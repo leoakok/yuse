@@ -1,0 +1,10 @@
+.env
+.env.*
+!.env.example
+.git
+.gitignore
+bin/
+tmp/
+*.test
+README.md
+Makefile

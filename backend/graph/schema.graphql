@@ -1,0 +1,416 @@
+scalar DateTime
+scalar JSON
+
+enum SectionType {
+  SUMMARY
+  EXPERIENCE
+  EDUCATION
+  SKILLS
+  PROJECTS
+  CERTIFICATIONS
+  LANGUAGES
+  ORGANIZATIONS
+  PUBLICATIONS
+  AWARDS
+  VOLUNTEER
+  CUSTOM
+}
+
+enum AssistantMessageRole {
+  USER
+  ASSISTANT
+  SYSTEM
+}
+
+enum AssistantView {
+  RESUMES
+  SECTIONS
+  ITEMS
+  RESUME_DETAIL
+  DIGITAL_TWIN
+  JOB_TRACKER
+}
+
+enum JobStatus {
+  SAVED
+  APPLIED
+  INTERVIEW
+  OFFER
+  REJECTED
+}
+
+enum TwinEntryType {
+  EXPERIENCE
+  EDUCATION
+  PROJECT
+  SKILL_AREA
+  OTHER
+}
+
+enum FontSize {
+  S
+  M
+  L
+}
+
+enum PageFormat {
+  A4
+  LETTER
+}
+
+"""Spoken language proficiency — stored in section item metadata.level (LANGUAGES)."""
+enum LanguageLevel {
+  BEGINNER
+  INTERMEDIATE
+  PROFICIENT
+  FLUENT
+  NATIVE
+}
+
+"""Technical/professional skill proficiency — stored in section item metadata.level (SKILLS) and Twin SKILL_AREA."""
+enum SkillLevel {
+  BEGINNER
+  INTERMEDIATE
+  PROFICIENT
+  ADVANCED
+  EXPERT
+}
+
+enum ConnectionProvider {
+  GITHUB
+}
+
+type ConnectionStatus {
+  provider: ConnectionProvider!
+  connected: Boolean!
+  username: String
+  avatarUrl: String
+  connectedAt: DateTime
+}
+
+type User {
+  id: ID!
+  email: String!
+  displayName: String!
+  avatarUrl: String
+  createdAt: DateTime!
+  updatedAt: DateTime!
+}
+
+type Workspace {
+  id: ID!
+  name: String!
+  slug: String!
+  ownerId: ID!
+  plan: String!
+  createdAt: DateTime!
+  updatedAt: DateTime!
+}
+
+type WorkspaceStats {
+  resumeCount: Int!
+  sectionCount: Int!
+  sectionItemCount: Int!
+}
+
+type ContactProfile {
+  id: ID!
+  workspaceId: ID!
+  fullName: String!
+  headline: String
+  email: String
+  phone: String
+  location: String
+  website: String
+  linkedIn: String
+  github: String
+  photoUrl: String
+  createdAt: DateTime!
+  updatedAt: DateTime!
+}
+
+type SectionItem {
+  id: ID!
+  workspaceId: ID!
+  type: SectionType!
+  headline: String!
+  body: String!
+  metadata: JSON!
+  showInPreview: Boolean!
+  createdBy: ID!
+  createdAt: DateTime!
+  updatedAt: DateTime!
+}
+
+type Section {
+  id: ID!
+  workspaceId: ID!
+  type: SectionType!
+  title: String!
+  description: String
+  createdBy: ID!
+  createdAt: DateTime!
+  updatedAt: DateTime!
+}
+
+type Resume {
+  id: ID!
+  workspaceId: ID!
+  title: String!
+  contactProfileId: ID
+  createdBy: ID!
+  createdAt: DateTime!
+  updatedAt: DateTime!
+}
+
+type ResumeSettings {
+  resumeId: ID!
+  themeId: ID!
+  fontSize: FontSize!
+  pageFormat: PageFormat!
+  marginHorizontalMm: Float!
+  marginVerticalMm: Float!
+  showPhoto: Boolean!
+  locale: String!
+}
+
+type CvTheme {
+  id: ID!
+  name: String!
+  slug: String!
+  isSystem: Boolean!
+  config: JSON!
+}
+
+type SectionWithItems {
+  section: Section!
+  items: [SectionItem!]!
+}
+
+type ResumeWithContent {
+  resume: Resume!
+  contactProfile: ContactProfile
+  settings: ResumeSettings!
+  theme: CvTheme!
+  sections: [SectionWithItems!]!
+}
+
+type SectionItemUsage {
+  sectionItem: SectionItem!
+  sections: [Section!]!
+  resumes: [Resume!]!
+}
+
+type TwinEntry {
+  id: ID!
+  workspaceId: ID!
+  type: TwinEntryType!
+  title: String!
+  body: String!
+  metadata: JSON!
+  sortOrder: Int!
+  createdBy: ID!
+  createdAt: DateTime!
+  updatedAt: DateTime!
+}
+
+type TrackedJob {
+  id: ID!
+  workspaceId: ID!
+  url: String!
+  title: String!
+  company: String!
+  status: JobStatus!
+  notes: String!
+  resumeId: ID
+  coverLetter: String!
+  metadata: JSON!
+  createdBy: ID!
+  createdAt: DateTime!
+  updatedAt: DateTime!
+}
+
+input AssistantContextInput {
+  view: AssistantView!
+  resumeId: ID
+  sectionId: ID
+  sectionItemId: ID
+  jobId: ID
+}
+
+input AssistantAttachmentInput {
+  name: String!
+  mimeType: String!
+  contentBase64: String
+  extractedText: String
+}
+
+type AssistantThread {
+  id: ID!
+  workspaceId: ID!
+  createdAt: DateTime!
+  updatedAt: DateTime!
+  preview: String
+}
+
+type AssistantMessage {
+  id: ID!
+  threadId: ID!
+  role: AssistantMessageRole!
+  content: String!
+  context: JSON
+  createdAt: DateTime!
+}
+
+type AssistantActionLog {
+  id: ID!
+  messageId: ID!
+  op: String!
+  payload: JSON!
+  success: Boolean!
+  error: String
+  createdAt: DateTime!
+}
+
+type AssistantTurnResult {
+  messages: [AssistantMessage!]!
+  actionLogs: [AssistantActionLog!]!
+  affectedResumeIds: [ID!]!
+  resumeWithContent: ResumeWithContent
+}
+
+type Query {
+  me: User!
+  myWorkspace: Workspace!
+  workspaceStats: WorkspaceStats!
+  resumes: [Resume!]!
+  resume(id: ID!): Resume
+  sections(type: SectionType): [Section!]!
+  section(id: ID!): Section
+  sectionItems(type: SectionType): [SectionItem!]!
+  sectionItem(id: ID!): SectionItem
+  contactProfiles: [ContactProfile!]!
+  cvThemes: [CvTheme!]!
+  resumeWithContent(id: ID!): ResumeWithContent
+  sectionItemUsage(id: ID!): SectionItemUsage
+  sectionItemsForSection(sectionId: ID!): [SectionItem!]!
+  resumesForSection(sectionId: ID!): [Resume!]!
+  assistantThreads: [AssistantThread!]!
+  assistantMessages(threadId: ID!, limit: Int = 50): [AssistantMessage!]!
+  twinEntries: [TwinEntry!]!
+  twinEntry(id: ID!): TwinEntry
+  trackedJobs: [TrackedJob!]!
+  trackedJob(id: ID!): TrackedJob
+  connectionStatus(provider: ConnectionProvider!): ConnectionStatus!
+}
+
+input UpdateResumeSettingsInput {
+  resumeId: ID!
+  pageFormat: PageFormat
+  fontSize: FontSize
+  marginHorizontalMm: Float
+  marginVerticalMm: Float
+  themeId: ID
+  showPhoto: Boolean
+  locale: String
+}
+
+input UpdateResumeSectionItemVisibilityInput {
+  resumeId: ID!
+  sectionId: ID!
+  sectionItemId: ID!
+  showInPreview: Boolean!
+}
+
+input AddResumeSectionItemInput {
+  resumeId: ID!
+  sectionId: ID!
+  headline: String
+  body: String
+  metadata: JSON
+}
+
+input CreateTwinEntryInput {
+  type: TwinEntryType!
+  title: String!
+  body: String!
+  metadata: JSON
+}
+
+input UpdateTwinEntryInput {
+  id: ID!
+  type: TwinEntryType
+  title: String
+  body: String
+  metadata: JSON
+  sortOrder: Int
+}
+
+input UpdateTrackedJobInput {
+  id: ID!
+  title: String
+  company: String
+  status: JobStatus
+  notes: String
+  resumeId: ID
+  coverLetter: String
+  metadata: JSON
+}
+
+input UpdateResumeSectionItemInput {
+  resumeId: ID!
+  sectionId: ID!
+  sectionItemId: ID!
+  headline: String
+  body: String
+  metadata: JSON
+}
+
+input UpdateContactProfileInput {
+  resumeId: ID!
+  fullName: String
+  headline: String
+  email: String
+  phone: String
+  location: String
+  website: String
+  linkedIn: String
+  github: String
+  photoUrl: String
+}
+
+type ProfilePhotoUpload {
+  uploadUrl: String!
+  photoUrl: String!
+  contentType: String!
+  maxBytes: Int!
+}
+
+type Mutation {
+  createResume(title: String!): Resume!
+  duplicateResume(id: ID!): Resume!
+  deleteResume(id: ID!): Boolean!
+  updateResume(id: ID!, title: String, contactProfileId: ID): Resume!
+  updateResumeSettings(input: UpdateResumeSettingsInput!): ResumeSettings!
+  updateResumeSectionItemVisibility(input: UpdateResumeSectionItemVisibilityInput!): ResumeWithContent!
+  updateResumeSectionItem(input: UpdateResumeSectionItemInput!): ResumeWithContent!
+  addResumeSectionItem(input: AddResumeSectionItemInput!): ResumeWithContent!
+  deleteSectionItem(resumeId: ID!, sectionItemId: ID!): ResumeWithContent!
+  updateContactProfile(input: UpdateContactProfileInput!): ResumeWithContent!
+  requestProfilePhotoUpload(contentType: String!, fileName: String!): ProfilePhotoUpload!
+  createTwinEntry(input: CreateTwinEntryInput!): TwinEntry!
+  updateTwinEntry(input: UpdateTwinEntryInput!): TwinEntry!
+  deleteTwinEntry(id: ID!): Boolean!
+  createTrackedJob(url: String!): TrackedJob!
+  updateTrackedJob(input: UpdateTrackedJobInput!): TrackedJob!
+  deleteTrackedJob(id: ID!): Boolean!
+  createAssistantThread: AssistantThread!
+  deleteAssistantThread(id: ID!): Boolean!
+  sendAssistantMessage(
+    threadId: ID!
+    text: String!
+    context: AssistantContextInput!
+    attachments: [AssistantAttachmentInput!] = []
+  ): AssistantTurnResult!
+  disconnectConnection(provider: ConnectionProvider!): Boolean!
+}
