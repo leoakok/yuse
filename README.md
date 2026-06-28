@@ -1,5 +1,17 @@
 This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-app`](https://nextjs.org/docs/app/api-reference/cli/create-next-app).
 
+## Quick start (full stack)
+
+```bash
+npm run setup:auth   # AUTH_SECRET + Google OAuth (interactive)
+# Set OPENAI_API_KEY in backend/.env (required for the CV assistant)
+npm run start        # Postgres + backend (Docker) + frontend
+npm run stop         # stop Docker services
+```
+
+See [docs/AUTH.md](docs/AUTH.md) for Google sign-in, MCP setup, and troubleshooting.  
+See [docs/DOCKER.md](docs/DOCKER.md) for ports and Docker details.
+
 ## Getting Started
 
 First, run the development server:
