@@ -224,10 +224,15 @@ cp backend/.env.example backend/.env
 | `TAVILY_API_KEY` | No | Web search fallback (DuckDuckGo used when unset) |
 | `LINKEDIN_PROFILE_API_URL` | No | Optional LinkedIn profile API endpoint |
 | `LINKEDIN_PROFILE_API_KEY` | No | API key for LinkedIn profile service |
-| `AWS_REGION` | No | S3 region for profile photo uploads |
-| `AWS_ACCESS_KEY_ID` | No | S3 access key |
-| `AWS_SECRET_ACCESS_KEY` | No | S3 secret key |
-| `AWS_S3_BUCKET` | No | S3 bucket name |
+| `STORAGE_PROVIDER` | No | `azure` or `s3` (auto-detected from credentials when unset) |
+| `AZURE_STORAGE_ACCOUNT` | For photo upload | Azure storage account name |
+| `AZURE_STORAGE_ACCOUNT_KEY` | For photo upload | Azure storage account key |
+| `AZURE_STORAGE_CONTAINER` | No | Blob container (default `profile-photos`) |
+| `AZURE_STORAGE_PUBLIC_URL_PREFIX` | No | CDN URL prefix for uploaded photos |
+| `AWS_REGION` | For S3 upload | S3 region for profile photo uploads (legacy) |
+| `AWS_ACCESS_KEY_ID` | For S3 upload | S3 access key |
+| `AWS_SECRET_ACCESS_KEY` | For S3 upload | S3 secret key |
+| `AWS_S3_BUCKET` | For S3 upload | S3 bucket name |
 | `AWS_S3_PUBLIC_URL_PREFIX` | No | CDN URL prefix for uploaded photos |
 
 Never commit `.env` files or secrets. `npm run start` syncs `AUTH_SECRET` from the root `.env` into `backend/.env` automatically.

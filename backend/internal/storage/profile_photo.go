@@ -54,12 +54,42 @@ func ProfileKeyPrefix(workspaceID, userID string) string {
 	return path.Join("workspaces", workspaceID, "profiles", userID) + "/"
 }
 
-// BuildPublicObjectURL returns the public URL for an uploaded object.
+// BuildPublicObjectURL returns the public URL for an uploaded S3 object.
 func BuildPublicObjectURL(publicPrefix, bucket, region, objectKey string) string {
 	if prefix := strings.TrimRight(strings.TrimSpace(publicPrefix), "/"); prefix != "" {
 		return prefix + "/" + objectKey
 	}
 	return fmt.Sprintf("https://%s.s3.%s.amazonaws.com/%s", bucket, region, objectKey)
+}
+
+// BuildAzureBlobURL returns the public URL for an uploaded Azure blob.
+func BuildAzureBlobURL(accountName, container, publicPrefix, objectKey string) string {
+	if prefix := strings.TrimRight(strings.TrimSpace(publicPrefix), "/"); prefix != "" {
+		return prefix + "/" + objectKey
+	}
+	return fmt.Sprintf("https://%s.blob.core.windows.net/%s/%s", accountName, container, objectKey)
+}
+
+// AzureBlobURLHost returns the default Azure blob container URL prefix.
+func AzureBlobURLHost(accountName, container string) string {
+	return fmt.Sprintf("https://%s.blob.core.windows.net/%s/", accountName, container)
+}
+
+// PhotoURLMatchesAzureScope checks that a photo URL belongs to the expected workspace/user prefix.
+func PhotoURLMatchesAzureScope(photoURL, publicPrefix, accountName, container, workspaceID, userID string) bool {
+	trimmed := strings.TrimSpace(photoURL)
+	if trimmed == "" {
+		return false
+	}
+	expectedPrefix := ProfileKeyPrefix(workspaceID, userID)
+	if prefix := strings.TrimRight(strings.TrimSpace(publicPrefix), "/"); prefix != "" {
+		return strings.Contains(trimmed, expectedPrefix) && strings.HasPrefix(trimmed, prefix+"/")
+	}
+	blobHost := AzureBlobURLHost(accountName, container)
+	if strings.HasPrefix(trimmed, blobHost) {
+		return strings.HasPrefix(strings.TrimPrefix(trimmed, blobHost), expectedPrefix)
+	}
+	return strings.Contains(trimmed, expectedPrefix)
 }
 
 // PhotoURLMatchesScope checks that a photo URL belongs to the expected workspace/user prefix.

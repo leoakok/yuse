@@ -18,11 +18,16 @@ type Config struct {
 	GitHubClientID         string
 	GitHubClientSecret     string
 	GitHubOAuthCallbackURL string
-	AWSRegion              string
-	AWSAccessKeyID         string
-	AWSSecretAccessKey     string
-	AWSS3Bucket            string
-	AWSS3PublicURLPrefix   string
+	StorageProvider            string
+	AWSRegion                  string
+	AWSAccessKeyID             string
+	AWSSecretAccessKey         string
+	AWSS3Bucket                string
+	AWSS3PublicURLPrefix       string
+	AzureStorageAccount        string
+	AzureStorageAccountKey     string
+	AzureStorageContainer      string
+	AzureStoragePublicURLPrefix string
 }
 
 func Load() (Config, error) {
@@ -38,11 +43,16 @@ func Load() (Config, error) {
 		GitHubClientID:         strings.TrimSpace(os.Getenv("GITHUB_CLIENT_ID")),
 		GitHubClientSecret:     strings.TrimSpace(os.Getenv("GITHUB_CLIENT_SECRET")),
 		GitHubOAuthCallbackURL: strings.TrimSpace(os.Getenv("GITHUB_OAUTH_CALLBACK_URL")),
-		AWSRegion:              strings.TrimSpace(os.Getenv("AWS_REGION")),
-		AWSAccessKeyID:         strings.TrimSpace(os.Getenv("AWS_ACCESS_KEY_ID")),
-		AWSSecretAccessKey:     strings.TrimSpace(os.Getenv("AWS_SECRET_ACCESS_KEY")),
-		AWSS3Bucket:            strings.TrimSpace(os.Getenv("AWS_S3_BUCKET")),
-		AWSS3PublicURLPrefix:   strings.TrimSpace(os.Getenv("AWS_S3_PUBLIC_URL_PREFIX")),
+		StorageProvider:             strings.TrimSpace(os.Getenv("STORAGE_PROVIDER")),
+		AWSRegion:                   strings.TrimSpace(os.Getenv("AWS_REGION")),
+		AWSAccessKeyID:              strings.TrimSpace(os.Getenv("AWS_ACCESS_KEY_ID")),
+		AWSSecretAccessKey:          strings.TrimSpace(os.Getenv("AWS_SECRET_ACCESS_KEY")),
+		AWSS3Bucket:                 strings.TrimSpace(os.Getenv("AWS_S3_BUCKET")),
+		AWSS3PublicURLPrefix:        strings.TrimSpace(os.Getenv("AWS_S3_PUBLIC_URL_PREFIX")),
+		AzureStorageAccount:         strings.TrimSpace(os.Getenv("AZURE_STORAGE_ACCOUNT")),
+		AzureStorageAccountKey:      strings.TrimSpace(os.Getenv("AZURE_STORAGE_ACCOUNT_KEY")),
+		AzureStorageContainer:       envOr("AZURE_STORAGE_CONTAINER", "profile-photos"),
+		AzureStoragePublicURLPrefix: strings.TrimSpace(os.Getenv("AZURE_STORAGE_PUBLIC_URL_PREFIX")),
 	}
 
 	if cfg.GitHubOAuthCallbackURL == "" {
@@ -63,6 +73,13 @@ func (c Config) HasAWS() bool {
 		c.AWSAccessKeyID != "" &&
 		c.AWSSecretAccessKey != "" &&
 		c.AWSS3Bucket != ""
+}
+
+// HasAzure reports whether Azure Blob profile photo upload is configured.
+func (c Config) HasAzure() bool {
+	return c.AzureStorageAccount != "" &&
+		c.AzureStorageAccountKey != "" &&
+		c.AzureStorageContainer != ""
 }
 
 // ValidateBootstrap ensures persistence can start.
