@@ -1,5 +1,5 @@
-<p align="center">
-  <img src="public/logo-options/option-c.svg" alt="Yuse logo" width="80" height="80" />
+<p align="center">https://github.com/leoakok/yuse/blob/main/public/yuse-logo%402x.png
+  <img src="public/yuse-logo@2x.png" alt="Yuse logo" width="80" height="80" />
 </p>
 
 <h1 align="center">Yuse</h1>
