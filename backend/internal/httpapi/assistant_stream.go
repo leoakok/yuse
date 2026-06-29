@@ -101,6 +101,19 @@ func (s *ndjsonSink) ResumePatch(content *model.ResumeWithContent) {
 	s.flush.Flush()
 }
 
+func (s *ndjsonSink) PortfolioPatch(content *model.PortfolioWithContent) {
+	if content == nil {
+		return
+	}
+	_ = s.enc.Encode(streamEvent{
+		Type: "portfolio_patch",
+		Result: map[string]any{
+			"portfolioWithContent": content,
+		},
+	})
+	s.flush.Flush()
+}
+
 func AssistantStream() http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
 		if r.Method != http.MethodPost {
@@ -139,10 +152,12 @@ func AssistantStream() http.HandlerFunc {
 		}
 
 		payload := map[string]any{
-			"messages":          result.Messages,
-			"actionLogs":        result.ActionLogs,
-			"affectedResumeIds": result.AffectedResumeIds,
-			"resumeWithContent": result.ResumeWithContent,
+			"messages":             result.Messages,
+			"actionLogs":           result.ActionLogs,
+			"affectedResumeIds":    result.AffectedResumeIds,
+			"affectedPortfolioIds": result.AffectedPortfolioIds,
+			"resumeWithContent":    result.ResumeWithContent,
+			"portfolioWithContent": result.PortfolioWithContent,
 		}
 		_ = sink.enc.Encode(streamEvent{Type: "done", Result: payload})
 		flusher.Flush()

@@ -43,6 +43,20 @@ type Store interface {
 	DuplicateResume(sourceID string) (*model.Resume, error)
 	DeleteResume(id string) error
 	CreateResume(title string) *model.Resume
+	ListPortfolios() []*model.Portfolio
+	GetPortfolio(id string) (*model.Portfolio, error)
+	SavePortfolio(portfolio *model.Portfolio)
+	GetPortfolioSettings(portfolioID string) *model.PortfolioSettings
+	UpdatePortfolioSettings(portfolioID string, update func(*model.PortfolioSettings)) (*model.PortfolioSettings, error)
+	UpdatePortfolioSectionItemVisibility(portfolioID, sectionID, sectionItemID string, showInPreview bool) (*model.PortfolioWithContent, error)
+	AddPortfolioSectionItem(portfolioID, sectionID, headline, body string, metadata map[string]any) (*model.PortfolioWithContent, error)
+	UpdatePortfolioSectionItem(portfolioID, sectionID, sectionItemID string, headline, body *string, metadata map[string]any) (*model.PortfolioWithContent, error)
+	UpdatePortfolioContactProfile(portfolioID string, fullName, headline, email, phone, location, website, linkedIn, github, photoURL *string) (*model.PortfolioWithContent, error)
+	PortfolioWithContent(portfolioID string) (*model.PortfolioWithContent, error)
+	PortfoliosForSection(sectionID string) ([]*model.Portfolio, error)
+	DuplicatePortfolio(sourceID string) (*model.Portfolio, error)
+	DeletePortfolio(id string) error
+	CreatePortfolio(title string) *model.Portfolio
 	ListTwinEntries() []*model.TwinEntry
 	GetTwinEntry(id string) (*model.TwinEntry, error)
 	CreateTwinEntry(entry *model.TwinEntry) *model.TwinEntry

@@ -60,7 +60,8 @@ Search online when facts are missing or a job posting / public profile needs res
 
 - **Web**: explore_website (any URL — auto-picks best strategy), fetch_linkedin_profile (LinkedIn /in/ profiles), web_search, fetch_url (single page). When GitHub is connected, explore_website and search_github use the user's OAuth token (private repos, higher rate limits). Lower-level: crawl_site, crawl_github_profile, search_github.
 - **Resumes**: list/get/create/duplicate/delete/update; get_resume_content for ids and fieldGuide.
-- **Profile**: update_contact_profile only for the header block (including photoUrl when the user shares a profile image).
+- **Portfolios**: list/get/create/duplicate/delete/update; get_portfolio_content for ids and fieldGuide. Same section library as resumes; use portfolio-specific tools (add_portfolio_section_item, update_portfolio_contact_profile, etc.) when editing a portfolio site.
+- **Profile**: update_contact_profile (resume) or update_portfolio_contact_profile (portfolio) for the header block.
 - **Sections**: add_section_item, update_section_item, set_item_visibility; list_sections for ids.
 - **Design**: update_resume_settings, list_cv_themes.
 - **Digital Twin**: list/get/create/update/delete twin entries — structured STAR/PAR career knowledge.
@@ -72,6 +73,7 @@ Tool JSON schemas define parameter types, enums, required/recommended fields per
 
 - **Workspace**: Everything belongs to the signed-in user.
 - **Resume**: A CV with title, contact profile, design, and linked sections. Users edit with live preview.
+- **Portfolio**: A personal site with the same section library and preview model as resumes — projects-first default sections (Summary, Projects, Skills, Experience, Education).
 - **Section items**: Jobs, degrees, skills, etc. in a workspace-shared library. Editor lists all items in each section; preview shows only items with show_in_preview true. New resume includes all section items hidden from preview until you set_item_visibility.
 - **Profile**: Header block (fullName, headline, email, phone, location, website, linkedIn, github, photoUrl) via update_contact_profile only — no PROFILE section type. Use photoUrl when the user provides a profile image URL; enable showPhoto with update_resume_settings so the preview shows it.
 - **Digital Twin**: Long-term career knowledge separate from any resume. Entries use full STAR (experience/education) or PAR (projects/skills) fields in metadata — non-negotiable depth; you maintain these through conversation, not the user.

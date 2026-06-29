@@ -929,16 +929,31 @@ func (p *Postgres) SectionItemUsage(itemID string) (*model.SectionItemUsage, err
 	defer resumeRows.Close()
 	resumes := scanResumes(resumeRows)
 
+	portfolioRows, err := p.pool.Query(p.ctx(), `
+		SELECT DISTINCT pf.id, pf.workspace_id, pf.title, pf.contact_profile_id, pf.created_by, pf.created_at, pf.updated_at
+		FROM section_item_links sil
+		JOIN portfolio_sections ps ON ps.section_id = sil.section_id
+		JOIN portfolios pf ON pf.id = ps.portfolio_id
+		WHERE sil.section_item_id = $1
+	`, itemID)
+	if err != nil {
+		return nil, err
+	}
+	defer portfolioRows.Close()
+	portfolios := scanPortfolios(portfolioRows)
+
 	return &model.SectionItemUsage{
 		SectionItem: item,
 		Sections:    sections,
 		Resumes:     resumes,
+		Portfolios:  portfolios,
 	}, nil
 }
 
 func (p *Postgres) WorkspaceStats() *model.WorkspaceStats {
 	var stats model.WorkspaceStats
 	_ = p.pool.QueryRow(p.ctx(), `SELECT COUNT(*) FROM resumes WHERE workspace_id = $1`, p.activeWorkspaceID()).Scan(&stats.ResumeCount)
+	_ = p.pool.QueryRow(p.ctx(), `SELECT COUNT(*) FROM portfolios WHERE workspace_id = $1`, p.activeWorkspaceID()).Scan(&stats.PortfolioCount)
 	_ = p.pool.QueryRow(p.ctx(), `SELECT COUNT(*) FROM sections WHERE workspace_id = $1`, p.activeWorkspaceID()).Scan(&stats.SectionCount)
 	_ = p.pool.QueryRow(p.ctx(), `SELECT COUNT(*) FROM section_items WHERE workspace_id = $1`, p.activeWorkspaceID()).Scan(&stats.SectionItemCount)
 	return &stats

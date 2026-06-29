@@ -220,6 +220,92 @@ Returns fieldHints when key profile fields were omitted.`,
 			}, "resumeId"),
 		},
 		{
+			Name:        "list_portfolios",
+			Description: "List all portfolios (id and title).",
+			Parameters:  object(map[string]any{}),
+		},
+		{
+			Name:        "get_portfolio",
+			Description: "Get portfolio metadata by id.",
+			Parameters:  object(map[string]any{"id": str("Portfolio id.")}, "id"),
+		},
+		{
+			Name:        "create_portfolio",
+			Description: "Create a new empty portfolio site.",
+			Parameters:  object(map[string]any{"title": str("Portfolio title.", "Alex Morgan — Portfolio")}, "title"),
+		},
+		{
+			Name:        "duplicate_portfolio",
+			Description: "Clone a portfolio with all sections, items, and settings.",
+			Parameters:  object(map[string]any{"id": str("Source portfolio id.")}, "id"),
+		},
+		{
+			Name:        "delete_portfolio",
+			Description: "Permanently delete a portfolio.",
+			Parameters:  object(map[string]any{"id": str("Portfolio id.")}, "id"),
+		},
+		{
+			Name:        "update_portfolio",
+			Description: "Rename a portfolio.",
+			Parameters: object(map[string]any{
+				"id":    str("Portfolio id."),
+				"title": str("New title.", "Product Designer Portfolio"),
+			}, "id"),
+		},
+		{
+			Name:        "get_portfolio_content",
+			Description: "Get portfolio for editing: contactProfile, sections with ids/types/items, and fieldGuide per section. Call before add_portfolio_section_item or update_portfolio_section_item.",
+			Parameters:  object(map[string]any{"id": str("Portfolio id.")}, "id"),
+		},
+		{
+			Name: "update_portfolio_contact_profile",
+			Description: `Update the Profile header block ONLY for a portfolio (name, title, contact, links, photo). NOT a section item.`,
+			Parameters: mergeProps(object(map[string]any{
+				"portfolioId": str("Portfolio id."),
+			}, "portfolioId"), contactProfileFields),
+		},
+		{
+			Name:        "add_portfolio_section_item",
+			Description: addSectionItemToolDescription(),
+			Parameters: mergeProps(object(map[string]any{
+				"portfolioId": str("Portfolio id."),
+				"sectionId":   str("Section id from list_sections or get_portfolio_content."),
+			}, "portfolioId", "sectionId"), sectionItemFields),
+		},
+		{
+			Name:        "update_portfolio_section_item",
+			Description: updateSectionItemToolDescription(),
+			Parameters: mergeProps(object(map[string]any{
+				"portfolioId":   str("Portfolio id."),
+				"sectionId":     str("Section id."),
+				"sectionItemId": str("Section item id."),
+			}, "portfolioId", "sectionId", "sectionItemId"), sectionItemFields),
+		},
+		{
+			Name:        "set_portfolio_item_visibility",
+			Description: "Show or hide a section item in the portfolio preview.",
+			Parameters: object(map[string]any{
+				"portfolioId":   str("Portfolio id."),
+				"sectionId":     str("Section id."),
+				"sectionItemId": str("Section item id."),
+				"showInPreview": boolProp("true = visible in preview, false = hidden."),
+			}, "portfolioId", "sectionId", "sectionItemId", "showInPreview"),
+		},
+		{
+			Name:        "update_portfolio_settings",
+			Description: "Update portfolio design: page format, margins, font, theme, locale.",
+			Parameters: object(map[string]any{
+				"portfolioId":        str("Portfolio id."),
+				"pageFormat":         pageFormatEnum(),
+				"fontSize":           fontSizeEnum(),
+				"marginHorizontalMm": map[string]any{"type": "number", "description": "Horizontal page margin in millimeters."},
+				"marginVerticalMm":   map[string]any{"type": "number", "description": "Vertical page margin in millimeters."},
+				"themeId":            str("Theme id from list_cv_themes."),
+				"showPhoto":          boolProp("Whether to show the profile photo in the portfolio preview."),
+				"locale":             str("BCP-47 locale.", "en-US"),
+			}, "portfolioId"),
+		},
+		{
 			Name:        "list_cv_themes",
 			Description: "List available CV themes.",
 			Parameters:  object(map[string]any{}),

@@ -55,6 +55,8 @@ Most CV tools treat your career as a static form. Yuse treats it as **knowledge 
 - **Auth** — Google OAuth and email/password sign-in (NextAuth.js); GitHub OAuth for Connections.
 - **Workspace-scoped data** — Per-user resumes, twin entries, and job applications in PostgreSQL.
 
+> **Social images:** 4:3 cover and homepage preview assets live in [`public/social/`](public/social/). Upload `github-cover.png` as the repo social preview in GitHub settings.
+>
 > **Screenshots:** Product screenshots are not bundled in this repo yet. Run locally with `npm run start` and visit [http://localhost:3000](http://localhost:3000), or try the [live demo](https://yuse.ahmetkok.dev). Contributions of anonymized screenshots to `docs/screenshots/` are welcome.
 
 ## Tech stack

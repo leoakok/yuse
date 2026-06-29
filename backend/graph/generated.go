@@ -75,10 +75,12 @@ type ComplexityRoot struct {
 	}
 
 	AssistantTurnResult struct {
-		ActionLogs        func(childComplexity int) int
-		AffectedResumeIds func(childComplexity int) int
-		Messages          func(childComplexity int) int
-		ResumeWithContent func(childComplexity int) int
+		ActionLogs           func(childComplexity int) int
+		AffectedPortfolioIds func(childComplexity int) int
+		AffectedResumeIds    func(childComplexity int) int
+		Messages             func(childComplexity int) int
+		PortfolioWithContent func(childComplexity int) int
+		ResumeWithContent    func(childComplexity int) int
 	}
 
 	ConnectionStatus struct {
@@ -114,27 +116,66 @@ type ComplexityRoot struct {
 	}
 
 	Mutation struct {
-		AddResumeSectionItem              func(childComplexity int, input model.AddResumeSectionItemInput) int
-		CreateAssistantThread             func(childComplexity int) int
-		CreateResume                      func(childComplexity int, title string) int
-		CreateTrackedJob                  func(childComplexity int, url string) int
-		CreateTwinEntry                   func(childComplexity int, input model.CreateTwinEntryInput) int
-		DeleteAssistantThread             func(childComplexity int, id string) int
-		DeleteResume                      func(childComplexity int, id string) int
-		DeleteSectionItem                 func(childComplexity int, resumeID string, sectionItemID string) int
-		DeleteTrackedJob                  func(childComplexity int, id string) int
-		DeleteTwinEntry                   func(childComplexity int, id string) int
-		DisconnectConnection              func(childComplexity int, provider model.ConnectionProvider) int
-		DuplicateResume                   func(childComplexity int, id string) int
-		RequestProfilePhotoUpload         func(childComplexity int, contentType string, fileName string) int
-		SendAssistantMessage              func(childComplexity int, threadID string, text string, context model.AssistantContextInput, attachments []*model.AssistantAttachmentInput) int
-		UpdateContactProfile              func(childComplexity int, input model.UpdateContactProfileInput) int
-		UpdateResume                      func(childComplexity int, id string, title *string, contactProfileID *string) int
-		UpdateResumeSectionItem           func(childComplexity int, input model.UpdateResumeSectionItemInput) int
-		UpdateResumeSectionItemVisibility func(childComplexity int, input model.UpdateResumeSectionItemVisibilityInput) int
-		UpdateResumeSettings              func(childComplexity int, input model.UpdateResumeSettingsInput) int
-		UpdateTrackedJob                  func(childComplexity int, input model.UpdateTrackedJobInput) int
-		UpdateTwinEntry                   func(childComplexity int, input model.UpdateTwinEntryInput) int
+		AddPortfolioSectionItem              func(childComplexity int, input model.AddPortfolioSectionItemInput) int
+		AddResumeSectionItem                 func(childComplexity int, input model.AddResumeSectionItemInput) int
+		CreateAssistantThread                func(childComplexity int) int
+		CreatePortfolio                      func(childComplexity int, title string) int
+		CreateResume                         func(childComplexity int, title string) int
+		CreateTrackedJob                     func(childComplexity int, url string) int
+		CreateTwinEntry                      func(childComplexity int, input model.CreateTwinEntryInput) int
+		DeleteAssistantThread                func(childComplexity int, id string) int
+		DeletePortfolio                      func(childComplexity int, id string) int
+		DeletePortfolioSectionItem           func(childComplexity int, portfolioID string, sectionItemID string) int
+		DeleteResume                         func(childComplexity int, id string) int
+		DeleteSectionItem                    func(childComplexity int, resumeID string, sectionItemID string) int
+		DeleteTrackedJob                     func(childComplexity int, id string) int
+		DeleteTwinEntry                      func(childComplexity int, id string) int
+		DisconnectConnection                 func(childComplexity int, provider model.ConnectionProvider) int
+		DuplicatePortfolio                   func(childComplexity int, id string) int
+		DuplicateResume                      func(childComplexity int, id string) int
+		RequestProfilePhotoUpload            func(childComplexity int, contentType string, fileName string) int
+		SendAssistantMessage                 func(childComplexity int, threadID string, text string, context model.AssistantContextInput, attachments []*model.AssistantAttachmentInput) int
+		UpdateContactProfile                 func(childComplexity int, input model.UpdateContactProfileInput) int
+		UpdatePortfolio                      func(childComplexity int, id string, title *string, contactProfileID *string) int
+		UpdatePortfolioContactProfile        func(childComplexity int, input model.UpdatePortfolioContactProfileInput) int
+		UpdatePortfolioSectionItem           func(childComplexity int, input model.UpdatePortfolioSectionItemInput) int
+		UpdatePortfolioSectionItemVisibility func(childComplexity int, input model.UpdatePortfolioSectionItemVisibilityInput) int
+		UpdatePortfolioSettings              func(childComplexity int, input model.UpdatePortfolioSettingsInput) int
+		UpdateResume                         func(childComplexity int, id string, title *string, contactProfileID *string) int
+		UpdateResumeSectionItem              func(childComplexity int, input model.UpdateResumeSectionItemInput) int
+		UpdateResumeSectionItemVisibility    func(childComplexity int, input model.UpdateResumeSectionItemVisibilityInput) int
+		UpdateResumeSettings                 func(childComplexity int, input model.UpdateResumeSettingsInput) int
+		UpdateTrackedJob                     func(childComplexity int, input model.UpdateTrackedJobInput) int
+		UpdateTwinEntry                      func(childComplexity int, input model.UpdateTwinEntryInput) int
+	}
+
+	Portfolio struct {
+		ContactProfileID func(childComplexity int) int
+		CreatedAt        func(childComplexity int) int
+		CreatedBy        func(childComplexity int) int
+		ID               func(childComplexity int) int
+		Title            func(childComplexity int) int
+		UpdatedAt        func(childComplexity int) int
+		WorkspaceID      func(childComplexity int) int
+	}
+
+	PortfolioSettings struct {
+		FontSize           func(childComplexity int) int
+		Locale             func(childComplexity int) int
+		MarginHorizontalMm func(childComplexity int) int
+		MarginVerticalMm   func(childComplexity int) int
+		PageFormat         func(childComplexity int) int
+		PortfolioID        func(childComplexity int) int
+		ShowPhoto          func(childComplexity int) int
+		ThemeID            func(childComplexity int) int
+	}
+
+	PortfolioWithContent struct {
+		ContactProfile func(childComplexity int) int
+		Portfolio      func(childComplexity int) int
+		Sections       func(childComplexity int) int
+		Settings       func(childComplexity int) int
+		Theme          func(childComplexity int) int
 	}
 
 	ProfilePhotoUpload struct {
@@ -152,6 +193,10 @@ type ComplexityRoot struct {
 		CvThemes               func(childComplexity int) int
 		Me                     func(childComplexity int) int
 		MyWorkspace            func(childComplexity int) int
+		Portfolio              func(childComplexity int, id string) int
+		PortfolioWithContent   func(childComplexity int, id string) int
+		Portfolios             func(childComplexity int) int
+		PortfoliosForSection   func(childComplexity int, sectionID string) int
 		Resume                 func(childComplexity int, id string) int
 		ResumeWithContent      func(childComplexity int, id string) int
 		Resumes                func(childComplexity int) int
@@ -223,6 +268,7 @@ type ComplexityRoot struct {
 	}
 
 	SectionItemUsage struct {
+		Portfolios  func(childComplexity int) int
 		Resumes     func(childComplexity int) int
 		SectionItem func(childComplexity int) int
 		Sections    func(childComplexity int) int
@@ -282,6 +328,7 @@ type ComplexityRoot struct {
 	}
 
 	WorkspaceStats struct {
+		PortfolioCount   func(childComplexity int) int
 		ResumeCount      func(childComplexity int) int
 		SectionCount     func(childComplexity int) int
 		SectionItemCount func(childComplexity int) int
@@ -299,6 +346,16 @@ type MutationResolver interface {
 	AddResumeSectionItem(ctx context.Context, input model.AddResumeSectionItemInput) (*model.ResumeWithContent, error)
 	DeleteSectionItem(ctx context.Context, resumeID string, sectionItemID string) (*model.ResumeWithContent, error)
 	UpdateContactProfile(ctx context.Context, input model.UpdateContactProfileInput) (*model.ResumeWithContent, error)
+	CreatePortfolio(ctx context.Context, title string) (*model.Portfolio, error)
+	DuplicatePortfolio(ctx context.Context, id string) (*model.Portfolio, error)
+	DeletePortfolio(ctx context.Context, id string) (bool, error)
+	UpdatePortfolio(ctx context.Context, id string, title *string, contactProfileID *string) (*model.Portfolio, error)
+	UpdatePortfolioSettings(ctx context.Context, input model.UpdatePortfolioSettingsInput) (*model.PortfolioSettings, error)
+	UpdatePortfolioSectionItemVisibility(ctx context.Context, input model.UpdatePortfolioSectionItemVisibilityInput) (*model.PortfolioWithContent, error)
+	UpdatePortfolioSectionItem(ctx context.Context, input model.UpdatePortfolioSectionItemInput) (*model.PortfolioWithContent, error)
+	AddPortfolioSectionItem(ctx context.Context, input model.AddPortfolioSectionItemInput) (*model.PortfolioWithContent, error)
+	DeletePortfolioSectionItem(ctx context.Context, portfolioID string, sectionItemID string) (*model.PortfolioWithContent, error)
+	UpdatePortfolioContactProfile(ctx context.Context, input model.UpdatePortfolioContactProfileInput) (*model.PortfolioWithContent, error)
 	RequestProfilePhotoUpload(ctx context.Context, contentType string, fileName string) (*model.ProfilePhotoUpload, error)
 	CreateTwinEntry(ctx context.Context, input model.CreateTwinEntryInput) (*model.TwinEntry, error)
 	UpdateTwinEntry(ctx context.Context, input model.UpdateTwinEntryInput) (*model.TwinEntry, error)
@@ -324,6 +381,10 @@ type QueryResolver interface {
 	ContactProfiles(ctx context.Context) ([]*model.ContactProfile, error)
 	CvThemes(ctx context.Context) ([]*model.CvTheme, error)
 	ResumeWithContent(ctx context.Context, id string) (*model.ResumeWithContent, error)
+	Portfolios(ctx context.Context) ([]*model.Portfolio, error)
+	Portfolio(ctx context.Context, id string) (*model.Portfolio, error)
+	PortfolioWithContent(ctx context.Context, id string) (*model.PortfolioWithContent, error)
+	PortfoliosForSection(ctx context.Context, sectionID string) ([]*model.Portfolio, error)
 	SectionItemUsage(ctx context.Context, id string) (*model.SectionItemUsage, error)
 	SectionItemsForSection(ctx context.Context, sectionID string) ([]*model.SectionItem, error)
 	ResumesForSection(ctx context.Context, sectionID string) ([]*model.Resume, error)
@@ -488,6 +549,13 @@ func (e *executableSchema) Complexity(ctx context.Context, typeName, field strin
 
 		return e.complexity.AssistantTurnResult.ActionLogs(childComplexity), true
 
+	case "AssistantTurnResult.affectedPortfolioIds":
+		if e.complexity.AssistantTurnResult.AffectedPortfolioIds == nil {
+			break
+		}
+
+		return e.complexity.AssistantTurnResult.AffectedPortfolioIds(childComplexity), true
+
 	case "AssistantTurnResult.affectedResumeIds":
 		if e.complexity.AssistantTurnResult.AffectedResumeIds == nil {
 			break
@@ -501,6 +569,13 @@ func (e *executableSchema) Complexity(ctx context.Context, typeName, field strin
 		}
 
 		return e.complexity.AssistantTurnResult.Messages(childComplexity), true
+
+	case "AssistantTurnResult.portfolioWithContent":
+		if e.complexity.AssistantTurnResult.PortfolioWithContent == nil {
+			break
+		}
+
+		return e.complexity.AssistantTurnResult.PortfolioWithContent(childComplexity), true
 
 	case "AssistantTurnResult.resumeWithContent":
 		if e.complexity.AssistantTurnResult.ResumeWithContent == nil {
@@ -670,6 +745,18 @@ func (e *executableSchema) Complexity(ctx context.Context, typeName, field strin
 
 		return e.complexity.CvTheme.Slug(childComplexity), true
 
+	case "Mutation.addPortfolioSectionItem":
+		if e.complexity.Mutation.AddPortfolioSectionItem == nil {
+			break
+		}
+
+		args, err := ec.field_Mutation_addPortfolioSectionItem_args(ctx, rawArgs)
+		if err != nil {
+			return 0, false
+		}
+
+		return e.complexity.Mutation.AddPortfolioSectionItem(childComplexity, args["input"].(model.AddPortfolioSectionItemInput)), true
+
 	case "Mutation.addResumeSectionItem":
 		if e.complexity.Mutation.AddResumeSectionItem == nil {
 			break
@@ -688,6 +775,18 @@ func (e *executableSchema) Complexity(ctx context.Context, typeName, field strin
 		}
 
 		return e.complexity.Mutation.CreateAssistantThread(childComplexity), true
+
+	case "Mutation.createPortfolio":
+		if e.complexity.Mutation.CreatePortfolio == nil {
+			break
+		}
+
+		args, err := ec.field_Mutation_createPortfolio_args(ctx, rawArgs)
+		if err != nil {
+			return 0, false
+		}
+
+		return e.complexity.Mutation.CreatePortfolio(childComplexity, args["title"].(string)), true
 
 	case "Mutation.createResume":
 		if e.complexity.Mutation.CreateResume == nil {
@@ -736,6 +835,30 @@ func (e *executableSchema) Complexity(ctx context.Context, typeName, field strin
 		}
 
 		return e.complexity.Mutation.DeleteAssistantThread(childComplexity, args["id"].(string)), true
+
+	case "Mutation.deletePortfolio":
+		if e.complexity.Mutation.DeletePortfolio == nil {
+			break
+		}
+
+		args, err := ec.field_Mutation_deletePortfolio_args(ctx, rawArgs)
+		if err != nil {
+			return 0, false
+		}
+
+		return e.complexity.Mutation.DeletePortfolio(childComplexity, args["id"].(string)), true
+
+	case "Mutation.deletePortfolioSectionItem":
+		if e.complexity.Mutation.DeletePortfolioSectionItem == nil {
+			break
+		}
+
+		args, err := ec.field_Mutation_deletePortfolioSectionItem_args(ctx, rawArgs)
+		if err != nil {
+			return 0, false
+		}
+
+		return e.complexity.Mutation.DeletePortfolioSectionItem(childComplexity, args["portfolioId"].(string), args["sectionItemId"].(string)), true
 
 	case "Mutation.deleteResume":
 		if e.complexity.Mutation.DeleteResume == nil {
@@ -797,6 +920,18 @@ func (e *executableSchema) Complexity(ctx context.Context, typeName, field strin
 
 		return e.complexity.Mutation.DisconnectConnection(childComplexity, args["provider"].(model.ConnectionProvider)), true
 
+	case "Mutation.duplicatePortfolio":
+		if e.complexity.Mutation.DuplicatePortfolio == nil {
+			break
+		}
+
+		args, err := ec.field_Mutation_duplicatePortfolio_args(ctx, rawArgs)
+		if err != nil {
+			return 0, false
+		}
+
+		return e.complexity.Mutation.DuplicatePortfolio(childComplexity, args["id"].(string)), true
+
 	case "Mutation.duplicateResume":
 		if e.complexity.Mutation.DuplicateResume == nil {
 			break
@@ -844,6 +979,66 @@ func (e *executableSchema) Complexity(ctx context.Context, typeName, field strin
 		}
 
 		return e.complexity.Mutation.UpdateContactProfile(childComplexity, args["input"].(model.UpdateContactProfileInput)), true
+
+	case "Mutation.updatePortfolio":
+		if e.complexity.Mutation.UpdatePortfolio == nil {
+			break
+		}
+
+		args, err := ec.field_Mutation_updatePortfolio_args(ctx, rawArgs)
+		if err != nil {
+			return 0, false
+		}
+
+		return e.complexity.Mutation.UpdatePortfolio(childComplexity, args["id"].(string), args["title"].(*string), args["contactProfileId"].(*string)), true
+
+	case "Mutation.updatePortfolioContactProfile":
+		if e.complexity.Mutation.UpdatePortfolioContactProfile == nil {
+			break
+		}
+
+		args, err := ec.field_Mutation_updatePortfolioContactProfile_args(ctx, rawArgs)
+		if err != nil {
+			return 0, false
+		}
+
+		return e.complexity.Mutation.UpdatePortfolioContactProfile(childComplexity, args["input"].(model.UpdatePortfolioContactProfileInput)), true
+
+	case "Mutation.updatePortfolioSectionItem":
+		if e.complexity.Mutation.UpdatePortfolioSectionItem == nil {
+			break
+		}
+
+		args, err := ec.field_Mutation_updatePortfolioSectionItem_args(ctx, rawArgs)
+		if err != nil {
+			return 0, false
+		}
+
+		return e.complexity.Mutation.UpdatePortfolioSectionItem(childComplexity, args["input"].(model.UpdatePortfolioSectionItemInput)), true
+
+	case "Mutation.updatePortfolioSectionItemVisibility":
+		if e.complexity.Mutation.UpdatePortfolioSectionItemVisibility == nil {
+			break
+		}
+
+		args, err := ec.field_Mutation_updatePortfolioSectionItemVisibility_args(ctx, rawArgs)
+		if err != nil {
+			return 0, false
+		}
+
+		return e.complexity.Mutation.UpdatePortfolioSectionItemVisibility(childComplexity, args["input"].(model.UpdatePortfolioSectionItemVisibilityInput)), true
+
+	case "Mutation.updatePortfolioSettings":
+		if e.complexity.Mutation.UpdatePortfolioSettings == nil {
+			break
+		}
+
+		args, err := ec.field_Mutation_updatePortfolioSettings_args(ctx, rawArgs)
+		if err != nil {
+			return 0, false
+		}
+
+		return e.complexity.Mutation.UpdatePortfolioSettings(childComplexity, args["input"].(model.UpdatePortfolioSettingsInput)), true
 
 	case "Mutation.updateResume":
 		if e.complexity.Mutation.UpdateResume == nil {
@@ -916,6 +1111,146 @@ func (e *executableSchema) Complexity(ctx context.Context, typeName, field strin
 		}
 
 		return e.complexity.Mutation.UpdateTwinEntry(childComplexity, args["input"].(model.UpdateTwinEntryInput)), true
+
+	case "Portfolio.contactProfileId":
+		if e.complexity.Portfolio.ContactProfileID == nil {
+			break
+		}
+
+		return e.complexity.Portfolio.ContactProfileID(childComplexity), true
+
+	case "Portfolio.createdAt":
+		if e.complexity.Portfolio.CreatedAt == nil {
+			break
+		}
+
+		return e.complexity.Portfolio.CreatedAt(childComplexity), true
+
+	case "Portfolio.createdBy":
+		if e.complexity.Portfolio.CreatedBy == nil {
+			break
+		}
+
+		return e.complexity.Portfolio.CreatedBy(childComplexity), true
+
+	case "Portfolio.id":
+		if e.complexity.Portfolio.ID == nil {
+			break
+		}
+
+		return e.complexity.Portfolio.ID(childComplexity), true
+
+	case "Portfolio.title":
+		if e.complexity.Portfolio.Title == nil {
+			break
+		}
+
+		return e.complexity.Portfolio.Title(childComplexity), true
+
+	case "Portfolio.updatedAt":
+		if e.complexity.Portfolio.UpdatedAt == nil {
+			break
+		}
+
+		return e.complexity.Portfolio.UpdatedAt(childComplexity), true
+
+	case "Portfolio.workspaceId":
+		if e.complexity.Portfolio.WorkspaceID == nil {
+			break
+		}
+
+		return e.complexity.Portfolio.WorkspaceID(childComplexity), true
+
+	case "PortfolioSettings.fontSize":
+		if e.complexity.PortfolioSettings.FontSize == nil {
+			break
+		}
+
+		return e.complexity.PortfolioSettings.FontSize(childComplexity), true
+
+	case "PortfolioSettings.locale":
+		if e.complexity.PortfolioSettings.Locale == nil {
+			break
+		}
+
+		return e.complexity.PortfolioSettings.Locale(childComplexity), true
+
+	case "PortfolioSettings.marginHorizontalMm":
+		if e.complexity.PortfolioSettings.MarginHorizontalMm == nil {
+			break
+		}
+
+		return e.complexity.PortfolioSettings.MarginHorizontalMm(childComplexity), true
+
+	case "PortfolioSettings.marginVerticalMm":
+		if e.complexity.PortfolioSettings.MarginVerticalMm == nil {
+			break
+		}
+
+		return e.complexity.PortfolioSettings.MarginVerticalMm(childComplexity), true
+
+	case "PortfolioSettings.pageFormat":
+		if e.complexity.PortfolioSettings.PageFormat == nil {
+			break
+		}
+
+		return e.complexity.PortfolioSettings.PageFormat(childComplexity), true
+
+	case "PortfolioSettings.portfolioId":
+		if e.complexity.PortfolioSettings.PortfolioID == nil {
+			break
+		}
+
+		return e.complexity.PortfolioSettings.PortfolioID(childComplexity), true
+
+	case "PortfolioSettings.showPhoto":
+		if e.complexity.PortfolioSettings.ShowPhoto == nil {
+			break
+		}
+
+		return e.complexity.PortfolioSettings.ShowPhoto(childComplexity), true
+
+	case "PortfolioSettings.themeId":
+		if e.complexity.PortfolioSettings.ThemeID == nil {
+			break
+		}
+
+		return e.complexity.PortfolioSettings.ThemeID(childComplexity), true
+
+	case "PortfolioWithContent.contactProfile":
+		if e.complexity.PortfolioWithContent.ContactProfile == nil {
+			break
+		}
+
+		return e.complexity.PortfolioWithContent.ContactProfile(childComplexity), true
+
+	case "PortfolioWithContent.portfolio":
+		if e.complexity.PortfolioWithContent.Portfolio == nil {
+			break
+		}
+
+		return e.complexity.PortfolioWithContent.Portfolio(childComplexity), true
+
+	case "PortfolioWithContent.sections":
+		if e.complexity.PortfolioWithContent.Sections == nil {
+			break
+		}
+
+		return e.complexity.PortfolioWithContent.Sections(childComplexity), true
+
+	case "PortfolioWithContent.settings":
+		if e.complexity.PortfolioWithContent.Settings == nil {
+			break
+		}
+
+		return e.complexity.PortfolioWithContent.Settings(childComplexity), true
+
+	case "PortfolioWithContent.theme":
+		if e.complexity.PortfolioWithContent.Theme == nil {
+			break
+		}
+
+		return e.complexity.PortfolioWithContent.Theme(childComplexity), true
 
 	case "ProfilePhotoUpload.contentType":
 		if e.complexity.ProfilePhotoUpload.ContentType == nil {
@@ -1003,6 +1338,49 @@ func (e *executableSchema) Complexity(ctx context.Context, typeName, field strin
 		}
 
 		return e.complexity.Query.MyWorkspace(childComplexity), true
+
+	case "Query.portfolio":
+		if e.complexity.Query.Portfolio == nil {
+			break
+		}
+
+		args, err := ec.field_Query_portfolio_args(ctx, rawArgs)
+		if err != nil {
+			return 0, false
+		}
+
+		return e.complexity.Query.Portfolio(childComplexity, args["id"].(string)), true
+
+	case "Query.portfolioWithContent":
+		if e.complexity.Query.PortfolioWithContent == nil {
+			break
+		}
+
+		args, err := ec.field_Query_portfolioWithContent_args(ctx, rawArgs)
+		if err != nil {
+			return 0, false
+		}
+
+		return e.complexity.Query.PortfolioWithContent(childComplexity, args["id"].(string)), true
+
+	case "Query.portfolios":
+		if e.complexity.Query.Portfolios == nil {
+			break
+		}
+
+		return e.complexity.Query.Portfolios(childComplexity), true
+
+	case "Query.portfoliosForSection":
+		if e.complexity.Query.PortfoliosForSection == nil {
+			break
+		}
+
+		args, err := ec.field_Query_portfoliosForSection_args(ctx, rawArgs)
+		if err != nil {
+			return 0, false
+		}
+
+		return e.complexity.Query.PortfoliosForSection(childComplexity, args["sectionId"].(string)), true
 
 	case "Query.resume":
 		if e.complexity.Query.Resume == nil {
@@ -1430,6 +1808,13 @@ func (e *executableSchema) Complexity(ctx context.Context, typeName, field strin
 
 		return e.complexity.SectionItem.WorkspaceID(childComplexity), true
 
+	case "SectionItemUsage.portfolios":
+		if e.complexity.SectionItemUsage.Portfolios == nil {
+			break
+		}
+
+		return e.complexity.SectionItemUsage.Portfolios(childComplexity), true
+
 	case "SectionItemUsage.resumes":
 		if e.complexity.SectionItemUsage.Resumes == nil {
 			break
@@ -1717,6 +2102,13 @@ func (e *executableSchema) Complexity(ctx context.Context, typeName, field strin
 
 		return e.complexity.Workspace.UpdatedAt(childComplexity), true
 
+	case "WorkspaceStats.portfolioCount":
+		if e.complexity.WorkspaceStats.PortfolioCount == nil {
+			break
+		}
+
+		return e.complexity.WorkspaceStats.PortfolioCount(childComplexity), true
+
 	case "WorkspaceStats.resumeCount":
 		if e.complexity.WorkspaceStats.ResumeCount == nil {
 			break
@@ -1746,11 +2138,16 @@ func (e *executableSchema) Exec(ctx context.Context) graphql.ResponseHandler {
 	opCtx := graphql.GetOperationContext(ctx)
 	ec := executionContext{opCtx, e, 0, 0, make(chan graphql.DeferredResult)}
 	inputUnmarshalMap := graphql.BuildUnmarshalerMap(
+		ec.unmarshalInputAddPortfolioSectionItemInput,
 		ec.unmarshalInputAddResumeSectionItemInput,
 		ec.unmarshalInputAssistantAttachmentInput,
 		ec.unmarshalInputAssistantContextInput,
 		ec.unmarshalInputCreateTwinEntryInput,
 		ec.unmarshalInputUpdateContactProfileInput,
+		ec.unmarshalInputUpdatePortfolioContactProfileInput,
+		ec.unmarshalInputUpdatePortfolioSectionItemInput,
+		ec.unmarshalInputUpdatePortfolioSectionItemVisibilityInput,
+		ec.unmarshalInputUpdatePortfolioSettingsInput,
 		ec.unmarshalInputUpdateResumeSectionItemInput,
 		ec.unmarshalInputUpdateResumeSectionItemVisibilityInput,
 		ec.unmarshalInputUpdateResumeSettingsInput,
@@ -1872,6 +2269,17 @@ var parsedSchema = gqlparser.MustLoadSchema(sources...)
 
 // region    ***************************** args.gotpl *****************************
 
+func (ec *executionContext) field_Mutation_addPortfolioSectionItem_args(ctx context.Context, rawArgs map[string]any) (map[string]any, error) {
+	var err error
+	args := map[string]any{}
+	arg0, err := graphql.ProcessArgField(ctx, rawArgs, "input", ec.unmarshalNAddPortfolioSectionItemInput2githubᚗcomᚋleoᚋaiᚑweekendᚋbackendᚋgraphᚋmodelᚐAddPortfolioSectionItemInput)
+	if err != nil {
+		return nil, err
+	}
+	args["input"] = arg0
+	return args, nil
+}
+
 func (ec *executionContext) field_Mutation_addResumeSectionItem_args(ctx context.Context, rawArgs map[string]any) (map[string]any, error) {
 	var err error
 	args := map[string]any{}
@@ -1880,6 +2288,17 @@ func (ec *executionContext) field_Mutation_addResumeSectionItem_args(ctx context
 		return nil, err
 	}
 	args["input"] = arg0
+	return args, nil
+}
+
+func (ec *executionContext) field_Mutation_createPortfolio_args(ctx context.Context, rawArgs map[string]any) (map[string]any, error) {
+	var err error
+	args := map[string]any{}
+	arg0, err := graphql.ProcessArgField(ctx, rawArgs, "title", ec.unmarshalNString2string)
+	if err != nil {
+		return nil, err
+	}
+	args["title"] = arg0
 	return args, nil
 }
 
@@ -1917,6 +2336,33 @@ func (ec *executionContext) field_Mutation_createTwinEntry_args(ctx context.Cont
 }
 
 func (ec *executionContext) field_Mutation_deleteAssistantThread_args(ctx context.Context, rawArgs map[string]any) (map[string]any, error) {
+	var err error
+	args := map[string]any{}
+	arg0, err := graphql.ProcessArgField(ctx, rawArgs, "id", ec.unmarshalNID2string)
+	if err != nil {
+		return nil, err
+	}
+	args["id"] = arg0
+	return args, nil
+}
+
+func (ec *executionContext) field_Mutation_deletePortfolioSectionItem_args(ctx context.Context, rawArgs map[string]any) (map[string]any, error) {
+	var err error
+	args := map[string]any{}
+	arg0, err := graphql.ProcessArgField(ctx, rawArgs, "portfolioId", ec.unmarshalNID2string)
+	if err != nil {
+		return nil, err
+	}
+	args["portfolioId"] = arg0
+	arg1, err := graphql.ProcessArgField(ctx, rawArgs, "sectionItemId", ec.unmarshalNID2string)
+	if err != nil {
+		return nil, err
+	}
+	args["sectionItemId"] = arg1
+	return args, nil
+}
+
+func (ec *executionContext) field_Mutation_deletePortfolio_args(ctx context.Context, rawArgs map[string]any) (map[string]any, error) {
 	var err error
 	args := map[string]any{}
 	arg0, err := graphql.ProcessArgField(ctx, rawArgs, "id", ec.unmarshalNID2string)
@@ -1987,6 +2433,17 @@ func (ec *executionContext) field_Mutation_disconnectConnection_args(ctx context
 	return args, nil
 }
 
+func (ec *executionContext) field_Mutation_duplicatePortfolio_args(ctx context.Context, rawArgs map[string]any) (map[string]any, error) {
+	var err error
+	args := map[string]any{}
+	arg0, err := graphql.ProcessArgField(ctx, rawArgs, "id", ec.unmarshalNID2string)
+	if err != nil {
+		return nil, err
+	}
+	args["id"] = arg0
+	return args, nil
+}
+
 func (ec *executionContext) field_Mutation_duplicateResume_args(ctx context.Context, rawArgs map[string]any) (map[string]any, error) {
 	var err error
 	args := map[string]any{}
@@ -2048,6 +2505,71 @@ func (ec *executionContext) field_Mutation_updateContactProfile_args(ctx context
 		return nil, err
 	}
 	args["input"] = arg0
+	return args, nil
+}
+
+func (ec *executionContext) field_Mutation_updatePortfolioContactProfile_args(ctx context.Context, rawArgs map[string]any) (map[string]any, error) {
+	var err error
+	args := map[string]any{}
+	arg0, err := graphql.ProcessArgField(ctx, rawArgs, "input", ec.unmarshalNUpdatePortfolioContactProfileInput2githubᚗcomᚋleoᚋaiᚑweekendᚋbackendᚋgraphᚋmodelᚐUpdatePortfolioContactProfileInput)
+	if err != nil {
+		return nil, err
+	}
+	args["input"] = arg0
+	return args, nil
+}
+
+func (ec *executionContext) field_Mutation_updatePortfolioSectionItemVisibility_args(ctx context.Context, rawArgs map[string]any) (map[string]any, error) {
+	var err error
+	args := map[string]any{}
+	arg0, err := graphql.ProcessArgField(ctx, rawArgs, "input", ec.unmarshalNUpdatePortfolioSectionItemVisibilityInput2githubᚗcomᚋleoᚋaiᚑweekendᚋbackendᚋgraphᚋmodelᚐUpdatePortfolioSectionItemVisibilityInput)
+	if err != nil {
+		return nil, err
+	}
+	args["input"] = arg0
+	return args, nil
+}
+
+func (ec *executionContext) field_Mutation_updatePortfolioSectionItem_args(ctx context.Context, rawArgs map[string]any) (map[string]any, error) {
+	var err error
+	args := map[string]any{}
+	arg0, err := graphql.ProcessArgField(ctx, rawArgs, "input", ec.unmarshalNUpdatePortfolioSectionItemInput2githubᚗcomᚋleoᚋaiᚑweekendᚋbackendᚋgraphᚋmodelᚐUpdatePortfolioSectionItemInput)
+	if err != nil {
+		return nil, err
+	}
+	args["input"] = arg0
+	return args, nil
+}
+
+func (ec *executionContext) field_Mutation_updatePortfolioSettings_args(ctx context.Context, rawArgs map[string]any) (map[string]any, error) {
+	var err error
+	args := map[string]any{}
+	arg0, err := graphql.ProcessArgField(ctx, rawArgs, "input", ec.unmarshalNUpdatePortfolioSettingsInput2githubᚗcomᚋleoᚋaiᚑweekendᚋbackendᚋgraphᚋmodelᚐUpdatePortfolioSettingsInput)
+	if err != nil {
+		return nil, err
+	}
+	args["input"] = arg0
+	return args, nil
+}
+
+func (ec *executionContext) field_Mutation_updatePortfolio_args(ctx context.Context, rawArgs map[string]any) (map[string]any, error) {
+	var err error
+	args := map[string]any{}
+	arg0, err := graphql.ProcessArgField(ctx, rawArgs, "id", ec.unmarshalNID2string)
+	if err != nil {
+		return nil, err
+	}
+	args["id"] = arg0
+	arg1, err := graphql.ProcessArgField(ctx, rawArgs, "title", ec.unmarshalOString2ᚖstring)
+	if err != nil {
+		return nil, err
+	}
+	args["title"] = arg1
+	arg2, err := graphql.ProcessArgField(ctx, rawArgs, "contactProfileId", ec.unmarshalOID2ᚖstring)
+	if err != nil {
+		return nil, err
+	}
+	args["contactProfileId"] = arg2
 	return args, nil
 }
 
@@ -2162,6 +2684,39 @@ func (ec *executionContext) field_Query_connectionStatus_args(ctx context.Contex
 		return nil, err
 	}
 	args["provider"] = arg0
+	return args, nil
+}
+
+func (ec *executionContext) field_Query_portfolioWithContent_args(ctx context.Context, rawArgs map[string]any) (map[string]any, error) {
+	var err error
+	args := map[string]any{}
+	arg0, err := graphql.ProcessArgField(ctx, rawArgs, "id", ec.unmarshalNID2string)
+	if err != nil {
+		return nil, err
+	}
+	args["id"] = arg0
+	return args, nil
+}
+
+func (ec *executionContext) field_Query_portfolio_args(ctx context.Context, rawArgs map[string]any) (map[string]any, error) {
+	var err error
+	args := map[string]any{}
+	arg0, err := graphql.ProcessArgField(ctx, rawArgs, "id", ec.unmarshalNID2string)
+	if err != nil {
+		return nil, err
+	}
+	args["id"] = arg0
+	return args, nil
+}
+
+func (ec *executionContext) field_Query_portfoliosForSection_args(ctx context.Context, rawArgs map[string]any) (map[string]any, error) {
+	var err error
+	args := map[string]any{}
+	arg0, err := graphql.ProcessArgField(ctx, rawArgs, "sectionId", ec.unmarshalNID2string)
+	if err != nil {
+		return nil, err
+	}
+	args["sectionId"] = arg0
 	return args, nil
 }
 
@@ -3283,6 +3838,50 @@ func (ec *executionContext) fieldContext_AssistantTurnResult_affectedResumeIds(_
 	return fc, nil
 }
 
+func (ec *executionContext) _AssistantTurnResult_affectedPortfolioIds(ctx context.Context, field graphql.CollectedField, obj *model.AssistantTurnResult) (ret graphql.Marshaler) {
+	fc, err := ec.fieldContext_AssistantTurnResult_affectedPortfolioIds(ctx, field)
+	if err != nil {
+		return graphql.Null
+	}
+	ctx = graphql.WithFieldContext(ctx, fc)
+	defer func() {
+		if r := recover(); r != nil {
+			ec.Error(ctx, ec.Recover(ctx, r))
+			ret = graphql.Null
+		}
+	}()
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (any, error) {
+		ctx = rctx // use context from middleware stack in children
+		return obj.AffectedPortfolioIds, nil
+	})
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	if resTmp == nil {
+		if !graphql.HasFieldError(ctx, fc) {
+			ec.Errorf(ctx, "must not be null")
+		}
+		return graphql.Null
+	}
+	res := resTmp.([]string)
+	fc.Result = res
+	return ec.marshalNID2ᚕstringᚄ(ctx, field.Selections, res)
+}
+
+func (ec *executionContext) fieldContext_AssistantTurnResult_affectedPortfolioIds(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "AssistantTurnResult",
+		Field:      field,
+		IsMethod:   false,
+		IsResolver: false,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return nil, errors.New("field of type ID does not have child fields")
+		},
+	}
+	return fc, nil
+}
+
 func (ec *executionContext) _AssistantTurnResult_resumeWithContent(ctx context.Context, field graphql.CollectedField, obj *model.AssistantTurnResult) (ret graphql.Marshaler) {
 	fc, err := ec.fieldContext_AssistantTurnResult_resumeWithContent(ctx, field)
 	if err != nil {
@@ -3331,6 +3930,59 @@ func (ec *executionContext) fieldContext_AssistantTurnResult_resumeWithContent(_
 				return ec.fieldContext_ResumeWithContent_sections(ctx, field)
 			}
 			return nil, fmt.Errorf("no field named %q was found under type ResumeWithContent", field.Name)
+		},
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _AssistantTurnResult_portfolioWithContent(ctx context.Context, field graphql.CollectedField, obj *model.AssistantTurnResult) (ret graphql.Marshaler) {
+	fc, err := ec.fieldContext_AssistantTurnResult_portfolioWithContent(ctx, field)
+	if err != nil {
+		return graphql.Null
+	}
+	ctx = graphql.WithFieldContext(ctx, fc)
+	defer func() {
+		if r := recover(); r != nil {
+			ec.Error(ctx, ec.Recover(ctx, r))
+			ret = graphql.Null
+		}
+	}()
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (any, error) {
+		ctx = rctx // use context from middleware stack in children
+		return obj.PortfolioWithContent, nil
+	})
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	if resTmp == nil {
+		return graphql.Null
+	}
+	res := resTmp.(*model.PortfolioWithContent)
+	fc.Result = res
+	return ec.marshalOPortfolioWithContent2ᚖgithubᚗcomᚋleoᚋaiᚑweekendᚋbackendᚋgraphᚋmodelᚐPortfolioWithContent(ctx, field.Selections, res)
+}
+
+func (ec *executionContext) fieldContext_AssistantTurnResult_portfolioWithContent(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "AssistantTurnResult",
+		Field:      field,
+		IsMethod:   false,
+		IsResolver: false,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			switch field.Name {
+			case "portfolio":
+				return ec.fieldContext_PortfolioWithContent_portfolio(ctx, field)
+			case "contactProfile":
+				return ec.fieldContext_PortfolioWithContent_contactProfile(ctx, field)
+			case "settings":
+				return ec.fieldContext_PortfolioWithContent_settings(ctx, field)
+			case "theme":
+				return ec.fieldContext_PortfolioWithContent_theme(ctx, field)
+			case "sections":
+				return ec.fieldContext_PortfolioWithContent_sections(ctx, field)
+			}
+			return nil, fmt.Errorf("no field named %q was found under type PortfolioWithContent", field.Name)
 		},
 	}
 	return fc, nil
@@ -4991,6 +5643,682 @@ func (ec *executionContext) fieldContext_Mutation_updateContactProfile(ctx conte
 	return fc, nil
 }
 
+func (ec *executionContext) _Mutation_createPortfolio(ctx context.Context, field graphql.CollectedField) (ret graphql.Marshaler) {
+	fc, err := ec.fieldContext_Mutation_createPortfolio(ctx, field)
+	if err != nil {
+		return graphql.Null
+	}
+	ctx = graphql.WithFieldContext(ctx, fc)
+	defer func() {
+		if r := recover(); r != nil {
+			ec.Error(ctx, ec.Recover(ctx, r))
+			ret = graphql.Null
+		}
+	}()
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (any, error) {
+		ctx = rctx // use context from middleware stack in children
+		return ec.resolvers.Mutation().CreatePortfolio(rctx, fc.Args["title"].(string))
+	})
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	if resTmp == nil {
+		if !graphql.HasFieldError(ctx, fc) {
+			ec.Errorf(ctx, "must not be null")
+		}
+		return graphql.Null
+	}
+	res := resTmp.(*model.Portfolio)
+	fc.Result = res
+	return ec.marshalNPortfolio2ᚖgithubᚗcomᚋleoᚋaiᚑweekendᚋbackendᚋgraphᚋmodelᚐPortfolio(ctx, field.Selections, res)
+}
+
+func (ec *executionContext) fieldContext_Mutation_createPortfolio(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "Mutation",
+		Field:      field,
+		IsMethod:   true,
+		IsResolver: true,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			switch field.Name {
+			case "id":
+				return ec.fieldContext_Portfolio_id(ctx, field)
+			case "workspaceId":
+				return ec.fieldContext_Portfolio_workspaceId(ctx, field)
+			case "title":
+				return ec.fieldContext_Portfolio_title(ctx, field)
+			case "contactProfileId":
+				return ec.fieldContext_Portfolio_contactProfileId(ctx, field)
+			case "createdBy":
+				return ec.fieldContext_Portfolio_createdBy(ctx, field)
+			case "createdAt":
+				return ec.fieldContext_Portfolio_createdAt(ctx, field)
+			case "updatedAt":
+				return ec.fieldContext_Portfolio_updatedAt(ctx, field)
+			}
+			return nil, fmt.Errorf("no field named %q was found under type Portfolio", field.Name)
+		},
+	}
+	defer func() {
+		if r := recover(); r != nil {
+			err = ec.Recover(ctx, r)
+			ec.Error(ctx, err)
+		}
+	}()
+	ctx = graphql.WithFieldContext(ctx, fc)
+	if fc.Args, err = ec.field_Mutation_createPortfolio_args(ctx, field.ArgumentMap(ec.Variables)); err != nil {
+		ec.Error(ctx, err)
+		return fc, err
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _Mutation_duplicatePortfolio(ctx context.Context, field graphql.CollectedField) (ret graphql.Marshaler) {
+	fc, err := ec.fieldContext_Mutation_duplicatePortfolio(ctx, field)
+	if err != nil {
+		return graphql.Null
+	}
+	ctx = graphql.WithFieldContext(ctx, fc)
+	defer func() {
+		if r := recover(); r != nil {
+			ec.Error(ctx, ec.Recover(ctx, r))
+			ret = graphql.Null
+		}
+	}()
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (any, error) {
+		ctx = rctx // use context from middleware stack in children
+		return ec.resolvers.Mutation().DuplicatePortfolio(rctx, fc.Args["id"].(string))
+	})
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	if resTmp == nil {
+		if !graphql.HasFieldError(ctx, fc) {
+			ec.Errorf(ctx, "must not be null")
+		}
+		return graphql.Null
+	}
+	res := resTmp.(*model.Portfolio)
+	fc.Result = res
+	return ec.marshalNPortfolio2ᚖgithubᚗcomᚋleoᚋaiᚑweekendᚋbackendᚋgraphᚋmodelᚐPortfolio(ctx, field.Selections, res)
+}
+
+func (ec *executionContext) fieldContext_Mutation_duplicatePortfolio(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "Mutation",
+		Field:      field,
+		IsMethod:   true,
+		IsResolver: true,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			switch field.Name {
+			case "id":
+				return ec.fieldContext_Portfolio_id(ctx, field)
+			case "workspaceId":
+				return ec.fieldContext_Portfolio_workspaceId(ctx, field)
+			case "title":
+				return ec.fieldContext_Portfolio_title(ctx, field)
+			case "contactProfileId":
+				return ec.fieldContext_Portfolio_contactProfileId(ctx, field)
+			case "createdBy":
+				return ec.fieldContext_Portfolio_createdBy(ctx, field)
+			case "createdAt":
+				return ec.fieldContext_Portfolio_createdAt(ctx, field)
+			case "updatedAt":
+				return ec.fieldContext_Portfolio_updatedAt(ctx, field)
+			}
+			return nil, fmt.Errorf("no field named %q was found under type Portfolio", field.Name)
+		},
+	}
+	defer func() {
+		if r := recover(); r != nil {
+			err = ec.Recover(ctx, r)
+			ec.Error(ctx, err)
+		}
+	}()
+	ctx = graphql.WithFieldContext(ctx, fc)
+	if fc.Args, err = ec.field_Mutation_duplicatePortfolio_args(ctx, field.ArgumentMap(ec.Variables)); err != nil {
+		ec.Error(ctx, err)
+		return fc, err
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _Mutation_deletePortfolio(ctx context.Context, field graphql.CollectedField) (ret graphql.Marshaler) {
+	fc, err := ec.fieldContext_Mutation_deletePortfolio(ctx, field)
+	if err != nil {
+		return graphql.Null
+	}
+	ctx = graphql.WithFieldContext(ctx, fc)
+	defer func() {
+		if r := recover(); r != nil {
+			ec.Error(ctx, ec.Recover(ctx, r))
+			ret = graphql.Null
+		}
+	}()
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (any, error) {
+		ctx = rctx // use context from middleware stack in children
+		return ec.resolvers.Mutation().DeletePortfolio(rctx, fc.Args["id"].(string))
+	})
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	if resTmp == nil {
+		if !graphql.HasFieldError(ctx, fc) {
+			ec.Errorf(ctx, "must not be null")
+		}
+		return graphql.Null
+	}
+	res := resTmp.(bool)
+	fc.Result = res
+	return ec.marshalNBoolean2bool(ctx, field.Selections, res)
+}
+
+func (ec *executionContext) fieldContext_Mutation_deletePortfolio(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "Mutation",
+		Field:      field,
+		IsMethod:   true,
+		IsResolver: true,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return nil, errors.New("field of type Boolean does not have child fields")
+		},
+	}
+	defer func() {
+		if r := recover(); r != nil {
+			err = ec.Recover(ctx, r)
+			ec.Error(ctx, err)
+		}
+	}()
+	ctx = graphql.WithFieldContext(ctx, fc)
+	if fc.Args, err = ec.field_Mutation_deletePortfolio_args(ctx, field.ArgumentMap(ec.Variables)); err != nil {
+		ec.Error(ctx, err)
+		return fc, err
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _Mutation_updatePortfolio(ctx context.Context, field graphql.CollectedField) (ret graphql.Marshaler) {
+	fc, err := ec.fieldContext_Mutation_updatePortfolio(ctx, field)
+	if err != nil {
+		return graphql.Null
+	}
+	ctx = graphql.WithFieldContext(ctx, fc)
+	defer func() {
+		if r := recover(); r != nil {
+			ec.Error(ctx, ec.Recover(ctx, r))
+			ret = graphql.Null
+		}
+	}()
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (any, error) {
+		ctx = rctx // use context from middleware stack in children
+		return ec.resolvers.Mutation().UpdatePortfolio(rctx, fc.Args["id"].(string), fc.Args["title"].(*string), fc.Args["contactProfileId"].(*string))
+	})
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	if resTmp == nil {
+		if !graphql.HasFieldError(ctx, fc) {
+			ec.Errorf(ctx, "must not be null")
+		}
+		return graphql.Null
+	}
+	res := resTmp.(*model.Portfolio)
+	fc.Result = res
+	return ec.marshalNPortfolio2ᚖgithubᚗcomᚋleoᚋaiᚑweekendᚋbackendᚋgraphᚋmodelᚐPortfolio(ctx, field.Selections, res)
+}
+
+func (ec *executionContext) fieldContext_Mutation_updatePortfolio(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "Mutation",
+		Field:      field,
+		IsMethod:   true,
+		IsResolver: true,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			switch field.Name {
+			case "id":
+				return ec.fieldContext_Portfolio_id(ctx, field)
+			case "workspaceId":
+				return ec.fieldContext_Portfolio_workspaceId(ctx, field)
+			case "title":
+				return ec.fieldContext_Portfolio_title(ctx, field)
+			case "contactProfileId":
+				return ec.fieldContext_Portfolio_contactProfileId(ctx, field)
+			case "createdBy":
+				return ec.fieldContext_Portfolio_createdBy(ctx, field)
+			case "createdAt":
+				return ec.fieldContext_Portfolio_createdAt(ctx, field)
+			case "updatedAt":
+				return ec.fieldContext_Portfolio_updatedAt(ctx, field)
+			}
+			return nil, fmt.Errorf("no field named %q was found under type Portfolio", field.Name)
+		},
+	}
+	defer func() {
+		if r := recover(); r != nil {
+			err = ec.Recover(ctx, r)
+			ec.Error(ctx, err)
+		}
+	}()
+	ctx = graphql.WithFieldContext(ctx, fc)
+	if fc.Args, err = ec.field_Mutation_updatePortfolio_args(ctx, field.ArgumentMap(ec.Variables)); err != nil {
+		ec.Error(ctx, err)
+		return fc, err
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _Mutation_updatePortfolioSettings(ctx context.Context, field graphql.CollectedField) (ret graphql.Marshaler) {
+	fc, err := ec.fieldContext_Mutation_updatePortfolioSettings(ctx, field)
+	if err != nil {
+		return graphql.Null
+	}
+	ctx = graphql.WithFieldContext(ctx, fc)
+	defer func() {
+		if r := recover(); r != nil {
+			ec.Error(ctx, ec.Recover(ctx, r))
+			ret = graphql.Null
+		}
+	}()
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (any, error) {
+		ctx = rctx // use context from middleware stack in children
+		return ec.resolvers.Mutation().UpdatePortfolioSettings(rctx, fc.Args["input"].(model.UpdatePortfolioSettingsInput))
+	})
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	if resTmp == nil {
+		if !graphql.HasFieldError(ctx, fc) {
+			ec.Errorf(ctx, "must not be null")
+		}
+		return graphql.Null
+	}
+	res := resTmp.(*model.PortfolioSettings)
+	fc.Result = res
+	return ec.marshalNPortfolioSettings2ᚖgithubᚗcomᚋleoᚋaiᚑweekendᚋbackendᚋgraphᚋmodelᚐPortfolioSettings(ctx, field.Selections, res)
+}
+
+func (ec *executionContext) fieldContext_Mutation_updatePortfolioSettings(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "Mutation",
+		Field:      field,
+		IsMethod:   true,
+		IsResolver: true,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			switch field.Name {
+			case "portfolioId":
+				return ec.fieldContext_PortfolioSettings_portfolioId(ctx, field)
+			case "themeId":
+				return ec.fieldContext_PortfolioSettings_themeId(ctx, field)
+			case "fontSize":
+				return ec.fieldContext_PortfolioSettings_fontSize(ctx, field)
+			case "pageFormat":
+				return ec.fieldContext_PortfolioSettings_pageFormat(ctx, field)
+			case "marginHorizontalMm":
+				return ec.fieldContext_PortfolioSettings_marginHorizontalMm(ctx, field)
+			case "marginVerticalMm":
+				return ec.fieldContext_PortfolioSettings_marginVerticalMm(ctx, field)
+			case "showPhoto":
+				return ec.fieldContext_PortfolioSettings_showPhoto(ctx, field)
+			case "locale":
+				return ec.fieldContext_PortfolioSettings_locale(ctx, field)
+			}
+			return nil, fmt.Errorf("no field named %q was found under type PortfolioSettings", field.Name)
+		},
+	}
+	defer func() {
+		if r := recover(); r != nil {
+			err = ec.Recover(ctx, r)
+			ec.Error(ctx, err)
+		}
+	}()
+	ctx = graphql.WithFieldContext(ctx, fc)
+	if fc.Args, err = ec.field_Mutation_updatePortfolioSettings_args(ctx, field.ArgumentMap(ec.Variables)); err != nil {
+		ec.Error(ctx, err)
+		return fc, err
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _Mutation_updatePortfolioSectionItemVisibility(ctx context.Context, field graphql.CollectedField) (ret graphql.Marshaler) {
+	fc, err := ec.fieldContext_Mutation_updatePortfolioSectionItemVisibility(ctx, field)
+	if err != nil {
+		return graphql.Null
+	}
+	ctx = graphql.WithFieldContext(ctx, fc)
+	defer func() {
+		if r := recover(); r != nil {
+			ec.Error(ctx, ec.Recover(ctx, r))
+			ret = graphql.Null
+		}
+	}()
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (any, error) {
+		ctx = rctx // use context from middleware stack in children
+		return ec.resolvers.Mutation().UpdatePortfolioSectionItemVisibility(rctx, fc.Args["input"].(model.UpdatePortfolioSectionItemVisibilityInput))
+	})
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	if resTmp == nil {
+		if !graphql.HasFieldError(ctx, fc) {
+			ec.Errorf(ctx, "must not be null")
+		}
+		return graphql.Null
+	}
+	res := resTmp.(*model.PortfolioWithContent)
+	fc.Result = res
+	return ec.marshalNPortfolioWithContent2ᚖgithubᚗcomᚋleoᚋaiᚑweekendᚋbackendᚋgraphᚋmodelᚐPortfolioWithContent(ctx, field.Selections, res)
+}
+
+func (ec *executionContext) fieldContext_Mutation_updatePortfolioSectionItemVisibility(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "Mutation",
+		Field:      field,
+		IsMethod:   true,
+		IsResolver: true,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			switch field.Name {
+			case "portfolio":
+				return ec.fieldContext_PortfolioWithContent_portfolio(ctx, field)
+			case "contactProfile":
+				return ec.fieldContext_PortfolioWithContent_contactProfile(ctx, field)
+			case "settings":
+				return ec.fieldContext_PortfolioWithContent_settings(ctx, field)
+			case "theme":
+				return ec.fieldContext_PortfolioWithContent_theme(ctx, field)
+			case "sections":
+				return ec.fieldContext_PortfolioWithContent_sections(ctx, field)
+			}
+			return nil, fmt.Errorf("no field named %q was found under type PortfolioWithContent", field.Name)
+		},
+	}
+	defer func() {
+		if r := recover(); r != nil {
+			err = ec.Recover(ctx, r)
+			ec.Error(ctx, err)
+		}
+	}()
+	ctx = graphql.WithFieldContext(ctx, fc)
+	if fc.Args, err = ec.field_Mutation_updatePortfolioSectionItemVisibility_args(ctx, field.ArgumentMap(ec.Variables)); err != nil {
+		ec.Error(ctx, err)
+		return fc, err
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _Mutation_updatePortfolioSectionItem(ctx context.Context, field graphql.CollectedField) (ret graphql.Marshaler) {
+	fc, err := ec.fieldContext_Mutation_updatePortfolioSectionItem(ctx, field)
+	if err != nil {
+		return graphql.Null
+	}
+	ctx = graphql.WithFieldContext(ctx, fc)
+	defer func() {
+		if r := recover(); r != nil {
+			ec.Error(ctx, ec.Recover(ctx, r))
+			ret = graphql.Null
+		}
+	}()
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (any, error) {
+		ctx = rctx // use context from middleware stack in children
+		return ec.resolvers.Mutation().UpdatePortfolioSectionItem(rctx, fc.Args["input"].(model.UpdatePortfolioSectionItemInput))
+	})
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	if resTmp == nil {
+		if !graphql.HasFieldError(ctx, fc) {
+			ec.Errorf(ctx, "must not be null")
+		}
+		return graphql.Null
+	}
+	res := resTmp.(*model.PortfolioWithContent)
+	fc.Result = res
+	return ec.marshalNPortfolioWithContent2ᚖgithubᚗcomᚋleoᚋaiᚑweekendᚋbackendᚋgraphᚋmodelᚐPortfolioWithContent(ctx, field.Selections, res)
+}
+
+func (ec *executionContext) fieldContext_Mutation_updatePortfolioSectionItem(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "Mutation",
+		Field:      field,
+		IsMethod:   true,
+		IsResolver: true,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			switch field.Name {
+			case "portfolio":
+				return ec.fieldContext_PortfolioWithContent_portfolio(ctx, field)
+			case "contactProfile":
+				return ec.fieldContext_PortfolioWithContent_contactProfile(ctx, field)
+			case "settings":
+				return ec.fieldContext_PortfolioWithContent_settings(ctx, field)
+			case "theme":
+				return ec.fieldContext_PortfolioWithContent_theme(ctx, field)
+			case "sections":
+				return ec.fieldContext_PortfolioWithContent_sections(ctx, field)
+			}
+			return nil, fmt.Errorf("no field named %q was found under type PortfolioWithContent", field.Name)
+		},
+	}
+	defer func() {
+		if r := recover(); r != nil {
+			err = ec.Recover(ctx, r)
+			ec.Error(ctx, err)
+		}
+	}()
+	ctx = graphql.WithFieldContext(ctx, fc)
+	if fc.Args, err = ec.field_Mutation_updatePortfolioSectionItem_args(ctx, field.ArgumentMap(ec.Variables)); err != nil {
+		ec.Error(ctx, err)
+		return fc, err
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _Mutation_addPortfolioSectionItem(ctx context.Context, field graphql.CollectedField) (ret graphql.Marshaler) {
+	fc, err := ec.fieldContext_Mutation_addPortfolioSectionItem(ctx, field)
+	if err != nil {
+		return graphql.Null
+	}
+	ctx = graphql.WithFieldContext(ctx, fc)
+	defer func() {
+		if r := recover(); r != nil {
+			ec.Error(ctx, ec.Recover(ctx, r))
+			ret = graphql.Null
+		}
+	}()
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (any, error) {
+		ctx = rctx // use context from middleware stack in children
+		return ec.resolvers.Mutation().AddPortfolioSectionItem(rctx, fc.Args["input"].(model.AddPortfolioSectionItemInput))
+	})
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	if resTmp == nil {
+		if !graphql.HasFieldError(ctx, fc) {
+			ec.Errorf(ctx, "must not be null")
+		}
+		return graphql.Null
+	}
+	res := resTmp.(*model.PortfolioWithContent)
+	fc.Result = res
+	return ec.marshalNPortfolioWithContent2ᚖgithubᚗcomᚋleoᚋaiᚑweekendᚋbackendᚋgraphᚋmodelᚐPortfolioWithContent(ctx, field.Selections, res)
+}
+
+func (ec *executionContext) fieldContext_Mutation_addPortfolioSectionItem(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "Mutation",
+		Field:      field,
+		IsMethod:   true,
+		IsResolver: true,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			switch field.Name {
+			case "portfolio":
+				return ec.fieldContext_PortfolioWithContent_portfolio(ctx, field)
+			case "contactProfile":
+				return ec.fieldContext_PortfolioWithContent_contactProfile(ctx, field)
+			case "settings":
+				return ec.fieldContext_PortfolioWithContent_settings(ctx, field)
+			case "theme":
+				return ec.fieldContext_PortfolioWithContent_theme(ctx, field)
+			case "sections":
+				return ec.fieldContext_PortfolioWithContent_sections(ctx, field)
+			}
+			return nil, fmt.Errorf("no field named %q was found under type PortfolioWithContent", field.Name)
+		},
+	}
+	defer func() {
+		if r := recover(); r != nil {
+			err = ec.Recover(ctx, r)
+			ec.Error(ctx, err)
+		}
+	}()
+	ctx = graphql.WithFieldContext(ctx, fc)
+	if fc.Args, err = ec.field_Mutation_addPortfolioSectionItem_args(ctx, field.ArgumentMap(ec.Variables)); err != nil {
+		ec.Error(ctx, err)
+		return fc, err
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _Mutation_deletePortfolioSectionItem(ctx context.Context, field graphql.CollectedField) (ret graphql.Marshaler) {
+	fc, err := ec.fieldContext_Mutation_deletePortfolioSectionItem(ctx, field)
+	if err != nil {
+		return graphql.Null
+	}
+	ctx = graphql.WithFieldContext(ctx, fc)
+	defer func() {
+		if r := recover(); r != nil {
+			ec.Error(ctx, ec.Recover(ctx, r))
+			ret = graphql.Null
+		}
+	}()
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (any, error) {
+		ctx = rctx // use context from middleware stack in children
+		return ec.resolvers.Mutation().DeletePortfolioSectionItem(rctx, fc.Args["portfolioId"].(string), fc.Args["sectionItemId"].(string))
+	})
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	if resTmp == nil {
+		if !graphql.HasFieldError(ctx, fc) {
+			ec.Errorf(ctx, "must not be null")
+		}
+		return graphql.Null
+	}
+	res := resTmp.(*model.PortfolioWithContent)
+	fc.Result = res
+	return ec.marshalNPortfolioWithContent2ᚖgithubᚗcomᚋleoᚋaiᚑweekendᚋbackendᚋgraphᚋmodelᚐPortfolioWithContent(ctx, field.Selections, res)
+}
+
+func (ec *executionContext) fieldContext_Mutation_deletePortfolioSectionItem(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "Mutation",
+		Field:      field,
+		IsMethod:   true,
+		IsResolver: true,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			switch field.Name {
+			case "portfolio":
+				return ec.fieldContext_PortfolioWithContent_portfolio(ctx, field)
+			case "contactProfile":
+				return ec.fieldContext_PortfolioWithContent_contactProfile(ctx, field)
+			case "settings":
+				return ec.fieldContext_PortfolioWithContent_settings(ctx, field)
+			case "theme":
+				return ec.fieldContext_PortfolioWithContent_theme(ctx, field)
+			case "sections":
+				return ec.fieldContext_PortfolioWithContent_sections(ctx, field)
+			}
+			return nil, fmt.Errorf("no field named %q was found under type PortfolioWithContent", field.Name)
+		},
+	}
+	defer func() {
+		if r := recover(); r != nil {
+			err = ec.Recover(ctx, r)
+			ec.Error(ctx, err)
+		}
+	}()
+	ctx = graphql.WithFieldContext(ctx, fc)
+	if fc.Args, err = ec.field_Mutation_deletePortfolioSectionItem_args(ctx, field.ArgumentMap(ec.Variables)); err != nil {
+		ec.Error(ctx, err)
+		return fc, err
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _Mutation_updatePortfolioContactProfile(ctx context.Context, field graphql.CollectedField) (ret graphql.Marshaler) {
+	fc, err := ec.fieldContext_Mutation_updatePortfolioContactProfile(ctx, field)
+	if err != nil {
+		return graphql.Null
+	}
+	ctx = graphql.WithFieldContext(ctx, fc)
+	defer func() {
+		if r := recover(); r != nil {
+			ec.Error(ctx, ec.Recover(ctx, r))
+			ret = graphql.Null
+		}
+	}()
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (any, error) {
+		ctx = rctx // use context from middleware stack in children
+		return ec.resolvers.Mutation().UpdatePortfolioContactProfile(rctx, fc.Args["input"].(model.UpdatePortfolioContactProfileInput))
+	})
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	if resTmp == nil {
+		if !graphql.HasFieldError(ctx, fc) {
+			ec.Errorf(ctx, "must not be null")
+		}
+		return graphql.Null
+	}
+	res := resTmp.(*model.PortfolioWithContent)
+	fc.Result = res
+	return ec.marshalNPortfolioWithContent2ᚖgithubᚗcomᚋleoᚋaiᚑweekendᚋbackendᚋgraphᚋmodelᚐPortfolioWithContent(ctx, field.Selections, res)
+}
+
+func (ec *executionContext) fieldContext_Mutation_updatePortfolioContactProfile(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "Mutation",
+		Field:      field,
+		IsMethod:   true,
+		IsResolver: true,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			switch field.Name {
+			case "portfolio":
+				return ec.fieldContext_PortfolioWithContent_portfolio(ctx, field)
+			case "contactProfile":
+				return ec.fieldContext_PortfolioWithContent_contactProfile(ctx, field)
+			case "settings":
+				return ec.fieldContext_PortfolioWithContent_settings(ctx, field)
+			case "theme":
+				return ec.fieldContext_PortfolioWithContent_theme(ctx, field)
+			case "sections":
+				return ec.fieldContext_PortfolioWithContent_sections(ctx, field)
+			}
+			return nil, fmt.Errorf("no field named %q was found under type PortfolioWithContent", field.Name)
+		},
+	}
+	defer func() {
+		if r := recover(); r != nil {
+			err = ec.Recover(ctx, r)
+			ec.Error(ctx, err)
+		}
+	}()
+	ctx = graphql.WithFieldContext(ctx, fc)
+	if fc.Args, err = ec.field_Mutation_updatePortfolioContactProfile_args(ctx, field.ArgumentMap(ec.Variables)); err != nil {
+		ec.Error(ctx, err)
+		return fc, err
+	}
+	return fc, nil
+}
+
 func (ec *executionContext) _Mutation_requestProfilePhotoUpload(ctx context.Context, field graphql.CollectedField) (ret graphql.Marshaler) {
 	fc, err := ec.fieldContext_Mutation_requestProfilePhotoUpload(ctx, field)
 	if err != nil {
@@ -5642,8 +6970,12 @@ func (ec *executionContext) fieldContext_Mutation_sendAssistantMessage(ctx conte
 				return ec.fieldContext_AssistantTurnResult_actionLogs(ctx, field)
 			case "affectedResumeIds":
 				return ec.fieldContext_AssistantTurnResult_affectedResumeIds(ctx, field)
+			case "affectedPortfolioIds":
+				return ec.fieldContext_AssistantTurnResult_affectedPortfolioIds(ctx, field)
 			case "resumeWithContent":
 				return ec.fieldContext_AssistantTurnResult_resumeWithContent(ctx, field)
+			case "portfolioWithContent":
+				return ec.fieldContext_AssistantTurnResult_portfolioWithContent(ctx, field)
 			}
 			return nil, fmt.Errorf("no field named %q was found under type AssistantTurnResult", field.Name)
 		},
@@ -5713,6 +7045,960 @@ func (ec *executionContext) fieldContext_Mutation_disconnectConnection(ctx conte
 	if fc.Args, err = ec.field_Mutation_disconnectConnection_args(ctx, field.ArgumentMap(ec.Variables)); err != nil {
 		ec.Error(ctx, err)
 		return fc, err
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _Portfolio_id(ctx context.Context, field graphql.CollectedField, obj *model.Portfolio) (ret graphql.Marshaler) {
+	fc, err := ec.fieldContext_Portfolio_id(ctx, field)
+	if err != nil {
+		return graphql.Null
+	}
+	ctx = graphql.WithFieldContext(ctx, fc)
+	defer func() {
+		if r := recover(); r != nil {
+			ec.Error(ctx, ec.Recover(ctx, r))
+			ret = graphql.Null
+		}
+	}()
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (any, error) {
+		ctx = rctx // use context from middleware stack in children
+		return obj.ID, nil
+	})
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	if resTmp == nil {
+		if !graphql.HasFieldError(ctx, fc) {
+			ec.Errorf(ctx, "must not be null")
+		}
+		return graphql.Null
+	}
+	res := resTmp.(string)
+	fc.Result = res
+	return ec.marshalNID2string(ctx, field.Selections, res)
+}
+
+func (ec *executionContext) fieldContext_Portfolio_id(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "Portfolio",
+		Field:      field,
+		IsMethod:   false,
+		IsResolver: false,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return nil, errors.New("field of type ID does not have child fields")
+		},
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _Portfolio_workspaceId(ctx context.Context, field graphql.CollectedField, obj *model.Portfolio) (ret graphql.Marshaler) {
+	fc, err := ec.fieldContext_Portfolio_workspaceId(ctx, field)
+	if err != nil {
+		return graphql.Null
+	}
+	ctx = graphql.WithFieldContext(ctx, fc)
+	defer func() {
+		if r := recover(); r != nil {
+			ec.Error(ctx, ec.Recover(ctx, r))
+			ret = graphql.Null
+		}
+	}()
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (any, error) {
+		ctx = rctx // use context from middleware stack in children
+		return obj.WorkspaceID, nil
+	})
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	if resTmp == nil {
+		if !graphql.HasFieldError(ctx, fc) {
+			ec.Errorf(ctx, "must not be null")
+		}
+		return graphql.Null
+	}
+	res := resTmp.(string)
+	fc.Result = res
+	return ec.marshalNID2string(ctx, field.Selections, res)
+}
+
+func (ec *executionContext) fieldContext_Portfolio_workspaceId(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "Portfolio",
+		Field:      field,
+		IsMethod:   false,
+		IsResolver: false,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return nil, errors.New("field of type ID does not have child fields")
+		},
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _Portfolio_title(ctx context.Context, field graphql.CollectedField, obj *model.Portfolio) (ret graphql.Marshaler) {
+	fc, err := ec.fieldContext_Portfolio_title(ctx, field)
+	if err != nil {
+		return graphql.Null
+	}
+	ctx = graphql.WithFieldContext(ctx, fc)
+	defer func() {
+		if r := recover(); r != nil {
+			ec.Error(ctx, ec.Recover(ctx, r))
+			ret = graphql.Null
+		}
+	}()
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (any, error) {
+		ctx = rctx // use context from middleware stack in children
+		return obj.Title, nil
+	})
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	if resTmp == nil {
+		if !graphql.HasFieldError(ctx, fc) {
+			ec.Errorf(ctx, "must not be null")
+		}
+		return graphql.Null
+	}
+	res := resTmp.(string)
+	fc.Result = res
+	return ec.marshalNString2string(ctx, field.Selections, res)
+}
+
+func (ec *executionContext) fieldContext_Portfolio_title(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "Portfolio",
+		Field:      field,
+		IsMethod:   false,
+		IsResolver: false,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return nil, errors.New("field of type String does not have child fields")
+		},
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _Portfolio_contactProfileId(ctx context.Context, field graphql.CollectedField, obj *model.Portfolio) (ret graphql.Marshaler) {
+	fc, err := ec.fieldContext_Portfolio_contactProfileId(ctx, field)
+	if err != nil {
+		return graphql.Null
+	}
+	ctx = graphql.WithFieldContext(ctx, fc)
+	defer func() {
+		if r := recover(); r != nil {
+			ec.Error(ctx, ec.Recover(ctx, r))
+			ret = graphql.Null
+		}
+	}()
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (any, error) {
+		ctx = rctx // use context from middleware stack in children
+		return obj.ContactProfileID, nil
+	})
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	if resTmp == nil {
+		return graphql.Null
+	}
+	res := resTmp.(*string)
+	fc.Result = res
+	return ec.marshalOID2ᚖstring(ctx, field.Selections, res)
+}
+
+func (ec *executionContext) fieldContext_Portfolio_contactProfileId(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "Portfolio",
+		Field:      field,
+		IsMethod:   false,
+		IsResolver: false,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return nil, errors.New("field of type ID does not have child fields")
+		},
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _Portfolio_createdBy(ctx context.Context, field graphql.CollectedField, obj *model.Portfolio) (ret graphql.Marshaler) {
+	fc, err := ec.fieldContext_Portfolio_createdBy(ctx, field)
+	if err != nil {
+		return graphql.Null
+	}
+	ctx = graphql.WithFieldContext(ctx, fc)
+	defer func() {
+		if r := recover(); r != nil {
+			ec.Error(ctx, ec.Recover(ctx, r))
+			ret = graphql.Null
+		}
+	}()
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (any, error) {
+		ctx = rctx // use context from middleware stack in children
+		return obj.CreatedBy, nil
+	})
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	if resTmp == nil {
+		if !graphql.HasFieldError(ctx, fc) {
+			ec.Errorf(ctx, "must not be null")
+		}
+		return graphql.Null
+	}
+	res := resTmp.(string)
+	fc.Result = res
+	return ec.marshalNID2string(ctx, field.Selections, res)
+}
+
+func (ec *executionContext) fieldContext_Portfolio_createdBy(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "Portfolio",
+		Field:      field,
+		IsMethod:   false,
+		IsResolver: false,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return nil, errors.New("field of type ID does not have child fields")
+		},
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _Portfolio_createdAt(ctx context.Context, field graphql.CollectedField, obj *model.Portfolio) (ret graphql.Marshaler) {
+	fc, err := ec.fieldContext_Portfolio_createdAt(ctx, field)
+	if err != nil {
+		return graphql.Null
+	}
+	ctx = graphql.WithFieldContext(ctx, fc)
+	defer func() {
+		if r := recover(); r != nil {
+			ec.Error(ctx, ec.Recover(ctx, r))
+			ret = graphql.Null
+		}
+	}()
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (any, error) {
+		ctx = rctx // use context from middleware stack in children
+		return obj.CreatedAt, nil
+	})
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	if resTmp == nil {
+		if !graphql.HasFieldError(ctx, fc) {
+			ec.Errorf(ctx, "must not be null")
+		}
+		return graphql.Null
+	}
+	res := resTmp.(string)
+	fc.Result = res
+	return ec.marshalNDateTime2string(ctx, field.Selections, res)
+}
+
+func (ec *executionContext) fieldContext_Portfolio_createdAt(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "Portfolio",
+		Field:      field,
+		IsMethod:   false,
+		IsResolver: false,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return nil, errors.New("field of type DateTime does not have child fields")
+		},
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _Portfolio_updatedAt(ctx context.Context, field graphql.CollectedField, obj *model.Portfolio) (ret graphql.Marshaler) {
+	fc, err := ec.fieldContext_Portfolio_updatedAt(ctx, field)
+	if err != nil {
+		return graphql.Null
+	}
+	ctx = graphql.WithFieldContext(ctx, fc)
+	defer func() {
+		if r := recover(); r != nil {
+			ec.Error(ctx, ec.Recover(ctx, r))
+			ret = graphql.Null
+		}
+	}()
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (any, error) {
+		ctx = rctx // use context from middleware stack in children
+		return obj.UpdatedAt, nil
+	})
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	if resTmp == nil {
+		if !graphql.HasFieldError(ctx, fc) {
+			ec.Errorf(ctx, "must not be null")
+		}
+		return graphql.Null
+	}
+	res := resTmp.(string)
+	fc.Result = res
+	return ec.marshalNDateTime2string(ctx, field.Selections, res)
+}
+
+func (ec *executionContext) fieldContext_Portfolio_updatedAt(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "Portfolio",
+		Field:      field,
+		IsMethod:   false,
+		IsResolver: false,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return nil, errors.New("field of type DateTime does not have child fields")
+		},
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _PortfolioSettings_portfolioId(ctx context.Context, field graphql.CollectedField, obj *model.PortfolioSettings) (ret graphql.Marshaler) {
+	fc, err := ec.fieldContext_PortfolioSettings_portfolioId(ctx, field)
+	if err != nil {
+		return graphql.Null
+	}
+	ctx = graphql.WithFieldContext(ctx, fc)
+	defer func() {
+		if r := recover(); r != nil {
+			ec.Error(ctx, ec.Recover(ctx, r))
+			ret = graphql.Null
+		}
+	}()
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (any, error) {
+		ctx = rctx // use context from middleware stack in children
+		return obj.PortfolioID, nil
+	})
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	if resTmp == nil {
+		if !graphql.HasFieldError(ctx, fc) {
+			ec.Errorf(ctx, "must not be null")
+		}
+		return graphql.Null
+	}
+	res := resTmp.(string)
+	fc.Result = res
+	return ec.marshalNID2string(ctx, field.Selections, res)
+}
+
+func (ec *executionContext) fieldContext_PortfolioSettings_portfolioId(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "PortfolioSettings",
+		Field:      field,
+		IsMethod:   false,
+		IsResolver: false,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return nil, errors.New("field of type ID does not have child fields")
+		},
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _PortfolioSettings_themeId(ctx context.Context, field graphql.CollectedField, obj *model.PortfolioSettings) (ret graphql.Marshaler) {
+	fc, err := ec.fieldContext_PortfolioSettings_themeId(ctx, field)
+	if err != nil {
+		return graphql.Null
+	}
+	ctx = graphql.WithFieldContext(ctx, fc)
+	defer func() {
+		if r := recover(); r != nil {
+			ec.Error(ctx, ec.Recover(ctx, r))
+			ret = graphql.Null
+		}
+	}()
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (any, error) {
+		ctx = rctx // use context from middleware stack in children
+		return obj.ThemeID, nil
+	})
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	if resTmp == nil {
+		if !graphql.HasFieldError(ctx, fc) {
+			ec.Errorf(ctx, "must not be null")
+		}
+		return graphql.Null
+	}
+	res := resTmp.(string)
+	fc.Result = res
+	return ec.marshalNID2string(ctx, field.Selections, res)
+}
+
+func (ec *executionContext) fieldContext_PortfolioSettings_themeId(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "PortfolioSettings",
+		Field:      field,
+		IsMethod:   false,
+		IsResolver: false,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return nil, errors.New("field of type ID does not have child fields")
+		},
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _PortfolioSettings_fontSize(ctx context.Context, field graphql.CollectedField, obj *model.PortfolioSettings) (ret graphql.Marshaler) {
+	fc, err := ec.fieldContext_PortfolioSettings_fontSize(ctx, field)
+	if err != nil {
+		return graphql.Null
+	}
+	ctx = graphql.WithFieldContext(ctx, fc)
+	defer func() {
+		if r := recover(); r != nil {
+			ec.Error(ctx, ec.Recover(ctx, r))
+			ret = graphql.Null
+		}
+	}()
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (any, error) {
+		ctx = rctx // use context from middleware stack in children
+		return obj.FontSize, nil
+	})
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	if resTmp == nil {
+		if !graphql.HasFieldError(ctx, fc) {
+			ec.Errorf(ctx, "must not be null")
+		}
+		return graphql.Null
+	}
+	res := resTmp.(model.FontSize)
+	fc.Result = res
+	return ec.marshalNFontSize2githubᚗcomᚋleoᚋaiᚑweekendᚋbackendᚋgraphᚋmodelᚐFontSize(ctx, field.Selections, res)
+}
+
+func (ec *executionContext) fieldContext_PortfolioSettings_fontSize(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "PortfolioSettings",
+		Field:      field,
+		IsMethod:   false,
+		IsResolver: false,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return nil, errors.New("field of type FontSize does not have child fields")
+		},
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _PortfolioSettings_pageFormat(ctx context.Context, field graphql.CollectedField, obj *model.PortfolioSettings) (ret graphql.Marshaler) {
+	fc, err := ec.fieldContext_PortfolioSettings_pageFormat(ctx, field)
+	if err != nil {
+		return graphql.Null
+	}
+	ctx = graphql.WithFieldContext(ctx, fc)
+	defer func() {
+		if r := recover(); r != nil {
+			ec.Error(ctx, ec.Recover(ctx, r))
+			ret = graphql.Null
+		}
+	}()
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (any, error) {
+		ctx = rctx // use context from middleware stack in children
+		return obj.PageFormat, nil
+	})
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	if resTmp == nil {
+		if !graphql.HasFieldError(ctx, fc) {
+			ec.Errorf(ctx, "must not be null")
+		}
+		return graphql.Null
+	}
+	res := resTmp.(model.PageFormat)
+	fc.Result = res
+	return ec.marshalNPageFormat2githubᚗcomᚋleoᚋaiᚑweekendᚋbackendᚋgraphᚋmodelᚐPageFormat(ctx, field.Selections, res)
+}
+
+func (ec *executionContext) fieldContext_PortfolioSettings_pageFormat(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "PortfolioSettings",
+		Field:      field,
+		IsMethod:   false,
+		IsResolver: false,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return nil, errors.New("field of type PageFormat does not have child fields")
+		},
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _PortfolioSettings_marginHorizontalMm(ctx context.Context, field graphql.CollectedField, obj *model.PortfolioSettings) (ret graphql.Marshaler) {
+	fc, err := ec.fieldContext_PortfolioSettings_marginHorizontalMm(ctx, field)
+	if err != nil {
+		return graphql.Null
+	}
+	ctx = graphql.WithFieldContext(ctx, fc)
+	defer func() {
+		if r := recover(); r != nil {
+			ec.Error(ctx, ec.Recover(ctx, r))
+			ret = graphql.Null
+		}
+	}()
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (any, error) {
+		ctx = rctx // use context from middleware stack in children
+		return obj.MarginHorizontalMm, nil
+	})
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	if resTmp == nil {
+		if !graphql.HasFieldError(ctx, fc) {
+			ec.Errorf(ctx, "must not be null")
+		}
+		return graphql.Null
+	}
+	res := resTmp.(float64)
+	fc.Result = res
+	return ec.marshalNFloat2float64(ctx, field.Selections, res)
+}
+
+func (ec *executionContext) fieldContext_PortfolioSettings_marginHorizontalMm(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "PortfolioSettings",
+		Field:      field,
+		IsMethod:   false,
+		IsResolver: false,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return nil, errors.New("field of type Float does not have child fields")
+		},
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _PortfolioSettings_marginVerticalMm(ctx context.Context, field graphql.CollectedField, obj *model.PortfolioSettings) (ret graphql.Marshaler) {
+	fc, err := ec.fieldContext_PortfolioSettings_marginVerticalMm(ctx, field)
+	if err != nil {
+		return graphql.Null
+	}
+	ctx = graphql.WithFieldContext(ctx, fc)
+	defer func() {
+		if r := recover(); r != nil {
+			ec.Error(ctx, ec.Recover(ctx, r))
+			ret = graphql.Null
+		}
+	}()
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (any, error) {
+		ctx = rctx // use context from middleware stack in children
+		return obj.MarginVerticalMm, nil
+	})
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	if resTmp == nil {
+		if !graphql.HasFieldError(ctx, fc) {
+			ec.Errorf(ctx, "must not be null")
+		}
+		return graphql.Null
+	}
+	res := resTmp.(float64)
+	fc.Result = res
+	return ec.marshalNFloat2float64(ctx, field.Selections, res)
+}
+
+func (ec *executionContext) fieldContext_PortfolioSettings_marginVerticalMm(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "PortfolioSettings",
+		Field:      field,
+		IsMethod:   false,
+		IsResolver: false,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return nil, errors.New("field of type Float does not have child fields")
+		},
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _PortfolioSettings_showPhoto(ctx context.Context, field graphql.CollectedField, obj *model.PortfolioSettings) (ret graphql.Marshaler) {
+	fc, err := ec.fieldContext_PortfolioSettings_showPhoto(ctx, field)
+	if err != nil {
+		return graphql.Null
+	}
+	ctx = graphql.WithFieldContext(ctx, fc)
+	defer func() {
+		if r := recover(); r != nil {
+			ec.Error(ctx, ec.Recover(ctx, r))
+			ret = graphql.Null
+		}
+	}()
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (any, error) {
+		ctx = rctx // use context from middleware stack in children
+		return obj.ShowPhoto, nil
+	})
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	if resTmp == nil {
+		if !graphql.HasFieldError(ctx, fc) {
+			ec.Errorf(ctx, "must not be null")
+		}
+		return graphql.Null
+	}
+	res := resTmp.(bool)
+	fc.Result = res
+	return ec.marshalNBoolean2bool(ctx, field.Selections, res)
+}
+
+func (ec *executionContext) fieldContext_PortfolioSettings_showPhoto(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "PortfolioSettings",
+		Field:      field,
+		IsMethod:   false,
+		IsResolver: false,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return nil, errors.New("field of type Boolean does not have child fields")
+		},
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _PortfolioSettings_locale(ctx context.Context, field graphql.CollectedField, obj *model.PortfolioSettings) (ret graphql.Marshaler) {
+	fc, err := ec.fieldContext_PortfolioSettings_locale(ctx, field)
+	if err != nil {
+		return graphql.Null
+	}
+	ctx = graphql.WithFieldContext(ctx, fc)
+	defer func() {
+		if r := recover(); r != nil {
+			ec.Error(ctx, ec.Recover(ctx, r))
+			ret = graphql.Null
+		}
+	}()
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (any, error) {
+		ctx = rctx // use context from middleware stack in children
+		return obj.Locale, nil
+	})
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	if resTmp == nil {
+		if !graphql.HasFieldError(ctx, fc) {
+			ec.Errorf(ctx, "must not be null")
+		}
+		return graphql.Null
+	}
+	res := resTmp.(string)
+	fc.Result = res
+	return ec.marshalNString2string(ctx, field.Selections, res)
+}
+
+func (ec *executionContext) fieldContext_PortfolioSettings_locale(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "PortfolioSettings",
+		Field:      field,
+		IsMethod:   false,
+		IsResolver: false,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return nil, errors.New("field of type String does not have child fields")
+		},
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _PortfolioWithContent_portfolio(ctx context.Context, field graphql.CollectedField, obj *model.PortfolioWithContent) (ret graphql.Marshaler) {
+	fc, err := ec.fieldContext_PortfolioWithContent_portfolio(ctx, field)
+	if err != nil {
+		return graphql.Null
+	}
+	ctx = graphql.WithFieldContext(ctx, fc)
+	defer func() {
+		if r := recover(); r != nil {
+			ec.Error(ctx, ec.Recover(ctx, r))
+			ret = graphql.Null
+		}
+	}()
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (any, error) {
+		ctx = rctx // use context from middleware stack in children
+		return obj.Portfolio, nil
+	})
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	if resTmp == nil {
+		if !graphql.HasFieldError(ctx, fc) {
+			ec.Errorf(ctx, "must not be null")
+		}
+		return graphql.Null
+	}
+	res := resTmp.(*model.Portfolio)
+	fc.Result = res
+	return ec.marshalNPortfolio2ᚖgithubᚗcomᚋleoᚋaiᚑweekendᚋbackendᚋgraphᚋmodelᚐPortfolio(ctx, field.Selections, res)
+}
+
+func (ec *executionContext) fieldContext_PortfolioWithContent_portfolio(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "PortfolioWithContent",
+		Field:      field,
+		IsMethod:   false,
+		IsResolver: false,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			switch field.Name {
+			case "id":
+				return ec.fieldContext_Portfolio_id(ctx, field)
+			case "workspaceId":
+				return ec.fieldContext_Portfolio_workspaceId(ctx, field)
+			case "title":
+				return ec.fieldContext_Portfolio_title(ctx, field)
+			case "contactProfileId":
+				return ec.fieldContext_Portfolio_contactProfileId(ctx, field)
+			case "createdBy":
+				return ec.fieldContext_Portfolio_createdBy(ctx, field)
+			case "createdAt":
+				return ec.fieldContext_Portfolio_createdAt(ctx, field)
+			case "updatedAt":
+				return ec.fieldContext_Portfolio_updatedAt(ctx, field)
+			}
+			return nil, fmt.Errorf("no field named %q was found under type Portfolio", field.Name)
+		},
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _PortfolioWithContent_contactProfile(ctx context.Context, field graphql.CollectedField, obj *model.PortfolioWithContent) (ret graphql.Marshaler) {
+	fc, err := ec.fieldContext_PortfolioWithContent_contactProfile(ctx, field)
+	if err != nil {
+		return graphql.Null
+	}
+	ctx = graphql.WithFieldContext(ctx, fc)
+	defer func() {
+		if r := recover(); r != nil {
+			ec.Error(ctx, ec.Recover(ctx, r))
+			ret = graphql.Null
+		}
+	}()
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (any, error) {
+		ctx = rctx // use context from middleware stack in children
+		return obj.ContactProfile, nil
+	})
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	if resTmp == nil {
+		return graphql.Null
+	}
+	res := resTmp.(*model.ContactProfile)
+	fc.Result = res
+	return ec.marshalOContactProfile2ᚖgithubᚗcomᚋleoᚋaiᚑweekendᚋbackendᚋgraphᚋmodelᚐContactProfile(ctx, field.Selections, res)
+}
+
+func (ec *executionContext) fieldContext_PortfolioWithContent_contactProfile(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "PortfolioWithContent",
+		Field:      field,
+		IsMethod:   false,
+		IsResolver: false,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			switch field.Name {
+			case "id":
+				return ec.fieldContext_ContactProfile_id(ctx, field)
+			case "workspaceId":
+				return ec.fieldContext_ContactProfile_workspaceId(ctx, field)
+			case "fullName":
+				return ec.fieldContext_ContactProfile_fullName(ctx, field)
+			case "headline":
+				return ec.fieldContext_ContactProfile_headline(ctx, field)
+			case "email":
+				return ec.fieldContext_ContactProfile_email(ctx, field)
+			case "phone":
+				return ec.fieldContext_ContactProfile_phone(ctx, field)
+			case "location":
+				return ec.fieldContext_ContactProfile_location(ctx, field)
+			case "website":
+				return ec.fieldContext_ContactProfile_website(ctx, field)
+			case "linkedIn":
+				return ec.fieldContext_ContactProfile_linkedIn(ctx, field)
+			case "github":
+				return ec.fieldContext_ContactProfile_github(ctx, field)
+			case "photoUrl":
+				return ec.fieldContext_ContactProfile_photoUrl(ctx, field)
+			case "createdAt":
+				return ec.fieldContext_ContactProfile_createdAt(ctx, field)
+			case "updatedAt":
+				return ec.fieldContext_ContactProfile_updatedAt(ctx, field)
+			}
+			return nil, fmt.Errorf("no field named %q was found under type ContactProfile", field.Name)
+		},
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _PortfolioWithContent_settings(ctx context.Context, field graphql.CollectedField, obj *model.PortfolioWithContent) (ret graphql.Marshaler) {
+	fc, err := ec.fieldContext_PortfolioWithContent_settings(ctx, field)
+	if err != nil {
+		return graphql.Null
+	}
+	ctx = graphql.WithFieldContext(ctx, fc)
+	defer func() {
+		if r := recover(); r != nil {
+			ec.Error(ctx, ec.Recover(ctx, r))
+			ret = graphql.Null
+		}
+	}()
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (any, error) {
+		ctx = rctx // use context from middleware stack in children
+		return obj.Settings, nil
+	})
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	if resTmp == nil {
+		if !graphql.HasFieldError(ctx, fc) {
+			ec.Errorf(ctx, "must not be null")
+		}
+		return graphql.Null
+	}
+	res := resTmp.(*model.PortfolioSettings)
+	fc.Result = res
+	return ec.marshalNPortfolioSettings2ᚖgithubᚗcomᚋleoᚋaiᚑweekendᚋbackendᚋgraphᚋmodelᚐPortfolioSettings(ctx, field.Selections, res)
+}
+
+func (ec *executionContext) fieldContext_PortfolioWithContent_settings(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "PortfolioWithContent",
+		Field:      field,
+		IsMethod:   false,
+		IsResolver: false,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			switch field.Name {
+			case "portfolioId":
+				return ec.fieldContext_PortfolioSettings_portfolioId(ctx, field)
+			case "themeId":
+				return ec.fieldContext_PortfolioSettings_themeId(ctx, field)
+			case "fontSize":
+				return ec.fieldContext_PortfolioSettings_fontSize(ctx, field)
+			case "pageFormat":
+				return ec.fieldContext_PortfolioSettings_pageFormat(ctx, field)
+			case "marginHorizontalMm":
+				return ec.fieldContext_PortfolioSettings_marginHorizontalMm(ctx, field)
+			case "marginVerticalMm":
+				return ec.fieldContext_PortfolioSettings_marginVerticalMm(ctx, field)
+			case "showPhoto":
+				return ec.fieldContext_PortfolioSettings_showPhoto(ctx, field)
+			case "locale":
+				return ec.fieldContext_PortfolioSettings_locale(ctx, field)
+			}
+			return nil, fmt.Errorf("no field named %q was found under type PortfolioSettings", field.Name)
+		},
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _PortfolioWithContent_theme(ctx context.Context, field graphql.CollectedField, obj *model.PortfolioWithContent) (ret graphql.Marshaler) {
+	fc, err := ec.fieldContext_PortfolioWithContent_theme(ctx, field)
+	if err != nil {
+		return graphql.Null
+	}
+	ctx = graphql.WithFieldContext(ctx, fc)
+	defer func() {
+		if r := recover(); r != nil {
+			ec.Error(ctx, ec.Recover(ctx, r))
+			ret = graphql.Null
+		}
+	}()
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (any, error) {
+		ctx = rctx // use context from middleware stack in children
+		return obj.Theme, nil
+	})
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	if resTmp == nil {
+		if !graphql.HasFieldError(ctx, fc) {
+			ec.Errorf(ctx, "must not be null")
+		}
+		return graphql.Null
+	}
+	res := resTmp.(*model.CvTheme)
+	fc.Result = res
+	return ec.marshalNCvTheme2ᚖgithubᚗcomᚋleoᚋaiᚑweekendᚋbackendᚋgraphᚋmodelᚐCvTheme(ctx, field.Selections, res)
+}
+
+func (ec *executionContext) fieldContext_PortfolioWithContent_theme(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "PortfolioWithContent",
+		Field:      field,
+		IsMethod:   false,
+		IsResolver: false,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			switch field.Name {
+			case "id":
+				return ec.fieldContext_CvTheme_id(ctx, field)
+			case "name":
+				return ec.fieldContext_CvTheme_name(ctx, field)
+			case "slug":
+				return ec.fieldContext_CvTheme_slug(ctx, field)
+			case "isSystem":
+				return ec.fieldContext_CvTheme_isSystem(ctx, field)
+			case "config":
+				return ec.fieldContext_CvTheme_config(ctx, field)
+			}
+			return nil, fmt.Errorf("no field named %q was found under type CvTheme", field.Name)
+		},
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _PortfolioWithContent_sections(ctx context.Context, field graphql.CollectedField, obj *model.PortfolioWithContent) (ret graphql.Marshaler) {
+	fc, err := ec.fieldContext_PortfolioWithContent_sections(ctx, field)
+	if err != nil {
+		return graphql.Null
+	}
+	ctx = graphql.WithFieldContext(ctx, fc)
+	defer func() {
+		if r := recover(); r != nil {
+			ec.Error(ctx, ec.Recover(ctx, r))
+			ret = graphql.Null
+		}
+	}()
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (any, error) {
+		ctx = rctx // use context from middleware stack in children
+		return obj.Sections, nil
+	})
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	if resTmp == nil {
+		if !graphql.HasFieldError(ctx, fc) {
+			ec.Errorf(ctx, "must not be null")
+		}
+		return graphql.Null
+	}
+	res := resTmp.([]*model.SectionWithItems)
+	fc.Result = res
+	return ec.marshalNSectionWithItems2ᚕᚖgithubᚗcomᚋleoᚋaiᚑweekendᚋbackendᚋgraphᚋmodelᚐSectionWithItemsᚄ(ctx, field.Selections, res)
+}
+
+func (ec *executionContext) fieldContext_PortfolioWithContent_sections(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "PortfolioWithContent",
+		Field:      field,
+		IsMethod:   false,
+		IsResolver: false,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			switch field.Name {
+			case "section":
+				return ec.fieldContext_SectionWithItems_section(ctx, field)
+			case "items":
+				return ec.fieldContext_SectionWithItems_items(ctx, field)
+			}
+			return nil, fmt.Errorf("no field named %q was found under type SectionWithItems", field.Name)
+		},
 	}
 	return fc, nil
 }
@@ -6052,6 +8338,8 @@ func (ec *executionContext) fieldContext_Query_workspaceStats(_ context.Context,
 			switch field.Name {
 			case "resumeCount":
 				return ec.fieldContext_WorkspaceStats_resumeCount(ctx, field)
+			case "portfolioCount":
+				return ec.fieldContext_WorkspaceStats_portfolioCount(ctx, field)
 			case "sectionCount":
 				return ec.fieldContext_WorkspaceStats_sectionCount(ctx, field)
 			case "sectionItemCount":
@@ -6677,6 +8965,269 @@ func (ec *executionContext) fieldContext_Query_resumeWithContent(ctx context.Con
 	return fc, nil
 }
 
+func (ec *executionContext) _Query_portfolios(ctx context.Context, field graphql.CollectedField) (ret graphql.Marshaler) {
+	fc, err := ec.fieldContext_Query_portfolios(ctx, field)
+	if err != nil {
+		return graphql.Null
+	}
+	ctx = graphql.WithFieldContext(ctx, fc)
+	defer func() {
+		if r := recover(); r != nil {
+			ec.Error(ctx, ec.Recover(ctx, r))
+			ret = graphql.Null
+		}
+	}()
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (any, error) {
+		ctx = rctx // use context from middleware stack in children
+		return ec.resolvers.Query().Portfolios(rctx)
+	})
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	if resTmp == nil {
+		if !graphql.HasFieldError(ctx, fc) {
+			ec.Errorf(ctx, "must not be null")
+		}
+		return graphql.Null
+	}
+	res := resTmp.([]*model.Portfolio)
+	fc.Result = res
+	return ec.marshalNPortfolio2ᚕᚖgithubᚗcomᚋleoᚋaiᚑweekendᚋbackendᚋgraphᚋmodelᚐPortfolioᚄ(ctx, field.Selections, res)
+}
+
+func (ec *executionContext) fieldContext_Query_portfolios(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "Query",
+		Field:      field,
+		IsMethod:   true,
+		IsResolver: true,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			switch field.Name {
+			case "id":
+				return ec.fieldContext_Portfolio_id(ctx, field)
+			case "workspaceId":
+				return ec.fieldContext_Portfolio_workspaceId(ctx, field)
+			case "title":
+				return ec.fieldContext_Portfolio_title(ctx, field)
+			case "contactProfileId":
+				return ec.fieldContext_Portfolio_contactProfileId(ctx, field)
+			case "createdBy":
+				return ec.fieldContext_Portfolio_createdBy(ctx, field)
+			case "createdAt":
+				return ec.fieldContext_Portfolio_createdAt(ctx, field)
+			case "updatedAt":
+				return ec.fieldContext_Portfolio_updatedAt(ctx, field)
+			}
+			return nil, fmt.Errorf("no field named %q was found under type Portfolio", field.Name)
+		},
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _Query_portfolio(ctx context.Context, field graphql.CollectedField) (ret graphql.Marshaler) {
+	fc, err := ec.fieldContext_Query_portfolio(ctx, field)
+	if err != nil {
+		return graphql.Null
+	}
+	ctx = graphql.WithFieldContext(ctx, fc)
+	defer func() {
+		if r := recover(); r != nil {
+			ec.Error(ctx, ec.Recover(ctx, r))
+			ret = graphql.Null
+		}
+	}()
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (any, error) {
+		ctx = rctx // use context from middleware stack in children
+		return ec.resolvers.Query().Portfolio(rctx, fc.Args["id"].(string))
+	})
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	if resTmp == nil {
+		return graphql.Null
+	}
+	res := resTmp.(*model.Portfolio)
+	fc.Result = res
+	return ec.marshalOPortfolio2ᚖgithubᚗcomᚋleoᚋaiᚑweekendᚋbackendᚋgraphᚋmodelᚐPortfolio(ctx, field.Selections, res)
+}
+
+func (ec *executionContext) fieldContext_Query_portfolio(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "Query",
+		Field:      field,
+		IsMethod:   true,
+		IsResolver: true,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			switch field.Name {
+			case "id":
+				return ec.fieldContext_Portfolio_id(ctx, field)
+			case "workspaceId":
+				return ec.fieldContext_Portfolio_workspaceId(ctx, field)
+			case "title":
+				return ec.fieldContext_Portfolio_title(ctx, field)
+			case "contactProfileId":
+				return ec.fieldContext_Portfolio_contactProfileId(ctx, field)
+			case "createdBy":
+				return ec.fieldContext_Portfolio_createdBy(ctx, field)
+			case "createdAt":
+				return ec.fieldContext_Portfolio_createdAt(ctx, field)
+			case "updatedAt":
+				return ec.fieldContext_Portfolio_updatedAt(ctx, field)
+			}
+			return nil, fmt.Errorf("no field named %q was found under type Portfolio", field.Name)
+		},
+	}
+	defer func() {
+		if r := recover(); r != nil {
+			err = ec.Recover(ctx, r)
+			ec.Error(ctx, err)
+		}
+	}()
+	ctx = graphql.WithFieldContext(ctx, fc)
+	if fc.Args, err = ec.field_Query_portfolio_args(ctx, field.ArgumentMap(ec.Variables)); err != nil {
+		ec.Error(ctx, err)
+		return fc, err
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _Query_portfolioWithContent(ctx context.Context, field graphql.CollectedField) (ret graphql.Marshaler) {
+	fc, err := ec.fieldContext_Query_portfolioWithContent(ctx, field)
+	if err != nil {
+		return graphql.Null
+	}
+	ctx = graphql.WithFieldContext(ctx, fc)
+	defer func() {
+		if r := recover(); r != nil {
+			ec.Error(ctx, ec.Recover(ctx, r))
+			ret = graphql.Null
+		}
+	}()
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (any, error) {
+		ctx = rctx // use context from middleware stack in children
+		return ec.resolvers.Query().PortfolioWithContent(rctx, fc.Args["id"].(string))
+	})
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	if resTmp == nil {
+		return graphql.Null
+	}
+	res := resTmp.(*model.PortfolioWithContent)
+	fc.Result = res
+	return ec.marshalOPortfolioWithContent2ᚖgithubᚗcomᚋleoᚋaiᚑweekendᚋbackendᚋgraphᚋmodelᚐPortfolioWithContent(ctx, field.Selections, res)
+}
+
+func (ec *executionContext) fieldContext_Query_portfolioWithContent(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "Query",
+		Field:      field,
+		IsMethod:   true,
+		IsResolver: true,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			switch field.Name {
+			case "portfolio":
+				return ec.fieldContext_PortfolioWithContent_portfolio(ctx, field)
+			case "contactProfile":
+				return ec.fieldContext_PortfolioWithContent_contactProfile(ctx, field)
+			case "settings":
+				return ec.fieldContext_PortfolioWithContent_settings(ctx, field)
+			case "theme":
+				return ec.fieldContext_PortfolioWithContent_theme(ctx, field)
+			case "sections":
+				return ec.fieldContext_PortfolioWithContent_sections(ctx, field)
+			}
+			return nil, fmt.Errorf("no field named %q was found under type PortfolioWithContent", field.Name)
+		},
+	}
+	defer func() {
+		if r := recover(); r != nil {
+			err = ec.Recover(ctx, r)
+			ec.Error(ctx, err)
+		}
+	}()
+	ctx = graphql.WithFieldContext(ctx, fc)
+	if fc.Args, err = ec.field_Query_portfolioWithContent_args(ctx, field.ArgumentMap(ec.Variables)); err != nil {
+		ec.Error(ctx, err)
+		return fc, err
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _Query_portfoliosForSection(ctx context.Context, field graphql.CollectedField) (ret graphql.Marshaler) {
+	fc, err := ec.fieldContext_Query_portfoliosForSection(ctx, field)
+	if err != nil {
+		return graphql.Null
+	}
+	ctx = graphql.WithFieldContext(ctx, fc)
+	defer func() {
+		if r := recover(); r != nil {
+			ec.Error(ctx, ec.Recover(ctx, r))
+			ret = graphql.Null
+		}
+	}()
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (any, error) {
+		ctx = rctx // use context from middleware stack in children
+		return ec.resolvers.Query().PortfoliosForSection(rctx, fc.Args["sectionId"].(string))
+	})
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	if resTmp == nil {
+		if !graphql.HasFieldError(ctx, fc) {
+			ec.Errorf(ctx, "must not be null")
+		}
+		return graphql.Null
+	}
+	res := resTmp.([]*model.Portfolio)
+	fc.Result = res
+	return ec.marshalNPortfolio2ᚕᚖgithubᚗcomᚋleoᚋaiᚑweekendᚋbackendᚋgraphᚋmodelᚐPortfolioᚄ(ctx, field.Selections, res)
+}
+
+func (ec *executionContext) fieldContext_Query_portfoliosForSection(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "Query",
+		Field:      field,
+		IsMethod:   true,
+		IsResolver: true,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			switch field.Name {
+			case "id":
+				return ec.fieldContext_Portfolio_id(ctx, field)
+			case "workspaceId":
+				return ec.fieldContext_Portfolio_workspaceId(ctx, field)
+			case "title":
+				return ec.fieldContext_Portfolio_title(ctx, field)
+			case "contactProfileId":
+				return ec.fieldContext_Portfolio_contactProfileId(ctx, field)
+			case "createdBy":
+				return ec.fieldContext_Portfolio_createdBy(ctx, field)
+			case "createdAt":
+				return ec.fieldContext_Portfolio_createdAt(ctx, field)
+			case "updatedAt":
+				return ec.fieldContext_Portfolio_updatedAt(ctx, field)
+			}
+			return nil, fmt.Errorf("no field named %q was found under type Portfolio", field.Name)
+		},
+	}
+	defer func() {
+		if r := recover(); r != nil {
+			err = ec.Recover(ctx, r)
+			ec.Error(ctx, err)
+		}
+	}()
+	ctx = graphql.WithFieldContext(ctx, fc)
+	if fc.Args, err = ec.field_Query_portfoliosForSection_args(ctx, field.ArgumentMap(ec.Variables)); err != nil {
+		ec.Error(ctx, err)
+		return fc, err
+	}
+	return fc, nil
+}
+
 func (ec *executionContext) _Query_sectionItemUsage(ctx context.Context, field graphql.CollectedField) (ret graphql.Marshaler) {
 	fc, err := ec.fieldContext_Query_sectionItemUsage(ctx, field)
 	if err != nil {
@@ -6719,6 +9270,8 @@ func (ec *executionContext) fieldContext_Query_sectionItemUsage(ctx context.Cont
 				return ec.fieldContext_SectionItemUsage_sections(ctx, field)
 			case "resumes":
 				return ec.fieldContext_SectionItemUsage_resumes(ctx, field)
+			case "portfolios":
+				return ec.fieldContext_SectionItemUsage_portfolios(ctx, field)
 			}
 			return nil, fmt.Errorf("no field named %q was found under type SectionItemUsage", field.Name)
 		},
@@ -9431,6 +11984,66 @@ func (ec *executionContext) fieldContext_SectionItemUsage_resumes(_ context.Cont
 	return fc, nil
 }
 
+func (ec *executionContext) _SectionItemUsage_portfolios(ctx context.Context, field graphql.CollectedField, obj *model.SectionItemUsage) (ret graphql.Marshaler) {
+	fc, err := ec.fieldContext_SectionItemUsage_portfolios(ctx, field)
+	if err != nil {
+		return graphql.Null
+	}
+	ctx = graphql.WithFieldContext(ctx, fc)
+	defer func() {
+		if r := recover(); r != nil {
+			ec.Error(ctx, ec.Recover(ctx, r))
+			ret = graphql.Null
+		}
+	}()
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (any, error) {
+		ctx = rctx // use context from middleware stack in children
+		return obj.Portfolios, nil
+	})
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	if resTmp == nil {
+		if !graphql.HasFieldError(ctx, fc) {
+			ec.Errorf(ctx, "must not be null")
+		}
+		return graphql.Null
+	}
+	res := resTmp.([]*model.Portfolio)
+	fc.Result = res
+	return ec.marshalNPortfolio2ᚕᚖgithubᚗcomᚋleoᚋaiᚑweekendᚋbackendᚋgraphᚋmodelᚐPortfolioᚄ(ctx, field.Selections, res)
+}
+
+func (ec *executionContext) fieldContext_SectionItemUsage_portfolios(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "SectionItemUsage",
+		Field:      field,
+		IsMethod:   false,
+		IsResolver: false,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			switch field.Name {
+			case "id":
+				return ec.fieldContext_Portfolio_id(ctx, field)
+			case "workspaceId":
+				return ec.fieldContext_Portfolio_workspaceId(ctx, field)
+			case "title":
+				return ec.fieldContext_Portfolio_title(ctx, field)
+			case "contactProfileId":
+				return ec.fieldContext_Portfolio_contactProfileId(ctx, field)
+			case "createdBy":
+				return ec.fieldContext_Portfolio_createdBy(ctx, field)
+			case "createdAt":
+				return ec.fieldContext_Portfolio_createdAt(ctx, field)
+			case "updatedAt":
+				return ec.fieldContext_Portfolio_updatedAt(ctx, field)
+			}
+			return nil, fmt.Errorf("no field named %q was found under type Portfolio", field.Name)
+		},
+	}
+	return fc, nil
+}
+
 func (ec *executionContext) _SectionWithItems_section(ctx context.Context, field graphql.CollectedField, obj *model.SectionWithItems) (ret graphql.Marshaler) {
 	fc, err := ec.fieldContext_SectionWithItems_section(ctx, field)
 	if err != nil {
@@ -11169,6 +13782,50 @@ func (ec *executionContext) _WorkspaceStats_resumeCount(ctx context.Context, fie
 }
 
 func (ec *executionContext) fieldContext_WorkspaceStats_resumeCount(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "WorkspaceStats",
+		Field:      field,
+		IsMethod:   false,
+		IsResolver: false,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return nil, errors.New("field of type Int does not have child fields")
+		},
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _WorkspaceStats_portfolioCount(ctx context.Context, field graphql.CollectedField, obj *model.WorkspaceStats) (ret graphql.Marshaler) {
+	fc, err := ec.fieldContext_WorkspaceStats_portfolioCount(ctx, field)
+	if err != nil {
+		return graphql.Null
+	}
+	ctx = graphql.WithFieldContext(ctx, fc)
+	defer func() {
+		if r := recover(); r != nil {
+			ec.Error(ctx, ec.Recover(ctx, r))
+			ret = graphql.Null
+		}
+	}()
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (any, error) {
+		ctx = rctx // use context from middleware stack in children
+		return obj.PortfolioCount, nil
+	})
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	if resTmp == nil {
+		if !graphql.HasFieldError(ctx, fc) {
+			ec.Errorf(ctx, "must not be null")
+		}
+		return graphql.Null
+	}
+	res := resTmp.(int)
+	fc.Result = res
+	return ec.marshalNInt2int(ctx, field.Selections, res)
+}
+
+func (ec *executionContext) fieldContext_WorkspaceStats_portfolioCount(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
 	fc = &graphql.FieldContext{
 		Object:     "WorkspaceStats",
 		Field:      field,
@@ -13220,6 +15877,61 @@ func (ec *executionContext) fieldContext___Type_isOneOf(_ context.Context, field
 
 // region    **************************** input.gotpl *****************************
 
+func (ec *executionContext) unmarshalInputAddPortfolioSectionItemInput(ctx context.Context, obj any) (model.AddPortfolioSectionItemInput, error) {
+	var it model.AddPortfolioSectionItemInput
+	asMap := map[string]any{}
+	for k, v := range obj.(map[string]any) {
+		asMap[k] = v
+	}
+
+	fieldsInOrder := [...]string{"portfolioId", "sectionId", "headline", "body", "metadata"}
+	for _, k := range fieldsInOrder {
+		v, ok := asMap[k]
+		if !ok {
+			continue
+		}
+		switch k {
+		case "portfolioId":
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("portfolioId"))
+			data, err := ec.unmarshalNID2string(ctx, v)
+			if err != nil {
+				return it, err
+			}
+			it.PortfolioID = data
+		case "sectionId":
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("sectionId"))
+			data, err := ec.unmarshalNID2string(ctx, v)
+			if err != nil {
+				return it, err
+			}
+			it.SectionID = data
+		case "headline":
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("headline"))
+			data, err := ec.unmarshalOString2ᚖstring(ctx, v)
+			if err != nil {
+				return it, err
+			}
+			it.Headline = data
+		case "body":
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("body"))
+			data, err := ec.unmarshalOString2ᚖstring(ctx, v)
+			if err != nil {
+				return it, err
+			}
+			it.Body = data
+		case "metadata":
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("metadata"))
+			data, err := ec.unmarshalOJSON2map(ctx, v)
+			if err != nil {
+				return it, err
+			}
+			it.Metadata = data
+		}
+	}
+
+	return it, nil
+}
+
 func (ec *executionContext) unmarshalInputAddResumeSectionItemInput(ctx context.Context, obj any) (model.AddResumeSectionItemInput, error) {
 	var it model.AddResumeSectionItemInput
 	asMap := map[string]any{}
@@ -13330,7 +16042,7 @@ func (ec *executionContext) unmarshalInputAssistantContextInput(ctx context.Cont
 		asMap[k] = v
 	}
 
-	fieldsInOrder := [...]string{"view", "resumeId", "sectionId", "sectionItemId", "jobId"}
+	fieldsInOrder := [...]string{"view", "resumeId", "portfolioId", "sectionId", "sectionItemId", "jobId"}
 	for _, k := range fieldsInOrder {
 		v, ok := asMap[k]
 		if !ok {
@@ -13351,6 +16063,13 @@ func (ec *executionContext) unmarshalInputAssistantContextInput(ctx context.Cont
 				return it, err
 			}
 			it.ResumeID = data
+		case "portfolioId":
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("portfolioId"))
+			data, err := ec.unmarshalOID2ᚖstring(ctx, v)
+			if err != nil {
+				return it, err
+			}
+			it.PortfolioID = data
 		case "sectionId":
 			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("sectionId"))
 			data, err := ec.unmarshalOID2ᚖstring(ctx, v)
@@ -13510,6 +16229,282 @@ func (ec *executionContext) unmarshalInputUpdateContactProfileInput(ctx context.
 				return it, err
 			}
 			it.PhotoURL = data
+		}
+	}
+
+	return it, nil
+}
+
+func (ec *executionContext) unmarshalInputUpdatePortfolioContactProfileInput(ctx context.Context, obj any) (model.UpdatePortfolioContactProfileInput, error) {
+	var it model.UpdatePortfolioContactProfileInput
+	asMap := map[string]any{}
+	for k, v := range obj.(map[string]any) {
+		asMap[k] = v
+	}
+
+	fieldsInOrder := [...]string{"portfolioId", "fullName", "headline", "email", "phone", "location", "website", "linkedIn", "github", "photoUrl"}
+	for _, k := range fieldsInOrder {
+		v, ok := asMap[k]
+		if !ok {
+			continue
+		}
+		switch k {
+		case "portfolioId":
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("portfolioId"))
+			data, err := ec.unmarshalNID2string(ctx, v)
+			if err != nil {
+				return it, err
+			}
+			it.PortfolioID = data
+		case "fullName":
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("fullName"))
+			data, err := ec.unmarshalOString2ᚖstring(ctx, v)
+			if err != nil {
+				return it, err
+			}
+			it.FullName = data
+		case "headline":
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("headline"))
+			data, err := ec.unmarshalOString2ᚖstring(ctx, v)
+			if err != nil {
+				return it, err
+			}
+			it.Headline = data
+		case "email":
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("email"))
+			data, err := ec.unmarshalOString2ᚖstring(ctx, v)
+			if err != nil {
+				return it, err
+			}
+			it.Email = data
+		case "phone":
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("phone"))
+			data, err := ec.unmarshalOString2ᚖstring(ctx, v)
+			if err != nil {
+				return it, err
+			}
+			it.Phone = data
+		case "location":
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("location"))
+			data, err := ec.unmarshalOString2ᚖstring(ctx, v)
+			if err != nil {
+				return it, err
+			}
+			it.Location = data
+		case "website":
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("website"))
+			data, err := ec.unmarshalOString2ᚖstring(ctx, v)
+			if err != nil {
+				return it, err
+			}
+			it.Website = data
+		case "linkedIn":
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("linkedIn"))
+			data, err := ec.unmarshalOString2ᚖstring(ctx, v)
+			if err != nil {
+				return it, err
+			}
+			it.LinkedIn = data
+		case "github":
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("github"))
+			data, err := ec.unmarshalOString2ᚖstring(ctx, v)
+			if err != nil {
+				return it, err
+			}
+			it.Github = data
+		case "photoUrl":
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("photoUrl"))
+			data, err := ec.unmarshalOString2ᚖstring(ctx, v)
+			if err != nil {
+				return it, err
+			}
+			it.PhotoURL = data
+		}
+	}
+
+	return it, nil
+}
+
+func (ec *executionContext) unmarshalInputUpdatePortfolioSectionItemInput(ctx context.Context, obj any) (model.UpdatePortfolioSectionItemInput, error) {
+	var it model.UpdatePortfolioSectionItemInput
+	asMap := map[string]any{}
+	for k, v := range obj.(map[string]any) {
+		asMap[k] = v
+	}
+
+	fieldsInOrder := [...]string{"portfolioId", "sectionId", "sectionItemId", "headline", "body", "metadata"}
+	for _, k := range fieldsInOrder {
+		v, ok := asMap[k]
+		if !ok {
+			continue
+		}
+		switch k {
+		case "portfolioId":
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("portfolioId"))
+			data, err := ec.unmarshalNID2string(ctx, v)
+			if err != nil {
+				return it, err
+			}
+			it.PortfolioID = data
+		case "sectionId":
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("sectionId"))
+			data, err := ec.unmarshalNID2string(ctx, v)
+			if err != nil {
+				return it, err
+			}
+			it.SectionID = data
+		case "sectionItemId":
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("sectionItemId"))
+			data, err := ec.unmarshalNID2string(ctx, v)
+			if err != nil {
+				return it, err
+			}
+			it.SectionItemID = data
+		case "headline":
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("headline"))
+			data, err := ec.unmarshalOString2ᚖstring(ctx, v)
+			if err != nil {
+				return it, err
+			}
+			it.Headline = data
+		case "body":
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("body"))
+			data, err := ec.unmarshalOString2ᚖstring(ctx, v)
+			if err != nil {
+				return it, err
+			}
+			it.Body = data
+		case "metadata":
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("metadata"))
+			data, err := ec.unmarshalOJSON2map(ctx, v)
+			if err != nil {
+				return it, err
+			}
+			it.Metadata = data
+		}
+	}
+
+	return it, nil
+}
+
+func (ec *executionContext) unmarshalInputUpdatePortfolioSectionItemVisibilityInput(ctx context.Context, obj any) (model.UpdatePortfolioSectionItemVisibilityInput, error) {
+	var it model.UpdatePortfolioSectionItemVisibilityInput
+	asMap := map[string]any{}
+	for k, v := range obj.(map[string]any) {
+		asMap[k] = v
+	}
+
+	fieldsInOrder := [...]string{"portfolioId", "sectionId", "sectionItemId", "showInPreview"}
+	for _, k := range fieldsInOrder {
+		v, ok := asMap[k]
+		if !ok {
+			continue
+		}
+		switch k {
+		case "portfolioId":
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("portfolioId"))
+			data, err := ec.unmarshalNID2string(ctx, v)
+			if err != nil {
+				return it, err
+			}
+			it.PortfolioID = data
+		case "sectionId":
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("sectionId"))
+			data, err := ec.unmarshalNID2string(ctx, v)
+			if err != nil {
+				return it, err
+			}
+			it.SectionID = data
+		case "sectionItemId":
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("sectionItemId"))
+			data, err := ec.unmarshalNID2string(ctx, v)
+			if err != nil {
+				return it, err
+			}
+			it.SectionItemID = data
+		case "showInPreview":
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("showInPreview"))
+			data, err := ec.unmarshalNBoolean2bool(ctx, v)
+			if err != nil {
+				return it, err
+			}
+			it.ShowInPreview = data
+		}
+	}
+
+	return it, nil
+}
+
+func (ec *executionContext) unmarshalInputUpdatePortfolioSettingsInput(ctx context.Context, obj any) (model.UpdatePortfolioSettingsInput, error) {
+	var it model.UpdatePortfolioSettingsInput
+	asMap := map[string]any{}
+	for k, v := range obj.(map[string]any) {
+		asMap[k] = v
+	}
+
+	fieldsInOrder := [...]string{"portfolioId", "pageFormat", "fontSize", "marginHorizontalMm", "marginVerticalMm", "themeId", "showPhoto", "locale"}
+	for _, k := range fieldsInOrder {
+		v, ok := asMap[k]
+		if !ok {
+			continue
+		}
+		switch k {
+		case "portfolioId":
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("portfolioId"))
+			data, err := ec.unmarshalNID2string(ctx, v)
+			if err != nil {
+				return it, err
+			}
+			it.PortfolioID = data
+		case "pageFormat":
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("pageFormat"))
+			data, err := ec.unmarshalOPageFormat2ᚖgithubᚗcomᚋleoᚋaiᚑweekendᚋbackendᚋgraphᚋmodelᚐPageFormat(ctx, v)
+			if err != nil {
+				return it, err
+			}
+			it.PageFormat = data
+		case "fontSize":
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("fontSize"))
+			data, err := ec.unmarshalOFontSize2ᚖgithubᚗcomᚋleoᚋaiᚑweekendᚋbackendᚋgraphᚋmodelᚐFontSize(ctx, v)
+			if err != nil {
+				return it, err
+			}
+			it.FontSize = data
+		case "marginHorizontalMm":
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("marginHorizontalMm"))
+			data, err := ec.unmarshalOFloat2ᚖfloat64(ctx, v)
+			if err != nil {
+				return it, err
+			}
+			it.MarginHorizontalMm = data
+		case "marginVerticalMm":
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("marginVerticalMm"))
+			data, err := ec.unmarshalOFloat2ᚖfloat64(ctx, v)
+			if err != nil {
+				return it, err
+			}
+			it.MarginVerticalMm = data
+		case "themeId":
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("themeId"))
+			data, err := ec.unmarshalOID2ᚖstring(ctx, v)
+			if err != nil {
+				return it, err
+			}
+			it.ThemeID = data
+		case "showPhoto":
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("showPhoto"))
+			data, err := ec.unmarshalOBoolean2ᚖbool(ctx, v)
+			if err != nil {
+				return it, err
+			}
+			it.ShowPhoto = data
+		case "locale":
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("locale"))
+			data, err := ec.unmarshalOString2ᚖstring(ctx, v)
+			if err != nil {
+				return it, err
+			}
+			it.Locale = data
 		}
 	}
 
@@ -14057,8 +17052,15 @@ func (ec *executionContext) _AssistantTurnResult(ctx context.Context, sel ast.Se
 			if out.Values[i] == graphql.Null {
 				out.Invalids++
 			}
+		case "affectedPortfolioIds":
+			out.Values[i] = ec._AssistantTurnResult_affectedPortfolioIds(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				out.Invalids++
+			}
 		case "resumeWithContent":
 			out.Values[i] = ec._AssistantTurnResult_resumeWithContent(ctx, field, obj)
+		case "portfolioWithContent":
+			out.Values[i] = ec._AssistantTurnResult_portfolioWithContent(ctx, field, obj)
 		default:
 			panic("unknown field " + strconv.Quote(field.Name))
 		}
@@ -14355,6 +17357,76 @@ func (ec *executionContext) _Mutation(ctx context.Context, sel ast.SelectionSet)
 			if out.Values[i] == graphql.Null {
 				out.Invalids++
 			}
+		case "createPortfolio":
+			out.Values[i] = ec.OperationContext.RootResolverMiddleware(innerCtx, func(ctx context.Context) (res graphql.Marshaler) {
+				return ec._Mutation_createPortfolio(ctx, field)
+			})
+			if out.Values[i] == graphql.Null {
+				out.Invalids++
+			}
+		case "duplicatePortfolio":
+			out.Values[i] = ec.OperationContext.RootResolverMiddleware(innerCtx, func(ctx context.Context) (res graphql.Marshaler) {
+				return ec._Mutation_duplicatePortfolio(ctx, field)
+			})
+			if out.Values[i] == graphql.Null {
+				out.Invalids++
+			}
+		case "deletePortfolio":
+			out.Values[i] = ec.OperationContext.RootResolverMiddleware(innerCtx, func(ctx context.Context) (res graphql.Marshaler) {
+				return ec._Mutation_deletePortfolio(ctx, field)
+			})
+			if out.Values[i] == graphql.Null {
+				out.Invalids++
+			}
+		case "updatePortfolio":
+			out.Values[i] = ec.OperationContext.RootResolverMiddleware(innerCtx, func(ctx context.Context) (res graphql.Marshaler) {
+				return ec._Mutation_updatePortfolio(ctx, field)
+			})
+			if out.Values[i] == graphql.Null {
+				out.Invalids++
+			}
+		case "updatePortfolioSettings":
+			out.Values[i] = ec.OperationContext.RootResolverMiddleware(innerCtx, func(ctx context.Context) (res graphql.Marshaler) {
+				return ec._Mutation_updatePortfolioSettings(ctx, field)
+			})
+			if out.Values[i] == graphql.Null {
+				out.Invalids++
+			}
+		case "updatePortfolioSectionItemVisibility":
+			out.Values[i] = ec.OperationContext.RootResolverMiddleware(innerCtx, func(ctx context.Context) (res graphql.Marshaler) {
+				return ec._Mutation_updatePortfolioSectionItemVisibility(ctx, field)
+			})
+			if out.Values[i] == graphql.Null {
+				out.Invalids++
+			}
+		case "updatePortfolioSectionItem":
+			out.Values[i] = ec.OperationContext.RootResolverMiddleware(innerCtx, func(ctx context.Context) (res graphql.Marshaler) {
+				return ec._Mutation_updatePortfolioSectionItem(ctx, field)
+			})
+			if out.Values[i] == graphql.Null {
+				out.Invalids++
+			}
+		case "addPortfolioSectionItem":
+			out.Values[i] = ec.OperationContext.RootResolverMiddleware(innerCtx, func(ctx context.Context) (res graphql.Marshaler) {
+				return ec._Mutation_addPortfolioSectionItem(ctx, field)
+			})
+			if out.Values[i] == graphql.Null {
+				out.Invalids++
+			}
+		case "deletePortfolioSectionItem":
+			out.Values[i] = ec.OperationContext.RootResolverMiddleware(innerCtx, func(ctx context.Context) (res graphql.Marshaler) {
+				return ec._Mutation_deletePortfolioSectionItem(ctx, field)
+			})
+			if out.Values[i] == graphql.Null {
+				out.Invalids++
+			}
+		case "updatePortfolioContactProfile":
+			out.Values[i] = ec.OperationContext.RootResolverMiddleware(innerCtx, func(ctx context.Context) (res graphql.Marshaler) {
+				return ec._Mutation_updatePortfolioContactProfile(ctx, field)
+			})
+			if out.Values[i] == graphql.Null {
+				out.Invalids++
+			}
 		case "requestProfilePhotoUpload":
 			out.Values[i] = ec.OperationContext.RootResolverMiddleware(innerCtx, func(ctx context.Context) (res graphql.Marshaler) {
 				return ec._Mutation_requestProfilePhotoUpload(ctx, field)
@@ -14429,6 +17501,202 @@ func (ec *executionContext) _Mutation(ctx context.Context, sel ast.SelectionSet)
 			out.Values[i] = ec.OperationContext.RootResolverMiddleware(innerCtx, func(ctx context.Context) (res graphql.Marshaler) {
 				return ec._Mutation_disconnectConnection(ctx, field)
 			})
+			if out.Values[i] == graphql.Null {
+				out.Invalids++
+			}
+		default:
+			panic("unknown field " + strconv.Quote(field.Name))
+		}
+	}
+	out.Dispatch(ctx)
+	if out.Invalids > 0 {
+		return graphql.Null
+	}
+
+	atomic.AddInt32(&ec.deferred, int32(len(deferred)))
+
+	for label, dfs := range deferred {
+		ec.processDeferredGroup(graphql.DeferredGroup{
+			Label:    label,
+			Path:     graphql.GetPath(ctx),
+			FieldSet: dfs,
+			Context:  ctx,
+		})
+	}
+
+	return out
+}
+
+var portfolioImplementors = []string{"Portfolio"}
+
+func (ec *executionContext) _Portfolio(ctx context.Context, sel ast.SelectionSet, obj *model.Portfolio) graphql.Marshaler {
+	fields := graphql.CollectFields(ec.OperationContext, sel, portfolioImplementors)
+
+	out := graphql.NewFieldSet(fields)
+	deferred := make(map[string]*graphql.FieldSet)
+	for i, field := range fields {
+		switch field.Name {
+		case "__typename":
+			out.Values[i] = graphql.MarshalString("Portfolio")
+		case "id":
+			out.Values[i] = ec._Portfolio_id(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				out.Invalids++
+			}
+		case "workspaceId":
+			out.Values[i] = ec._Portfolio_workspaceId(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				out.Invalids++
+			}
+		case "title":
+			out.Values[i] = ec._Portfolio_title(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				out.Invalids++
+			}
+		case "contactProfileId":
+			out.Values[i] = ec._Portfolio_contactProfileId(ctx, field, obj)
+		case "createdBy":
+			out.Values[i] = ec._Portfolio_createdBy(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				out.Invalids++
+			}
+		case "createdAt":
+			out.Values[i] = ec._Portfolio_createdAt(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				out.Invalids++
+			}
+		case "updatedAt":
+			out.Values[i] = ec._Portfolio_updatedAt(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				out.Invalids++
+			}
+		default:
+			panic("unknown field " + strconv.Quote(field.Name))
+		}
+	}
+	out.Dispatch(ctx)
+	if out.Invalids > 0 {
+		return graphql.Null
+	}
+
+	atomic.AddInt32(&ec.deferred, int32(len(deferred)))
+
+	for label, dfs := range deferred {
+		ec.processDeferredGroup(graphql.DeferredGroup{
+			Label:    label,
+			Path:     graphql.GetPath(ctx),
+			FieldSet: dfs,
+			Context:  ctx,
+		})
+	}
+
+	return out
+}
+
+var portfolioSettingsImplementors = []string{"PortfolioSettings"}
+
+func (ec *executionContext) _PortfolioSettings(ctx context.Context, sel ast.SelectionSet, obj *model.PortfolioSettings) graphql.Marshaler {
+	fields := graphql.CollectFields(ec.OperationContext, sel, portfolioSettingsImplementors)
+
+	out := graphql.NewFieldSet(fields)
+	deferred := make(map[string]*graphql.FieldSet)
+	for i, field := range fields {
+		switch field.Name {
+		case "__typename":
+			out.Values[i] = graphql.MarshalString("PortfolioSettings")
+		case "portfolioId":
+			out.Values[i] = ec._PortfolioSettings_portfolioId(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				out.Invalids++
+			}
+		case "themeId":
+			out.Values[i] = ec._PortfolioSettings_themeId(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				out.Invalids++
+			}
+		case "fontSize":
+			out.Values[i] = ec._PortfolioSettings_fontSize(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				out.Invalids++
+			}
+		case "pageFormat":
+			out.Values[i] = ec._PortfolioSettings_pageFormat(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				out.Invalids++
+			}
+		case "marginHorizontalMm":
+			out.Values[i] = ec._PortfolioSettings_marginHorizontalMm(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				out.Invalids++
+			}
+		case "marginVerticalMm":
+			out.Values[i] = ec._PortfolioSettings_marginVerticalMm(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				out.Invalids++
+			}
+		case "showPhoto":
+			out.Values[i] = ec._PortfolioSettings_showPhoto(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				out.Invalids++
+			}
+		case "locale":
+			out.Values[i] = ec._PortfolioSettings_locale(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				out.Invalids++
+			}
+		default:
+			panic("unknown field " + strconv.Quote(field.Name))
+		}
+	}
+	out.Dispatch(ctx)
+	if out.Invalids > 0 {
+		return graphql.Null
+	}
+
+	atomic.AddInt32(&ec.deferred, int32(len(deferred)))
+
+	for label, dfs := range deferred {
+		ec.processDeferredGroup(graphql.DeferredGroup{
+			Label:    label,
+			Path:     graphql.GetPath(ctx),
+			FieldSet: dfs,
+			Context:  ctx,
+		})
+	}
+
+	return out
+}
+
+var portfolioWithContentImplementors = []string{"PortfolioWithContent"}
+
+func (ec *executionContext) _PortfolioWithContent(ctx context.Context, sel ast.SelectionSet, obj *model.PortfolioWithContent) graphql.Marshaler {
+	fields := graphql.CollectFields(ec.OperationContext, sel, portfolioWithContentImplementors)
+
+	out := graphql.NewFieldSet(fields)
+	deferred := make(map[string]*graphql.FieldSet)
+	for i, field := range fields {
+		switch field.Name {
+		case "__typename":
+			out.Values[i] = graphql.MarshalString("PortfolioWithContent")
+		case "portfolio":
+			out.Values[i] = ec._PortfolioWithContent_portfolio(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				out.Invalids++
+			}
+		case "contactProfile":
+			out.Values[i] = ec._PortfolioWithContent_contactProfile(ctx, field, obj)
+		case "settings":
+			out.Values[i] = ec._PortfolioWithContent_settings(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				out.Invalids++
+			}
+		case "theme":
+			out.Values[i] = ec._PortfolioWithContent_theme(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				out.Invalids++
+			}
+		case "sections":
+			out.Values[i] = ec._PortfolioWithContent_sections(ctx, field, obj)
 			if out.Values[i] == graphql.Null {
 				out.Invalids++
 			}
@@ -14771,6 +18039,88 @@ func (ec *executionContext) _Query(ctx context.Context, sel ast.SelectionSet) gr
 					}
 				}()
 				res = ec._Query_resumeWithContent(ctx, field)
+				return res
+			}
+
+			rrm := func(ctx context.Context) graphql.Marshaler {
+				return ec.OperationContext.RootResolverMiddleware(ctx,
+					func(ctx context.Context) graphql.Marshaler { return innerFunc(ctx, out) })
+			}
+
+			out.Concurrently(i, func(ctx context.Context) graphql.Marshaler { return rrm(innerCtx) })
+		case "portfolios":
+			field := field
+
+			innerFunc := func(ctx context.Context, fs *graphql.FieldSet) (res graphql.Marshaler) {
+				defer func() {
+					if r := recover(); r != nil {
+						ec.Error(ctx, ec.Recover(ctx, r))
+					}
+				}()
+				res = ec._Query_portfolios(ctx, field)
+				if res == graphql.Null {
+					atomic.AddUint32(&fs.Invalids, 1)
+				}
+				return res
+			}
+
+			rrm := func(ctx context.Context) graphql.Marshaler {
+				return ec.OperationContext.RootResolverMiddleware(ctx,
+					func(ctx context.Context) graphql.Marshaler { return innerFunc(ctx, out) })
+			}
+
+			out.Concurrently(i, func(ctx context.Context) graphql.Marshaler { return rrm(innerCtx) })
+		case "portfolio":
+			field := field
+
+			innerFunc := func(ctx context.Context, _ *graphql.FieldSet) (res graphql.Marshaler) {
+				defer func() {
+					if r := recover(); r != nil {
+						ec.Error(ctx, ec.Recover(ctx, r))
+					}
+				}()
+				res = ec._Query_portfolio(ctx, field)
+				return res
+			}
+
+			rrm := func(ctx context.Context) graphql.Marshaler {
+				return ec.OperationContext.RootResolverMiddleware(ctx,
+					func(ctx context.Context) graphql.Marshaler { return innerFunc(ctx, out) })
+			}
+
+			out.Concurrently(i, func(ctx context.Context) graphql.Marshaler { return rrm(innerCtx) })
+		case "portfolioWithContent":
+			field := field
+
+			innerFunc := func(ctx context.Context, _ *graphql.FieldSet) (res graphql.Marshaler) {
+				defer func() {
+					if r := recover(); r != nil {
+						ec.Error(ctx, ec.Recover(ctx, r))
+					}
+				}()
+				res = ec._Query_portfolioWithContent(ctx, field)
+				return res
+			}
+
+			rrm := func(ctx context.Context) graphql.Marshaler {
+				return ec.OperationContext.RootResolverMiddleware(ctx,
+					func(ctx context.Context) graphql.Marshaler { return innerFunc(ctx, out) })
+			}
+
+			out.Concurrently(i, func(ctx context.Context) graphql.Marshaler { return rrm(innerCtx) })
+		case "portfoliosForSection":
+			field := field
+
+			innerFunc := func(ctx context.Context, fs *graphql.FieldSet) (res graphql.Marshaler) {
+				defer func() {
+					if r := recover(); r != nil {
+						ec.Error(ctx, ec.Recover(ctx, r))
+					}
+				}()
+				res = ec._Query_portfoliosForSection(ctx, field)
+				if res == graphql.Null {
+					atomic.AddUint32(&fs.Invalids, 1)
+				}
 				return res
 			}
 
@@ -15399,6 +18749,11 @@ func (ec *executionContext) _SectionItemUsage(ctx context.Context, sel ast.Selec
 			if out.Values[i] == graphql.Null {
 				out.Invalids++
 			}
+		case "portfolios":
+			out.Values[i] = ec._SectionItemUsage_portfolios(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				out.Invalids++
+			}
 		default:
 			panic("unknown field " + strconv.Quote(field.Name))
 		}
@@ -15792,6 +19147,11 @@ func (ec *executionContext) _WorkspaceStats(ctx context.Context, sel ast.Selecti
 			if out.Values[i] == graphql.Null {
 				out.Invalids++
 			}
+		case "portfolioCount":
+			out.Values[i] = ec._WorkspaceStats_portfolioCount(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				out.Invalids++
+			}
 		case "sectionCount":
 			out.Values[i] = ec._WorkspaceStats_sectionCount(ctx, field, obj)
 			if out.Values[i] == graphql.Null {
@@ -16159,6 +19519,11 @@ func (ec *executionContext) ___Type(ctx context.Context, sel ast.SelectionSet, o
 // endregion **************************** object.gotpl ****************************
 
 // region    ***************************** type.gotpl *****************************
+
+func (ec *executionContext) unmarshalNAddPortfolioSectionItemInput2githubᚗcomᚋleoᚋaiᚑweekendᚋbackendᚋgraphᚋmodelᚐAddPortfolioSectionItemInput(ctx context.Context, v any) (model.AddPortfolioSectionItemInput, error) {
+	res, err := ec.unmarshalInputAddPortfolioSectionItemInput(ctx, v)
+	return res, graphql.ErrorOnPath(ctx, err)
+}
 
 func (ec *executionContext) unmarshalNAddResumeSectionItemInput2githubᚗcomᚋleoᚋaiᚑweekendᚋbackendᚋgraphᚋmodelᚐAddResumeSectionItemInput(ctx context.Context, v any) (model.AddResumeSectionItemInput, error) {
 	res, err := ec.unmarshalInputAddResumeSectionItemInput(ctx, v)
@@ -16674,6 +20039,92 @@ func (ec *executionContext) marshalNPageFormat2githubᚗcomᚋleoᚋaiᚑweekend
 	return v
 }
 
+func (ec *executionContext) marshalNPortfolio2githubᚗcomᚋleoᚋaiᚑweekendᚋbackendᚋgraphᚋmodelᚐPortfolio(ctx context.Context, sel ast.SelectionSet, v model.Portfolio) graphql.Marshaler {
+	return ec._Portfolio(ctx, sel, &v)
+}
+
+func (ec *executionContext) marshalNPortfolio2ᚕᚖgithubᚗcomᚋleoᚋaiᚑweekendᚋbackendᚋgraphᚋmodelᚐPortfolioᚄ(ctx context.Context, sel ast.SelectionSet, v []*model.Portfolio) graphql.Marshaler {
+	ret := make(graphql.Array, len(v))
+	var wg sync.WaitGroup
+	isLen1 := len(v) == 1
+	if !isLen1 {
+		wg.Add(len(v))
+	}
+	for i := range v {
+		i := i
+		fc := &graphql.FieldContext{
+			Index:  &i,
+			Result: &v[i],
+		}
+		ctx := graphql.WithFieldContext(ctx, fc)
+		f := func(i int) {
+			defer func() {
+				if r := recover(); r != nil {
+					ec.Error(ctx, ec.Recover(ctx, r))
+					ret = nil
+				}
+			}()
+			if !isLen1 {
+				defer wg.Done()
+			}
+			ret[i] = ec.marshalNPortfolio2ᚖgithubᚗcomᚋleoᚋaiᚑweekendᚋbackendᚋgraphᚋmodelᚐPortfolio(ctx, sel, v[i])
+		}
+		if isLen1 {
+			f(i)
+		} else {
+			go f(i)
+		}
+
+	}
+	wg.Wait()
+
+	for _, e := range ret {
+		if e == graphql.Null {
+			return graphql.Null
+		}
+	}
+
+	return ret
+}
+
+func (ec *executionContext) marshalNPortfolio2ᚖgithubᚗcomᚋleoᚋaiᚑweekendᚋbackendᚋgraphᚋmodelᚐPortfolio(ctx context.Context, sel ast.SelectionSet, v *model.Portfolio) graphql.Marshaler {
+	if v == nil {
+		if !graphql.HasFieldError(ctx, graphql.GetFieldContext(ctx)) {
+			ec.Errorf(ctx, "the requested element is null which the schema does not allow")
+		}
+		return graphql.Null
+	}
+	return ec._Portfolio(ctx, sel, v)
+}
+
+func (ec *executionContext) marshalNPortfolioSettings2githubᚗcomᚋleoᚋaiᚑweekendᚋbackendᚋgraphᚋmodelᚐPortfolioSettings(ctx context.Context, sel ast.SelectionSet, v model.PortfolioSettings) graphql.Marshaler {
+	return ec._PortfolioSettings(ctx, sel, &v)
+}
+
+func (ec *executionContext) marshalNPortfolioSettings2ᚖgithubᚗcomᚋleoᚋaiᚑweekendᚋbackendᚋgraphᚋmodelᚐPortfolioSettings(ctx context.Context, sel ast.SelectionSet, v *model.PortfolioSettings) graphql.Marshaler {
+	if v == nil {
+		if !graphql.HasFieldError(ctx, graphql.GetFieldContext(ctx)) {
+			ec.Errorf(ctx, "the requested element is null which the schema does not allow")
+		}
+		return graphql.Null
+	}
+	return ec._PortfolioSettings(ctx, sel, v)
+}
+
+func (ec *executionContext) marshalNPortfolioWithContent2githubᚗcomᚋleoᚋaiᚑweekendᚋbackendᚋgraphᚋmodelᚐPortfolioWithContent(ctx context.Context, sel ast.SelectionSet, v model.PortfolioWithContent) graphql.Marshaler {
+	return ec._PortfolioWithContent(ctx, sel, &v)
+}
+
+func (ec *executionContext) marshalNPortfolioWithContent2ᚖgithubᚗcomᚋleoᚋaiᚑweekendᚋbackendᚋgraphᚋmodelᚐPortfolioWithContent(ctx context.Context, sel ast.SelectionSet, v *model.PortfolioWithContent) graphql.Marshaler {
+	if v == nil {
+		if !graphql.HasFieldError(ctx, graphql.GetFieldContext(ctx)) {
+			ec.Errorf(ctx, "the requested element is null which the schema does not allow")
+		}
+		return graphql.Null
+	}
+	return ec._PortfolioWithContent(ctx, sel, v)
+}
+
 func (ec *executionContext) marshalNProfilePhotoUpload2githubᚗcomᚋleoᚋaiᚑweekendᚋbackendᚋgraphᚋmodelᚐProfilePhotoUpload(ctx context.Context, sel ast.SelectionSet, v model.ProfilePhotoUpload) graphql.Marshaler {
 	return ec._ProfilePhotoUpload(ctx, sel, &v)
 }
@@ -17090,6 +20541,26 @@ func (ec *executionContext) marshalNTwinEntryType2githubᚗcomᚋleoᚋaiᚑweek
 
 func (ec *executionContext) unmarshalNUpdateContactProfileInput2githubᚗcomᚋleoᚋaiᚑweekendᚋbackendᚋgraphᚋmodelᚐUpdateContactProfileInput(ctx context.Context, v any) (model.UpdateContactProfileInput, error) {
 	res, err := ec.unmarshalInputUpdateContactProfileInput(ctx, v)
+	return res, graphql.ErrorOnPath(ctx, err)
+}
+
+func (ec *executionContext) unmarshalNUpdatePortfolioContactProfileInput2githubᚗcomᚋleoᚋaiᚑweekendᚋbackendᚋgraphᚋmodelᚐUpdatePortfolioContactProfileInput(ctx context.Context, v any) (model.UpdatePortfolioContactProfileInput, error) {
+	res, err := ec.unmarshalInputUpdatePortfolioContactProfileInput(ctx, v)
+	return res, graphql.ErrorOnPath(ctx, err)
+}
+
+func (ec *executionContext) unmarshalNUpdatePortfolioSectionItemInput2githubᚗcomᚋleoᚋaiᚑweekendᚋbackendᚋgraphᚋmodelᚐUpdatePortfolioSectionItemInput(ctx context.Context, v any) (model.UpdatePortfolioSectionItemInput, error) {
+	res, err := ec.unmarshalInputUpdatePortfolioSectionItemInput(ctx, v)
+	return res, graphql.ErrorOnPath(ctx, err)
+}
+
+func (ec *executionContext) unmarshalNUpdatePortfolioSectionItemVisibilityInput2githubᚗcomᚋleoᚋaiᚑweekendᚋbackendᚋgraphᚋmodelᚐUpdatePortfolioSectionItemVisibilityInput(ctx context.Context, v any) (model.UpdatePortfolioSectionItemVisibilityInput, error) {
+	res, err := ec.unmarshalInputUpdatePortfolioSectionItemVisibilityInput(ctx, v)
+	return res, graphql.ErrorOnPath(ctx, err)
+}
+
+func (ec *executionContext) unmarshalNUpdatePortfolioSettingsInput2githubᚗcomᚋleoᚋaiᚑweekendᚋbackendᚋgraphᚋmodelᚐUpdatePortfolioSettingsInput(ctx context.Context, v any) (model.UpdatePortfolioSettingsInput, error) {
+	res, err := ec.unmarshalInputUpdatePortfolioSettingsInput(ctx, v)
 	return res, graphql.ErrorOnPath(ctx, err)
 }
 
@@ -17603,6 +21074,20 @@ func (ec *executionContext) marshalOPageFormat2ᚖgithubᚗcomᚋleoᚋaiᚑweek
 		return graphql.Null
 	}
 	return v
+}
+
+func (ec *executionContext) marshalOPortfolio2ᚖgithubᚗcomᚋleoᚋaiᚑweekendᚋbackendᚋgraphᚋmodelᚐPortfolio(ctx context.Context, sel ast.SelectionSet, v *model.Portfolio) graphql.Marshaler {
+	if v == nil {
+		return graphql.Null
+	}
+	return ec._Portfolio(ctx, sel, v)
+}
+
+func (ec *executionContext) marshalOPortfolioWithContent2ᚖgithubᚗcomᚋleoᚋaiᚑweekendᚋbackendᚋgraphᚋmodelᚐPortfolioWithContent(ctx context.Context, sel ast.SelectionSet, v *model.PortfolioWithContent) graphql.Marshaler {
+	if v == nil {
+		return graphql.Null
+	}
+	return ec._PortfolioWithContent(ctx, sel, v)
 }
 
 func (ec *executionContext) marshalOResume2ᚖgithubᚗcomᚋleoᚋaiᚑweekendᚋbackendᚋgraphᚋmodelᚐResume(ctx context.Context, sel ast.SelectionSet, v *model.Resume) graphql.Marshaler {

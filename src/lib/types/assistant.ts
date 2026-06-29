@@ -5,12 +5,15 @@ export type AssistantView =
   | "sections"
   | "items"
   | "resume_detail"
+  | "portfolios"
+  | "portfolio_detail"
   | "digital_twin"
   | "job_tracker";
 
 export interface AssistantContext {
   view: AssistantView;
   resumeId?: string;
+  portfolioId?: string;
   sectionId?: string;
   sectionItemId?: string;
   jobId?: string;
@@ -55,7 +58,9 @@ export interface AssistantTurnResult {
   messages: AssistantMessage[];
   actionLogs: AssistantActionLog[];
   affectedResumeIds: string[];
+  affectedPortfolioIds: string[];
   resumeWithContent?: import("@/lib/types/cv").ResumeWithContent;
+  portfolioWithContent?: import("@/lib/types/portfolio").PortfolioWithContent;
 }
 
 export type AgentPhase =

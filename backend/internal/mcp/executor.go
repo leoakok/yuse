@@ -21,6 +21,18 @@ type Executor interface {
 	UpdateResumeSectionItem(input model.UpdateResumeSectionItemInput) (*model.ResumeWithContent, error)
 	UpdateResumeSectionItemVisibility(input model.UpdateResumeSectionItemVisibilityInput) (*model.ResumeWithContent, error)
 	UpdateResumeSettings(input model.UpdateResumeSettingsInput) (*model.ResumeSettings, error)
+	ListPortfolios() []*model.Portfolio
+	GetPortfolio(id string) (*model.Portfolio, error)
+	CreatePortfolio(title string) *model.Portfolio
+	DuplicatePortfolio(id string) (*model.Portfolio, error)
+	DeletePortfolio(id string) (bool, error)
+	UpdatePortfolio(id string, title *string, contactProfileID *string) (*model.Portfolio, error)
+	GetPortfolioWithContent(id string) (*model.PortfolioWithContent, error)
+	UpdatePortfolioContactProfile(ctx context.Context, input model.UpdatePortfolioContactProfileInput) (*model.PortfolioWithContent, error)
+	AddPortfolioSectionItem(input model.AddPortfolioSectionItemInput) (*model.PortfolioWithContent, error)
+	UpdatePortfolioSectionItem(input model.UpdatePortfolioSectionItemInput) (*model.PortfolioWithContent, error)
+	UpdatePortfolioSectionItemVisibility(input model.UpdatePortfolioSectionItemVisibilityInput) (*model.PortfolioWithContent, error)
+	UpdatePortfolioSettings(input model.UpdatePortfolioSettingsInput) (*model.PortfolioSettings, error)
 	ListSections(sectionType *model.SectionType) []*model.Section
 	ListCvThemes() []*model.CvTheme
 	ListTwinEntries() []*model.TwinEntry

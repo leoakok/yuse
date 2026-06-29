@@ -27,6 +27,8 @@ enum AssistantView {
   SECTIONS
   ITEMS
   RESUME_DETAIL
+  PORTFOLIOS
+  PORTFOLIO_DETAIL
   DIGITAL_TWIN
   JOB_TRACKER
 }
@@ -109,6 +111,7 @@ type Workspace {
 
 type WorkspaceStats {
   resumeCount: Int!
+  portfolioCount: Int!
   sectionCount: Int!
   sectionItemCount: Int!
 }
@@ -195,10 +198,40 @@ type ResumeWithContent {
   sections: [SectionWithItems!]!
 }
 
+type Portfolio {
+  id: ID!
+  workspaceId: ID!
+  title: String!
+  contactProfileId: ID
+  createdBy: ID!
+  createdAt: DateTime!
+  updatedAt: DateTime!
+}
+
+type PortfolioSettings {
+  portfolioId: ID!
+  themeId: ID!
+  fontSize: FontSize!
+  pageFormat: PageFormat!
+  marginHorizontalMm: Float!
+  marginVerticalMm: Float!
+  showPhoto: Boolean!
+  locale: String!
+}
+
+type PortfolioWithContent {
+  portfolio: Portfolio!
+  contactProfile: ContactProfile
+  settings: PortfolioSettings!
+  theme: CvTheme!
+  sections: [SectionWithItems!]!
+}
+
 type SectionItemUsage {
   sectionItem: SectionItem!
   sections: [Section!]!
   resumes: [Resume!]!
+  portfolios: [Portfolio!]!
 }
 
 type TwinEntry {
@@ -233,6 +266,7 @@ type TrackedJob {
 input AssistantContextInput {
   view: AssistantView!
   resumeId: ID
+  portfolioId: ID
   sectionId: ID
   sectionItemId: ID
   jobId: ID
@@ -276,7 +310,9 @@ type AssistantTurnResult {
   messages: [AssistantMessage!]!
   actionLogs: [AssistantActionLog!]!
   affectedResumeIds: [ID!]!
+  affectedPortfolioIds: [ID!]!
   resumeWithContent: ResumeWithContent
+  portfolioWithContent: PortfolioWithContent
 }
 
 type Query {
@@ -292,6 +328,10 @@ type Query {
   contactProfiles: [ContactProfile!]!
   cvThemes: [CvTheme!]!
   resumeWithContent(id: ID!): ResumeWithContent
+  portfolios: [Portfolio!]!
+  portfolio(id: ID!): Portfolio
+  portfolioWithContent(id: ID!): PortfolioWithContent
+  portfoliosForSection(sectionId: ID!): [Portfolio!]!
   sectionItemUsage(id: ID!): SectionItemUsage
   sectionItemsForSection(sectionId: ID!): [SectionItem!]!
   resumesForSection(sectionId: ID!): [Resume!]!
@@ -379,6 +419,54 @@ input UpdateContactProfileInput {
   photoUrl: String
 }
 
+input UpdatePortfolioContactProfileInput {
+  portfolioId: ID!
+  fullName: String
+  headline: String
+  email: String
+  phone: String
+  location: String
+  website: String
+  linkedIn: String
+  github: String
+  photoUrl: String
+}
+
+input UpdatePortfolioSettingsInput {
+  portfolioId: ID!
+  pageFormat: PageFormat
+  fontSize: FontSize
+  marginHorizontalMm: Float
+  marginVerticalMm: Float
+  themeId: ID
+  showPhoto: Boolean
+  locale: String
+}
+
+input UpdatePortfolioSectionItemVisibilityInput {
+  portfolioId: ID!
+  sectionId: ID!
+  sectionItemId: ID!
+  showInPreview: Boolean!
+}
+
+input AddPortfolioSectionItemInput {
+  portfolioId: ID!
+  sectionId: ID!
+  headline: String
+  body: String
+  metadata: JSON
+}
+
+input UpdatePortfolioSectionItemInput {
+  portfolioId: ID!
+  sectionId: ID!
+  sectionItemId: ID!
+  headline: String
+  body: String
+  metadata: JSON
+}
+
 type ProfilePhotoUpload {
   uploadUrl: String!
   photoUrl: String!
@@ -397,6 +485,16 @@ type Mutation {
   addResumeSectionItem(input: AddResumeSectionItemInput!): ResumeWithContent!
   deleteSectionItem(resumeId: ID!, sectionItemId: ID!): ResumeWithContent!
   updateContactProfile(input: UpdateContactProfileInput!): ResumeWithContent!
+  createPortfolio(title: String!): Portfolio!
+  duplicatePortfolio(id: ID!): Portfolio!
+  deletePortfolio(id: ID!): Boolean!
+  updatePortfolio(id: ID!, title: String, contactProfileId: ID): Portfolio!
+  updatePortfolioSettings(input: UpdatePortfolioSettingsInput!): PortfolioSettings!
+  updatePortfolioSectionItemVisibility(input: UpdatePortfolioSectionItemVisibilityInput!): PortfolioWithContent!
+  updatePortfolioSectionItem(input: UpdatePortfolioSectionItemInput!): PortfolioWithContent!
+  addPortfolioSectionItem(input: AddPortfolioSectionItemInput!): PortfolioWithContent!
+  deletePortfolioSectionItem(portfolioId: ID!, sectionItemId: ID!): PortfolioWithContent!
+  updatePortfolioContactProfile(input: UpdatePortfolioContactProfileInput!): PortfolioWithContent!
   requestProfilePhotoUpload(contentType: String!, fileName: String!): ProfilePhotoUpload!
   createTwinEntry(input: CreateTwinEntryInput!): TwinEntry!
   updateTwinEntry(input: UpdateTwinEntryInput!): TwinEntry!

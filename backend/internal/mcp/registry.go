@@ -17,8 +17,9 @@ type Execution struct {
 	Arguments         map[string]any
 	Result            any
 	Error             string
-	AffectedResumeIDs []string
-	DurationMs        int64
+	AffectedResumeIDs   []string
+	AffectedPortfolioIDs []string
+	DurationMs          int64
 }
 
 // Registry holds MCP/OpenAI tool definitions and dispatches execution to the platform.
@@ -730,6 +731,9 @@ func (r *Registry) ExecuteWithProgress(toolName string, argsJSON []byte, progres
 		exec.Result = result
 
 	default:
+		if r.executePortfolioTool(toolName, args, &exec) {
+			return exec
+		}
 		exec.Error = fmt.Sprintf("unknown tool: %s", toolName)
 	}
 

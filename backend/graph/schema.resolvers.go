@@ -62,6 +62,56 @@ func (r *mutationResolver) UpdateContactProfile(ctx context.Context, input model
 	return scope.CV(ctx).UpdateContactProfile(ctx, input)
 }
 
+// CreatePortfolio is the resolver for the createPortfolio field.
+func (r *mutationResolver) CreatePortfolio(ctx context.Context, title string) (*model.Portfolio, error) {
+	return scope.CV(ctx).CreatePortfolio(title), nil
+}
+
+// DuplicatePortfolio is the resolver for the duplicatePortfolio field.
+func (r *mutationResolver) DuplicatePortfolio(ctx context.Context, id string) (*model.Portfolio, error) {
+	return scope.CV(ctx).DuplicatePortfolio(id)
+}
+
+// DeletePortfolio is the resolver for the deletePortfolio field.
+func (r *mutationResolver) DeletePortfolio(ctx context.Context, id string) (bool, error) {
+	return scope.CV(ctx).DeletePortfolio(id)
+}
+
+// UpdatePortfolio is the resolver for the updatePortfolio field.
+func (r *mutationResolver) UpdatePortfolio(ctx context.Context, id string, title *string, contactProfileID *string) (*model.Portfolio, error) {
+	return scope.CV(ctx).UpdatePortfolio(id, title, contactProfileID)
+}
+
+// UpdatePortfolioSettings is the resolver for the updatePortfolioSettings field.
+func (r *mutationResolver) UpdatePortfolioSettings(ctx context.Context, input model.UpdatePortfolioSettingsInput) (*model.PortfolioSettings, error) {
+	return scope.CV(ctx).UpdatePortfolioSettings(input)
+}
+
+// UpdatePortfolioSectionItemVisibility is the resolver for the updatePortfolioSectionItemVisibility field.
+func (r *mutationResolver) UpdatePortfolioSectionItemVisibility(ctx context.Context, input model.UpdatePortfolioSectionItemVisibilityInput) (*model.PortfolioWithContent, error) {
+	return scope.CV(ctx).UpdatePortfolioSectionItemVisibility(input)
+}
+
+// UpdatePortfolioSectionItem is the resolver for the updatePortfolioSectionItem field.
+func (r *mutationResolver) UpdatePortfolioSectionItem(ctx context.Context, input model.UpdatePortfolioSectionItemInput) (*model.PortfolioWithContent, error) {
+	return scope.CV(ctx).UpdatePortfolioSectionItem(input)
+}
+
+// AddPortfolioSectionItem is the resolver for the addPortfolioSectionItem field.
+func (r *mutationResolver) AddPortfolioSectionItem(ctx context.Context, input model.AddPortfolioSectionItemInput) (*model.PortfolioWithContent, error) {
+	return scope.CV(ctx).AddPortfolioSectionItem(input)
+}
+
+// DeletePortfolioSectionItem is the resolver for the deletePortfolioSectionItem field.
+func (r *mutationResolver) DeletePortfolioSectionItem(ctx context.Context, portfolioID string, sectionItemID string) (*model.PortfolioWithContent, error) {
+	return scope.CV(ctx).DeletePortfolioSectionItem(portfolioID, sectionItemID)
+}
+
+// UpdatePortfolioContactProfile is the resolver for the updatePortfolioContactProfile field.
+func (r *mutationResolver) UpdatePortfolioContactProfile(ctx context.Context, input model.UpdatePortfolioContactProfileInput) (*model.PortfolioWithContent, error) {
+	return scope.CV(ctx).UpdatePortfolioContactProfile(ctx, input)
+}
+
 // RequestProfilePhotoUpload is the resolver for the requestProfilePhotoUpload field.
 func (r *mutationResolver) RequestProfilePhotoUpload(ctx context.Context, contentType string, fileName string) (*model.ProfilePhotoUpload, error) {
 	return scope.CV(ctx).RequestProfilePhotoUpload(ctx, contentType, fileName)
@@ -191,6 +241,38 @@ func (r *queryResolver) ResumeWithContent(ctx context.Context, id string) (*mode
 		return nil, nil
 	}
 	return content, err
+}
+
+// Portfolios is the resolver for the portfolios field.
+func (r *queryResolver) Portfolios(ctx context.Context) ([]*model.Portfolio, error) {
+	return scope.CV(ctx).ListPortfolios(), nil
+}
+
+// Portfolio is the resolver for the portfolio field.
+func (r *queryResolver) Portfolio(ctx context.Context, id string) (*model.Portfolio, error) {
+	portfolio, err := scope.CV(ctx).GetPortfolio(id)
+	if cv.NotFound(err) {
+		return nil, nil
+	}
+	return portfolio, err
+}
+
+// PortfolioWithContent is the resolver for the portfolioWithContent field.
+func (r *queryResolver) PortfolioWithContent(ctx context.Context, id string) (*model.PortfolioWithContent, error) {
+	content, err := scope.CV(ctx).GetPortfolioWithContent(id)
+	if cv.NotFound(err) {
+		return nil, nil
+	}
+	return content, err
+}
+
+// PortfoliosForSection is the resolver for the portfoliosForSection field.
+func (r *queryResolver) PortfoliosForSection(ctx context.Context, sectionID string) ([]*model.Portfolio, error) {
+	portfolios, err := scope.CV(ctx).PortfoliosForSection(sectionID)
+	if cv.NotFound(err) {
+		return nil, nil
+	}
+	return portfolios, err
 }
 
 // SectionItemUsage is the resolver for the sectionItemUsage field.

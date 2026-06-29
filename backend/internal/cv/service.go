@@ -502,12 +502,16 @@ func (s *Service) sendAssistantMessage(
 	messageID := uuid.NewString()
 	actionLogs := make([]*model.AssistantActionLog, 0, len(turn.Executions))
 	affectedResumeIDs := map[string]struct{}{}
+	affectedPortfolioIDs := map[string]struct{}{}
 
 	for _, exec := range turn.Executions {
 		logEntry := executionToActionLog(messageID, exec)
 		actionLogs = append(actionLogs, logEntry)
 		for _, rid := range exec.AffectedResumeIDs {
 			affectedResumeIDs[rid] = struct{}{}
+		}
+		for _, pid := range exec.AffectedPortfolioIDs {
+			affectedPortfolioIDs[pid] = struct{}{}
 		}
 		s.store.AppendActionLog(logEntry)
 	}
@@ -527,6 +531,11 @@ func (s *Service) sendAssistantMessage(
 		affected = append(affected, rid)
 	}
 
+	affectedPortfolios := make([]string, 0, len(affectedPortfolioIDs))
+	for pid := range affectedPortfolioIDs {
+		affectedPortfolios = append(affectedPortfolios, pid)
+	}
+
 	var resumeWithContent *model.ResumeWithContent
 	if assistantContext.ResumeID != nil {
 		if content, err := s.store.ResumeWithContent(*assistantContext.ResumeID); err == nil {
@@ -539,11 +548,25 @@ func (s *Service) sendAssistantMessage(
 		}
 	}
 
+	var portfolioWithContent *model.PortfolioWithContent
+	if assistantContext.PortfolioID != nil {
+		if content, err := s.store.PortfolioWithContent(*assistantContext.PortfolioID); err == nil {
+			portfolioWithContent = content
+		}
+	}
+	if portfolioWithContent == nil && len(affectedPortfolios) > 0 {
+		if content, err := s.store.PortfolioWithContent(affectedPortfolios[len(affectedPortfolios)-1]); err == nil {
+			portfolioWithContent = content
+		}
+	}
+
 	return &model.AssistantTurnResult{
-		Messages:          s.store.ListAssistantMessages(thread.ID, 50),
-		ActionLogs:        actionLogs,
-		AffectedResumeIds: affected,
-		ResumeWithContent: resumeWithContent,
+		Messages:             s.store.ListAssistantMessages(thread.ID, 50),
+		ActionLogs:           actionLogs,
+		AffectedResumeIds:    affected,
+		AffectedPortfolioIds: affectedPortfolios,
+		ResumeWithContent:    resumeWithContent,
+		PortfolioWithContent: portfolioWithContent,
 	}, nil
 }
 
@@ -568,6 +591,9 @@ func contextToMap(input model.AssistantContextInput) map[string]any {
 	m := map[string]any{"view": string(input.View)}
 	if input.ResumeID != nil {
 		m["resumeId"] = *input.ResumeID
+	}
+	if input.PortfolioID != nil {
+		m["portfolioId"] = *input.PortfolioID
 	}
 	if input.SectionID != nil {
 		m["sectionId"] = *input.SectionID

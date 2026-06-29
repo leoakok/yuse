@@ -27,7 +27,7 @@ import type {
   TrackedJob,
   UpdateTrackedJobInput,
 } from "@/lib/types/job";
-import { graphqlRequest } from "@/lib/graphql/client";
+import { mapPortfolioWithContent } from "@/lib/api/portfolio-api";
 import { DEFAULT_PAGE_MARGIN_MM } from "@/lib/cv/page-format";
 import { normalizeUserMessage } from "@/lib/assistant/attachments";
 import {
@@ -394,6 +394,8 @@ function mapAssistantContext(context: AssistantContext) {
     sections: "SECTIONS",
     items: "ITEMS",
     resume_detail: "RESUME_DETAIL",
+    portfolios: "PORTFOLIOS",
+    portfolio_detail: "PORTFOLIO_DETAIL",
     digital_twin: "DIGITAL_TWIN",
     job_tracker: "JOB_TRACKER",
   } as const;
@@ -401,6 +403,7 @@ function mapAssistantContext(context: AssistantContext) {
   return {
     view: viewMap[context.view],
     resumeId: context.resumeId,
+    portfolioId: context.portfolioId,
     sectionId: context.sectionId,
     sectionItemId: context.sectionItemId,
     jobId: context.jobId,
@@ -516,8 +519,12 @@ export async function sendAssistantMessage(
     return {
       ...data.sendAssistantMessage,
       messages: data.sendAssistantMessage.messages.map(mapAssistantMessage),
+      affectedPortfolioIds: data.sendAssistantMessage.affectedPortfolioIds ?? [],
       resumeWithContent: data.sendAssistantMessage.resumeWithContent
         ? mapResumeWithContent(data.sendAssistantMessage.resumeWithContent)
+        : undefined,
+      portfolioWithContent: data.sendAssistantMessage.portfolioWithContent
+        ? mapPortfolioWithContent(data.sendAssistantMessage.portfolioWithContent)
         : undefined,
     };
   } catch (error) {

@@ -6,6 +6,8 @@ import type {
 } from "@/lib/types/assistant";
 import type { ResumeWithContent } from "@/lib/types/cv";
 import { mapResumeWithContent } from "@/lib/api/cv-api";
+import { mapPortfolioWithContent } from "@/lib/api/portfolio-api";
+import type { PortfolioWithContent } from "@/lib/types/portfolio";
 import { AGENT_PHASE_LABELS } from "@/lib/types/assistant";
 import {
   appendActivity,
@@ -23,6 +25,7 @@ type StreamHandlers = {
   onDelta?: (text: string) => void;
   onStatus?: (label: string) => void;
   onResumePatch?: (resume: ResumeWithContent) => void;
+  onPortfolioPatch?: (portfolio: PortfolioWithContent) => void;
   hadComposerAttachments?: boolean;
 };
 
@@ -49,6 +52,8 @@ function mapAssistantContext(context: AssistantContext) {
     sections: "SECTIONS",
     items: "ITEMS",
     resume_detail: "RESUME_DETAIL",
+    portfolios: "PORTFOLIOS",
+    portfolio_detail: "PORTFOLIO_DETAIL",
     digital_twin: "DIGITAL_TWIN",
     job_tracker: "JOB_TRACKER",
   } as const;
@@ -56,6 +61,7 @@ function mapAssistantContext(context: AssistantContext) {
   return {
     view: viewMap[context.view],
     resumeId: context.resumeId,
+    portfolioId: context.portfolioId,
     sectionId: context.sectionId,
     sectionItemId: context.sectionItemId,
     jobId: context.jobId,
@@ -91,9 +97,18 @@ function mapTurnResult(raw: Record<string, unknown>): AssistantTurnResult {
     affectedResumeIds: Array.isArray(raw.affectedResumeIds)
       ? (raw.affectedResumeIds as string[])
       : [],
+    affectedPortfolioIds: Array.isArray(raw.affectedPortfolioIds)
+      ? (raw.affectedPortfolioIds as string[])
+      : [],
     resumeWithContent:
       raw.resumeWithContent && typeof raw.resumeWithContent === "object"
         ? mapResumeWithContent(raw.resumeWithContent as Parameters<typeof mapResumeWithContent>[0])
+        : undefined,
+    portfolioWithContent:
+      raw.portfolioWithContent && typeof raw.portfolioWithContent === "object"
+        ? mapPortfolioWithContent(
+            raw.portfolioWithContent as Parameters<typeof mapPortfolioWithContent>[0]
+          )
         : undefined,
   };
 }
@@ -217,6 +232,13 @@ export async function streamAssistantMessage(
           event.result.resumeWithContent as Parameters<typeof mapResumeWithContent>[0]
         );
         handlers.onResumePatch?.(resume);
+      }
+
+      if (event.type === "portfolio_patch" && event.result?.portfolioWithContent) {
+        const portfolio = mapPortfolioWithContent(
+          event.result.portfolioWithContent as Parameters<typeof mapPortfolioWithContent>[0]
+        );
+        handlers.onPortfolioPatch?.(portfolio);
       }
 
       if (event.type === "error") {

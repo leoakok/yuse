@@ -9,6 +9,14 @@ import (
 	"strconv"
 )
 
+type AddPortfolioSectionItemInput struct {
+	PortfolioID string         `json:"portfolioId"`
+	SectionID   string         `json:"sectionId"`
+	Headline    *string        `json:"headline,omitempty"`
+	Body        *string        `json:"body,omitempty"`
+	Metadata    map[string]any `json:"metadata,omitempty"`
+}
+
 type AddResumeSectionItemInput struct {
 	ResumeID  string         `json:"resumeId"`
 	SectionID string         `json:"sectionId"`
@@ -37,6 +45,7 @@ type AssistantAttachmentInput struct {
 type AssistantContextInput struct {
 	View          AssistantView `json:"view"`
 	ResumeID      *string       `json:"resumeId,omitempty"`
+	PortfolioID   *string       `json:"portfolioId,omitempty"`
 	SectionID     *string       `json:"sectionId,omitempty"`
 	SectionItemID *string       `json:"sectionItemId,omitempty"`
 	JobID         *string       `json:"jobId,omitempty"`
@@ -60,10 +69,12 @@ type AssistantThread struct {
 }
 
 type AssistantTurnResult struct {
-	Messages          []*AssistantMessage   `json:"messages"`
-	ActionLogs        []*AssistantActionLog `json:"actionLogs"`
-	AffectedResumeIds []string              `json:"affectedResumeIds"`
-	ResumeWithContent *ResumeWithContent    `json:"resumeWithContent,omitempty"`
+	Messages             []*AssistantMessage   `json:"messages"`
+	ActionLogs           []*AssistantActionLog `json:"actionLogs"`
+	AffectedResumeIds    []string              `json:"affectedResumeIds"`
+	AffectedPortfolioIds []string              `json:"affectedPortfolioIds"`
+	ResumeWithContent    *ResumeWithContent    `json:"resumeWithContent,omitempty"`
+	PortfolioWithContent *PortfolioWithContent `json:"portfolioWithContent,omitempty"`
 }
 
 type ConnectionStatus struct {
@@ -106,6 +117,35 @@ type CvTheme struct {
 }
 
 type Mutation struct {
+}
+
+type Portfolio struct {
+	ID               string  `json:"id"`
+	WorkspaceID      string  `json:"workspaceId"`
+	Title            string  `json:"title"`
+	ContactProfileID *string `json:"contactProfileId,omitempty"`
+	CreatedBy        string  `json:"createdBy"`
+	CreatedAt        string  `json:"createdAt"`
+	UpdatedAt        string  `json:"updatedAt"`
+}
+
+type PortfolioSettings struct {
+	PortfolioID        string     `json:"portfolioId"`
+	ThemeID            string     `json:"themeId"`
+	FontSize           FontSize   `json:"fontSize"`
+	PageFormat         PageFormat `json:"pageFormat"`
+	MarginHorizontalMm float64    `json:"marginHorizontalMm"`
+	MarginVerticalMm   float64    `json:"marginVerticalMm"`
+	ShowPhoto          bool       `json:"showPhoto"`
+	Locale             string     `json:"locale"`
+}
+
+type PortfolioWithContent struct {
+	Portfolio      *Portfolio          `json:"portfolio"`
+	ContactProfile *ContactProfile     `json:"contactProfile,omitempty"`
+	Settings       *PortfolioSettings  `json:"settings"`
+	Theme          *CvTheme            `json:"theme"`
+	Sections       []*SectionWithItems `json:"sections"`
 }
 
 type ProfilePhotoUpload struct {
@@ -175,6 +215,7 @@ type SectionItemUsage struct {
 	SectionItem *SectionItem `json:"sectionItem"`
 	Sections    []*Section   `json:"sections"`
 	Resumes     []*Resume    `json:"resumes"`
+	Portfolios  []*Portfolio `json:"portfolios"`
 }
 
 type SectionWithItems struct {
@@ -222,6 +263,46 @@ type UpdateContactProfileInput struct {
 	LinkedIn *string `json:"linkedIn,omitempty"`
 	Github   *string `json:"github,omitempty"`
 	PhotoURL *string `json:"photoUrl,omitempty"`
+}
+
+type UpdatePortfolioContactProfileInput struct {
+	PortfolioID string  `json:"portfolioId"`
+	FullName    *string `json:"fullName,omitempty"`
+	Headline    *string `json:"headline,omitempty"`
+	Email       *string `json:"email,omitempty"`
+	Phone       *string `json:"phone,omitempty"`
+	Location    *string `json:"location,omitempty"`
+	Website     *string `json:"website,omitempty"`
+	LinkedIn    *string `json:"linkedIn,omitempty"`
+	Github      *string `json:"github,omitempty"`
+	PhotoURL    *string `json:"photoUrl,omitempty"`
+}
+
+type UpdatePortfolioSectionItemInput struct {
+	PortfolioID   string         `json:"portfolioId"`
+	SectionID     string         `json:"sectionId"`
+	SectionItemID string         `json:"sectionItemId"`
+	Headline      *string        `json:"headline,omitempty"`
+	Body          *string        `json:"body,omitempty"`
+	Metadata      map[string]any `json:"metadata,omitempty"`
+}
+
+type UpdatePortfolioSectionItemVisibilityInput struct {
+	PortfolioID   string `json:"portfolioId"`
+	SectionID     string `json:"sectionId"`
+	SectionItemID string `json:"sectionItemId"`
+	ShowInPreview bool   `json:"showInPreview"`
+}
+
+type UpdatePortfolioSettingsInput struct {
+	PortfolioID        string      `json:"portfolioId"`
+	PageFormat         *PageFormat `json:"pageFormat,omitempty"`
+	FontSize           *FontSize   `json:"fontSize,omitempty"`
+	MarginHorizontalMm *float64    `json:"marginHorizontalMm,omitempty"`
+	MarginVerticalMm   *float64    `json:"marginVerticalMm,omitempty"`
+	ThemeID            *string     `json:"themeId,omitempty"`
+	ShowPhoto          *bool       `json:"showPhoto,omitempty"`
+	Locale             *string     `json:"locale,omitempty"`
 }
 
 type UpdateResumeSectionItemInput struct {
@@ -292,6 +373,7 @@ type Workspace struct {
 
 type WorkspaceStats struct {
 	ResumeCount      int `json:"resumeCount"`
+	PortfolioCount   int `json:"portfolioCount"`
 	SectionCount     int `json:"sectionCount"`
 	SectionItemCount int `json:"sectionItemCount"`
 }
@@ -356,12 +438,14 @@ func (e AssistantMessageRole) MarshalJSON() ([]byte, error) {
 type AssistantView string
 
 const (
-	AssistantViewResumes      AssistantView = "RESUMES"
-	AssistantViewSections     AssistantView = "SECTIONS"
-	AssistantViewItems        AssistantView = "ITEMS"
-	AssistantViewResumeDetail AssistantView = "RESUME_DETAIL"
-	AssistantViewDigitalTwin  AssistantView = "DIGITAL_TWIN"
-	AssistantViewJobTracker   AssistantView = "JOB_TRACKER"
+	AssistantViewResumes         AssistantView = "RESUMES"
+	AssistantViewSections        AssistantView = "SECTIONS"
+	AssistantViewItems           AssistantView = "ITEMS"
+	AssistantViewResumeDetail    AssistantView = "RESUME_DETAIL"
+	AssistantViewPortfolios      AssistantView = "PORTFOLIOS"
+	AssistantViewPortfolioDetail AssistantView = "PORTFOLIO_DETAIL"
+	AssistantViewDigitalTwin     AssistantView = "DIGITAL_TWIN"
+	AssistantViewJobTracker      AssistantView = "JOB_TRACKER"
 )
 
 var AllAssistantView = []AssistantView{
@@ -369,13 +453,15 @@ var AllAssistantView = []AssistantView{
 	AssistantViewSections,
 	AssistantViewItems,
 	AssistantViewResumeDetail,
+	AssistantViewPortfolios,
+	AssistantViewPortfolioDetail,
 	AssistantViewDigitalTwin,
 	AssistantViewJobTracker,
 }
 
 func (e AssistantView) IsValid() bool {
 	switch e {
-	case AssistantViewResumes, AssistantViewSections, AssistantViewItems, AssistantViewResumeDetail, AssistantViewDigitalTwin, AssistantViewJobTracker:
+	case AssistantViewResumes, AssistantViewSections, AssistantViewItems, AssistantViewResumeDetail, AssistantViewPortfolios, AssistantViewPortfolioDetail, AssistantViewDigitalTwin, AssistantViewJobTracker:
 		return true
 	}
 	return false
