@@ -26,6 +26,19 @@ type resumeItemVisibilityLink struct {
 	showInPreview bool
 }
 
+type portfolioSectionLink struct {
+	portfolioID string
+	sectionID   string
+	sortOrder   int
+}
+
+type portfolioItemVisibilityLink struct {
+	portfolioID   string
+	sectionID     string
+	sectionItemID string
+	showInPreview bool
+}
+
 func strPtr(s string) *string { return &s }
 
 func trimmedStringPtr(s string) *string {
@@ -277,4 +290,33 @@ func defaultResumeSettings(resumeID string) *model.ResumeSettings {
 		ShowPhoto:          false,
 		Locale:             "en-US",
 	}
+}
+
+func defaultPortfolioSettings(portfolioID string) *model.PortfolioSettings {
+	return &model.PortfolioSettings{
+		PortfolioID:        portfolioID,
+		ThemeID:            "theme-modern",
+		FontSize:           model.FontSizeM,
+		PageFormat:         model.PageFormatA4,
+		MarginHorizontalMm: 12,
+		MarginVerticalMm:   12,
+		ShowPhoto:          false,
+		Locale:             "en-US",
+	}
+}
+
+func clonePortfolioSettings(s *model.PortfolioSettings) *model.PortfolioSettings {
+	if s == nil {
+		return nil
+	}
+	c := *s
+	return &c
+}
+
+func clonePortfolio(p *model.Portfolio) *model.Portfolio {
+	if p == nil {
+		return nil
+	}
+	c := *p
+	return &c
 }

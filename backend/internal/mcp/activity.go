@@ -87,6 +87,36 @@ func ToolActivityStartLabel(toolName string, args map[string]any) string {
 		return "Updating your profile…"
 	case "update_resume_settings":
 		return "Updating resume design…"
+	case "list_portfolios":
+		return "Listing your portfolios…"
+	case "get_portfolio_content":
+		return "Reading your portfolio…"
+	case "get_portfolio":
+		return "Looking up portfolio details…"
+	case "create_portfolio":
+		if title, ok := optionalString(args, "title"); ok && title != "" {
+			return fmt.Sprintf("Creating portfolio %q…", truncateLabel(title, 40))
+		}
+		return "Creating a new portfolio…"
+	case "duplicate_portfolio":
+		return "Duplicating portfolio…"
+	case "delete_portfolio":
+		return "Deleting portfolio…"
+	case "update_portfolio":
+		return "Updating portfolio title…"
+	case "add_portfolio_section_item":
+		if headline, ok := optionalString(args, "headline"); ok && headline != "" {
+			return fmt.Sprintf("Adding %s…", truncateLabel(headline, 40))
+		}
+		return "Adding a section item…"
+	case "update_portfolio_section_item":
+		return "Updating a section item…"
+	case "set_portfolio_item_visibility":
+		return "Updating item visibility…"
+	case "update_portfolio_contact_profile":
+		return "Updating your profile…"
+	case "update_portfolio_settings":
+		return "Updating portfolio design…"
 	case "create_twin_entry":
 		if title, ok := optionalString(args, "title"); ok && title != "" {
 			return fmt.Sprintf("Saving to Digital Twin: %s…", truncateLabel(title, 40))

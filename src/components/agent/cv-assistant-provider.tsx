@@ -19,6 +19,7 @@ import type {
   ComposerAttachment,
 } from "@/lib/types/assistant";
 import type { ResumeWithContent } from "@/lib/types/cv";
+import type { PortfolioWithContent } from "@/lib/types/portfolio";
 import { buildAgentSteps, createInitialAgentState } from "@/lib/assistant/state";
 import { AGENT_PHASE_LABELS } from "@/lib/types/assistant";
 import {
@@ -42,6 +43,7 @@ import {
   setLastOpenedResumeId,
 } from "@/lib/cv/preferences";
 import { resumePath } from "@/lib/cv/routes";
+import { portfolioPath } from "@/lib/portfolio/routes";
 import { useWorkspace } from "@/components/layout/workspace-provider";
 
 interface CvAssistantContextValue {
@@ -71,8 +73,10 @@ interface CvAssistantContextValue {
   refreshKey: number;
   lastActionLogs: AssistantActionLog[];
   resumeContentPatch: ResumeWithContent | null;
+  portfolioContentPatch: PortfolioWithContent | null;
   streamingMessageId: string | null;
   lastAffectedResumeIds: string[];
+  lastAffectedPortfolioIds: string[];
 }
 
 const CvAssistantContext = createContext<CvAssistantContextValue | null>(null);
@@ -83,6 +87,13 @@ function deriveContext(pathname: string): AssistantContext {
   }
   if (pathname === "/digital-twin" || pathname.startsWith("/digital-twin/")) {
     return { view: "digital_twin" };
+  }
+  const portfolioMatch = pathname.match(/^\/portfolios\/([^/]+)/);
+  if (portfolioMatch) {
+    return { view: "portfolio_detail", portfolioId: portfolioMatch[1] };
+  }
+  if (pathname === "/portfolios" || pathname.startsWith("/portfolios/")) {
+    return { view: "portfolios" };
   }
   const resumeMatch = pathname.match(/^\/resumes\/([^/]+)/);
   if (resumeMatch) {
@@ -108,13 +119,18 @@ export function CvAssistantProvider({ children }: { children: ReactNode }) {
   const [refreshKey, setRefreshKey] = useState(0);
   const [lastActionLogs, setLastActionLogs] = useState<AssistantActionLog[]>([]);
   const [resumeContentPatch, setResumeContentPatch] = useState<ResumeWithContent | null>(null);
+  const [portfolioContentPatch, setPortfolioContentPatch] = useState<PortfolioWithContent | null>(
+    null
+  );
   const [streamingMessageId, setStreamingMessageId] = useState<string | null>(null);
   const [lastAffectedResumeIds, setLastAffectedResumeIds] = useState<string[]>([]);
+  const [lastAffectedPortfolioIds, setLastAffectedPortfolioIds] = useState<string[]>([]);
 
   const context = useMemo(() => deriveContext(pathname), [pathname]);
 
   useEffect(() => {
     setResumeContentPatch(null);
+    setPortfolioContentPatch(null);
   }, [pathname]);
 
   const loadMessagesForThread = useCallback(async (threadId: string) => {
@@ -316,6 +332,12 @@ export function CvAssistantProvider({ children }: { children: ReactNode }) {
                 setRefreshKey((k) => k + 1);
               }
             },
+            onPortfolioPatch: (portfolio) => {
+              setPortfolioContentPatch(portfolio);
+              if (context.view === "portfolios") {
+                setRefreshKey((k) => k + 1);
+              }
+            },
           }
         );
 
@@ -328,11 +350,16 @@ export function CvAssistantProvider({ children }: { children: ReactNode }) {
         }
         setLastActionLogs(result.actionLogs);
         setLastAffectedResumeIds(result.affectedResumeIds);
+        setLastAffectedPortfolioIds(result.affectedPortfolioIds);
         if (result.resumeWithContent) {
           setResumeContentPatch(result.resumeWithContent);
         }
+        if (result.portfolioWithContent) {
+          setPortfolioContentPatch(result.portfolioWithContent);
+        }
         if (
           result.affectedResumeIds.length > 0 ||
+          result.affectedPortfolioIds.length > 0 ||
           result.actionLogs.some((log) => log.success) ||
           effectiveContext.view === "digital_twin" ||
           effectiveContext.view === "job_tracker"
@@ -343,14 +370,21 @@ export function CvAssistantProvider({ children }: { children: ReactNode }) {
         const updatedThreads = await refreshThreads();
         setThreads(updatedThreads);
 
-        const createdResumeId = result.affectedResumeIds.at(-1);
-        if (createdResumeId) {
-          setLastOpenedResumeId(user.id, createdResumeId);
-          if (context.view === "resumes") {
-            router.push(resumePath(createdResumeId));
+        const createdPortfolioId = result.affectedPortfolioIds.at(-1);
+        if (createdPortfolioId) {
+          if (context.view === "portfolios") {
+            router.push(portfolioPath(createdPortfolioId));
           }
-        } else if (context.resumeId) {
-          setLastOpenedResumeId(user.id, context.resumeId);
+        } else {
+          const createdResumeId = result.affectedResumeIds.at(-1);
+          if (createdResumeId) {
+            setLastOpenedResumeId(user.id, createdResumeId);
+            if (context.view === "resumes") {
+              router.push(resumePath(createdResumeId));
+            }
+          } else if (context.resumeId) {
+            setLastOpenedResumeId(user.id, context.resumeId);
+          }
         }
       } catch (error) {
         toast.error(
@@ -409,8 +443,10 @@ export function CvAssistantProvider({ children }: { children: ReactNode }) {
       refreshKey,
       lastActionLogs,
       resumeContentPatch,
+      portfolioContentPatch,
       streamingMessageId,
       lastAffectedResumeIds,
+      lastAffectedPortfolioIds,
     }),
     [
       messages,
@@ -429,8 +465,10 @@ export function CvAssistantProvider({ children }: { children: ReactNode }) {
       refreshKey,
       lastActionLogs,
       resumeContentPatch,
+      portfolioContentPatch,
       streamingMessageId,
       lastAffectedResumeIds,
+      lastAffectedPortfolioIds,
     ]
   );
 

@@ -114,6 +114,7 @@ export interface SectionItemUsage {
   sectionItem: SectionItem;
   sections: Section[];
   resumes: Resume[];
+  portfolios?: import("@/lib/types/portfolio").Portfolio[];
 }
 
 export interface WorkspaceStats {

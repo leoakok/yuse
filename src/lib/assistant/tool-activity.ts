@@ -68,6 +68,24 @@ const TOOL_START_LABELS: Record<string, (payload: Record<string, unknown>) => st
   set_item_visibility: () => "Updating visibility",
   update_contact_profile: () => "Updating your profile",
   update_resume_settings: () => "Updating resume design",
+  list_portfolios: () => "Listing your portfolios",
+  get_portfolio_content: () => "Reading your portfolio",
+  get_portfolio: () => "Looking up portfolio details",
+  create_portfolio: (p) => {
+    const title = readString(p, "title");
+    return title ? `Creating portfolio "${truncate(title, 40)}"` : "Creating a new portfolio";
+  },
+  duplicate_portfolio: () => "Duplicating portfolio",
+  delete_portfolio: () => "Deleting portfolio",
+  update_portfolio: () => "Updating portfolio title",
+  add_portfolio_section_item: (p) => {
+    const headline = readString(p, "headline");
+    return headline ? `Adding ${truncate(headline, 40)}` : "Adding a section item";
+  },
+  update_portfolio_section_item: () => "Updating a section item",
+  set_portfolio_item_visibility: () => "Updating visibility",
+  update_portfolio_contact_profile: () => "Updating your profile",
+  update_portfolio_settings: () => "Updating portfolio design",
   create_twin_entry: (p) => {
     const title = readString(p, "title");
     return title ? `Saving to Digital Twin: ${truncate(title, 40)}` : "Saving to Digital Twin";

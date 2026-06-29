@@ -727,6 +727,74 @@ export const DELETE_ASSISTANT_THREAD_MUTATION = `
   }
 `;
 
+const PORTFOLIO_WITH_CONTENT_FIELDS = `
+  portfolio {
+    id
+    workspaceId
+    title
+    contactProfileId
+    createdBy
+    createdAt
+    updatedAt
+  }
+  contactProfile {
+    id
+    workspaceId
+    fullName
+    headline
+    email
+    phone
+    location
+    website
+    linkedIn
+    github
+    photoUrl
+    createdAt
+    updatedAt
+  }
+  settings {
+    portfolioId
+    themeId
+    fontSize
+    pageFormat
+    marginHorizontalMm
+    marginVerticalMm
+    showPhoto
+    locale
+  }
+  theme {
+    id
+    name
+    slug
+    isSystem
+    config
+  }
+  sections {
+    section {
+      id
+      workspaceId
+      type
+      title
+      description
+      createdBy
+      createdAt
+      updatedAt
+    }
+    items {
+      id
+      workspaceId
+      type
+      headline
+      body
+      metadata
+      showInPreview
+      createdBy
+      createdAt
+      updatedAt
+    }
+  }
+`;
+
 export const SEND_ASSISTANT_MESSAGE_MUTATION = `
   mutation SendAssistantMessage(
     $threadId: ID!
@@ -758,6 +826,7 @@ export const SEND_ASSISTANT_MESSAGE_MUTATION = `
         createdAt
       }
       affectedResumeIds
+      affectedPortfolioIds
       resumeWithContent {
         resume {
           id
@@ -825,11 +894,12 @@ export const SEND_ASSISTANT_MESSAGE_MUTATION = `
           }
         }
       }
+      portfolioWithContent {
+        ${PORTFOLIO_WITH_CONTENT_FIELDS}
+      }
     }
   }
 `;
-
-export const TWIN_ENTRIES_QUERY = `
   query TwinEntries {
     twinEntries {
       id
@@ -967,5 +1037,110 @@ export const CONNECTION_STATUS_QUERY = `
 export const DISCONNECT_CONNECTION_MUTATION = `
   mutation DisconnectConnection($provider: ConnectionProvider!) {
     disconnectConnection(provider: $provider)
+  }
+`;
+
+export const PORTFOLIOS_QUERY = `
+  query Portfolios {
+    portfolios {
+      id
+      workspaceId
+      title
+      contactProfileId
+      createdBy
+      createdAt
+      updatedAt
+    }
+  }
+`;
+
+export const PORTFOLIO_WITH_CONTENT_QUERY = `
+  query PortfolioWithContent($id: ID!) {
+    portfolioWithContent(id: $id) {
+      ${PORTFOLIO_WITH_CONTENT_FIELDS}
+    }
+  }
+`;
+
+export const CREATE_PORTFOLIO_MUTATION = `
+  mutation CreatePortfolio($title: String!) {
+    createPortfolio(title: $title) {
+      id
+      title
+      createdAt
+      updatedAt
+    }
+  }
+`;
+
+export const DUPLICATE_PORTFOLIO_MUTATION = `
+  mutation DuplicatePortfolio($id: ID!) {
+    duplicatePortfolio(id: $id) {
+      id
+      title
+      createdAt
+      updatedAt
+    }
+  }
+`;
+
+export const DELETE_PORTFOLIO_MUTATION = `
+  mutation DeletePortfolio($id: ID!) {
+    deletePortfolio(id: $id)
+  }
+`;
+
+export const UPDATE_PORTFOLIO_SETTINGS_MUTATION = `
+  mutation UpdatePortfolioSettings($input: UpdatePortfolioSettingsInput!) {
+    updatePortfolioSettings(input: $input) {
+      portfolioId
+      themeId
+      fontSize
+      pageFormat
+      marginHorizontalMm
+      marginVerticalMm
+      showPhoto
+      locale
+    }
+  }
+`;
+
+export const UPDATE_PORTFOLIO_SECTION_ITEM_VISIBILITY_MUTATION = `
+  mutation UpdatePortfolioSectionItemVisibility($input: UpdatePortfolioSectionItemVisibilityInput!) {
+    updatePortfolioSectionItemVisibility(input: $input) {
+      ${PORTFOLIO_WITH_CONTENT_FIELDS}
+    }
+  }
+`;
+
+export const UPDATE_PORTFOLIO_SECTION_ITEM_MUTATION = `
+  mutation UpdatePortfolioSectionItem($input: UpdatePortfolioSectionItemInput!) {
+    updatePortfolioSectionItem(input: $input) {
+      ${PORTFOLIO_WITH_CONTENT_FIELDS}
+    }
+  }
+`;
+
+export const ADD_PORTFOLIO_SECTION_ITEM_MUTATION = `
+  mutation AddPortfolioSectionItem($input: AddPortfolioSectionItemInput!) {
+    addPortfolioSectionItem(input: $input) {
+      ${PORTFOLIO_WITH_CONTENT_FIELDS}
+    }
+  }
+`;
+
+export const DELETE_PORTFOLIO_SECTION_ITEM_MUTATION = `
+  mutation DeletePortfolioSectionItem($portfolioId: ID!, $sectionItemId: ID!) {
+    deletePortfolioSectionItem(portfolioId: $portfolioId, sectionItemId: $sectionItemId) {
+      ${PORTFOLIO_WITH_CONTENT_FIELDS}
+    }
+  }
+`;
+
+export const UPDATE_PORTFOLIO_CONTACT_PROFILE_MUTATION = `
+  mutation UpdatePortfolioContactProfile($input: UpdatePortfolioContactProfileInput!) {
+    updatePortfolioContactProfile(input: $input) {
+      ${PORTFOLIO_WITH_CONTENT_FIELDS}
+    }
   }
 `;

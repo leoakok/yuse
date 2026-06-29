@@ -12,6 +12,7 @@ type StreamSink interface {
 	ToolEnd(exec mcp.Execution)
 	Delta(text string)
 	ResumePatch(content *model.ResumeWithContent)
+	PortfolioPatch(content *model.PortfolioWithContent)
 }
 
 type noopStreamSink struct{}
@@ -21,3 +22,4 @@ func (noopStreamSink) ToolStart(string, map[string]any)             {}
 func (noopStreamSink) ToolEnd(mcp.Execution)                      {}
 func (noopStreamSink) Delta(string)                               {}
 func (noopStreamSink) ResumePatch(*model.ResumeWithContent)       {}
+func (noopStreamSink) PortfolioPatch(*model.PortfolioWithContent) {}

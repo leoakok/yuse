@@ -31,10 +31,14 @@ type Memory struct {
 	resumes           map[string]*model.Resume
 	sections          map[string]*model.Section
 	sectionItems      map[string]*model.SectionItem
-	resumeSections       []resumeSectionLink
-	sectionItemLinks     []sectionItemLink
-	itemVisibilityLinks  []resumeItemVisibilityLink
-	resumeSettings       map[string]*model.ResumeSettings
+	resumeSections          []resumeSectionLink
+	portfolioSections       []portfolioSectionLink
+	sectionItemLinks        []sectionItemLink
+	itemVisibilityLinks     []resumeItemVisibilityLink
+	portfolioVisibilityLinks []portfolioItemVisibilityLink
+	resumeSettings          map[string]*model.ResumeSettings
+	portfolioSettings       map[string]*model.PortfolioSettings
+	portfolios              map[string]*model.Portfolio
 	themes            []*model.CvTheme
 	twinEntries       map[string]*model.TwinEntry
 	trackedJobs         map[string]*model.TrackedJob
@@ -43,10 +47,12 @@ type Memory struct {
 func NewMemory() *Memory {
 	m := &Memory{
 		contactProfiles:  make(map[string]*model.ContactProfile),
-		resumes:          make(map[string]*model.Resume),
-		sections:         make(map[string]*model.Section),
-		sectionItems:     make(map[string]*model.SectionItem),
-		resumeSettings:   make(map[string]*model.ResumeSettings),
+		resumes:              make(map[string]*model.Resume),
+		portfolios:           make(map[string]*model.Portfolio),
+		sections:             make(map[string]*model.Section),
+		sectionItems:         make(map[string]*model.SectionItem),
+		resumeSettings:       make(map[string]*model.ResumeSettings),
+		portfolioSettings:    make(map[string]*model.PortfolioSettings),
 		twinEntries:      make(map[string]*model.TwinEntry),
 		trackedJobs:      make(map[string]*model.TrackedJob),
 		threads:          make(map[string]*model.AssistantThread),
@@ -892,10 +898,26 @@ func (m *Memory) SectionItemUsage(itemID string) (*model.SectionItemUsage, error
 		}
 	}
 
+	portfolioIDSet := map[string]struct{}{}
+	for _, sid := range sectionIDs {
+		for _, pl := range m.portfolioSections {
+			if pl.sectionID == sid {
+				portfolioIDSet[pl.portfolioID] = struct{}{}
+			}
+		}
+	}
+	portfolios := make([]*model.Portfolio, 0, len(portfolioIDSet))
+	for pid := range portfolioIDSet {
+		if pf := m.portfolios[pid]; pf != nil {
+			portfolios = append(portfolios, clonePortfolio(pf))
+		}
+	}
+
 	return &model.SectionItemUsage{
 		SectionItem: withDefaultShowInPreview(cloneSectionItem(item)),
 		Sections:    sections,
 		Resumes:     resumes,
+		Portfolios:  portfolios,
 	}, nil
 }
 
@@ -923,6 +945,14 @@ func (m *Memory) DeleteSectionItem(sectionItemID string) error {
 	}
 	m.itemVisibilityLinks = visibility
 
+	portfolioVisibility := make([]portfolioItemVisibilityLink, 0, len(m.portfolioVisibilityLinks))
+	for _, link := range m.portfolioVisibilityLinks {
+		if link.sectionItemID != sectionItemID {
+			portfolioVisibility = append(portfolioVisibility, link)
+		}
+	}
+	m.portfolioVisibilityLinks = portfolioVisibility
+
 	delete(m.sectionItems, sectionItemID)
 	return nil
 }
@@ -932,6 +962,7 @@ func (m *Memory) WorkspaceStats() *model.WorkspaceStats {
 	defer m.mu.RUnlock()
 	return &model.WorkspaceStats{
 		ResumeCount:      len(m.resumes),
+		PortfolioCount:   len(m.portfolios),
 		SectionCount:     len(m.sections),
 		SectionItemCount: len(m.sectionItems),
 	}

@@ -151,6 +151,32 @@ func (githubTokenExecutor) UpdateResumeSectionItemVisibility(model.UpdateResumeS
 func (githubTokenExecutor) UpdateResumeSettings(model.UpdateResumeSettingsInput) (*model.ResumeSettings, error) {
 	return nil, nil
 }
+func (githubTokenExecutor) ListPortfolios() []*model.Portfolio { return nil }
+func (githubTokenExecutor) GetPortfolio(string) (*model.Portfolio, error) { return nil, nil }
+func (githubTokenExecutor) CreatePortfolio(string) *model.Portfolio { return nil }
+func (githubTokenExecutor) DuplicatePortfolio(string) (*model.Portfolio, error) { return nil, nil }
+func (githubTokenExecutor) DeletePortfolio(string) (bool, error) { return false, nil }
+func (githubTokenExecutor) UpdatePortfolio(string, *string, *string) (*model.Portfolio, error) {
+	return nil, nil
+}
+func (githubTokenExecutor) GetPortfolioWithContent(string) (*model.PortfolioWithContent, error) {
+	return nil, nil
+}
+func (githubTokenExecutor) UpdatePortfolioContactProfile(_ context.Context, _ model.UpdatePortfolioContactProfileInput) (*model.PortfolioWithContent, error) {
+	return nil, nil
+}
+func (githubTokenExecutor) AddPortfolioSectionItem(model.AddPortfolioSectionItemInput) (*model.PortfolioWithContent, error) {
+	return nil, nil
+}
+func (githubTokenExecutor) UpdatePortfolioSectionItem(model.UpdatePortfolioSectionItemInput) (*model.PortfolioWithContent, error) {
+	return nil, nil
+}
+func (githubTokenExecutor) UpdatePortfolioSectionItemVisibility(model.UpdatePortfolioSectionItemVisibilityInput) (*model.PortfolioWithContent, error) {
+	return nil, nil
+}
+func (githubTokenExecutor) UpdatePortfolioSettings(model.UpdatePortfolioSettingsInput) (*model.PortfolioSettings, error) {
+	return nil, nil
+}
 func (githubTokenExecutor) ListSections(*model.SectionType) []*model.Section { return nil }
 func (githubTokenExecutor) ListCvThemes() []*model.CvTheme { return nil }
 func (githubTokenExecutor) ListTwinEntries() []*model.TwinEntry { return nil }
