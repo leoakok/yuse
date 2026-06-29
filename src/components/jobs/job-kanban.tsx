@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import {
   DndContext,
   DragOverlay,
@@ -15,10 +15,9 @@ import {
   type DragStartEvent,
 } from "@dnd-kit/core";
 import { CSS } from "@dnd-kit/utilities";
-import { FileText, GripVertical, Trash2 } from "lucide-react";
+import { FileText } from "lucide-react";
 import { JobLinkButton } from "@/components/jobs/job-link-button";
 import { Badge } from "@/components/ui/badge";
-import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 import { cn } from "@/lib/utils";
 import { JOB_STATUS_LABELS, JOB_STATUS_ORDER } from "@/lib/types/job";
@@ -27,7 +26,6 @@ import type { JobStatus, TrackedJob } from "@/lib/types/job";
 interface JobKanbanProps {
   jobs: TrackedJob[];
   onStatusChange: (job: TrackedJob, status: JobStatus) => void;
-  onDelete: (job: TrackedJob) => void;
   onSelect: (job: TrackedJob) => void;
   selectedJobId?: string | null;
 }
@@ -53,63 +51,51 @@ function resolveDropStatus(overId: string | number, jobs: TrackedJob[]): JobStat
 
 interface JobCardContentProps {
   job: TrackedJob;
-  onDelete: (job: TrackedJob) => void;
-  onSelect: (job: TrackedJob) => void;
+  onSelect?: (job: TrackedJob) => void;
   isSelected?: boolean;
   isDragging?: boolean;
-  dragHandle?: React.ReactNode;
+  isOverlay?: boolean;
 }
 
 function JobCardContent({
   job,
-  onDelete,
   onSelect,
   isSelected,
   isDragging,
-  dragHandle,
+  isOverlay,
 }: JobCardContentProps) {
   return (
     <Card
-      role="button"
-      tabIndex={0}
-      onClick={() => onSelect(job)}
-      onKeyDown={(event) => {
-        if (event.key === "Enter" || event.key === " ") {
-          event.preventDefault();
-          onSelect(job);
-        }
-      }}
+      role={onSelect ? "button" : undefined}
+      tabIndex={onSelect ? 0 : undefined}
+      onClick={onSelect ? () => onSelect(job) : undefined}
+      onKeyDown={
+        onSelect
+          ? (event) => {
+              if (event.key === "Enter" || event.key === " ") {
+                event.preventDefault();
+                onSelect(job);
+              }
+            }
+          : undefined
+      }
       className={cn(
-        "cursor-pointer gap-2 rounded-lg border bg-card p-3 shadow-sm transition-shadow hover:shadow-md",
+        "gap-2 rounded-lg border bg-card p-3 shadow-sm transition-[opacity,box-shadow,transform] duration-200 ease-out",
+        onSelect && "cursor-grab hover:shadow-md active:cursor-grabbing",
         isSelected && "border-primary/50 ring-1 ring-primary/20",
-        isDragging && "opacity-40 shadow-none"
+        isDragging && "opacity-40 shadow-none",
+        isOverlay && "pointer-events-none shadow-lg"
       )}
     >
-      <div className="flex items-start gap-2">
-        {dragHandle}
-        <div className="min-w-0 flex-1 space-y-1">
-          <p className="text-sm font-medium leading-snug">{displayTitle(job)}</p>
-          <p className="text-xs text-muted-foreground">{displayCompany(job)}</p>
-        </div>
+      <div className="min-w-0 space-y-1">
+        <p className="text-sm font-medium leading-snug">{displayTitle(job)}</p>
+        <p className="text-xs text-muted-foreground">{displayCompany(job)}</p>
       </div>
-      <div className="flex items-center justify-between gap-2 pl-6">
+      <div className="flex items-center gap-2">
         <JobLinkButton url={job.url} />
-        <Button
-          type="button"
-          variant="ghost"
-          size="icon"
-          className="size-7 text-muted-foreground hover:text-destructive"
-          onClick={(event) => {
-            event.stopPropagation();
-            onDelete(job);
-          }}
-          aria-label="Delete application"
-        >
-          <Trash2 className="size-3.5" />
-        </Button>
       </div>
       {(job.resumeId || job.coverLetter.trim()) && (
-        <div className="flex flex-wrap gap-1.5 pl-6">
+        <div className="flex flex-wrap gap-1.5">
           {job.resumeId ? (
             <span className="inline-flex items-center gap-1 rounded-md bg-muted/60 px-1.5 py-0.5 text-[11px] text-muted-foreground">
               <FileText className="size-3" />
@@ -128,14 +114,32 @@ function JobCardContent({
   );
 }
 
+function DragOverlayCard({ job }: { job: TrackedJob }) {
+  const [tilted, setTilted] = useState(false);
+
+  useEffect(() => {
+    const frame = requestAnimationFrame(() => setTilted(true));
+    return () => cancelAnimationFrame(frame);
+  }, []);
+
+  return (
+    <div
+      className={cn(
+        "w-72 transition-transform duration-200 ease-out will-change-transform",
+        tilted ? "rotate-1" : "rotate-0"
+      )}
+    >
+      <JobCardContent job={job} isOverlay />
+    </div>
+  );
+}
+
 function DraggableJobCard({
   job,
-  onDelete,
   onSelect,
   isSelected,
 }: {
   job: TrackedJob;
-  onDelete: (job: TrackedJob) => void;
   onSelect: (job: TrackedJob) => void;
   isSelected?: boolean;
 }) {
@@ -148,27 +152,19 @@ function DraggableJobCard({
     ? { transform: CSS.Translate.toString(transform) }
     : undefined;
 
-  const dragHandle = (
-    <button
-      type="button"
-      className="mt-0.5 shrink-0 cursor-grab touch-none text-muted-foreground/50 hover:text-muted-foreground active:cursor-grabbing"
-      aria-label="Drag to change status"
+  return (
+    <div
+      ref={setNodeRef}
+      style={style}
+      className="touch-none"
       {...listeners}
       {...attributes}
     >
-      <GripVertical className="size-4" />
-    </button>
-  );
-
-  return (
-    <div ref={setNodeRef} style={style} className="touch-none">
       <JobCardContent
         job={job}
-        onDelete={onDelete}
         onSelect={onSelect}
         isSelected={isSelected}
         isDragging={isDragging}
-        dragHandle={dragHandle}
       />
     </div>
   );
@@ -177,13 +173,11 @@ function DraggableJobCard({
 function KanbanColumn({
   status,
   jobs,
-  onDelete,
   onSelect,
   selectedJobId,
 }: {
   status: JobStatus;
   jobs: TrackedJob[];
-  onDelete: (job: TrackedJob) => void;
   onSelect: (job: TrackedJob) => void;
   selectedJobId?: string | null;
 }) {
@@ -225,7 +219,6 @@ function KanbanColumn({
             <DraggableJobCard
               key={job.id}
               job={job}
-              onDelete={onDelete}
               onSelect={onSelect}
               isSelected={job.id === selectedJobId}
             />
@@ -236,7 +229,7 @@ function KanbanColumn({
   );
 }
 
-export function JobKanban({ jobs, onStatusChange, onDelete, onSelect, selectedJobId }: JobKanbanProps) {
+export function JobKanban({ jobs, onStatusChange, onSelect, selectedJobId }: JobKanbanProps) {
   const [activeJob, setActiveJob] = useState<TrackedJob | null>(null);
 
   const sensors = useSensors(
@@ -287,18 +280,13 @@ export function JobKanban({ jobs, onStatusChange, onDelete, onSelect, selectedJo
             key={status}
             status={status}
             jobs={jobs}
-            onDelete={onDelete}
             onSelect={onSelect}
             selectedJobId={selectedJobId}
           />
         ))}
       </div>
       <DragOverlay dropAnimation={{ duration: 200, easing: "ease" }}>
-        {activeJob ? (
-          <div className="w-72 rotate-1 cursor-grabbing">
-            <JobCardContent job={activeJob} onDelete={() => {}} onSelect={() => {}} />
-          </div>
-        ) : null}
+        {activeJob ? <DragOverlayCard job={activeJob} /> : null}
       </DragOverlay>
     </DndContext>
   );

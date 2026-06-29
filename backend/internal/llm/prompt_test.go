@@ -53,6 +53,13 @@ func TestSystemPromptContainsVoiceAndSTAR(t *testing.T) {
 	}, "", false, "")
 
 	for _, phrase := range []string{
+		"Who you are",
+		"CV journey",
+		"HR",
+		"Plain language",
+		"STAR-aware",
+		"Ask, don't guess",
+		"Search when useful",
 		"Voice",
 		"STAR",
 		"PAR",

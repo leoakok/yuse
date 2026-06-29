@@ -226,7 +226,6 @@ export function JobTrackerWorkspace() {
         <JobKanban
           jobs={jobs}
           onStatusChange={handleStatusChange}
-          onDelete={setDeleteTarget}
           onSelect={(job) => setSelectedJobId(job.id)}
           selectedJobId={selectedJobId}
         />
@@ -248,6 +247,7 @@ export function JobTrackerWorkspace() {
         resumes={resumes}
         onSave={handleSaveJob}
         onRegenerateCoverLetter={handleRegenerateCoverLetter}
+        onDelete={setDeleteTarget}
         isRegenerating={isRegenerating}
       />
 

@@ -1,0 +1,46 @@
+---
+description: Reusable component structure and design system conventions
+alwaysApply: true
+---
+
+# Component Design System
+
+## Folder structure
+
+- `src/components/ui/` — shadcn primitives only. Do not add feature logic here.
+- `src/components/{domain}/` — reusable feature UI (`cv/`, `agent/`, `layout/`).
+- `src/app/**/page.tsx` — thin composition only. No large inline JSX or business logic.
+
+## When to extract a component
+
+Extract when:
+- Used on 2+ pages, or
+- It is a design-system unit (preview card, section list, assistant bubble).
+
+## Conventions
+
+- One primary export per file, `PascalCase` filename matching export.
+- Props over one-off styling. Shared types live in `src/lib/types/`.
+- Agent/assistant UI belongs in `src/components/agent/` (status badge, progress stream, floating panel).
+- CV domain UI belongs in `src/components/cv/` (preview, grids, lists, workspace).
+- Data access goes through `src/lib/api/cv-api.ts`, not direct store imports from pages.
+- Use plain, non-technical copy in all user-facing text.
+- Colocate private helpers in the same file only when not reusable elsewhere.
+
+## Examples
+
+```tsx
+// BAD — page fetches data inline instead of API layer
+import { listResumes } from "./local-data";
+
+// GOOD — page uses API layer
+import { listResumes } from "@/lib/api/cv-api";
+```
+
+```tsx
+// BAD — feature component in ui/
+src/components/ui/cv-preview.tsx
+
+// GOOD — domain folder
+src/components/cv/cv-preview.tsx
+```
