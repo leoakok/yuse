@@ -2,7 +2,7 @@ import type { Metadata } from "next";
 import { Toaster } from "@/components/ui/sonner";
 import "./globals.css";
 
-const siteUrl = "https://yuse.ahmetkok.dev";
+const siteUrl = "https://yuse.one";
 
 export const metadata: Metadata = {
   metadataBase: new URL(siteUrl),
