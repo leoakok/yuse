@@ -34,6 +34,34 @@ func TestBuildPublicObjectURL(t *testing.T) {
 	}
 }
 
+func TestBuildAzureBlobURL(t *testing.T) {
+	got := BuildAzureBlobURL("account", "photos", "https://cdn.example.com", "workspaces/ws/profiles/u/a.jpg")
+	want := "https://cdn.example.com/workspaces/ws/profiles/u/a.jpg"
+	if got != want {
+		t.Fatalf("got %q want %q", got, want)
+	}
+
+	got = BuildAzureBlobURL("account", "photos", "", "workspaces/ws/profiles/u/a.jpg")
+	want = "https://account.blob.core.windows.net/photos/workspaces/ws/profiles/u/a.jpg"
+	if got != want {
+		t.Fatalf("got %q want %q", got, want)
+	}
+}
+
+func TestPhotoURLMatchesAzureScope(t *testing.T) {
+	workspaceID := "ws-1"
+	userID := "user-1"
+	key := ProfileObjectKey(workspaceID, userID, ".webp")
+	url := BuildAzureBlobURL("yuseprofilephotos", "profile-photos", "", key)
+
+	if !PhotoURLMatchesAzureScope(url, "", "yuseprofilephotos", "profile-photos", workspaceID, userID) {
+		t.Fatal("expected scoped URL to match")
+	}
+	if PhotoURLMatchesAzureScope("https://yuseprofilephotos.blob.core.windows.net/profile-photos/workspaces/other/profiles/user-1/x.webp", "", "yuseprofilephotos", "profile-photos", workspaceID, userID) {
+		t.Fatal("expected foreign workspace URL to fail")
+	}
+}
+
 func TestPhotoURLMatchesScope(t *testing.T) {
 	workspaceID := "ws-1"
 	userID := "user-1"

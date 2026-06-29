@@ -42,13 +42,9 @@ func Bootstrap(ctx context.Context, cfg config.Config) (*Stack, error) {
 	}
 
 	llmSvc := llm.NewService(cfg)
-	var photos storage.ProfilePhotoUploader
-	if cfg.HasAWS() {
-		uploader, err := storage.NewS3ProfilePhotoUploader(cfg)
-		if err != nil {
-			return nil, fmt.Errorf("init profile photo upload: %w", err)
-		}
-		photos = uploader
+	photos, err := storage.NewProfilePhotoUploader(cfg)
+	if err != nil {
+		return nil, fmt.Errorf("init profile photo upload: %w", err)
 	}
 	cvSvc := cv.NewService(dataStore, llmSvc, photos)
 	tools := mcp.NewRegistry(cvSvc)
