@@ -1,0 +1,125 @@
+AWSTemplateFormatVersion: "2010-09-09"
+Description: >
+  Yuse profile photo storage — S3 bucket with public read, CORS for browser
+  presigned PUT uploads, and a minimal IAM user for the Go backend.
+
+Parameters:
+  BucketNameSuffix:
+    Type: String
+    Default: profile-photos
+    Description: Suffix appended to yuse-{suffix}-{account-id} bucket name.
+    AllowedPattern: ^[a-z0-9-]{1,32}$
+    ConstraintDescription: Lowercase letters, numbers, and hyphens only.
+
+Resources:
+  ProfilePhotosBucket:
+    Type: AWS::S3::Bucket
+    DeletionPolicy: Retain
+    UpdateReplacePolicy: Retain
+    Properties:
+      BucketName: !Sub "yuse-${BucketNameSuffix}-${AWS::AccountId}"
+      BucketEncryption:
+        ServerSideEncryptionConfiguration:
+          - ServerSideEncryptionByDefault:
+              SSEAlgorithm: AES256
+      PublicAccessBlockConfiguration:
+        # Allow a bucket policy that grants anonymous GetObject (photos are public URLs).
+        BlockPublicAcls: true
+        BlockPublicPolicy: false
+        IgnorePublicAcls: true
+        RestrictPublicBuckets: false
+      CorsConfiguration:
+        CorsRules:
+          - AllowedHeaders:
+              - Content-Type
+              - x-amz-content-sha256
+              - x-amz-date
+            AllowedMethods:
+              - PUT
+              - GET
+              - HEAD
+            AllowedOrigins:
+              - https://yuse.one
+              - https://www.yuse.one
+              - http://localhost:3000
+            ExposedHeaders:
+              - ETag
+            MaxAgeSeconds: 3600
+      Tags:
+        - Key: Application
+          Value: yuse
+        - Key: Purpose
+          Value: profile-photos
+
+  ProfilePhotosBucketPolicy:
+    Type: AWS::S3::BucketPolicy
+    Properties:
+      Bucket: !Ref ProfilePhotosBucket
+      PolicyDocument:
+        Version: "2012-10-17"
+        Statement:
+          - Sid: PublicReadProfilePhotos
+            Effect: Allow
+            Principal: "*"
+            Action: s3:GetObject
+            Resource: !Sub "${ProfilePhotosBucket.Arn}/*"
+
+  ProfilePhotosUser:
+    Type: AWS::IAM::User
+    Properties:
+      UserName: !Sub "yuse-profile-photos-${AWS::AccountId}"
+      Policies:
+        - PolicyName: ProfilePhotosBucketAccess
+          PolicyDocument:
+            Version: "2012-10-17"
+            Statement:
+              - Sid: ManageProfilePhotoObjects
+                Effect: Allow
+                Action:
+                  - s3:PutObject
+                  - s3:GetObject
+                  - s3:HeadObject
+                Resource: !Sub "${ProfilePhotosBucket.Arn}/*"
+
+  ProfilePhotosAccessKey:
+    Type: AWS::IAM::AccessKey
+    Properties:
+      UserName: !Ref ProfilePhotosUser
+
+Outputs:
+  BucketName:
+    Description: S3 bucket for profile photos.
+    Value: !Ref ProfilePhotosBucket
+    Export:
+      Name: !Sub "${AWS::StackName}-BucketName"
+
+  Region:
+    Description: Region where the stack was deployed (set AWS_REGION to this value).
+    Value: !Ref AWS::Region
+
+  PublicURLPrefix:
+    Description: >
+      Leave AWS_S3_PUBLIC_URL_PREFIX empty to use direct S3 URLs, or set a CloudFront
+      origin prefix later (e.g. https://d123.cloudfront.net).
+    Value: ""
+
+  DirectObjectURLPattern:
+    Description: Public URL pattern when AWS_S3_PUBLIC_URL_PREFIX is unset.
+    Value: !Sub "https://${ProfilePhotosBucket}.s3.${AWS::Region}.amazonaws.com/"
+
+  AccessKeyId:
+    Description: IAM access key for the backend (AWS_ACCESS_KEY_ID).
+    Value: !Ref ProfilePhotosAccessKey
+
+  SecretAccessKey:
+    Description: IAM secret key for the backend (AWS_SECRET_ACCESS_KEY). Store securely.
+    Value: !GetAtt ProfilePhotosAccessKey.SecretAccessKey
+
+  EnvVarsHint:
+    Description: Environment variables for backend/.env and Vercel backend service.
+    Value: !Sub |
+      AWS_REGION=${AWS::Region}
+      AWS_S3_BUCKET=${ProfilePhotosBucket}
+      AWS_ACCESS_KEY_ID=<see AccessKeyId output>
+      AWS_SECRET_ACCESS_KEY=<see SecretAccessKey output>
+      # AWS_S3_PUBLIC_URL_PREFIX=   # optional CDN prefix
