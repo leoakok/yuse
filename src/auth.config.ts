@@ -50,15 +50,22 @@ export const authConfig = {
     },
     authorized({ auth, request }) {
       const { pathname } = request.nextUrl;
+      const isLanding = pathname === "/";
       const isLogin = pathname.startsWith("/login");
       const isAuthApi = pathname.startsWith("/api/auth");
       const isRegisterApi = pathname.startsWith("/api/register");
       const isGraphqlProxy = pathname.startsWith("/api/graphql");
       const isGitHubOAuthCallback = pathname === "/api/auth/github/callback";
 
+      // The marketing landing page is public. Signed-in visitors are sent to
+      // the app by the page itself (server-side redirect to /home).
+      if (isLanding) {
+        return true;
+      }
+
       if (isLogin) {
         if (auth?.user) {
-          return Response.redirect(new URL("/", request.nextUrl));
+          return Response.redirect(new URL("/home", request.nextUrl));
         }
         return true;
       }

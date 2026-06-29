@@ -44,6 +44,7 @@ interface JobDetailPanelProps {
   resumes: Resume[];
   onSave: (input: UpdateTrackedJobInput) => Promise<TrackedJob>;
   onRegenerateCoverLetter: (job: TrackedJob) => Promise<void>;
+  onDelete?: (job: TrackedJob) => void;
   isRegenerating?: boolean;
 }
 
@@ -62,6 +63,7 @@ export function JobDetailPanel({
   resumes,
   onSave,
   onRegenerateCoverLetter,
+  onDelete,
   isRegenerating = false,
 }: JobDetailPanelProps) {
   const [title, setTitle] = useState("");
@@ -306,7 +308,19 @@ export function JobDetailPanel({
               </div>
             </ScrollArea>
 
-            <SheetFooter className="border-t px-4 py-3">
+            <SheetFooter className="flex-row justify-between border-t px-4 py-3 sm:justify-between">
+              {onDelete ? (
+                <Button
+                  type="button"
+                  variant="destructive"
+                  onClick={() => onDelete(job)}
+                  disabled={isSaving}
+                >
+                  Delete
+                </Button>
+              ) : (
+                <span />
+              )}
               <Button type="button" onClick={() => void handleSave()} disabled={isSaving}>
                 {isSaving ? (
                   <>

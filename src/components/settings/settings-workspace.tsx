@@ -1,6 +1,6 @@
 "use client";
 
-import { FileText, LogOut, Mail, Sparkles, UserCircle } from "lucide-react";
+import { FileText, LogOut, Mail, UserCircle } from "lucide-react";
 import { YuseLogo } from "@/components/brand/yuse-logo";
 import { signOut } from "next-auth/react";
 import Link from "next/link";
@@ -102,23 +102,6 @@ export function SettingsWorkspace() {
                 className={cn(buttonVariants({ variant: "link" }), "h-auto p-0")}
               >
                 Open resumes
-              </Link>
-            </div>
-          </div>
-          <Separator />
-          <div className="flex gap-3">
-            <Sparkles className="mt-0.5 size-4 shrink-0 text-muted-foreground" />
-            <div>
-              <p className="font-medium">Digital Twin</p>
-              <p className="text-muted-foreground">
-                Your full career story lives here — every role, project, and skill.
-                Resumes pull only what fits each application.
-              </p>
-              <Link
-                href="/digital-twin"
-                className={cn(buttonVariants({ variant: "link" }), "h-auto p-0")}
-              >
-                Open Digital Twin
               </Link>
             </div>
           </div>

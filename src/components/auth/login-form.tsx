@@ -121,7 +121,7 @@ export function LoginForm({ authError }: { authError?: string | null }) {
         return;
       }
 
-      router.push("/");
+      router.push("/home");
       router.refresh();
     } finally {
       setLoading(false);

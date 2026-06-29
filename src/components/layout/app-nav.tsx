@@ -2,7 +2,7 @@
 
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import { PRIMARY_NAV, isResumesNavActive, isDigitalTwinNavActive, isJobTrackerNavActive } from "@/lib/nav";
+import { PRIMARY_NAV, isResumesNavActive, isJobTrackerNavActive } from "@/lib/nav";
 import { cn } from "@/lib/utils";
 
 export function AppNav() {
@@ -14,7 +14,6 @@ export function AppNav() {
         if (item.enabled) {
           const isActive =
             (item.id === "resumes" && isResumesNavActive(pathname)) ||
-            (item.id === "digital-twin" && isDigitalTwinNavActive(pathname)) ||
             (item.id === "job-tracker" && isJobTrackerNavActive(pathname));
           return (
             <Link

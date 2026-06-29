@@ -1,5 +1,5 @@
 import { HomeRedirect } from "@/components/home-redirect";
 
-export default function Home() {
+export default function HomePage() {
   return <HomeRedirect />;
 }

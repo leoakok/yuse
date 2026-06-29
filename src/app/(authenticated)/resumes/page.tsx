@@ -2,12 +2,12 @@
 
 import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
-import { Plus } from "lucide-react";
 import { CatalogShell } from "@/components/layout/catalog-shell";
 import { ResumeGrid } from "@/components/cv/resume-grid";
+import { ResumeImportDialog } from "@/components/cv/resume-import-dialog";
+import { Button } from "@/components/ui/button";
 import { createResume, listResumes } from "@/lib/api/cv-api";
 import { resumePath } from "@/lib/cv/routes";
-import { Button } from "@/components/ui/button";
 import { useCvAssistant } from "@/components/agent/cv-assistant-provider";
 import type { Resume } from "@/lib/types/cv";
 
@@ -15,6 +15,7 @@ export default function ResumesPage() {
   const router = useRouter();
   const { refreshKey } = useCvAssistant();
   const [resumes, setResumes] = useState<Resume[]>([]);
+  const [importOpen, setImportOpen] = useState(false);
 
   useEffect(() => {
     void listResumes().then(setResumes);
@@ -30,17 +31,25 @@ export default function ResumesPage() {
       title="Resumes"
       description="Your CV documents with a live preview on each card."
       actions={
-        <Button size="sm" className="gap-1.5" onClick={() => void handleNewResume()}>
-          <Plus className="size-3.5" />
-          New resume
-        </Button>
+        resumes.length > 0 ? (
+          <Button
+            type="button"
+            variant="outline"
+            size="sm"
+            onClick={() => setImportOpen(true)}
+          >
+            Import a resume
+          </Button>
+        ) : undefined
       }
     >
       <ResumeGrid
         resumes={resumes}
         onCreateResume={() => void handleNewResume()}
+        onImportResume={() => setImportOpen(true)}
         onResumeDeleted={(id) => setResumes((current) => current.filter((r) => r.id !== id))}
       />
+      <ResumeImportDialog open={importOpen} onOpenChange={setImportOpen} />
     </CatalogShell>
   );
 }

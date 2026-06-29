@@ -7,7 +7,6 @@ import {
   LogOut,
   Mail,
   Settings,
-  Sparkles,
 } from "lucide-react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
@@ -95,10 +94,6 @@ export function UserMenuButton() {
           <DropdownMenuItem render={<Link href="/resumes" />}>
             <FileText />
             Resumes
-          </DropdownMenuItem>
-          <DropdownMenuItem render={<Link href="/digital-twin" />}>
-            <Sparkles />
-            Digital Twin
           </DropdownMenuItem>
         </DropdownMenuGroup>
         <DropdownMenuSeparator />

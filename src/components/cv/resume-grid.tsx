@@ -235,10 +235,16 @@ function ResumeCard({ resume, onDeleted }: ResumeCardProps) {
 interface ResumeGridProps {
   resumes: Resume[];
   onCreateResume?: () => void;
+  onImportResume?: () => void;
   onResumeDeleted?: (id: string) => void;
 }
 
-export function ResumeGrid({ resumes, onCreateResume, onResumeDeleted }: ResumeGridProps) {
+export function ResumeGrid({
+  resumes,
+  onCreateResume,
+  onImportResume,
+  onResumeDeleted,
+}: ResumeGridProps) {
   if (resumes.length === 0) {
     return (
       <div className="flex flex-col items-center justify-center gap-4 rounded-lg border border-dashed px-6 py-16 text-center">
@@ -248,10 +254,19 @@ export function ResumeGrid({ resumes, onCreateResume, onResumeDeleted }: ResumeG
             Create your first CV to start editing sections and previewing the layout.
           </p>
         </div>
-        {onCreateResume ? (
-          <Button type="button" size="sm" onClick={onCreateResume}>
-            Create your first resume
-          </Button>
+        {onCreateResume || onImportResume ? (
+          <div className="flex flex-wrap items-center justify-center gap-2">
+            {onCreateResume ? (
+              <Button type="button" size="sm" onClick={onCreateResume}>
+                Create your first resume
+              </Button>
+            ) : null}
+            {onImportResume ? (
+              <Button type="button" variant="outline" size="sm" onClick={onImportResume}>
+                Import a resume
+              </Button>
+            ) : null}
+          </div>
         ) : null}
       </div>
     );
