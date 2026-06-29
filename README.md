@@ -1,4 +1,4 @@
-<p align="center">https://github.com/leoakok/yuse/blob/main/public/yuse-logo%402x.png
+<p align="center">
   <img src="public/yuse-logo@2x.png" alt="Yuse logo" width="80" height="80" />
 </p>
 
