@@ -6,7 +6,7 @@
 
 <p align="center">
   <strong>AI-native CV builder that grows with you.</strong><br />
-  Build, tailor, and export resumes from a living career knowledge base — not a one-off template.
+  Build, tailor, and export resumes from a living career knowledge base, not a one-off template.
 </p>
 
 <p align="center">
@@ -33,27 +33,27 @@
 
 ## Why Yuse exists
 
-Most CV tools treat your career as a static form. Yuse treats it as **knowledge that compounds** — a Digital Twin of your real work that gets sharper every time you chat, import a profile, or tailor for a role.
+Most CV tools treat your career as a static form. Yuse treats it as **knowledge that compounds**, a Digital Twin of your real work that gets sharper every time you chat, import a profile, or tailor for a role.
 
 | | |
 |---|---|
-| **Why** | Every application deserves a CV that reflects who you actually are — not a generic one-pager. |
+| **Why** | Every application deserves a CV that reflects who you actually are, not a generic one-pager. |
 | **How** | A conversational AI assistant maintains structured career stories (STAR/PAR), imports from GitHub and LinkedIn, and tailors resumes per job. |
 | **What** | A full-stack app: Next.js editor with live preview, Go GraphQL API, Postgres persistence, and print/PDF export. |
 
 ## Features
 
-- **AI assistant** — Floating in-app agent that creates, edits, and tailors resumes through natural conversation and tool calls (OpenAI function calling + in-process MCP registry).
-- **Digital Twin** — Long-term career knowledge separate from any single CV. Experience uses **STAR** (Situation → Task → Action → Result); projects and skills use **PAR** (Problem → Action → Result).
-- **Resume workspace** — Live preview, reusable section library, themes, and per-resume visibility controls.
-- **Job Tracker** — Track applications, research postings, generate tailored CVs and cover letters, and link them to tracked jobs.
+- **AI assistant**, Floating in-app agent that creates, edits, and tailors resumes through natural conversation and tool calls (OpenAI function calling + in-process MCP registry).
+- **Digital Twin**, Long-term career knowledge separate from any single CV. Experience uses **STAR** (Situation → Task → Action → Result); projects and skills use **PAR** (Problem → Action → Result).
+- **Resume workspace**, Live preview, reusable section library, themes, and per-resume visibility controls.
+- **Job Tracker**, Track applications, research postings, generate tailored CVs and cover letters, and link them to tracked jobs.
 - **Import sources**
-  - **GitHub** — Optional OAuth connection for private repos and higher rate limits; public profile crawl when not connected.
-  - **LinkedIn** — Profile import via `fetch_linkedin_profile` (server-side crawl).
-  - **Websites & portfolios** — Deep crawl of personal sites, GitLab, and similar URLs.
-- **Print & PDF** — Dedicated print view (`/print`) with browser print-to-PDF; vector PDF export via jsPDF.
-- **Auth** — Google OAuth and email/password sign-in (NextAuth.js); GitHub OAuth for Connections.
-- **Workspace-scoped data** — Per-user resumes, twin entries, and job applications in PostgreSQL.
+  - **GitHub**, Optional OAuth connection for private repos and higher rate limits; public profile crawl when not connected.
+  - **LinkedIn**, Profile import via `fetch_linkedin_profile` (server-side crawl).
+  - **Websites & portfolios**, Deep crawl of personal sites, GitLab, and similar URLs.
+- **Print & PDF**, Dedicated print view (`/print`) with browser print-to-PDF; vector PDF export via jsPDF.
+- **Auth**, Google OAuth and email/password sign-in (NextAuth.js); GitHub OAuth for Connections.
+- **Workspace-scoped data**, Per-user resumes, twin entries, and job applications in PostgreSQL.
 
 > **Social images:** 4:3 cover and homepage preview assets live in [`public/social/`](public/social/). Upload `github-cover.png` as the repo social preview in GitHub settings.
 >
@@ -70,7 +70,7 @@ Most CV tools treat your career as a static form. Yuse treats it as **knowledge 
 | AI | OpenAI API (`gpt-5.4-mini` default; configurable fallbacks) |
 | Agent tools | In-process MCP registry (`backend/internal/mcp`); optional stdio MCP server for Cursor |
 | PDF | jsPDF (client-side vector export) + browser print |
-| Deploy | [Vercel](https://vercel.com) — Next.js frontend + Go backend at `/_/backend` |
+| Deploy | [Vercel](https://vercel.com), Next.js frontend + Go backend at `/_/backend` |
 
 ## Architecture
 
@@ -103,7 +103,7 @@ flowchart LR
 - **Node.js** 20+
 - **Docker Desktop** (Compose v2.1+ with `--wait`) for local Postgres + backend
 - **OpenAI API key** (required for the CV assistant)
-- **Google OAuth credentials** (required for sign-in — interactive setup script provided)
+- **Google OAuth credentials** (required for sign-in, interactive setup script provided)
 
 Optional: `gcloud` CLI for guided Google OAuth setup; Go 1.25+ if you run the backend outside Docker.
 
@@ -194,7 +194,7 @@ cp .env.example .env
 | `GOOGLE_CLIENT_ID` | Yes | Google OAuth client ID |
 | `GOOGLE_CLIENT_SECRET` | Yes | Google OAuth client secret |
 | `NEXT_PUBLIC_GRAPHQL_URL` | Yes | Browser GraphQL endpoint (`/api/graphql`) |
-| `GRAPHQL_URL` | Yes | Server-side upstream — absolute URL (`http://localhost:8080/graphql`) |
+| `GRAPHQL_URL` | Yes | Server-side upstream, absolute URL (`http://localhost:8080/graphql`) |
 | `NEXTAUTH_URL` | No | App URL; inferred locally with `trustHost` |
 | `BACKEND_PORT` | No | Docker backend port override (default `8080`) |
 | `CORS_ORIGIN` | No | Frontend origin for backend CORS (default `http://localhost:3000`) |
@@ -273,9 +273,9 @@ yuse/
 
 Production runs on **Vercel**:
 
-- **Frontend** — Next.js at `/`
-- **Backend** — Go service at `/_/backend` (see `vercel.json`)
-- **Database** — [Neon](https://neon.tech) PostgreSQL
+- **Frontend**, Next.js at `/`
+- **Backend**, Go service at `/_/backend` (see `vercel.json`)
+- **Database**, [Neon](https://neon.tech) PostgreSQL
 
 Live site: **[yuse.ahmetkok.dev](https://yuse.ahmetkok.dev)**
 
@@ -302,11 +302,11 @@ Contributions are welcome. Please read [CONTRIBUTING.md](CONTRIBUTING.md) for se
 
 ## Related documentation
 
-- [docs/AUTH.md](docs/AUTH.md) — Authentication, OAuth, session invalidation
-- [docs/DOCKER.md](docs/DOCKER.md) — Local Docker orchestration
-- [docs/ROADMAP.md](docs/ROADMAP.md) — Product vision and phases
-- [backend/README.md](backend/README.md) — GraphQL API details and example queries
-- [backend/internal/mcp/README.md](backend/internal/mcp/README.md) — MCP tools and Cursor setup
+- [docs/AUTH.md](docs/AUTH.md), Authentication, OAuth, session invalidation
+- [docs/DOCKER.md](docs/DOCKER.md), Local Docker orchestration
+- [docs/ROADMAP.md](docs/ROADMAP.md), Product vision and phases
+- [backend/README.md](backend/README.md), GraphQL API details and example queries
+- [backend/internal/mcp/README.md](backend/internal/mcp/README.md), MCP tools and Cursor setup
 
 ## License
 

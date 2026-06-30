@@ -65,7 +65,7 @@ Passwords are hashed with **bcrypt** (cost 12) in Postgres; plaintext passwords 
 | `GOOGLE_CLIENT_SECRET`    | `.env`                  | Google OAuth client                                       |
 | `NEXTAUTH_URL`            | `.env` (optional)       | App URL (`http://localhost:3000`); inferred locally       |
 | `NEXT_PUBLIC_GRAPHQL_URL` | `.env`                  | Browser GraphQL endpoint (`/api/graphql` proxy)           |
-| `GRAPHQL_URL`             | `.env`                  | Server-side upstream — **must be absolute** (`http://localhost:8080/graphql`) |
+| `GRAPHQL_URL`             | `.env`                  | Server-side upstream, **must be absolute** (`http://localhost:8080/graphql`) |
 | `DATABASE_URL`            | `backend/.env`          | Postgres (required for real per-user workspaces)          |
 
 
@@ -173,12 +173,12 @@ gcloud config set project YOUR_PROJECT_ID
 | `Unauthorized` from GraphQL   | Ensure `AUTH_SECRET` matches in `.env` and `backend/.env`; restart backend  |
 | `POST /api/graphql` 500/503   | Set `GRAPHQL_URL=http://localhost:8080/graphql` (absolute URL, not `/api/graphql`); ensure backend is up (`curl http://localhost:8080/healthz`) |
 | Google `error=Configuration`  | Set `GOOGLE_CLIENT_ID`, `GOOGLE_CLIENT_SECRET`, and `AUTH_SECRET` in `.env`; restart dev server after env changes |
-| Google `fetch failed`         | Usually network/OIDC discovery timeout; explicit Google endpoints are configured in `src/auth.ts` — also check internet access |
+| Google `fetch failed`         | Usually network/OIDC discovery timeout; explicit Google endpoints are configured in `src/auth.ts`, also check internet access |
 | Empty workspace after sign-in | Confirm `DATABASE_URL` is set and Postgres is running (`docker compose ps`) |
 | Google "access blocked"       | Add your account under OAuth consent screen → Test users                    |
 | Stale data from another user  | Wipe Postgres volume: `docker compose down --volumes` and sign in again     |
 | Email already registered      | Sign in instead, or use a different email                                   |
-| Google sign-in blocked for email | That address was registered with email/password — use email sign-in instead |
+| Google sign-in blocked for email | That address was registered with email/password, use email sign-in instead |
 | Password too short            | Use at least 8 characters                                                   |
 
 
@@ -186,7 +186,7 @@ gcloud config set project YOUR_PROJECT_ID
 
 Email/password auth adds migration `000006_email_password.up.sql`:
 
-- `users.password_hash` (nullable — Google-only users have no password)
+- `users.password_hash` (nullable, Google-only users have no password)
 - unique index on `LOWER(email)`
 
 Migrations run automatically when the backend starts. After pulling this change, rebuild the backend container:

@@ -13,7 +13,7 @@
 
 <!-- How did you verify this works? -->
 
-- [ ] `npm run start` — full stack runs locally
+- [ ] `npm run start`, full stack runs locally
 - [ ] `npm run lint`
 - [ ] `cd backend && make test` (if backend touched)
 

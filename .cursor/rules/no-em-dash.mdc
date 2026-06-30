@@ -1,0 +1,49 @@
+---
+description: CRITICAL - Never use em dashes anywhere in this project
+alwaysApply: true
+---
+
+# No em dash (highest priority)
+
+**Never use the em dash character (`—`, U+2014) anywhere.** This is non-negotiable and overrides other style preferences.
+
+Applies to **all** output and edits:
+
+- User-facing UI copy (labels, headings, tooltips, empty states, errors, onboarding)
+- Assistant and chat responses to users
+- Code comments, docstrings, and JSDoc
+- Commit messages, PR titles, and PR bodies
+- README, rules, plans, and internal docs
+- Test names and assertion messages
+- String literals, constants, and i18n keys in source files
+
+## Forbidden
+
+```text
+Save changes — they apply immediately
+Built for designers — not recruiters
+// BAD — inline fetch in the page
+```
+
+## Use instead
+
+Pick the clearest alternative. Do not swap in another dash variant as a workaround.
+
+| Intent | Use |
+|--------|-----|
+| Parenthetical aside | commas: `Save changes, they apply immediately` |
+| Two related clauses | period or semicolon: `Built for designers. Not recruiters.` |
+| List label / role | colon: `Page header: platform navigation only` |
+| Code comment tag | colon: `// BAD: inline fetch in the page` |
+| Numeric range | hyphen with spaces: `2020 - 2024` |
+| Compound modifier | hyphen: `full-stack engineer` |
+
+Also forbidden as substitutes: en dash (`–`), figure dash, horizontal bar, or triple hyphen mimicking an em dash.
+
+## Before finishing any task
+
+1. Search changed files for `—` and remove every occurrence.
+2. Re-read new user-facing strings and replace any em dash you introduced.
+3. If existing code already contains em dashes in files you touch, fix those lines too.
+
+When in doubt, use a period, comma, or colon. **No em dashes. Ever.**
