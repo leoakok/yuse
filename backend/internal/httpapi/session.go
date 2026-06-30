@@ -42,7 +42,34 @@ func (m SessionMiddleware) Wrap(next http.Handler) http.Handler {
 
 		scopedStore := m.Store.WithSession(session)
 		cvSvc := cv.NewService(scopedStore, m.LLM, m.Photos)
-		ctx := scope.With(r.Context(), scope.Value{Session: session, CV: cvSvc})
+		ctx := scope.With(r.Context(), scope.Value{Session: session, CV: cvSvc, Postgres: m.Store})
+		next.ServeHTTP(w, r.WithContext(ctx))
+	})
+}
+
+// WrapGraphQL validates auth when present and always attaches Postgres for public resolvers.
+func (m SessionMiddleware) WrapGraphQL(next http.Handler) http.Handler {
+	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		claims, err := auth.ParseBearer(r.Header.Get("Authorization"), m.AuthSecret)
+		if err != nil {
+			ctx := scope.With(r.Context(), scope.Value{Postgres: m.Store})
+			next.ServeHTTP(w, r.WithContext(ctx))
+			return
+		}
+
+		session, err := store.EnsureSession(r.Context(), m.Pool, claims)
+		if errors.Is(err, store.ErrSessionInvalid) {
+			http.Error(w, "session invalid", http.StatusUnauthorized)
+			return
+		}
+		if err != nil {
+			http.Error(w, "session error", http.StatusInternalServerError)
+			return
+		}
+
+		scopedStore := m.Store.WithSession(session)
+		cvSvc := cv.NewService(scopedStore, m.LLM, m.Photos)
+		ctx := scope.With(r.Context(), scope.Value{Session: session, CV: cvSvc, Postgres: m.Store})
 		next.ServeHTTP(w, r.WithContext(ctx))
 	})
 }

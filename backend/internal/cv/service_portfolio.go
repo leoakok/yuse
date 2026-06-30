@@ -83,6 +83,24 @@ func (s *Service) UpdatePortfolioSettings(input model.UpdatePortfolioSettingsInp
 		if input.Locale != nil {
 			settings.Locale = *input.Locale
 		}
+		if input.ProjectGridColumns != nil {
+			settings.ProjectGridColumns = *input.ProjectGridColumns
+		}
+		if input.ProjectCardStyle != nil {
+			settings.ProjectCardStyle = *input.ProjectCardStyle
+		}
+		if input.TypographyScale != nil {
+			settings.TypographyScale = *input.TypographyScale
+		}
+		if input.HeroStyle != nil {
+			settings.HeroStyle = *input.HeroStyle
+		}
+		if input.NavigationStyle != nil {
+			settings.NavigationStyle = *input.NavigationStyle
+		}
+		if input.AnimationLevel != nil {
+			settings.AnimationLevel = *input.AnimationLevel
+		}
 	})
 }
 
@@ -156,5 +174,7 @@ func (s *Service) UpdatePortfolioContactProfile(
 		input.PhotoURL,
 		input.LinkedinPhotoURL,
 		input.GithubPhotoURL,
+		input.OgImageURL,
+		input.FaviconURL,
 	)
 }
