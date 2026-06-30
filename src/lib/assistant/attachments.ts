@@ -282,9 +282,9 @@ export function formatMessageWithAttachments(
     } else if (isImageAttachment(attachment)) {
       lines.push("(Image attached for analysis.)");
     } else if (isPdfAttachment(attachment)) {
-      lines.push("(PDF attached — content will be read on the server.)");
+      lines.push("(PDF attached, content will be read on the server.)");
     } else {
-      lines.push("(Filename and type provided — content not extracted.)");
+      lines.push("(Filename and type provided, content not extracted.)");
     }
   });
   lines.push("---");

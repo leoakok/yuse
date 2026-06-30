@@ -1,6 +1,7 @@
 "use client";
 
 import { useCallback, useEffect, useState } from "react";
+import { usePathname } from "next/navigation";
 import { ArrowLeft, History, Plus, X } from "lucide-react";
 import { YuseLogo } from "@/components/brand/yuse-logo";
 import { toast } from "sonner";
@@ -24,7 +25,10 @@ import { ScrollArea } from "@/components/ui/scroll-area";
 import type { ComposerAttachment } from "@/lib/types/assistant";
 import { cn } from "@/lib/utils";
 
+const WELCOME_PATH = "/welcome";
+
 export function CvAssistantPanel() {
+  const pathname = usePathname();
   const {
     messages,
     threads,
@@ -121,6 +125,16 @@ export function CvAssistantPanel() {
       return preview.length > 72 ? `${preview.slice(0, 72)}…` : preview;
     }
     return "New chat";
+  }
+
+  useEffect(() => {
+    if (pathname === WELCOME_PATH && isOpen) {
+      setOpen(false);
+    }
+  }, [isOpen, pathname, setOpen]);
+
+  if (pathname === WELCOME_PATH) {
+    return null;
   }
 
   return (

@@ -202,7 +202,7 @@ export function describeToolEnd(
 }
 
 const TOOL_ERROR_LABELS: Record<string, string> = {
-  fetch_linkedin_profile: "Couldn't import LinkedIn — need a profile link",
+  fetch_linkedin_profile: "Couldn't import LinkedIn. Need a profile link",
   explore_website: "Couldn't explore that site",
   create_resume: "Couldn't create the CV",
   duplicate_resume: "Couldn't duplicate the CV",
@@ -225,7 +225,7 @@ export function describeToolError(
     err.includes("too short") ||
     err.includes("unclear")
   ) {
-    return "Paused — I need a clearer request first";
+    return "Paused. I need a clearer request first";
   }
   if (err.includes("profileurl") || err.includes("linkedin")) {
     return "LinkedIn import needs a profile link";

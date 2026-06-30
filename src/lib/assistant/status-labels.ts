@@ -1,7 +1,7 @@
 /** Maps backend / legacy status strings to plain Yuse voice. */
 const STATUS_LABEL_MAP: Record<string, string> = {
-  "Waiting for model capacity…": "Give me a moment — getting ready…",
-  "Waiting for model capacity...": "Give me a moment — getting ready…",
+  "Waiting for model capacity…": "Give me a moment. Getting ready…",
+  "Waiting for model capacity...": "Give me a moment. Getting ready…",
   "Continuing resume population…": "Still building your resume…",
   "Continuing resume population...": "Still building your resume…",
   "Finishing job application…": "Wrapping up your application…",
@@ -20,8 +20,8 @@ const STATUS_LABEL_MAP: Record<string, string> = {
 };
 
 const TECHNICAL_STATUS_PATTERNS: Array<{ pattern: RegExp; label: string }> = [
-  { pattern: /rate\s*limit|429|too many requests/i, label: "Busy right now — trying again…" },
-  { pattern: /model capacity|capacity|queue/i, label: "Give me a moment — getting ready…" },
+  { pattern: /rate\s*limit|429|too many requests/i, label: "Busy right now, trying again…" },
+  { pattern: /model capacity|capacity|queue/i, label: "Give me a moment. Getting ready…" },
   { pattern: /retry|backoff|throttl/i, label: "One sec, trying again…" },
   { pattern: /openai|llm|token limit|context length/i, label: "Working on it…" },
 ];

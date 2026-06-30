@@ -4,7 +4,22 @@ import { useEffect, useRef, useState, type Dispatch, type SetStateAction } from 
 import { Check, ChevronDown, LoaderCircle, X } from "lucide-react";
 import type { AgentActivity } from "@/lib/types/assistant";
 import { humanizeStatusLabel, isThinkingStatusLabel } from "@/lib/assistant/status-labels";
+import { DotmSquare4 } from "@/components/ui/dotm-square-4";
 import { cn } from "@/lib/utils";
+
+function ThinkingIndicator() {
+  return (
+    <DotmSquare4
+      size={22}
+      dotSize={3}
+      speed={1.2}
+      color="var(--primary)"
+      bloom
+      ariaLabel="Thinking"
+      className="shrink-0"
+    />
+  );
+}
 
 const COMPLETED_HOLD_MS = 1400;
 const FADE_OUT_MS = 280;
@@ -182,7 +197,7 @@ interface AgentActivityFeedProps {
   className?: string;
 }
 
-/** Step-by-step tool progress during streaming — one current action at a time. */
+/** Step-by-step tool progress during streaming, one current action at a time. */
 export function AgentActivityFeed({ activities, className }: AgentActivityFeedProps) {
   const slots = useStepwiseActivitySlots(activities);
 
@@ -231,7 +246,7 @@ interface ThinkingCollapsibleProps {
   className?: string;
 }
 
-/** Collapsible block for model reasoning / thinking phase only. */
+/** Status row or collapsible block for model reasoning / thinking phase. */
 export function ThinkingCollapsible({
   label = "Give me a moment…",
   content,
@@ -241,6 +256,34 @@ export function ThinkingCollapsible({
 }: ThinkingCollapsibleProps) {
   const [open, setOpen] = useState(defaultOpen);
   const hasContent = Boolean(content?.trim());
+
+  const labelText = (
+    <span
+      className={cn(
+        isActive ? "font-medium text-foreground" : "text-muted-foreground"
+      )}
+    >
+      {label}
+    </span>
+  );
+
+  if (!hasContent) {
+    return (
+      <div
+        role="status"
+        aria-live="polite"
+        className={cn(
+          "rounded-lg border bg-muted/40 px-3 py-2 backdrop-blur-sm",
+          className
+        )}
+      >
+        <div className="flex items-center gap-2 text-xs">
+          {isActive ? <ThinkingIndicator /> : null}
+          {labelText}
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div
@@ -261,18 +304,10 @@ export function ThinkingCollapsible({
             open && "rotate-180"
           )}
         />
-        {isActive ? (
-          <LoaderCircle className="size-3.5 shrink-0 animate-spin text-primary" />
-        ) : null}
-        <span
-          className={cn(
-            isActive ? "font-medium text-foreground" : "text-muted-foreground"
-          )}
-        >
-          {label}
-        </span>
+        {isActive ? <ThinkingIndicator /> : null}
+        {labelText}
       </button>
-      {open && hasContent ? (
+      {open ? (
         <div className="whitespace-pre-wrap border-t px-3 py-2 text-xs text-muted-foreground">
           {content}
         </div>
