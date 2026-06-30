@@ -5,6 +5,7 @@ import type {
   SectionItem,
   SectionType,
 } from "@/lib/types/cv";
+import { defaultResumeSettings } from "@/lib/cv/resume-settings";
 import type { CvTheme } from "@/lib/types/theme";
 
 const DEMO_WORKSPACE = "landing-demo";
@@ -68,25 +69,9 @@ function buildDemoResume(
       updatedAt: DEMO_AT,
     },
     contactProfile,
-    settings: {
-      resumeId: id,
-      themeId: DEMO_THEME.id,
-      fontSize: "M",
-      contactNameFontSize: "M",
-      contactHeadlineFontSize: "M",
-      contactDetailsFontSize: "M",
-      sectionTitleFontSize: "M",
-      itemTitleFontSize: "M",
-      itemMetaFontSize: "M",
-      pageFormat: "A4",
-      marginHorizontalMm: 12,
-      marginVerticalMm: 12,
-      showPhoto: false,
-      itemTitleLayout: "STACKED",
-      locale: "en",
-    },
+    settings: { ...defaultResumeSettings(id), themeId: DEMO_THEME.id },
     theme: DEMO_THEME,
-    sections,
+    sections: sections.map((entry) => ({ ...entry, showInPreview: true })),
   };
 }
 
@@ -191,7 +176,7 @@ const MUSK_PROFILE: ContactProfile = {
   id: "demo-musk-profile",
   workspaceId: DEMO_WORKSPACE,
   fullName: "Elon Musk",
-  headline: "CEO & Chief Engineer — multi-planetary transport and sustainable energy",
+  headline: "CEO & Chief Engineer, multi-planetary transport and sustainable energy",
   email: "elon@demo.yuse.app",
   location: "Austin, TX",
   website: "spacex.com",
@@ -203,7 +188,7 @@ const JOBS_PROFILE: ContactProfile = {
   id: "demo-jobs-profile",
   workspaceId: DEMO_WORKSPACE,
   fullName: "Steve Jobs",
-  headline: "CEO & Co-founder — technology at the intersection of liberal arts",
+  headline: "CEO & Co-founder, technology at the intersection of liberal arts",
   email: "steve@demo.yuse.app",
   location: "Cupertino, CA",
   website: "apple.com",
@@ -215,7 +200,7 @@ const RAMS_PROFILE: ContactProfile = {
   id: "demo-rams-profile",
   workspaceId: DEMO_WORKSPACE,
   fullName: "Dieter Rams",
-  headline: "Chief Design Officer — disciplined industrial design, less but better",
+  headline: "Chief Design Officer, disciplined industrial design, less but better",
   email: "dieter@demo.yuse.app",
   location: "Kronberg, Germany",
   website: "vitsœ.com",
@@ -229,7 +214,7 @@ export const TAILOR_SHOWCASE_EXAMPLES: TailorShowcaseExample[] = [
     label: "Elon Musk",
     url: "spacex.com/careers/chief-engineer-starship",
     company: "SpaceX",
-    headline: "Chief Engineer — Starship",
+    headline: "Chief Engineer, Starship",
     summary:
       "First-principles engineer and operator who builds where physics, manufacturing, and product velocity matter.",
     skills: [
@@ -252,7 +237,7 @@ export const TAILOR_SHOWCASE_EXAMPLES: TailorShowcaseExample[] = [
         source: "linkedin",
       },
     ],
-    preview: buildDemoResume("demo-musk", "Elon Musk — SpaceX", MUSK_PROFILE, [
+    preview: buildDemoResume("demo-musk", "Elon Musk, SpaceX", MUSK_PROFILE, [
       {
         section: stubSection("musk-summary", "SUMMARY", "Summary"),
         items: [
@@ -311,7 +296,7 @@ export const TAILOR_SHOWCASE_EXAMPLES: TailorShowcaseExample[] = [
     company: "Apple",
     headline: "Product Vision Lead",
     summary:
-      "Product leader who believed technology should feel inevitable — simple on the surface, obsessively crafted underneath.",
+      "Product leader who believed technology should feel inevitable, simple on the surface, obsessively crafted underneath.",
     skills: [
       "Product vision",
       "Design critique",
@@ -324,7 +309,7 @@ export const TAILOR_SHOWCASE_EXAMPLES: TailorShowcaseExample[] = [
         source: "twin",
       },
       {
-        text: "Instituted end-to-end ownership — hardware, software, retail, and brand as one experience.",
+        text: "Instituted end-to-end ownership, hardware, software, retail, and brand as one experience.",
         source: "github",
       },
       {
@@ -332,7 +317,7 @@ export const TAILOR_SHOWCASE_EXAMPLES: TailorShowcaseExample[] = [
         source: "linkedin",
       },
     ],
-    preview: buildDemoResume("demo-jobs", "Steve Jobs — Apple", JOBS_PROFILE, [
+    preview: buildDemoResume("demo-jobs", "Steve Jobs, Apple", JOBS_PROFILE, [
       {
         section: stubSection("jobs-summary", "SUMMARY", "Summary"),
         items: [
@@ -340,7 +325,7 @@ export const TAILOR_SHOWCASE_EXAMPLES: TailorShowcaseExample[] = [
             "jobs-summary-1",
             "SUMMARY",
             "Professional summary",
-            "Product leader who believed technology should feel inevitable — simple on the surface, obsessively crafted underneath. Demo profile for illustration only.",
+            "Product leader who believed technology should feel inevitable, simple on the surface, obsessively crafted underneath. Demo profile for illustration only.",
           ),
         ],
       },
@@ -351,7 +336,7 @@ export const TAILOR_SHOWCASE_EXAMPLES: TailorShowcaseExample[] = [
             "jobs-apple-2",
             "EXPERIENCE",
             "CEO & Co-founder",
-            "- Returned to Apple and rebuilt the product line around a handful of breakthrough devices: iMac, iPod, iPhone, iPad.\n- Instituted a culture of end-to-end ownership — hardware, software, retail, and brand as one experience.\n- Championed design reviews that killed good ideas to protect great ones.",
+            "- Returned to Apple and rebuilt the product line around a handful of breakthrough devices: iMac, iPod, iPhone, iPad.\n- Instituted a culture of end-to-end ownership, hardware, software, retail, and brand as one experience.\n- Championed design reviews that killed good ideas to protect great ones.",
             {
               company: "Apple",
               location: "Cupertino, CA",
@@ -420,11 +405,11 @@ export const TAILOR_SHOWCASE_EXAMPLES: TailorShowcaseExample[] = [
         source: "twin",
       },
       {
-        text: "Advised on the 606 Universal Shelving System — modular furniture built to outlast trends.",
+        text: "Advised on the 606 Universal Shelving System, modular furniture built to outlast trends.",
         source: "linkedin",
       },
     ],
-    preview: buildDemoResume("demo-rams", "Dieter Rams — Vitsoe", RAMS_PROFILE, [
+    preview: buildDemoResume("demo-rams", "Dieter Rams, Vitsoe", RAMS_PROFILE, [
       {
         section: stubSection("rams-summary", "SUMMARY", "Summary"),
         items: [
@@ -455,7 +440,7 @@ export const TAILOR_SHOWCASE_EXAMPLES: TailorShowcaseExample[] = [
             "rams-vitsoe",
             "EXPERIENCE",
             "Design Consultant",
-            "- Advised on the 606 Universal Shelving System — modular furniture built to outlast trends.\n- Helped Vitsoe keep a single product line excellent instead of chasing seasonal collections.",
+            "- Advised on the 606 Universal Shelving System, modular furniture built to outlast trends.\n- Helped Vitsoe keep a single product line excellent instead of chasing seasonal collections.",
             {
               company: "Vitsoe",
               location: "London, UK",

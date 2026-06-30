@@ -37,7 +37,7 @@ export function LandingHero({ isSignedIn = false }: LandingHeroProps) {
           <p className="mt-6 max-w-xl text-balance text-lg leading-relaxed text-muted-foreground">
             I believe every application deserves a CV that actually reflects who
             you are. Generic resumes flatten years of real work into tired
-            bullet points. I&apos;m here to change that — for every single role
+            bullet points. I&apos;m here to change that, for every single role
             you go after.
           </p>
         </Reveal>

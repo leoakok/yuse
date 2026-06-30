@@ -170,7 +170,7 @@ export function TailorDemo() {
             <div className="flex h-full min-h-72 flex-col items-center justify-center gap-3 px-2 text-center">
               <Sparkles className="size-6 text-primary" />
               <p className="max-w-xs text-sm text-muted-foreground">
-                Your tailored CV appears here — pulled from your real work, shaped
+                Your tailored CV appears here, pulled from your real work, shaped
                 for this exact role.
               </p>
             </div>

@@ -8,6 +8,7 @@ export default function JobTrackerPage() {
     <CatalogShell
       title="Job Tracker"
       description="Track applications, tailor your CV, and save cover letters with Yuse."
+      fillHeight
     >
       <JobTrackerWorkspace />
     </CatalogShell>

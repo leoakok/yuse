@@ -4,7 +4,7 @@ import { useCallback, useEffect, useMemo, useState } from "react";
 import { LayoutGrid, List, Loader2 } from "lucide-react";
 import { toast } from "sonner";
 import { JobDetailPanel } from "@/components/jobs/job-detail-panel";
-import { JobKanban } from "@/components/jobs/job-kanban";
+import { JobKanbanPanel } from "@/components/jobs/job-kanban-panel";
 import { JobTable } from "@/components/jobs/job-table";
 import { useCvAssistant } from "@/components/agent/cv-assistant-provider";
 import { Button } from "@/components/ui/button";
@@ -166,8 +166,8 @@ export function JobTrackerWorkspace() {
   }
 
   return (
-    <div className="space-y-6">
-      <form onSubmit={handleTrackJob} className="flex flex-col gap-3 sm:flex-row">
+    <div className="flex min-h-0 min-w-0 w-full flex-1 flex-col gap-6">
+      <form onSubmit={handleTrackJob} className="flex shrink-0 flex-col gap-3 sm:flex-row">
         <Input
           type="url"
           placeholder="Paste LinkedIn or job posting URL"
@@ -188,7 +188,7 @@ export function JobTrackerWorkspace() {
         </Button>
       </form>
 
-      <div className="flex items-center justify-between gap-3">
+      <div className="flex shrink-0 items-center justify-between gap-3">
         <p className="text-sm text-muted-foreground">
           Yuse fetches the posting, tailors your CV, and writes a cover letter in chat.
         </p>
@@ -223,19 +223,21 @@ export function JobTrackerWorkspace() {
       </div>
 
       {viewMode === "kanban" ? (
-        <JobKanban
+        <JobKanbanPanel
           jobs={jobs}
           onStatusChange={handleStatusChange}
           onSelect={(job) => setSelectedJobId(job.id)}
           selectedJobId={selectedJobId}
         />
       ) : (
-        <JobTable
-          jobs={jobs}
-          onDelete={setDeleteTarget}
-          onSelect={(job) => setSelectedJobId(job.id)}
-          selectedJobId={selectedJobId}
-        />
+        <div className="min-h-0 min-w-0 w-full flex-1 overflow-y-auto">
+          <JobTable
+            jobs={jobs}
+            onDelete={setDeleteTarget}
+            onSelect={(job) => setSelectedJobId(job.id)}
+            selectedJobId={selectedJobId}
+          />
+        </div>
       )}
 
       <JobDetailPanel
