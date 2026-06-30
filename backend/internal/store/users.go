@@ -317,7 +317,7 @@ func personalWorkspaceName(displayName string) string {
 // UserByID loads a user row for the me query.
 func UserByID(ctx context.Context, pool *pgxpool.Pool, userID string) (*model.User, error) {
 	row := pool.QueryRow(ctx, `
-		SELECT id, email, display_name, avatar_url, role, created_at, updated_at
+		SELECT id, email, display_name, username, avatar_url, role, created_at, updated_at
 		FROM users WHERE id = $1
 	`, userID)
 	return scanUser(row)

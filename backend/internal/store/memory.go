@@ -1,8 +1,9 @@
-// In-memory store for unit tests only — not used in production bootstrap.
+// In-memory store for unit tests only, not used in production bootstrap.
 package store
 
 import (
 	"errors"
+	"fmt"
 	"sort"
 	"strings"
 	"sync"
@@ -208,14 +209,14 @@ func (m *Memory) seed() {
 	}
 
 	m.resumeSections = []resumeSectionLink{
-		{"resume-swe", "section-summary", 0},
-		{"resume-swe", "section-exp", 1},
-		{"resume-swe", "section-edu", 2},
-		{"resume-swe", "section-skills", 3},
-		{"resume-swe", "section-lang", 4},
-		{"resume-startup", "section-summary", 0},
-		{"resume-startup", "section-exp", 1},
-		{"resume-startup", "section-skills", 2},
+		{"resume-swe", "section-summary", 0, true, nil},
+		{"resume-swe", "section-exp", 1, true, nil},
+		{"resume-swe", "section-edu", 2, true, nil},
+		{"resume-swe", "section-skills", 3, true, nil},
+		{"resume-swe", "section-lang", 4, true, nil},
+		{"resume-startup", "section-summary", 0, true, nil},
+		{"resume-startup", "section-exp", 1, true, nil},
+		{"resume-startup", "section-skills", 2, true, nil},
 	}
 
 	m.sectionItemLinks = []sectionItemLink{
@@ -519,6 +520,39 @@ func (m *Memory) UpdateResumeSettings(resumeID string, update func(*model.Resume
 	return cloneResumeSettings(settings), nil
 }
 
+func (m *Memory) UpdateResumeSectionDisplayTitle(
+	resumeID, sectionID string,
+	displayTitle *string,
+) (*model.ResumeWithContent, error) {
+	m.mu.Lock()
+	defer m.mu.Unlock()
+
+	if _, ok := m.resumes[resumeID]; !ok {
+		return nil, ErrNotFound
+	}
+	var titleVal *string
+	if displayTitle != nil {
+		trimmed := strings.TrimSpace(*displayTitle)
+		if trimmed == "" {
+			titleVal = nil
+		} else {
+			titleVal = &trimmed
+		}
+	}
+	updated := false
+	for i := range m.resumeSections {
+		if m.resumeSections[i].resumeID == resumeID && m.resumeSections[i].sectionID == sectionID {
+			m.resumeSections[i].displayTitle = titleVal
+			updated = true
+			break
+		}
+	}
+	if !updated {
+		return nil, ErrNotFound
+	}
+	return m.resumeWithContentLocked(resumeID)
+}
+
 func (m *Memory) itemVisibilityOnResume(resumeID, sectionID, sectionItemID string) (show bool, onResume bool) {
 	for _, link := range m.itemVisibilityLinks {
 		if link.resumeID == resumeID && link.sectionID == sectionID && link.sectionItemID == sectionItemID {
@@ -563,6 +597,76 @@ func (m *Memory) UpdateResumeSectionItemVisibility(
 	return m.resumeWithContentLocked(resumeID)
 }
 
+func (m *Memory) ReorderResumeSections(resumeID string, sectionIDs []string) (*model.ResumeWithContent, error) {
+	m.mu.Lock()
+	defer m.mu.Unlock()
+
+	if _, ok := m.resumes[resumeID]; !ok {
+		return nil, ErrNotFound
+	}
+
+	current := filterResumeSections(m.resumeSections, resumeID)
+	if len(current) != len(sectionIDs) {
+		return nil, fmt.Errorf("section count mismatch")
+	}
+	seen := make(map[string]struct{}, len(sectionIDs))
+	for _, id := range sectionIDs {
+		if _, ok := seen[id]; ok {
+			return nil, fmt.Errorf("duplicate section id")
+		}
+		seen[id] = struct{}{}
+	}
+	for _, link := range current {
+		if _, ok := seen[link.sectionID]; !ok {
+			return nil, fmt.Errorf("unknown section id")
+		}
+	}
+
+	orderByID := make(map[string]int, len(sectionIDs))
+	for i, id := range sectionIDs {
+		orderByID[id] = i
+	}
+	for i := range m.resumeSections {
+		if m.resumeSections[i].resumeID != resumeID {
+			continue
+		}
+		if order, ok := orderByID[m.resumeSections[i].sectionID]; ok {
+			m.resumeSections[i].sortOrder = order
+		}
+	}
+
+	return m.resumeWithContentLocked(resumeID)
+}
+
+func (m *Memory) UpdateResumeSectionVisibility(
+	resumeID, sectionID string,
+	showInPreview bool,
+) (*model.ResumeWithContent, error) {
+	m.mu.Lock()
+	defer m.mu.Unlock()
+
+	if _, ok := m.resumes[resumeID]; !ok {
+		return nil, ErrNotFound
+	}
+	if _, ok := m.sections[sectionID]; !ok {
+		return nil, ErrNotFound
+	}
+
+	found := false
+	for i := range m.resumeSections {
+		if m.resumeSections[i].resumeID == resumeID && m.resumeSections[i].sectionID == sectionID {
+			m.resumeSections[i].showInPreview = showInPreview
+			found = true
+			break
+		}
+	}
+	if !found {
+		return nil, ErrNotFound
+	}
+
+	return m.resumeWithContentLocked(resumeID)
+}
+
 func (m *Memory) AddResumeSectionItem(
 	resumeID, sectionID string,
 	headline, body string,
@@ -601,7 +705,7 @@ func (m *Memory) AddResumeSectionItem(
 			}
 		}
 		m.resumeSections = append(m.resumeSections, resumeSectionLink{
-			resumeID: resumeID, sectionID: sectionID, sortOrder: maxOrder + 1,
+			resumeID: resumeID, sectionID: sectionID, sortOrder: maxOrder + 1, showInPreview: true, displayTitle: nil,
 		})
 		linked = true
 	}
@@ -814,7 +918,7 @@ func (m *Memory) resumeWithContentLocked(resumeID string) (*model.ResumeWithCont
 	if settings == nil {
 		settings = &model.ResumeSettings{
 			ResumeID: resumeID, ThemeID: "theme-modern", FontSize: model.FontSizeM,
-			PageFormat: model.PageFormatA4, MarginHorizontalMm: 12, MarginVerticalMm: 12, ShowPhoto: false, ItemTitleLayout: model.ItemTitleLayoutStacked, Locale: "en-US",
+			PageFormat: model.PageFormatA4, MarginHorizontalMm: 12, MarginVerticalMm: 12, ShowPhoto: false, ItemTitleLayout: model.ItemTitleLayoutStacked, ItemTitleSeparator: model.ItemTitleSeparatorDot, ItemTitleOrder: model.ItemTitleOrderTitleFirst, FontFamily: model.FontFamilySans, Locale: "en-US",
 		}
 	}
 
@@ -855,8 +959,10 @@ func (m *Memory) resumeWithContentLocked(resumeID string) (*model.ResumeWithCont
 			}
 		}
 		sectionsWithItems = append(sectionsWithItems, &model.SectionWithItems{
-			Section: cloneSection(section),
-			Items:   items,
+			Section:       cloneSection(section),
+			DisplayTitle:  link.displayTitle,
+			Items:         items,
+			ShowInPreview: link.showInPreview,
 		})
 	}
 
@@ -1065,7 +1171,7 @@ func (m *Memory) DuplicateResume(sourceID string) (*model.Resume, error) {
 
 	for _, link := range filterResumeSections(m.resumeSections, sourceID) {
 		m.resumeSections = append(m.resumeSections, resumeSectionLink{
-			resumeID: newID, sectionID: link.sectionID, sortOrder: link.sortOrder,
+			resumeID: newID, sectionID: link.sectionID, sortOrder: link.sortOrder, showInPreview: link.showInPreview, displayTitle: link.displayTitle,
 		})
 	}
 
@@ -1134,7 +1240,7 @@ func (m *Memory) CreateResume(title string) *model.Resume {
 				continue
 			}
 			m.resumeSections = append(m.resumeSections, resumeSectionLink{
-				resumeID: id, sectionID: section.ID, sortOrder: i,
+				resumeID: id, sectionID: section.ID, sortOrder: i, showInPreview: true, displayTitle: nil,
 			})
 			for _, itemLink := range m.sectionItemLinks {
 				if itemLink.sectionID != section.ID {

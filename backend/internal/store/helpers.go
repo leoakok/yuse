@@ -1,6 +1,7 @@
 package store
 
 import (
+	"encoding/json"
 	"sort"
 	"strings"
 
@@ -8,9 +9,11 @@ import (
 )
 
 type resumeSectionLink struct {
-	resumeID  string
-	sectionID string
-	sortOrder int
+	resumeID      string
+	sectionID     string
+	sortOrder     int
+	showInPreview bool
+	displayTitle  *string
 }
 
 type sectionItemLink struct {
@@ -306,6 +309,24 @@ func cloneTwinEntry(entry *model.TwinEntry) *model.TwinEntry {
 	return &c
 }
 
+// normalizeFontSize maps stored values to a valid FontSize tier (XS–XL).
+func normalizeFontSize(raw string) model.FontSize {
+	switch strings.ToUpper(strings.TrimSpace(raw)) {
+	case "XS":
+		return model.FontSizeXs
+	case "S":
+		return model.FontSizeS
+	case "M":
+		return model.FontSizeM
+	case "L":
+		return model.FontSizeL
+	case "XL":
+		return model.FontSizeXl
+	default:
+		return model.FontSizeM
+	}
+}
+
 func defaultResumeSettings(resumeID string) *model.ResumeSettings {
 	return &model.ResumeSettings{
 		ResumeID:                resumeID,
@@ -322,18 +343,92 @@ func defaultResumeSettings(resumeID string) *model.ResumeSettings {
 		MarginVerticalMm:        12,
 		ShowPhoto:               false,
 		ItemTitleLayout:         model.ItemTitleLayoutStacked,
+		ItemTitleSeparator:      model.ItemTitleSeparatorDot,
+		ItemTitleOrder:          model.ItemTitleOrderTitleFirst,
+		FontFamily:              model.FontFamilySans,
+		AccentColor:             "#c45c3e",
+		SectionDividerStyle:     model.SectionDividerStyleFull,
+		DateFormat:              model.DateFormatMonYyyy,
+		DatePosition:            model.DatePositionRight,
+		SkillsLayout:            model.SkillsLayoutList,
+		AtsMode:                 false,
+		ColumnLayout:            model.ColumnLayoutSingle,
+		SidebarPosition:         model.SidebarPositionLeft,
+		SidebarWidth:            model.SidebarWidthMedium,
+		DesignPresetID:          model.DesignPresetIDModern,
+		PhotoPosition:           model.PhotoPositionHeaderLeft,
+		PhotoSize:               model.PhotoSizeM,
+		ContactLayout:           model.ContactLayoutInline,
+		ContactFields:           defaultContactFields(),
+		SectionSpacing:          model.SpacingDensityNormal,
+		ItemSpacing:             model.SpacingDensityNormal,
+		DescriptionStyle:        model.DescriptionStyleBullets,
+		BulletChar:              model.BulletCharDot,
+		ItemTitleEmphasis:       model.ItemTitleEmphasisTitle,
+		HighlightCurrentRole:    false,
+		LocationDisplay:         model.LocationDisplayOwnLine,
+		HeadingFontFamily:       model.FontFamilySans,
+		BodyFontFamily:          model.FontFamilySans,
+		NameFontWeight:          model.FontWeightRoleSemibold,
+		SectionTitleFontWeight:  model.FontWeightRoleSemibold,
+		LineHeight:              model.LineHeightDensityNormal,
+		HeadingLetterSpacing:    model.LetterSpacingDensityNormal,
+		SectionTitleSmallCaps:   true,
+		TextPrimaryColor:        "",
+		TextMutedColor:          "",
+		PageBackground:          model.PageBackgroundWhite,
+		LinkColor:               "",
+		SkillsProficiency:       model.SkillsProficiencyNone,
+		LanguagesLayout:         model.LanguagesLayoutList,
+		CertificationsLayout:    model.CertificationsLayoutList,
+		KeepSectionsTogether:    true,
+		MaxItemsBeforeBreak:     nil,
+		FooterStyle:             model.FooterStyleNone,
+		ExportFilenameTemplate:  "{name}-resume",
 		Locale:                  "en-US",
+	}
+}
+
+func encodeContactFields(fields []model.ContactField) []byte {
+	if len(fields) == 0 {
+		fields = defaultContactFields()
+	}
+	raw := make([]string, len(fields))
+	for i, f := range fields {
+		raw[i] = string(f)
+	}
+	b, err := json.Marshal(raw)
+	if err != nil {
+		return []byte(`["EMAIL","PHONE","LOCATION","WEBSITE"]`)
+	}
+	return b
+}
+
+func normalizeFontFamily(raw string) model.FontFamily {
+	switch strings.ToUpper(strings.TrimSpace(raw)) {
+	case "SERIF":
+		return model.FontFamilySerif
+	case "MONO":
+		return model.FontFamilyMono
+	default:
+		return model.FontFamilySans
 	}
 }
 
 func defaultPortfolioSettings(portfolioID string) *model.PortfolioSettings {
 	return &model.PortfolioSettings{
-		PortfolioID: portfolioID,
-		ThemeID:     "theme-modern",
-		Layout:      model.PortfolioLayoutSingle,
-		AccentColor: "#2563eb",
-		ShowPhoto:   false,
-		Locale:      "en-US",
+		PortfolioID:        portfolioID,
+		ThemeID:            "theme-modern",
+		Layout:             model.PortfolioLayoutSingle,
+		AccentColor:        "#2563eb",
+		ShowPhoto:          false,
+		Locale:             "en-US",
+		ProjectGridColumns: model.PortfolioProjectGridColumnsTwo,
+		ProjectCardStyle:   model.PortfolioProjectCardStyleStandard,
+		TypographyScale:    model.PortfolioTypographyScaleNormal,
+		HeroStyle:          model.PortfolioHeroStyleGradient,
+		NavigationStyle:    model.PortfolioNavigationStyleTop,
+		AnimationLevel:     model.PortfolioAnimationLevelSubtle,
 	}
 }
 
