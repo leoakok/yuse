@@ -14,6 +14,21 @@ import type {
   Section,
   SectionItem,
   ItemTitleLayout,
+  ItemTitleSeparator,
+  ItemTitleOrder,
+  FontFamily,
+  SectionDividerStyle,
+  DateFormat,
+  DatePosition,
+  SkillsLayout,
+  ColumnLayout,
+  SidebarPosition,
+  SidebarWidth,
+  DesignPresetId,
+  PhotoPosition,
+  PhotoSize,
+  ContactLayout,
+  ContactField,
   CvFontSize,
   SectionItemMetadata,
   SectionItemUsage,
@@ -30,8 +45,16 @@ import type {
   UpdateTrackedJobInput,
 } from "@/lib/types/job";
 import { mapPortfolioWithContent } from "@/lib/api/portfolio-api";
-import { DEFAULT_CV_TYPOGRAPHY_SETTINGS } from "@/lib/cv/typography";
-import { DEFAULT_PAGE_MARGIN_MM } from "@/lib/cv/page-format";
+import { DEFAULT_CV_TYPOGRAPHY_SETTINGS, normalizeFontSize } from "@/lib/cv/typography";
+import { DEFAULT_CV_FONT_FAMILY, normalizeFontFamily } from "@/lib/cv/fonts";
+import { DEFAULT_PAGE_MARGIN_MM, snapMarginMm } from "@/lib/cv/page-format";
+import { DEFAULT_RESUME_ACCENT_COLOR, mapSectionDividerStyle } from "@/lib/cv/accent";
+import { normalizeContactFields } from "@/lib/cv/contact-header";
+import { normalizeDesignPresetId } from "@/lib/cv/design-presets";
+import {
+  DEFAULT_RESUME_DESIGN_EXTENSION,
+  pickResumeDesignExtension,
+} from "@/lib/cv/resume-design";
 import { normalizeUserMessage } from "@/lib/assistant/attachments";
 import {
   ASSISTANT_MESSAGES_QUERY,
@@ -67,6 +90,9 @@ import {
   ADD_RESUME_SECTION_ITEM_MUTATION,
   DELETE_SECTION_ITEM_MUTATION,
   UPDATE_RESUME_SETTINGS_MUTATION,
+  UPDATE_RESUME_SECTION_DISPLAY_TITLE_MUTATION,
+  REORDER_RESUME_SECTIONS_MUTATION,
+  UPDATE_RESUME_SECTION_VISIBILITY_MUTATION,
   UPDATE_CONTACT_PROFILE_MUTATION,
   REQUEST_PROFILE_PHOTO_UPLOAD_MUTATION,
 } from "@/lib/graphql/operations";
@@ -91,10 +117,18 @@ function mapResume(r: Resume): Resume {
   return { ...r };
 }
 
-function mapSectionItem(item: SectionItem): SectionItem {
+function mapWorkspaceSectionItem(item: SectionItem): SectionItem {
   return {
     ...item,
     showInPreview: item.showInPreview ?? true,
+    metadata: mapMetadata(item.metadata as Record<string, unknown>),
+  };
+}
+
+function mapResumeSectionItem(item: SectionItem): SectionItem {
+  return {
+    ...item,
+    showInPreview: item.showInPreview ?? false,
     metadata: mapMetadata(item.metadata as Record<string, unknown>),
   };
 }
@@ -148,9 +182,81 @@ function mapItemTitleLayout(value: string | undefined): ItemTitleLayout {
   return value === "INLINE" ? "INLINE" : "STACKED";
 }
 
-function mapFontSize(value: string | undefined): CvFontSize {
-  if (value === "S" || value === "L") return value;
+function mapItemTitleSeparator(value: string | undefined): ItemTitleSeparator {
+  if (value === "PIPE") return "PIPE";
+  if (value === "COMMA") return "COMMA";
+  return "DOT";
+}
+
+function mapFontFamily(value: string | undefined): FontFamily {
+  return normalizeFontFamily(value);
+}
+
+function mapItemTitleOrder(value: string | undefined): ItemTitleOrder {
+  return value === "COMPANY_FIRST" ? "COMPANY_FIRST" : "TITLE_FIRST";
+}
+
+function mapDateFormat(value: string | undefined): DateFormat {
+  if (value === "MM_YYYY") return "MM_YYYY";
+  if (value === "YYYY") return "YYYY";
+  if (value === "ISO") return "ISO";
+  return "MON_YYYY";
+}
+
+function mapDatePosition(value: string | undefined): DatePosition {
+  if (value === "BELOW") return "BELOW";
+  if (value === "INLINE") return "INLINE";
+  return "RIGHT";
+}
+
+function mapSkillsLayout(value: string | undefined): SkillsLayout {
+  if (value === "TAGS") return "TAGS";
+  if (value === "COLUMNS") return "COLUMNS";
+  return "LIST";
+}
+
+function mapColumnLayout(value: string | undefined): ColumnLayout {
+  return value === "TWO_COLUMN" ? "TWO_COLUMN" : "SINGLE";
+}
+
+function mapSidebarPosition(value: string | undefined): SidebarPosition {
+  return value === "RIGHT" ? "RIGHT" : "LEFT";
+}
+
+function mapSidebarWidth(value: string | undefined): SidebarWidth {
+  if (value === "NARROW") return "NARROW";
+  if (value === "WIDE") return "WIDE";
+  return "MEDIUM";
+}
+
+function mapPhotoPosition(value: string | undefined): PhotoPosition {
+  if (value === "HEADER_RIGHT") return "HEADER_RIGHT";
+  if (value === "SIDEBAR") return "SIDEBAR";
+  if (value === "NONE") return "NONE";
+  return "HEADER_LEFT";
+}
+
+function mapPhotoSize(value: string | undefined): PhotoSize {
+  if (value === "XS") return "XS";
+  if (value === "S") return "S";
+  if (value === "L") return "L";
+  if (value === "XL") return "XL";
   return "M";
+}
+
+function mapContactLayout(value: string | undefined): ContactLayout {
+  if (value === "STACKED") return "STACKED";
+  if (value === "ICON_LABEL") return "ICON_LABEL";
+  return "INLINE";
+}
+
+function mapContactFields(value: ContactField[] | string[] | undefined): ContactField[] {
+  if (!value?.length) return normalizeContactFields(undefined);
+  return normalizeContactFields(value as ContactField[]);
+}
+
+function mapFontSize(value: string | undefined): CvFontSize {
+  return normalizeFontSize(value);
 }
 
 function mapResumeSettings(settings: ResumeSettings): ResumeSettings {
@@ -164,9 +270,27 @@ function mapResumeSettings(settings: ResumeSettings): ResumeSettings {
     itemTitleFontSize: mapFontSize(settings.itemTitleFontSize as string | undefined),
     itemMetaFontSize: mapFontSize(settings.itemMetaFontSize as string | undefined),
     pageFormat: mapPageFormat(settings.pageFormat as string | undefined),
-    marginHorizontalMm: settings.marginHorizontalMm ?? DEFAULT_PAGE_MARGIN_MM,
-    marginVerticalMm: settings.marginVerticalMm ?? DEFAULT_PAGE_MARGIN_MM,
+    marginHorizontalMm: snapMarginMm(settings.marginHorizontalMm ?? DEFAULT_PAGE_MARGIN_MM),
+    marginVerticalMm: snapMarginMm(settings.marginVerticalMm ?? DEFAULT_PAGE_MARGIN_MM),
     itemTitleLayout: mapItemTitleLayout(settings.itemTitleLayout as string | undefined),
+    itemTitleSeparator: mapItemTitleSeparator(settings.itemTitleSeparator as string | undefined),
+    itemTitleOrder: mapItemTitleOrder(settings.itemTitleOrder as string | undefined),
+    fontFamily: mapFontFamily(settings.fontFamily as string | undefined ?? DEFAULT_CV_FONT_FAMILY),
+    accentColor: settings.accentColor?.trim() || DEFAULT_RESUME_ACCENT_COLOR,
+    sectionDividerStyle: mapSectionDividerStyle(settings.sectionDividerStyle as string | undefined),
+    dateFormat: mapDateFormat(settings.dateFormat as string | undefined),
+    datePosition: mapDatePosition(settings.datePosition as string | undefined),
+    skillsLayout: mapSkillsLayout(settings.skillsLayout as string | undefined),
+    atsMode: settings.atsMode ?? false,
+    columnLayout: mapColumnLayout(settings.columnLayout as string | undefined),
+    sidebarPosition: mapSidebarPosition(settings.sidebarPosition as string | undefined),
+    sidebarWidth: mapSidebarWidth(settings.sidebarWidth as string | undefined),
+    designPresetId: normalizeDesignPresetId(settings.designPresetId as string | undefined),
+    photoPosition: mapPhotoPosition(settings.photoPosition as string | undefined),
+    photoSize: mapPhotoSize(settings.photoSize as string | undefined),
+    contactLayout: mapContactLayout(settings.contactLayout as string | undefined),
+    contactFields: mapContactFields(settings.contactFields),
+    ...pickResumeDesignExtension(settings),
   };
 }
 
@@ -175,11 +299,14 @@ export function mapResumeWithContent(data: ResumeWithContent): ResumeWithContent
     ...data,
     settings: mapResumeSettings({
       ...DEFAULT_CV_TYPOGRAPHY_SETTINGS,
+      ...DEFAULT_RESUME_DESIGN_EXTENSION,
       ...data.settings,
     } as ResumeSettings),
     sections: data.sections.map((s) => ({
       section: s.section,
-      items: s.items.map(mapSectionItem),
+      displayTitle: s.displayTitle,
+      items: s.items.map(mapResumeSectionItem),
+      showInPreview: s.showInPreview ?? true,
     })),
   };
 }
@@ -195,41 +322,14 @@ export async function getResumeWithContent(id: string): Promise<ResumeWithConten
 
 export async function updateResumeSettings(
   resumeId: string,
-  patch: Pick<
-    Partial<ResumeSettings>,
-    | "pageFormat"
-    | "fontSize"
-    | "contactNameFontSize"
-    | "contactHeadlineFontSize"
-    | "contactDetailsFontSize"
-    | "sectionTitleFontSize"
-    | "itemTitleFontSize"
-    | "itemMetaFontSize"
-    | "themeId"
-    | "showPhoto"
-    | "itemTitleLayout"
-    | "locale"
-    | "marginHorizontalMm"
-    | "marginVerticalMm"
-  >
+  patch: Partial<Omit<ResumeSettings, "resumeId">>
 ): Promise<ResumeSettings> {
   const input: Record<string, unknown> = { resumeId };
-  if (patch.pageFormat != null) input.pageFormat = patch.pageFormat;
-  if (patch.fontSize != null) input.fontSize = patch.fontSize;
-  if (patch.contactNameFontSize != null) input.contactNameFontSize = patch.contactNameFontSize;
-  if (patch.contactHeadlineFontSize != null) {
-    input.contactHeadlineFontSize = patch.contactHeadlineFontSize;
+  for (const [key, value] of Object.entries(patch)) {
+    if (value !== undefined) {
+      input[key] = value;
+    }
   }
-  if (patch.contactDetailsFontSize != null) input.contactDetailsFontSize = patch.contactDetailsFontSize;
-  if (patch.sectionTitleFontSize != null) input.sectionTitleFontSize = patch.sectionTitleFontSize;
-  if (patch.itemTitleFontSize != null) input.itemTitleFontSize = patch.itemTitleFontSize;
-  if (patch.itemMetaFontSize != null) input.itemMetaFontSize = patch.itemMetaFontSize;
-  if (patch.themeId != null) input.themeId = patch.themeId;
-  if (patch.showPhoto != null) input.showPhoto = patch.showPhoto;
-  if (patch.itemTitleLayout != null) input.itemTitleLayout = patch.itemTitleLayout;
-  if (patch.locale != null) input.locale = patch.locale;
-  if (patch.marginHorizontalMm != null) input.marginHorizontalMm = patch.marginHorizontalMm;
-  if (patch.marginVerticalMm != null) input.marginVerticalMm = patch.marginVerticalMm;
 
   const data = await graphqlRequest<{ updateResumeSettings: ResumeSettings }>(
     UPDATE_RESUME_SETTINGS_MUTATION,
@@ -237,8 +337,22 @@ export async function updateResumeSettings(
   );
   return mapResumeSettings({
     ...DEFAULT_CV_TYPOGRAPHY_SETTINGS,
+    ...DEFAULT_RESUME_DESIGN_EXTENSION,
     ...data.updateResumeSettings,
   } as ResumeSettings);
+}
+
+export async function updateResumeSectionDisplayTitle(
+  resumeId: string,
+  sectionId: string,
+  displayTitle: string | null
+): Promise<ResumeWithContent> {
+  const data = await graphqlRequest<{
+    updateResumeSectionDisplayTitle: ResumeWithContent;
+  }>(UPDATE_RESUME_SECTION_DISPLAY_TITLE_MUTATION, {
+    input: { resumeId, sectionId, displayTitle },
+  });
+  return mapResumeWithContent(data.updateResumeSectionDisplayTitle);
 }
 
 export async function updateResumeSectionItemVisibility(
@@ -253,6 +367,31 @@ export async function updateResumeSectionItemVisibility(
     input: { resumeId, sectionId, sectionItemId, showInPreview },
   });
   return mapResumeWithContent(data.updateResumeSectionItemVisibility);
+}
+
+export async function reorderResumeSections(
+  resumeId: string,
+  sectionIds: string[]
+): Promise<ResumeWithContent> {
+  const data = await graphqlRequest<{
+    reorderResumeSections: ResumeWithContent;
+  }>(REORDER_RESUME_SECTIONS_MUTATION, {
+    input: { resumeId, sectionIds },
+  });
+  return mapResumeWithContent(data.reorderResumeSections);
+}
+
+export async function updateResumeSectionVisibility(
+  resumeId: string,
+  sectionId: string,
+  showInPreview: boolean
+): Promise<ResumeWithContent> {
+  const data = await graphqlRequest<{
+    updateResumeSectionVisibility: ResumeWithContent;
+  }>(UPDATE_RESUME_SECTION_VISIBILITY_MUTATION, {
+    input: { resumeId, sectionId, showInPreview },
+  });
+  return mapResumeWithContent(data.updateResumeSectionVisibility);
 }
 
 export async function updateResumeSectionItem(
@@ -388,7 +527,7 @@ export async function listSectionItems(type?: string): Promise<SectionItem[]> {
   const data = await graphqlRequest<{ sectionItems: SectionItem[] }>(SECTION_ITEMS_QUERY, {
     type,
   });
-  return data.sectionItems.map(mapSectionItem);
+  return data.sectionItems.map(mapWorkspaceSectionItem);
 }
 
 export async function getSectionItem(id: string): Promise<SectionItem | undefined> {
@@ -397,7 +536,7 @@ export async function getSectionItem(id: string): Promise<SectionItem | undefine
     { id }
   );
   if (!data.sectionItem) return undefined;
-  return mapSectionItem(data.sectionItem);
+  return mapWorkspaceSectionItem(data.sectionItem);
 }
 
 export async function getSectionItemUsage(id: string): Promise<SectionItemUsage | undefined> {
@@ -408,7 +547,7 @@ export async function getSectionItemUsage(id: string): Promise<SectionItemUsage 
   if (!data.sectionItemUsage) return undefined;
   return {
     ...data.sectionItemUsage,
-    sectionItem: mapSectionItem(data.sectionItemUsage.sectionItem),
+    sectionItem: mapWorkspaceSectionItem(data.sectionItemUsage.sectionItem),
   };
 }
 
@@ -586,7 +725,7 @@ export async function getSectionItemsForSection(sectionId: string): Promise<Sect
     SECTION_ITEMS_FOR_SECTION_QUERY,
     { sectionId }
   );
-  return data.sectionItemsForSection.map(mapSectionItem);
+  return data.sectionItemsForSection.map(mapWorkspaceSectionItem);
 }
 
 export async function getResumesForSection(sectionId: string): Promise<Resume[]> {

@@ -1,9 +1,20 @@
-import type { ContactProfile, Section, SectionItem } from "@/lib/types/cv";
+import type {
+  CertificationsLayout,
+  ContactProfile,
+  LanguagesLayout,
+  Section,
+  SectionItem,
+  SkillsLayout,
+} from "@/lib/types/cv";
+import { isItemShownInPreview, isSectionShownInPreview } from "@/lib/cv/preview-visibility";
 
 export type CvBlock =
   | { kind: "header"; contactProfile: ContactProfile }
-  | { kind: "section-title"; section: Section }
-  | { kind: "item"; section: Section; item: SectionItem };
+  | { kind: "section-title"; section: Section; displayTitle?: string | null }
+  | { kind: "item"; section: Section; item: SectionItem }
+  | { kind: "skills"; section: Section; items: SectionItem[] }
+  | { kind: "languages"; section: Section; items: SectionItem[]; layout: LanguagesLayout }
+  | { kind: "certifications"; section: Section; items: SectionItem[]; layout: CertificationsLayout };
 
 export interface CvBlockMetrics {
   blockIndex: number;
@@ -13,19 +24,60 @@ export interface CvBlockMetrics {
 
 export function buildCvBlocks(
   contactProfile: ContactProfile | undefined,
-  sections: { section: Section; items: SectionItem[] }[]
+  sections: {
+    section: Section;
+    items: SectionItem[];
+    showInPreview?: boolean;
+    displayTitle?: string | null;
+  }[],
+  options: {
+    skillsLayout?: SkillsLayout;
+    languagesLayout?: LanguagesLayout;
+    certificationsLayout?: CertificationsLayout;
+  } = {}
 ): CvBlock[] {
+  const skillsLayout = options.skillsLayout ?? "LIST";
+  const languagesLayout = options.languagesLayout ?? "LIST";
+  const certificationsLayout = options.certificationsLayout ?? "LIST";
   const blocks: CvBlock[] = [];
 
   if (contactProfile) {
     blocks.push({ kind: "header", contactProfile });
   }
 
-  for (const { section, items } of sections) {
-    const visibleItems = items.filter((item) => item.showInPreview);
+  for (const entry of sections) {
+    if (!isSectionShownInPreview(entry.showInPreview)) continue;
+
+    const visibleItems = entry.items.filter((item) => isItemShownInPreview(item.showInPreview));
     if (visibleItems.length === 0) continue;
 
-    blocks.push({ kind: "section-title", section });
+    const { section } = entry;
+    blocks.push({
+      kind: "section-title",
+      section,
+      displayTitle: entry.displayTitle,
+    });
+
+    if (section.type === "SKILLS" && skillsLayout !== "LIST") {
+      blocks.push({ kind: "skills", section, items: visibleItems });
+      continue;
+    }
+
+    if (section.type === "LANGUAGES" && languagesLayout !== "LIST") {
+      blocks.push({ kind: "languages", section, items: visibleItems, layout: languagesLayout });
+      continue;
+    }
+
+    if (section.type === "CERTIFICATIONS" && certificationsLayout === "COMPACT") {
+      blocks.push({
+        kind: "certifications",
+        section,
+        items: visibleItems,
+        layout: certificationsLayout,
+      });
+      continue;
+    }
+
     for (const item of visibleItems) {
       blocks.push({ kind: "item", section, item });
     }
@@ -38,12 +90,6 @@ export function measureCvBlocks(container: HTMLElement): CvBlockMetrics[] {
   const elements = container.querySelectorAll<HTMLElement>("[data-cv-block-index]");
   if (elements.length === 0) return [];
 
-  // The live preview renders this measuring container inside a
-  // `transform: scale()` wrapper, so getBoundingClientRect() reports
-  // post-transform (scaled) sizes. The pagination math compares against an
-  // unscaled page height, so recover the ancestor scale from the container's
-  // rendered vs. layout width and divide it back out. Without this, scaled-down
-  // measurements make a 2-page resume look like it fits on one page.
   const containerRect = container.getBoundingClientRect();
   const layoutWidth = container.offsetWidth;
   const scale = layoutWidth > 0 ? containerRect.width / layoutWidth : 1;
@@ -102,16 +148,34 @@ export function paginateCvBlocks(
   return pages;
 }
 
-/** Whether a section title should appear before this item on the rendered page. */
-export function shouldShowSectionTitleForItem(
-  itemBlock: CvBlock & { kind: "item" },
+export function pageIndicesEqual(a: number[][] | null, b: number[][]): boolean {
+  if (a == null) return false;
+  if (a.length !== b.length) return false;
+  return a.every((page, pageIndex) => {
+    const other = b[pageIndex];
+    return page.length === other.length && page.every((value, i) => value === other[i]);
+  });
+}
+
+/** Whether a section title should appear before this content block on the rendered page. */
+export function shouldShowSectionTitleForContent(
+  block: CvBlock & { kind: "item" | "skills" | "languages" | "certifications" },
   prevOnPage: CvBlock | null,
   prevGlobal: CvBlock | null
 ): boolean {
   if (prevOnPage?.kind === "section-title") {
     return false;
   }
-  if (prevOnPage?.kind === "item" && prevOnPage.section.id === itemBlock.section.id) {
+  const sectionId = block.section.id;
+  if (prevOnPage?.kind === "item" && prevOnPage.section.id === sectionId) {
+    return false;
+  }
+  if (
+    (prevOnPage?.kind === "skills" ||
+      prevOnPage?.kind === "languages" ||
+      prevOnPage?.kind === "certifications") &&
+    prevOnPage.section.id === sectionId
+  ) {
     return false;
   }
   if (prevOnPage !== null) {
@@ -120,19 +184,32 @@ export function shouldShowSectionTitleForItem(
 
   if (!prevGlobal) return true;
   if (prevGlobal.kind === "header") return true;
-  if (prevGlobal.kind === "section-title" && prevGlobal.section.id === itemBlock.section.id) {
+  if (prevGlobal.kind === "section-title" && prevGlobal.section.id === sectionId) {
     return true;
   }
-  if (prevGlobal.kind === "item" && prevGlobal.section.id === itemBlock.section.id) {
+  if (prevGlobal.kind === "item" && prevGlobal.section.id === sectionId) {
+    return false;
+  }
+  if (
+    (prevGlobal.kind === "skills" ||
+      prevGlobal.kind === "languages" ||
+      prevGlobal.kind === "certifications") &&
+    prevGlobal.section.id === sectionId
+  ) {
     return false;
   }
   return true;
 }
 
-/**
- * Map paginated block indices to render blocks, inserting section titles only when
- * a section starts on the page (including orphaned titles from the previous page).
- */
+/** @deprecated Use shouldShowSectionTitleForContent */
+export function shouldShowSectionTitleForItem(
+  itemBlock: CvBlock & { kind: "item" },
+  prevOnPage: CvBlock | null,
+  prevGlobal: CvBlock | null
+): boolean {
+  return shouldShowSectionTitleForContent(itemBlock, prevOnPage, prevGlobal);
+}
+
 export function resolvePageBlocks(
   pageIndices: number[],
   blocks: CvBlock[],
@@ -148,11 +225,24 @@ export function resolvePageBlocks(
     const block = blocks[pageIndices[i]];
     if (!block) continue;
 
-    if (block.kind === "item") {
+    if (
+      block.kind === "item" ||
+      block.kind === "skills" ||
+      block.kind === "languages" ||
+      block.kind === "certifications"
+    ) {
       const prevOnPage = i > 0 ? blocks[pageIndices[i - 1]] ?? null : null;
       const prevContext = prevOnPage ?? prevGlobal;
-      if (shouldShowSectionTitleForItem(block, prevOnPage, prevContext)) {
-        result.push({ kind: "section-title", section: block.section });
+      if (shouldShowSectionTitleForContent(block, prevOnPage, prevContext)) {
+        const titleBlock = blocks.find(
+          (candidate) =>
+            candidate.kind === "section-title" && candidate.section.id === block.section.id
+        );
+        result.push(
+          titleBlock?.kind === "section-title"
+            ? titleBlock
+            : { kind: "section-title", section: block.section }
+        );
       }
     }
 
@@ -162,7 +252,7 @@ export function resolvePageBlocks(
   return result;
 }
 
-/** @deprecated Use resolvePageBlocks — kept for callers migrating off injected titles. */
+/** @deprecated Use resolvePageBlocks */
 export function expandPageBlocks(
   pageIndices: number[],
   blocks: CvBlock[],

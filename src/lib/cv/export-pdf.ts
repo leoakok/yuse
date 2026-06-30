@@ -1,8 +1,9 @@
 import type { ResumeWithContent } from "@/lib/types/cv";
 import { sanitizePdfFilename } from "@/lib/cv/export-pdf-vector";
+import { exportResumePlainText } from "@/lib/cv/export-plain-text";
 import { openResumePrint, storePrintContent } from "@/lib/cv/print";
 
-export { sanitizePdfFilename };
+export { sanitizePdfFilename, exportResumePlainText };
 
 /**
  * Opens the dedicated print view for the resume and triggers the browser print dialog.
