@@ -1,12 +1,47 @@
 "use client";
 
-import { useLayoutEffect, useMemo, useRef, useState } from "react";
-import type { ContactProfile, ItemTitleLayout, ResumeWithContent, Section, SectionItem } from "@/lib/types/cv";
-import { effectiveContactPhotoUrl } from "@/lib/cv/contact-photo";
+import { useLayoutEffect, useMemo, useRef, useState, type ReactNode, type RefObject } from "react";
+import type {
+  ColumnLayout,
+  ContactField,
+  ContactLayout,
+  ContactProfile,
+  DateFormat,
+  DatePosition,
+  ItemTitleLayout,
+  ItemTitleOrder,
+  ItemTitleSeparator,
+  PhotoPosition,
+  PhotoSize,
+  ResumeWithContent,
+  Section,
+  SectionDividerStyle,
+  SectionItem,
+  SidebarPosition,
+  SidebarWidth,
+  SkillsLayout,
+} from "@/lib/types/cv";
+import {
+  isSidebarSection,
+  isTwoColumnLayout,
+  resolveSidebarWidthPercent,
+  sidebarFlexDirection,
+} from "@/lib/cv/column-layout";
+import { ATS_SYSTEM_FONT_STYLE, resolveAtsPreviewSettings } from "@/lib/cv/ats-preview";
+import { resolveAccentColor } from "@/lib/cv/accent";
+import { normalizeContactFields } from "@/lib/cv/contact-header";
+import { formatDateRange } from "@/lib/cv/dates";
+import { getCvFontFamilyClassName, getCvBodyFontClassName, getCvHeadingFontClassName, cvFontVariableClassNames } from "@/lib/cv/fonts";
+import { DEFAULT_PHOTO_POSITION, DEFAULT_PHOTO_SIZE } from "@/lib/cv/photo";
+import {
+  CvPreviewHeader,
+  CvPreviewSidebarPhoto,
+} from "@/components/cv/cv-preview-header";
 import {
   buildCvBlocks,
   measureCvBlocks,
   paginateCvBlocks,
+  pageIndicesEqual,
   resolvePageBlocks,
   type CvBlock,
 } from "@/lib/cv/cv-pagination";
@@ -19,9 +54,14 @@ import {
 import { MarkdownContent } from "@/lib/markdown/render";
 import {
   formatItemHeadline,
+  getInlineItemLineParts,
+  getInlineItemTitleFields,
   getSectionItemSubtitle,
 } from "@/lib/cv/section-item-display";
 import { resolveCvTypography, type CvTypography } from "@/lib/cv/typography";
+import { resolveCvDesignTokens, sectionDisplayTitle, isCurrentRole, type CvDesignTokens } from "@/lib/cv/resume-design";
+import { formatLevelLabel } from "@/lib/cv/levels";
+import { LANGUAGE_LEVELS, SKILL_LEVELS } from "@/lib/cv/levels";
 import { cn } from "@/lib/utils";
 
 interface CvPreviewProps {
@@ -31,147 +71,430 @@ interface CvPreviewProps {
   singlePage?: boolean;
   /** Gap between stacked pages in the live preview. */
   pageGapClassName?: string;
+  /** When false, contact links render as static text (e.g. grid thumbnails inside a Link). */
+  interactive?: boolean;
 }
 
-function formatDateRange(metadata: Record<string, string | undefined>) {
-  const start = metadata.startDate;
-  const end = metadata.endDate;
-  if (!start && !end) return null;
-  if (!end) return `${start} – Present`;
-  return `${start} – ${end}`;
+function proficiencyFillCount(level: string | undefined, max: number): number {
+  if (!level?.trim()) return 0;
+  const key = level.trim().toUpperCase();
+  const idx = max === 5 ? SKILL_LEVELS.indexOf(key as (typeof SKILL_LEVELS)[number]) : LANGUAGE_LEVELS.indexOf(key as (typeof LANGUAGE_LEVELS)[number]);
+  return idx >= 0 ? idx + 1 : 0;
 }
 
-function CvPreviewHeader({
-  contactProfile,
-  showPhoto = false,
-  typography,
+function ProficiencyIndicator({
+  level,
+  mode,
+  accentColor,
+  textMuted,
 }: {
-  contactProfile: ContactProfile;
-  showPhoto?: boolean;
-  typography: CvTypography;
+  level: string | undefined;
+  mode: CvDesignTokens["skillsProficiency"];
+  accentColor: string;
+  textMuted: string;
 }) {
-  const photoUrl = effectiveContactPhotoUrl(contactProfile);
-  const photoVisible = showPhoto && photoUrl;
+  const label = formatLevelLabel(level);
+  if (mode === "NONE" || !label) return null;
+
+  if (mode === "TEXT") {
+    return (
+      <span className="text-xs" style={{ color: textMuted }}>
+        {label}
+      </span>
+    );
+  }
+
+  const filled = proficiencyFillCount(level, 5);
+  const total = 5;
+
+  if (mode === "BARS") {
+    return (
+      <span className="inline-flex h-1.5 w-16 overflow-hidden rounded-sm bg-zinc-200">
+        <span
+          className="h-full rounded-sm"
+          style={{ width: `${(filled / total) * 100}%`, backgroundColor: accentColor }}
+        />
+      </span>
+    );
+  }
 
   return (
-    <header className="mb-6 border-b border-zinc-200 pb-4 dark:border-zinc-800">
-      <div className={cn("flex gap-4", photoVisible ? "items-start" : undefined)}>
-        {photoVisible ? (
-          // eslint-disable-next-line @next/next/no-img-element
-          <img
-            src={photoUrl}
-            alt=""
-            className="h-16 w-16 shrink-0 rounded-full object-cover ring-1 ring-zinc-200 dark:ring-zinc-700"
-          />
-        ) : null}
-        <div className="min-w-0 flex-1">
-          <h1
-            className="font-bold tracking-tight"
-            style={{ fontSize: `${typography.contactNamePx}px` }}
-          >
-            {contactProfile.fullName}
-          </h1>
-          {contactProfile.headline ? (
-            <p
-              className="mt-1 text-zinc-600 dark:text-zinc-400"
-              style={{ fontSize: `${typography.contactHeadlinePx}px` }}
-            >
-              {contactProfile.headline}
-            </p>
-          ) : null}
-          <div
-            className="mt-2 flex flex-wrap gap-x-3 gap-y-1 text-zinc-500"
-            style={{ fontSize: `${typography.contactDetailsPx}px` }}
-          >
-            {contactProfile.email ? <span>{contactProfile.email}</span> : null}
-            {contactProfile.phone ? <span>{contactProfile.phone}</span> : null}
-            {contactProfile.location ? <span>{contactProfile.location}</span> : null}
-            {contactProfile.website ? <span>{contactProfile.website}</span> : null}
-          </div>
-        </div>
-      </div>
-    </header>
+    <span className="inline-flex gap-0.5" aria-label={label ?? undefined}>
+      {Array.from({ length: total }, (_, index) => (
+        <span
+          key={index}
+          className="size-1.5 rounded-full"
+          style={{
+            backgroundColor: index < filled ? accentColor : "#d4d4d8",
+          }}
+        />
+      ))}
+    </span>
   );
 }
 
 function CvPreviewSectionTitle({
   section,
+  displayTitle,
   typography,
+  accentColor,
+  sectionDividerStyle,
+  designTokens,
 }: {
   section: Section;
+  displayTitle?: string | null;
   typography: CvTypography;
+  accentColor: string;
+  sectionDividerStyle: SectionDividerStyle;
+  designTokens: CvDesignTokens;
 }) {
+  const title = sectionDisplayTitle(section, displayTitle);
+  const borderStyle =
+    sectionDividerStyle === "NONE"
+      ? undefined
+      : sectionDividerStyle === "TEXT_WIDTH"
+        ? { borderBottom: `2px solid ${accentColor}`, display: "inline-block" as const }
+        : { borderBottom: `2px solid ${accentColor}` };
+
   return (
     <h2
-      className="mb-2 border-b border-zinc-300 font-semibold uppercase tracking-wider text-zinc-700 dark:border-zinc-700 dark:text-zinc-300"
-      style={{ fontSize: `${typography.sectionTitlePx}px` }}
+      className={cn(
+        "mb-2",
+        sectionDividerStyle === "FULL" && "border-b pb-0.5",
+        !designTokens.sectionTitleSmallCaps && "uppercase tracking-wider"
+      )}
+      style={{
+        fontSize: `${typography.sectionTitlePx}px`,
+        fontWeight: designTokens.sectionTitleFontWeight,
+        letterSpacing: designTokens.headingLetterSpacing,
+        fontVariant: designTokens.sectionTitleSmallCaps ? "small-caps" : undefined,
+        color: designTokens.textPrimary,
+        ...(sectionDividerStyle === "FULL" ? borderStyle : {}),
+        ...(sectionDividerStyle === "TEXT_WIDTH" ? borderStyle : {}),
+      }}
     >
-      {section.title}
+      {title}
     </h2>
   );
+}
+
+function CvPreviewSkills({
+  items,
+  layout,
+  typography,
+  designTokens,
+}: {
+  items: SectionItem[];
+  layout: SkillsLayout;
+  typography: CvTypography;
+  designTokens: CvDesignTokens;
+}) {
+  const bodyStyle = {
+    fontSize: `${typography.bodyPx}px`,
+    color: designTokens.textPrimary,
+  };
+  const showProficiency = designTokens.skillsProficiency !== "NONE";
+
+  if (layout === "TAGS") {
+    return (
+      <div className="flex flex-wrap gap-1.5" style={bodyStyle}>
+        {items.map((item) => (
+          <span
+            key={item.id}
+            className="inline-flex items-center gap-1.5 rounded border px-2 py-0.5"
+            style={{ borderColor: designTokens.textMuted, color: designTokens.textPrimary }}
+          >
+            {item.headline}
+            {showProficiency ? (
+              <ProficiencyIndicator
+                level={item.metadata.level}
+                mode={designTokens.skillsProficiency}
+                accentColor={designTokens.accentColor}
+                textMuted={designTokens.textMuted}
+              />
+            ) : null}
+          </span>
+        ))}
+      </div>
+    );
+  }
+
+  if (layout === "COLUMNS") {
+    return (
+      <ul className="columns-2 gap-x-6" style={bodyStyle}>
+        {items.map((item) => (
+          <li key={item.id} className="break-inside-avoid">
+            <span className="inline-flex items-center gap-2">
+              {item.headline}
+              {showProficiency ? (
+                <ProficiencyIndicator
+                  level={item.metadata.level}
+                  mode={designTokens.skillsProficiency}
+                  accentColor={designTokens.accentColor}
+                  textMuted={designTokens.textMuted}
+                />
+              ) : null}
+            </span>
+          </li>
+        ))}
+      </ul>
+    );
+  }
+
+  return (
+    <ul className="list-disc space-y-0.5 pl-5" style={bodyStyle}>
+      {items.map((item) => (
+        <li key={item.id}>
+          <span className="inline-flex flex-wrap items-center gap-2">
+            {item.headline}
+            {showProficiency ? (
+              <ProficiencyIndicator
+                level={item.metadata.level}
+                mode={designTokens.skillsProficiency}
+                accentColor={designTokens.accentColor}
+                textMuted={designTokens.textMuted}
+              />
+            ) : null}
+          </span>
+        </li>
+      ))}
+    </ul>
+  );
+}
+
+function CvPreviewLanguages({
+  items,
+  layout,
+  typography,
+  designTokens,
+}: {
+  items: SectionItem[];
+  layout: CvDesignTokens["languagesLayout"];
+  typography: CvTypography;
+  designTokens: CvDesignTokens;
+}) {
+  const bodyStyle = {
+    fontSize: `${typography.bodyPx}px`,
+    color: designTokens.textPrimary,
+  };
+
+  if (layout === "INLINE") {
+    return (
+      <p style={bodyStyle}>
+        {items.map((item, index) => {
+          const level = formatLevelLabel(item.metadata.level);
+          return (
+            <span key={item.id}>
+              {index > 0 ? ", " : null}
+              {item.headline}
+              {level ? ` (${level})` : null}
+            </span>
+          );
+        })}
+      </p>
+    );
+  }
+
+  if (layout === "COLUMNS") {
+    return (
+      <ul className="columns-2 gap-x-6" style={bodyStyle}>
+        {items.map((item) => {
+          const level = formatLevelLabel(item.metadata.level);
+          return (
+            <li key={item.id} className="break-inside-avoid">
+              {item.headline}
+              {level ? `, ${level}` : null}
+            </li>
+          );
+        })}
+      </ul>
+    );
+  }
+
+  return null;
+}
+
+function CvPreviewCertifications({
+  items,
+  layout,
+  typography,
+  designTokens,
+}: {
+  items: SectionItem[];
+  layout: CvDesignTokens["certificationsLayout"];
+  typography: CvTypography;
+  designTokens: CvDesignTokens;
+}) {
+  const bodyStyle = {
+    fontSize: `${typography.bodyPx}px`,
+    color: designTokens.textPrimary,
+  };
+  const metaStyle = { fontSize: `${typography.itemMetaPx}px`, color: designTokens.textMuted };
+
+  if (layout === "COMPACT") {
+    return (
+      <p style={bodyStyle}>
+        {items.map((item, index) => (
+          <span key={item.id}>
+            {index > 0 ? " · " : null}
+            {item.headline}
+          </span>
+        ))}
+      </p>
+    );
+  }
+
+  return null;
 }
 
 function CvPreviewItem({
   item,
   itemTitleLayout,
+  itemTitleSeparator,
+  itemTitleOrder,
+  dateFormat,
+  datePosition,
   typography,
+  designTokens,
 }: {
   item: SectionItem;
   itemTitleLayout: ItemTitleLayout;
+  itemTitleSeparator: ItemTitleSeparator;
+  itemTitleOrder: ItemTitleOrder;
+  dateFormat: DateFormat;
+  datePosition: DatePosition;
   typography: CvTypography;
+  designTokens: CvDesignTokens;
 }) {
-  const dates = formatDateRange(item.metadata);
+  const dates = formatDateRange(item.metadata, dateFormat);
   const subtitle = getSectionItemSubtitle(item);
   const headline = formatItemHeadline(item);
-  const inline = itemTitleLayout === "INLINE" && subtitle;
-  const metaStyle = { fontSize: `${typography.itemMetaPx}px` };
+  const inlineFields =
+    itemTitleLayout === "INLINE" ? getInlineItemTitleFields(item, itemTitleOrder) : null;
+  const inlineLineParts = inlineFields
+    ? getInlineItemLineParts({
+        left: inlineFields.left,
+        right: inlineFields.right,
+        separator: itemTitleSeparator,
+      })
+    : null;
+  const metaStyle = { fontSize: `${typography.itemMetaPx}px`, color: designTokens.textMuted };
+  const titlePx = { fontSize: `${typography.itemTitlePx}px` };
+  const emphasizeCompany = designTokens.itemTitleEmphasis === "COMPANY";
+  const location = item.metadata.location?.trim();
+  const showLocationOwnLine =
+    designTokens.locationDisplay === "OWN_LINE" && location && item.type === "EXPERIENCE";
+  const showLocationInline =
+    designTokens.locationDisplay === "INLINE_WITH_COMPANY" && location && item.type === "EXPERIENCE";
+  const highlight =
+    designTokens.highlightCurrentRole &&
+    item.type === "EXPERIENCE" &&
+    isCurrentRole(item.metadata);
 
-  return (
-    <div>
-      <div className="flex items-baseline justify-between gap-2">
-        <div className="min-w-0">
-          {inline ? (
-            <h3 className="font-semibold" style={{ fontSize: `${typography.itemTitlePx}px` }}>
-              {headline}
-              <span className="font-normal text-zinc-500" style={metaStyle}>
-                {" "}
-                · {subtitle}
-              </span>
-            </h3>
-          ) : (
-            <h3
-              className="font-semibold"
-              style={{ fontSize: `${typography.itemTitlePx}px` }}
-            >
-              {headline}
-            </h3>
-          )}
-        </div>
-        {dates ? (
-          <span className="shrink-0 text-zinc-500" style={metaStyle}>
-            {dates}
-          </span>
-        ) : null}
-      </div>
-      {!inline && subtitle ? (
-        <p className="text-zinc-500" style={metaStyle}>
-          {subtitle}
-        </p>
+  const datesNode = dates ? (
+    <span className="shrink-0" style={metaStyle}>
+      {dates}
+    </span>
+  ) : null;
+
+  const subtitleWithLocation =
+    subtitle && showLocationInline ? `${subtitle} · ${location}` : subtitle;
+
+  const titleBlock = inlineLineParts ? (
+    <h3 style={titlePx}>
+      <span style={{ fontWeight: emphasizeCompany ? 400 : 600 }}>{inlineLineParts.primary}</span>
+      {datePosition === "INLINE" && dates ? (
+        <span style={metaStyle}> · {dates}</span>
       ) : null}
-      {item.type === "EXPERIENCE" && item.metadata.location ? (
-        <p className="text-zinc-500" style={metaStyle}>
-          {item.metadata.location}
-        </p>
-      ) : null}
-      {item.body ? (
-        <div style={{ fontSize: `${typography.bodyPx}px` }}>
-          <MarkdownContent
-            content={item.body}
-            className="mt-1 text-zinc-700 dark:text-zinc-300"
+      <span style={{ fontWeight: emphasizeCompany ? 600 : 400, ...metaStyle }}>
+        {inlineLineParts.secondary}
+      </span>
+    </h3>
+  ) : (
+    <h3 style={titlePx}>
+      <span style={{ fontWeight: emphasizeCompany ? 400 : 600 }} className="inline-flex flex-wrap items-center gap-2">
+        {item.type === "SKILLS" || item.type === "LANGUAGES"
+          ? item.headline
+          : headline}
+        {item.type === "SKILLS" && designTokens.skillsProficiency !== "NONE" ? (
+          <ProficiencyIndicator
+            level={item.metadata.level}
+            mode={designTokens.skillsProficiency}
+            accentColor={designTokens.accentColor}
+            textMuted={designTokens.textMuted}
           />
-        </div>
+        ) : null}
+      </span>
+      {datePosition === "INLINE" && dates ? (
+        <span style={metaStyle}> · {dates}</span>
       ) : null}
+    </h3>
+  );
+
+  const subtitleBlock =
+    !inlineFields && subtitleWithLocation ? (
+      <p style={{ ...metaStyle, fontWeight: emphasizeCompany ? 600 : 400 }}>{subtitleWithLocation}</p>
+    ) : null;
+
+  const locationBlock = showLocationOwnLine ? <p style={metaStyle}>{location}</p> : null;
+
+  const bodyBlock = item.body ? (
+    <div style={{ fontSize: `${typography.bodyPx}px`, color: designTokens.textPrimary }}>
+      <MarkdownContent
+        content={item.body}
+        className="mt-1"
+        descriptionStyle={designTokens.descriptionStyle}
+        bulletMarker={
+          designTokens.descriptionStyle === "BULLETS" ? designTokens.bulletMarker : undefined
+        }
+      />
     </div>
+  ) : null;
+
+  const itemShell = (children: ReactNode) => (
+    <div
+      className={cn(highlight && "rounded-sm border-l-2 pl-2")}
+      style={
+        highlight
+          ? {
+              borderLeftColor: designTokens.accentColor,
+              backgroundColor: `${designTokens.accentColor}14`,
+            }
+          : undefined
+      }
+    >
+      {children}
+    </div>
+  );
+
+  if (datePosition === "BELOW") {
+    return itemShell(
+      <>
+        {titleBlock}
+        {subtitleBlock}
+        {dates ? <p style={metaStyle}>{dates}</p> : null}
+        {locationBlock}
+        {bodyBlock}
+      </>
+    );
+  }
+
+  return itemShell(
+    <>
+      <div
+        className={cn(
+          datePosition === "RIGHT"
+            ? "flex items-baseline justify-between gap-2"
+            : "space-y-0.5"
+        )}
+      >
+        <div className="min-w-0">{titleBlock}</div>
+        {datePosition === "RIGHT" ? datesNode : null}
+      </div>
+      {subtitleBlock}
+      {locationBlock}
+      {bodyBlock}
+    </>
   );
 }
 
@@ -204,82 +527,331 @@ function groupPageBlocks(pageBlocks: CvBlock[]) {
   return groups;
 }
 
+type SectionGroup = { section: Section | null; blocks: CvBlock[] };
+
+interface CvSectionRenderProps {
+  itemTitleLayout: ItemTitleLayout;
+  itemTitleSeparator: ItemTitleSeparator;
+  itemTitleOrder: ItemTitleOrder;
+  dateFormat: DateFormat;
+  datePosition: DatePosition;
+  skillsLayout: SkillsLayout;
+  typography: CvTypography;
+  accentColor: string;
+  sectionDividerStyle: SectionDividerStyle;
+  designTokens: CvDesignTokens;
+}
+
+function renderSectionGroup(
+  group: SectionGroup,
+  index: number,
+  props: CvSectionRenderProps,
+  options?: {
+    /** When set, blocks are wrapped with data-cv-block-index for pagination measurement. */
+    blockIndexFor?: (block: CvBlock) => number | undefined;
+    itemIndexInSection?: number;
+  }
+) {
+  if (group.section === null) return null;
+
+  const titleBlock = group.blocks.find((b) => b.kind === "section-title");
+  const displayTitle =
+    titleBlock?.kind === "section-title" ? titleBlock.displayTitle : undefined;
+  const contentBlocks = group.blocks.filter(
+    (b) =>
+      b.kind === "item" ||
+      b.kind === "skills" ||
+      b.kind === "languages" ||
+      b.kind === "certifications"
+  );
+
+  let itemCounter = 0;
+
+  return (
+    <section
+      key={`${group.section.id}-${index}`}
+      className={cn(props.designTokens.keepSectionsTogether && "break-inside-avoid")}
+      style={{ marginTop: index > 0 ? props.designTokens.sectionGapPx : undefined }}
+    >
+      {titleBlock ? (() => {
+        const titleBlockIndex = options?.blockIndexFor?.(titleBlock);
+        const title = (
+          <CvPreviewSectionTitle
+            section={titleBlock.section}
+            displayTitle={displayTitle}
+            typography={props.typography}
+            accentColor={props.accentColor}
+            sectionDividerStyle={props.sectionDividerStyle}
+            designTokens={props.designTokens}
+          />
+        );
+        return titleBlockIndex != null ? (
+          <div data-cv-block-index={titleBlockIndex}>{title}</div>
+        ) : (
+          title
+        );
+      })() : null}
+      <div style={{ display: "flex", flexDirection: "column", gap: props.designTokens.itemGapPx }}>
+        {contentBlocks.map((block, blockIdx) => {
+          const blockIndex = options?.blockIndexFor?.(block);
+          const currentItemIndex = itemCounter;
+          if (block.kind === "item") itemCounter += 1;
+
+          const breakBefore =
+            props.designTokens.maxItemsBeforeBreak != null &&
+            props.designTokens.maxItemsBeforeBreak > 0 &&
+            block.kind === "item" &&
+            currentItemIndex > 0 &&
+            currentItemIndex % props.designTokens.maxItemsBeforeBreak === 0;
+
+          const content =
+            block.kind === "skills" ? (
+              <CvPreviewSkills
+                items={block.items}
+                layout={props.skillsLayout}
+                typography={props.typography}
+                designTokens={props.designTokens}
+              />
+            ) : block.kind === "languages" ? (
+              <CvPreviewLanguages
+                items={block.items}
+                layout={block.layout}
+                typography={props.typography}
+                designTokens={props.designTokens}
+              />
+            ) : block.kind === "certifications" ? (
+              <CvPreviewCertifications
+                items={block.items}
+                layout={block.layout}
+                typography={props.typography}
+                designTokens={props.designTokens}
+              />
+            ) : block.kind === "item" ? (
+              <CvPreviewItem
+                item={block.item}
+                itemTitleLayout={props.itemTitleLayout}
+                itemTitleSeparator={props.itemTitleSeparator}
+                itemTitleOrder={props.itemTitleOrder}
+                dateFormat={props.dateFormat}
+                datePosition={props.datePosition}
+                typography={props.typography}
+                designTokens={props.designTokens}
+              />
+            ) : null;
+
+          const wrapped = (
+            <div
+              className={cn(breakBefore && "break-before-page")}
+              style={breakBefore ? { breakBefore: "page" } : undefined}
+            >
+              {content}
+            </div>
+          );
+
+          if (blockIndex != null) {
+            return (
+              <div key={blockIdx} data-cv-block-index={blockIndex}>
+                {wrapped}
+              </div>
+            );
+          }
+          return <div key={blockIdx}>{wrapped}</div>;
+        })}
+      </div>
+    </section>
+  );
+}
+
+function splitGroupsForColumns(groups: SectionGroup[]) {
+  const headerGroups = groups.filter((g) => g.section === null);
+  const bodyGroups = groups.filter((g) => g.section !== null);
+  const sidebarGroups = bodyGroups.filter(
+    (g) => g.section && isSidebarSection(g.section.type)
+  );
+  const mainGroups = bodyGroups.filter(
+    (g) => g.section && !isSidebarSection(g.section.type)
+  );
+  return { headerGroups, sidebarGroups, mainGroups, bodyGroups };
+}
+
 function CvPreviewPage({
   pageBlocks,
   page,
   typography,
   pagePadding,
   showPhoto,
+  photoPosition,
+  photoSize,
+  contactLayout,
+  contactFields,
+  columnLayout,
+  sidebarPosition,
+  sidebarWidth,
   itemTitleLayout,
+  itemTitleSeparator,
+  itemTitleOrder,
+  dateFormat,
+  datePosition,
+  skillsLayout,
+  accentColor,
+  sectionDividerStyle,
+  fontFamilyClassName,
+  headingFontClassName,
+  bodyFontClassName,
+  atsMode,
+  designTokens,
+  contactName,
+  pageNumber,
+  totalPages,
   className,
   fixedHeight,
+  interactive = true,
 }: {
   pageBlocks: CvBlock[];
   page: ReturnType<typeof getPageFormatSpec>;
   typography: CvTypography;
   pagePadding: string;
   showPhoto?: boolean;
+  photoPosition: PhotoPosition;
+  photoSize: PhotoSize;
+  contactLayout: ContactLayout;
+  contactFields: ContactField[];
+  columnLayout: ColumnLayout;
+  sidebarPosition: SidebarPosition;
+  sidebarWidth: SidebarWidth;
   itemTitleLayout: ItemTitleLayout;
+  itemTitleSeparator: ItemTitleSeparator;
+  itemTitleOrder: ItemTitleOrder;
+  dateFormat: DateFormat;
+  datePosition: DatePosition;
+  skillsLayout: SkillsLayout;
+  accentColor: string;
+  sectionDividerStyle: SectionDividerStyle;
+  fontFamilyClassName: string;
+  headingFontClassName: string;
+  bodyFontClassName: string;
+  atsMode: boolean;
+  designTokens: CvDesignTokens;
+  contactName?: string;
+  pageNumber: number;
+  totalPages: number;
   className?: string;
   fixedHeight?: boolean;
+  interactive?: boolean;
 }) {
   const groups = groupPageBlocks(pageBlocks);
+  const { headerGroups, sidebarGroups, mainGroups, bodyGroups } = splitGroupsForColumns(groups);
+  const twoColumn = isTwoColumnLayout(columnLayout) && !atsMode;
+  const headerBlock = headerGroups[0]?.blocks[0];
+  const contactProfile =
+    headerBlock?.kind === "header" ? headerBlock.contactProfile : undefined;
+  const sectionProps: CvSectionRenderProps = {
+    itemTitleLayout,
+    itemTitleSeparator,
+    itemTitleOrder,
+    dateFormat,
+    datePosition,
+    skillsLayout,
+    typography,
+    accentColor,
+    sectionDividerStyle,
+    designTokens,
+  };
+  const sidebarWidthPercent = resolveSidebarWidthPercent(sidebarWidth);
+  const footerText =
+    designTokens.footerStyle === "PAGE_NUMBER"
+      ? `${pageNumber} / ${totalPages}`
+      : designTokens.footerStyle === "NAME_AND_PAGE"
+        ? `${contactName ?? ""}${contactName ? " · " : ""}${pageNumber} / ${totalPages}`
+        : null;
 
   return (
     <article
       className={cn(
-        "rounded-sm bg-white text-zinc-900 shadow-lg ring-1 ring-black/5 dark:bg-zinc-950 dark:text-zinc-100 dark:ring-white/10",
+        cvFontVariableClassNames,
+        bodyFontClassName,
+        fontFamilyClassName,
+        "cv-print-page rounded-sm shadow-lg ring-1 ring-black/5 dark:ring-white/10",
         "box-border shrink-0 overflow-hidden",
         className
       )}
-      style={{
+        style={{
         width: page.width,
         padding: pagePadding,
         fontSize: `${typography.bodyPx}px`,
+        lineHeight: designTokens.lineHeight,
+        backgroundColor: designTokens.pageBackground,
+        color: designTokens.textPrimary,
+        ...(atsMode ? ATS_SYSTEM_FONT_STYLE : {}),
         ...(fixedHeight
           ? { height: page.minHeight, minHeight: page.minHeight }
           : { minHeight: page.minHeight }),
       }}
     >
-      {groups.map((group, index) => {
-        if (group.section === null) {
-          const block = group.blocks[0];
-          return (
-            <div key={`header-${index}`}>
-              {block?.kind === "header" ? (
-                <CvPreviewHeader
-                  contactProfile={block.contactProfile}
-                  showPhoto={showPhoto}
-                  typography={typography}
-                />
-              ) : null}
-            </div>
-          );
-        }
-
-        const titleBlock = group.blocks.find((b) => b.kind === "section-title");
-        const items = group.blocks.filter((b) => b.kind === "item");
-
+      {headerGroups.map((group, index) => {
+        const block = group.blocks[0];
         return (
-          <section key={`${group.section.id}-${index}`} className={index > 0 ? "mt-5" : undefined}>
-            {titleBlock ? (
-              <CvPreviewSectionTitle section={titleBlock.section} typography={typography} />
+          <div key={`header-${index}`}>
+            {block?.kind === "header" ? (
+              <CvPreviewHeader
+                contactProfile={block.contactProfile}
+                showPhoto={showPhoto}
+                photoPosition={photoPosition}
+                photoSize={photoSize}
+                contactLayout={contactLayout}
+                contactFields={contactFields}
+                columnLayout={columnLayout}
+                typography={typography}
+                accentColor={designTokens.linkColor}
+                nameFontWeight={designTokens.nameFontWeight}
+                headingFontClassName={headingFontClassName}
+                textMuted={designTokens.textMuted}
+                interactive={interactive}
+              />
             ) : null}
-            <div className="space-y-3">
-              {items.map((block) =>
-                block.kind === "item" ? (
-                  <CvPreviewItem
-                    key={block.item.id}
-                    item={block.item}
-                    itemTitleLayout={itemTitleLayout}
-                    typography={typography}
-                  />
-                ) : null
-              )}
-            </div>
-          </section>
+          </div>
         );
       })}
+
+      {twoColumn ? (
+        <div
+          className="flex gap-4"
+          style={{ flexDirection: sidebarFlexDirection(sidebarPosition) }}
+        >
+          <aside className="shrink-0" style={{ width: `${sidebarWidthPercent}%` }}>
+            {contactProfile ? (
+              <CvPreviewSidebarPhoto
+                contactProfile={contactProfile}
+                showPhoto={showPhoto ?? false}
+                photoPosition={photoPosition}
+                photoSize={photoSize}
+                columnLayout={columnLayout}
+                accentColor={accentColor}
+              />
+            ) : null}
+            {sidebarGroups.map((group, index) =>
+              renderSectionGroup(group, index, sectionProps)
+            )}
+          </aside>
+          <main className="min-w-0 flex-1">
+            {mainGroups.map((group, index) =>
+              renderSectionGroup(group, index, sectionProps)
+            )}
+          </main>
+        </div>
+      ) : (
+        bodyGroups.map((group, index) =>
+          renderSectionGroup(group, index, sectionProps)
+        )
+      )}
+      {footerText ? (
+        <footer
+          className="cv-print-footer mt-4 text-center text-[9pt] print:fixed print:bottom-0"
+          style={{ color: designTokens.textMuted }}
+        >
+          {footerText}
+        </footer>
+      ) : null}
     </article>
   );
 }
@@ -290,30 +862,68 @@ function CvPreviewMeasureLayout({
   typography,
   pagePadding,
   showPhoto,
+  photoPosition,
+  photoSize,
+  contactLayout,
+  contactFields,
+  columnLayout,
+  sidebarPosition,
+  sidebarWidth,
+  atsMode,
   itemTitleLayout,
+  itemTitleSeparator,
+  itemTitleOrder,
+  dateFormat,
+  datePosition,
+  skillsLayout,
+  accentColor,
+  sectionDividerStyle,
+  designTokens,
+  headingFontClassName,
+  bodyFontClassName,
   measureRef,
+  interactive = true,
 }: {
   blocks: CvBlock[];
   page: ReturnType<typeof getPageFormatSpec>;
   typography: CvTypography;
   pagePadding: string;
   showPhoto?: boolean;
+  photoPosition: PhotoPosition;
+  photoSize: PhotoSize;
+  contactLayout: ContactLayout;
+  contactFields: ContactField[];
+  columnLayout: ColumnLayout;
+  sidebarPosition: SidebarPosition;
+  sidebarWidth: SidebarWidth;
+  atsMode: boolean;
   itemTitleLayout: ItemTitleLayout;
-  measureRef: React.RefObject<HTMLDivElement | null>;
+  itemTitleSeparator: ItemTitleSeparator;
+  itemTitleOrder: ItemTitleOrder;
+  dateFormat: DateFormat;
+  datePosition: DatePosition;
+  skillsLayout: SkillsLayout;
+  accentColor: string;
+  sectionDividerStyle: SectionDividerStyle;
+  designTokens: CvDesignTokens;
+  headingFontClassName: string;
+  bodyFontClassName: string;
+  measureRef: RefObject<HTMLDivElement | null>;
+  interactive?: boolean;
 }) {
-  const groups: { section: Section | null; blockIndices: number[] }[] = [];
+  const indexGroups: { section: Section | null; blockIndices: number[] }[] = [];
   let current: { section: Section | null; blockIndices: number[] } | null = null;
 
   blocks.forEach((block, index) => {
     if (block.kind === "header") {
-      if (current) groups.push(current);
-      groups.push({ section: null, blockIndices: [index] });
+      if (current) indexGroups.push(current);
+      indexGroups.push({ section: null, blockIndices: [index] });
       current = null;
       return;
     }
 
     if (block.kind === "section-title") {
-      if (current) groups.push(current);
+      if (current) indexGroups.push(current);
       current = { section: block.section, blockIndices: [index] };
       return;
     }
@@ -324,7 +934,38 @@ function CvPreviewMeasureLayout({
       current.blockIndices.push(index);
     }
   });
-  if (current) groups.push(current);
+  if (current) indexGroups.push(current);
+
+  const blockGroups: SectionGroup[] = indexGroups.map((group) => ({
+    section: group.section,
+    blocks: group.blockIndices
+      .map((index) => blocks[index])
+      .filter((block): block is CvBlock => block != null),
+  }));
+
+  const blockIndexFor = (block: CvBlock) => blocks.indexOf(block);
+  const { headerGroups, sidebarGroups, mainGroups, bodyGroups } =
+    splitGroupsForColumns(blockGroups);
+  const twoColumn = isTwoColumnLayout(columnLayout) && !atsMode;
+  const headerBlock = headerGroups[0]?.blocks[0];
+  const contactProfile =
+    headerBlock?.kind === "header" ? headerBlock.contactProfile : undefined;
+  const sectionProps: CvSectionRenderProps = {
+    itemTitleLayout,
+    itemTitleSeparator,
+    itemTitleOrder,
+    dateFormat,
+    datePosition,
+    skillsLayout,
+    typography,
+    accentColor,
+    sectionDividerStyle,
+    designTokens,
+  };
+  const sidebarWidthPercent = resolveSidebarWidthPercent(sidebarWidth);
+
+  const renderMeasuredGroup = (group: SectionGroup, index: number) =>
+    renderSectionGroup(group, index, sectionProps, { blockIndexFor });
 
   return (
     <div
@@ -333,62 +974,69 @@ function CvPreviewMeasureLayout({
       className="pointer-events-none absolute left-[-9999px] top-0 opacity-0"
     >
       <div
-        className="box-border"
-        style={{ width: page.width, padding: pagePadding, fontSize: `${typography.bodyPx}px` }}
+        className={cn("box-border", bodyFontClassName)}
+        style={{
+          width: page.width,
+          padding: pagePadding,
+          fontSize: `${typography.bodyPx}px`,
+          lineHeight: designTokens.lineHeight,
+        }}
         data-cv-measure-root
       >
-        {groups.map((group, groupIndex) => {
-          if (group.section === null) {
-            const block = blocks[group.blockIndices[0]];
-            return (
-              <div key={`m-header-${groupIndex}`} data-cv-block-index={group.blockIndices[0]}>
-                {block.kind === "header" ? (
-                  <CvPreviewHeader
-                    contactProfile={block.contactProfile}
-                    showPhoto={showPhoto}
-                    typography={typography}
-                  />
-                ) : null}
-              </div>
-            );
-          }
-
-          const titleIndex = group.blockIndices.find(
-            (i) => blocks[i].kind === "section-title"
-          );
-          const itemIndices = group.blockIndices.filter(
-            (i) => blocks[i].kind === "item"
-          );
-
+        {headerGroups.map((group, groupIndex) => {
+          const block = group.blocks[0];
+          const blockIndex = block ? blockIndexFor(block) : -1;
           return (
-            <section
-              key={`m-section-${group.section.id}-${groupIndex}`}
-              className={groupIndex > 0 ? "mt-5" : undefined}
+            <div
+              key={`m-header-${groupIndex}`}
+              {...(blockIndex >= 0 ? { "data-cv-block-index": blockIndex } : {})}
             >
-              {titleIndex != null ? (
-                <div data-cv-block-index={titleIndex}>
-                  <CvPreviewSectionTitle section={group.section} typography={typography} />
-                </div>
+              {block?.kind === "header" ? (
+                <CvPreviewHeader
+                  contactProfile={block.contactProfile}
+                  showPhoto={showPhoto}
+                  photoPosition={photoPosition}
+                  photoSize={photoSize}
+                  contactLayout={contactLayout}
+                  contactFields={contactFields}
+                  columnLayout={columnLayout}
+                  typography={typography}
+                  accentColor={designTokens.linkColor}
+                  nameFontWeight={designTokens.nameFontWeight}
+                  headingFontClassName={headingFontClassName}
+                  textMuted={designTokens.textMuted}
+                  interactive={interactive}
+                />
               ) : null}
-              <div className="space-y-3">
-                {itemIndices.map((blockIndex) => {
-                  const block = blocks[blockIndex];
-                  return (
-                    <div key={blockIndex} data-cv-block-index={blockIndex}>
-                      {block.kind === "item" ? (
-                        <CvPreviewItem
-                          item={block.item}
-                          itemTitleLayout={itemTitleLayout}
-                          typography={typography}
-                        />
-                      ) : null}
-                    </div>
-                  );
-                })}
-              </div>
-            </section>
+            </div>
           );
         })}
+
+        {twoColumn ? (
+          <div
+            className="flex gap-4"
+            style={{ flexDirection: sidebarFlexDirection(sidebarPosition) }}
+          >
+            <aside className="shrink-0" style={{ width: `${sidebarWidthPercent}%` }}>
+              {contactProfile ? (
+                <CvPreviewSidebarPhoto
+                  contactProfile={contactProfile}
+                  showPhoto={showPhoto ?? false}
+                  photoPosition={photoPosition}
+                  photoSize={photoSize}
+                  columnLayout={columnLayout}
+                  accentColor={accentColor}
+                />
+              ) : null}
+              {sidebarGroups.map((group, index) => renderMeasuredGroup(group, index))}
+            </aside>
+            <main className="min-w-0 flex-1">
+              {mainGroups.map((group, index) => renderMeasuredGroup(group, index))}
+            </main>
+          </div>
+        ) : (
+          bodyGroups.map((group, index) => renderMeasuredGroup(group, index))
+        )}
       </div>
     </div>
   );
@@ -399,21 +1047,67 @@ export function CvPreview({
   className,
   singlePage = false,
   pageGapClassName = "gap-6",
+  interactive = true,
 }: CvPreviewProps) {
   const { contactProfile, sections } = content;
-  const pageFormat = content.settings.pageFormat ?? "A4";
+  const previewSettings = useMemo(
+    () => resolveAtsPreviewSettings(content.settings),
+    [content.settings]
+  );
+  const pageFormat = previewSettings.pageFormat ?? "A4";
   const page = getPageFormatSpec(pageFormat);
-  const margins = getPageMargins(content.settings);
+  const margins = getPageMargins(previewSettings);
   const pagePadding = getPagePaddingStyle(margins);
-  const typography = useMemo(() => resolveCvTypography(content.settings), [content.settings]);
-  const showPhoto = content.settings.showPhoto;
-  const itemTitleLayout = content.settings.itemTitleLayout ?? "STACKED";
+  const typography = useMemo(() => resolveCvTypography(previewSettings), [previewSettings]);
+  const showPhoto = previewSettings.showPhoto;
+  const itemTitleLayout = previewSettings.itemTitleLayout ?? "STACKED";
+  const itemTitleSeparator = previewSettings.itemTitleSeparator ?? "DOT";
+  const itemTitleOrder = previewSettings.itemTitleOrder ?? "TITLE_FIRST";
+  const dateFormat = previewSettings.dateFormat ?? "MON_YYYY";
+  const datePosition = previewSettings.datePosition ?? "RIGHT";
+  const skillsLayout = previewSettings.skillsLayout ?? "LIST";
+  const columnLayout = previewSettings.columnLayout ?? "SINGLE";
+  const sidebarPosition = previewSettings.sidebarPosition ?? "LEFT";
+  const sidebarWidth = previewSettings.sidebarWidth ?? "MEDIUM";
+  const photoPosition = previewSettings.photoPosition ?? DEFAULT_PHOTO_POSITION;
+  const photoSize = previewSettings.photoSize ?? DEFAULT_PHOTO_SIZE;
+  const contactLayout = previewSettings.contactLayout ?? "INLINE";
+  const contactFieldsKey = useMemo(
+    () => JSON.stringify(previewSettings.contactFields ?? []),
+    [previewSettings.contactFields]
+  );
+  const contactFields = useMemo(
+    () => normalizeContactFields(previewSettings.contactFields),
+    [contactFieldsKey]
+  );
+  const atsMode = content.settings.atsMode ?? false;
+  const designTokens = useMemo(
+    () => resolveCvDesignTokens(content.settings),
+    [content.settings]
+  );
+  const accentColor = atsMode ? "#000000" : resolveAccentColor(previewSettings.accentColor);
+  const sectionDividerStyle = previewSettings.sectionDividerStyle ?? "FULL";
+  const fontFamilyClassName = atsMode
+    ? ""
+    : getCvFontFamilyClassName(previewSettings.fontFamily);
+  const headingFontClassName = atsMode
+    ? ""
+    : getCvHeadingFontClassName(designTokens.headingFontFamily);
+  const bodyFontClassName = atsMode
+    ? ""
+    : getCvBodyFontClassName(designTokens.bodyFontFamily);
+  const designTokensKey = JSON.stringify(designTokens);
   const measureRef = useRef<HTMLDivElement>(null);
   const [pageIndices, setPageIndices] = useState<number[][] | null>(null);
 
   const blocks = useMemo(
-    () => buildCvBlocks(contactProfile, sections),
-    [contactProfile, sections]
+    () =>
+      buildCvBlocks(contactProfile, sections, {
+        skillsLayout,
+        languagesLayout: designTokens.languagesLayout,
+        certificationsLayout: designTokens.certificationsLayout,
+      }),
+    [contactProfile, sections, skillsLayout, designTokens.languagesLayout, designTokens.certificationsLayout]
   );
 
   const typographyKey = JSON.stringify(typography);
@@ -421,14 +1115,37 @@ export function CvPreview({
   useLayoutEffect(() => {
     const root = measureRef.current?.querySelector<HTMLElement>("[data-cv-measure-root]");
     if (!root || blocks.length === 0) {
-      setPageIndices([[]]);
+      setPageIndices((prev) => (pageIndicesEqual(prev, [[]]) ? prev : [[]]));
       return;
     }
 
     const metrics = measureCvBlocks(root);
     const maxHeight = getUsablePageHeightPx(pageFormat, margins.vertical);
-    setPageIndices(paginateCvBlocks(metrics, maxHeight));
-  }, [blocks, pageFormat, typographyKey, showPhoto, itemTitleLayout, margins.horizontal, margins.vertical]);
+    const next = paginateCvBlocks(metrics, maxHeight);
+    setPageIndices((prev) => (pageIndicesEqual(prev, next) ? prev : next));
+  }, [
+    blocks,
+    pageFormat,
+    typographyKey,
+    showPhoto,
+    itemTitleLayout,
+    itemTitleSeparator,
+    itemTitleOrder,
+    dateFormat,
+    datePosition,
+    skillsLayout,
+    columnLayout,
+    sidebarPosition,
+    sidebarWidth,
+    photoPosition,
+    photoSize,
+    contactLayout,
+    contactFieldsKey,
+    sectionDividerStyle,
+    margins.horizontal,
+    margins.vertical,
+    designTokensKey,
+  ]);
 
   const pages = useMemo(() => {
     const fallback = [blocks.map((_, i) => i)];
@@ -481,8 +1198,27 @@ export function CvPreview({
         typography={typography}
         pagePadding={pagePadding}
         showPhoto={showPhoto}
+        photoPosition={photoPosition}
+        photoSize={photoSize}
+        contactLayout={contactLayout}
+        contactFields={contactFields}
+        columnLayout={columnLayout}
+        sidebarPosition={sidebarPosition}
+        sidebarWidth={sidebarWidth}
+        atsMode={atsMode}
         itemTitleLayout={itemTitleLayout}
+        itemTitleSeparator={itemTitleSeparator}
+        itemTitleOrder={itemTitleOrder}
+        dateFormat={dateFormat}
+        datePosition={datePosition}
+        skillsLayout={skillsLayout}
+        accentColor={accentColor}
+        sectionDividerStyle={sectionDividerStyle}
+        designTokens={designTokens}
+        headingFontClassName={headingFontClassName}
+        bodyFontClassName={bodyFontClassName}
         measureRef={measureRef}
+        interactive={interactive}
       />
 
       <div className={cn("flex flex-col", isPaginated && pageGapClassName)}>
@@ -494,9 +1230,32 @@ export function CvPreview({
             typography={typography}
             pagePadding={pagePadding}
             showPhoto={showPhoto}
+            photoPosition={photoPosition}
+            photoSize={photoSize}
+            contactLayout={contactLayout}
+            contactFields={contactFields}
+            columnLayout={columnLayout}
+            sidebarPosition={sidebarPosition}
+            sidebarWidth={sidebarWidth}
             itemTitleLayout={itemTitleLayout}
+            itemTitleSeparator={itemTitleSeparator}
+            itemTitleOrder={itemTitleOrder}
+            dateFormat={dateFormat}
+            datePosition={datePosition}
+            skillsLayout={skillsLayout}
+            accentColor={accentColor}
+            sectionDividerStyle={sectionDividerStyle}
+            fontFamilyClassName={fontFamilyClassName}
+            headingFontClassName={headingFontClassName}
+            bodyFontClassName={bodyFontClassName}
+            atsMode={atsMode}
+            designTokens={designTokens}
+            contactName={contactProfile?.fullName}
+            pageNumber={pageIndex + 1}
+            totalPages={pages.length}
             className={className}
             fixedHeight={isPaginated || singlePage}
+            interactive={interactive}
           />
         ))}
       </div>

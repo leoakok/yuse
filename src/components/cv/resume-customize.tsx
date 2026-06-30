@@ -2,7 +2,7 @@
 
 import Link from "next/link";
 import { useState } from "react";
-import type { ItemTitleLayout, PageFormat, ResumeWithContent } from "@/lib/types/cv";
+import type { ItemTitleLayout, ItemTitleSeparator, PageFormat, ResumeWithContent } from "@/lib/types/cv";
 import { DEFAULT_CV_TYPOGRAPHY_SETTINGS, type CvTypographySettings } from "@/lib/cv/typography";
 import { DEFAULT_PAGE_MARGIN_MM } from "@/lib/cv/page-format";
 import { resumePath } from "@/lib/cv/routes";
@@ -45,6 +45,12 @@ export function ResumeCustomize({ content }: ResumeCustomizeProps) {
   const [savedItemTitleLayout, setSavedItemTitleLayout] = useState<ItemTitleLayout>(
     content.settings.itemTitleLayout ?? "STACKED"
   );
+  const [itemTitleSeparator, setItemTitleSeparator] = useState<ItemTitleSeparator>(
+    content.settings.itemTitleSeparator ?? "DOT"
+  );
+  const [savedItemTitleSeparator, setSavedItemTitleSeparator] = useState<ItemTitleSeparator>(
+    content.settings.itemTitleSeparator ?? "DOT"
+  );
   const [typography, setTypography] = useState<CvTypographySettings>({
     fontSize: content.settings.fontSize ?? DEFAULT_CV_TYPOGRAPHY_SETTINGS.fontSize,
     contactNameFontSize:
@@ -73,6 +79,7 @@ export function ResumeCustomize({ content }: ResumeCustomizeProps) {
       marginVerticalMm,
       showPhoto,
       itemTitleLayout,
+      itemTitleSeparator,
       ...typography,
     },
   };
@@ -83,7 +90,7 @@ export function ResumeCustomize({ content }: ResumeCustomizeProps) {
         <div>
           <h1 className="text-lg font-semibold">Customize style</h1>
           <p className="text-sm text-muted-foreground">
-            {content.resume.title} — page layout and style options
+            {content.resume.title}, page layout and style options
           </p>
         </div>
         <Link
@@ -108,11 +115,14 @@ export function ResumeCustomize({ content }: ResumeCustomizeProps) {
           savedMarginVerticalMm={savedMarginVerticalMm}
           itemTitleLayout={itemTitleLayout}
           savedItemTitleLayout={savedItemTitleLayout}
+          itemTitleSeparator={itemTitleSeparator}
+          savedItemTitleSeparator={savedItemTitleSeparator}
           typography={typography}
           savedTypography={savedTypography}
           onPageFormatChange={setPageFormat}
           onShowPhotoChange={setShowPhoto}
           onItemTitleLayoutChange={setItemTitleLayout}
+          onItemTitleSeparatorChange={setItemTitleSeparator}
           onTypographyChange={setTypography}
           onMarginHorizontalChange={setMarginHorizontalMm}
           onMarginVerticalChange={setMarginVerticalMm}
@@ -120,6 +130,7 @@ export function ResumeCustomize({ content }: ResumeCustomizeProps) {
             pageFormat: format,
             showPhoto: nextShowPhoto,
             itemTitleLayout: nextItemTitleLayout,
+            itemTitleSeparator: nextItemTitleSeparator,
             marginHorizontalMm: h,
             marginVerticalMm: v,
             typography: nextTypography,
@@ -127,6 +138,7 @@ export function ResumeCustomize({ content }: ResumeCustomizeProps) {
             setSavedPageFormat(format);
             setSavedShowPhoto(nextShowPhoto);
             setSavedItemTitleLayout(nextItemTitleLayout);
+            setSavedItemTitleSeparator(nextItemTitleSeparator);
             setSavedMarginHorizontalMm(h);
             setSavedMarginVerticalMm(v);
             setSavedTypography(nextTypography);

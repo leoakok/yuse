@@ -2,6 +2,7 @@
 
 import { useEffect, useState } from "react";
 import { use } from "react";
+import { Loader2 } from "lucide-react";
 import { AppWorkspace } from "@/components/layout/app-workspace";
 import { ResumeCustomize } from "@/components/cv/resume-customize";
 import { getResumeWithContent } from "@/lib/api/cv-api";
@@ -36,8 +37,15 @@ export default function ResumeCustomizePage({ params }: ResumeCustomizePageProps
     return null;
   }
 
-  if (!content) {
-    return null;
+  if (loading || !content) {
+    return (
+      <AppWorkspace>
+        <div className="flex flex-1 items-center justify-center p-8">
+          <Loader2 className="size-6 animate-spin text-muted-foreground" aria-hidden />
+          <span className="sr-only">Loading resume</span>
+        </div>
+      </AppWorkspace>
+    );
   }
 
   return (
