@@ -16,7 +16,7 @@ const STEPS: Step[] = [
   {
     icon: <Brain className="size-5" />,
     title: "I get to know you over time",
-    body: "We talk, and I remember. I build a Digital Twin of your real work — every project, decision, and result — kept in a clear story structure so nothing about you gets lost.",
+    body: "We talk, and I remember. I build a Digital Twin of your real work, every project, decision, and result, kept in a clear story structure so nothing about you gets lost.",
   },
   {
     icon: <GitHubMark className="size-5" />,
@@ -31,7 +31,7 @@ const STEPS: Step[] = [
   {
     icon: <Wand2 className="size-5" />,
     title: "You paste a job link",
-    body: "Then I craft the most tailored CV for that exact application — choosing the right work, the right words, the right emphasis for this one role.",
+    body: "Then I craft the most tailored CV for that exact application, choosing the right work, the right words, the right emphasis for this one role.",
   },
 ];
 
@@ -85,7 +85,7 @@ export function LandingHow() {
 
         <Reveal className="mx-auto mt-14 max-w-2xl text-center">
           <p className="text-balance text-xl font-medium tracking-tight sm:text-2xl">
-            The more you use me, the better I know you — and the sharper every CV
+            The more you use me, the better I know you, and the sharper every CV
             becomes.
           </p>
         </Reveal>

@@ -16,7 +16,7 @@ interface JobTableProps {
 
 function formatDate(value: string) {
   const date = new Date(value);
-  if (Number.isNaN(date.getTime())) return "—";
+  if (Number.isNaN(date.getTime())) return "-";
   return date.toLocaleDateString(undefined, {
     month: "short",
     day: "numeric",
@@ -73,7 +73,7 @@ export function JobTable({ jobs, onDelete, onSelect, selectedJobId }: JobTablePr
                   job.id === selectedJobId && "bg-primary/5 hover:bg-primary/10"
                 )}
               >
-                <td className="px-4 py-3">{job.company.trim() || "—"}</td>
+                <td className="px-4 py-3">{job.company.trim() || "-"}</td>
                 <td className="px-4 py-3 font-medium">{job.title.trim() || "Untitled role"}</td>
                 <td className="px-4 py-3">
                   <StatusBadge status={job.status} />

@@ -238,7 +238,7 @@ export function JobDetailPanel({
                     </Link>
                   ) : resumes.length === 0 ? (
                     <p className="text-xs text-muted-foreground">
-                      No resumes yet — ask Yuse to tailor one for this role.
+                      No resumes yet, ask Yuse to tailor one for this role.
                     </p>
                   ) : null}
                 </div>
@@ -301,7 +301,7 @@ export function JobDetailPanel({
                     id="job-detail-notes"
                     value={notes}
                     onChange={(event) => setNotes(event.target.value)}
-                    placeholder="Private notes — recruiter contacts, follow-ups, etc."
+                    placeholder="Private notes, recruiter contacts, follow-ups, etc."
                     className="min-h-20"
                   />
                 </div>

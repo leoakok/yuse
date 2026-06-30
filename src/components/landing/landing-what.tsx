@@ -26,7 +26,7 @@ export function LandingWhat({ isSignedIn = false }: LandingWhatProps) {
           </h2>
           <p className="mt-5 max-w-xl text-balance text-lg text-muted-foreground">
             Bring your GitHub, your LinkedIn, and your story. I&apos;ll turn them
-            into a CV that&apos;s unmistakably you — tailored for every role you
+            into a CV that&apos;s unmistakably you, tailored for every role you
             want next.
           </p>
 

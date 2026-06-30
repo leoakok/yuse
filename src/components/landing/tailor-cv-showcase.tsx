@@ -76,7 +76,7 @@ export function TailorCvShowcase() {
           See what&apos;s possible
         </span>
         <p className="mt-2 text-balance text-lg font-medium tracking-tight">
-          Full A4 CVs — tailored, print-ready
+          Full A4 CVs, tailored, print-ready
         </p>
       </div>
 
