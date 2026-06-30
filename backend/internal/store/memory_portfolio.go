@@ -355,7 +355,7 @@ func (m *Memory) DeletePortfolioTestimonial(portfolioID, testimonialID string) (
 
 func (m *Memory) UpdatePortfolioContactProfile(
 	portfolioID string,
-	fullName, headline, email, phone, location, website, linkedIn, github, photoURL, linkedinPhotoURL, githubPhotoURL *string,
+	fullName, headline, email, phone, location, website, linkedIn, github, photoURL, linkedinPhotoURL, githubPhotoURL, ogImageURL, faviconURL *string,
 ) (*model.PortfolioWithContent, error) {
 	m.mu.Lock()
 	defer m.mu.Unlock()
@@ -415,6 +415,12 @@ func (m *Memory) UpdatePortfolioContactProfile(
 	}
 	if githubPhotoURL != nil {
 		profile.GithubPhotoURL = trimmedStringPtr(*githubPhotoURL)
+	}
+	if ogImageURL != nil {
+		profile.OgImageURL = trimmedStringPtr(*ogImageURL)
+	}
+	if faviconURL != nil {
+		profile.FaviconURL = trimmedStringPtr(*faviconURL)
 	}
 	profile.UpdatedAt = now
 	m.contactProfiles[profile.ID] = cloneContactProfile(profile)

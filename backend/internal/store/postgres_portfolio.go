@@ -14,7 +14,7 @@ import (
 
 func (p *Postgres) ListPortfolios() []*model.Portfolio {
 	rows, err := p.pool.Query(p.ctx(), `
-		SELECT id, workspace_id, title, tagline, about, contact_profile_id, created_by, created_at, updated_at
+		SELECT id, workspace_id, title, slug, tagline, about, contact_profile_id, created_by, created_at, updated_at
 		FROM portfolios WHERE workspace_id = $1
 		ORDER BY updated_at DESC
 	`, p.activeWorkspaceID())
@@ -27,7 +27,7 @@ func (p *Postgres) ListPortfolios() []*model.Portfolio {
 
 func (p *Postgres) GetPortfolio(id string) (*model.Portfolio, error) {
 	row := p.pool.QueryRow(p.ctx(), `
-		SELECT id, workspace_id, title, tagline, about, contact_profile_id, created_by, created_at, updated_at
+		SELECT id, workspace_id, title, slug, tagline, about, contact_profile_id, created_by, created_at, updated_at
 		FROM portfolios WHERE id = $1 AND workspace_id = $2
 	`, id, p.activeWorkspaceID())
 	pf, err := scanPortfolio(row)
@@ -39,21 +39,23 @@ func (p *Postgres) GetPortfolio(id string) (*model.Portfolio, error) {
 
 func (p *Postgres) SavePortfolio(portfolio *model.Portfolio) {
 	_, _ = p.pool.Exec(p.ctx(), `
-		INSERT INTO portfolios (id, workspace_id, title, tagline, about, contact_profile_id, created_by, created_at, updated_at)
-		VALUES ($1, $2, $3, $4, $5, $6, $7, $8::timestamptz, $9::timestamptz)
+		INSERT INTO portfolios (id, workspace_id, title, slug, tagline, about, contact_profile_id, created_by, created_at, updated_at)
+		VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9::timestamptz, $10::timestamptz)
 		ON CONFLICT (id) DO UPDATE SET
 			title = EXCLUDED.title,
+			slug = EXCLUDED.slug,
 			tagline = EXCLUDED.tagline,
 			about = EXCLUDED.about,
 			contact_profile_id = EXCLUDED.contact_profile_id,
 			updated_at = EXCLUDED.updated_at
-	`, portfolio.ID, portfolio.WorkspaceID, portfolio.Title, portfolio.Tagline, portfolio.About,
+	`, portfolio.ID, portfolio.WorkspaceID, portfolio.Title, portfolio.Slug, portfolio.Tagline, portfolio.About,
 		portfolio.ContactProfileID, portfolio.CreatedBy, portfolio.CreatedAt, portfolio.UpdatedAt)
 }
 
 func (p *Postgres) GetPortfolioSettings(portfolioID string) *model.PortfolioSettings {
 	row := p.pool.QueryRow(p.ctx(), `
-		SELECT portfolio_id, theme_id, layout, accent_color, show_photo, locale
+		SELECT portfolio_id, theme_id, layout, accent_color, show_photo, locale,
+			project_grid_columns, project_card_style, typography_scale, hero_style, navigation_style, animation_level
 		FROM portfolio_settings WHERE portfolio_id = $1
 	`, portfolioID)
 	s, err := scanPortfolioSettings(row)
@@ -76,15 +78,26 @@ func (p *Postgres) UpdatePortfolioSettings(portfolioID string, update func(*mode
 	update(settings)
 
 	_, err := p.pool.Exec(p.ctx(), `
-		INSERT INTO portfolio_settings (portfolio_id, theme_id, layout, accent_color, show_photo, locale)
-		VALUES ($1, $2, $3, $4, $5, $6)
+		INSERT INTO portfolio_settings (
+			portfolio_id, theme_id, layout, accent_color, show_photo, locale,
+			project_grid_columns, project_card_style, typography_scale, hero_style, navigation_style, animation_level
+		)
+		VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12)
 		ON CONFLICT (portfolio_id) DO UPDATE SET
 			theme_id = EXCLUDED.theme_id,
 			layout = EXCLUDED.layout,
 			accent_color = EXCLUDED.accent_color,
 			show_photo = EXCLUDED.show_photo,
-			locale = EXCLUDED.locale
-	`, settings.PortfolioID, settings.ThemeID, string(settings.Layout), settings.AccentColor, settings.ShowPhoto, settings.Locale)
+			locale = EXCLUDED.locale,
+			project_grid_columns = EXCLUDED.project_grid_columns,
+			project_card_style = EXCLUDED.project_card_style,
+			typography_scale = EXCLUDED.typography_scale,
+			hero_style = EXCLUDED.hero_style,
+			navigation_style = EXCLUDED.navigation_style,
+			animation_level = EXCLUDED.animation_level
+	`, settings.PortfolioID, settings.ThemeID, string(settings.Layout), settings.AccentColor, settings.ShowPhoto, settings.Locale,
+		string(settings.ProjectGridColumns), string(settings.ProjectCardStyle), string(settings.TypographyScale),
+		string(settings.HeroStyle), string(settings.NavigationStyle), string(settings.AnimationLevel))
 	if err != nil {
 		return nil, fmt.Errorf("update portfolio settings: %w", err)
 	}
@@ -411,7 +424,7 @@ func (p *Postgres) DeletePortfolioTestimonial(portfolioID, testimonialID string)
 
 func (p *Postgres) UpdatePortfolioContactProfile(
 	portfolioID string,
-	fullName, headline, email, phone, location, website, linkedIn, github, photoURL, linkedinPhotoURL, githubPhotoURL *string,
+	fullName, headline, email, phone, location, website, linkedIn, github, photoURL, linkedinPhotoURL, githubPhotoURL, ogImageURL, faviconURL *string,
 ) (*model.PortfolioWithContent, error) {
 	ctx := p.ctx()
 	portfolio, err := p.GetPortfolio(portfolioID)
@@ -479,6 +492,12 @@ func (p *Postgres) UpdatePortfolioContactProfile(
 	if githubPhotoURL != nil {
 		profile.GithubPhotoURL = trimmedStringPtr(*githubPhotoURL)
 	}
+	if ogImageURL != nil {
+		profile.OgImageURL = trimmedStringPtr(*ogImageURL)
+	}
+	if faviconURL != nil {
+		profile.FaviconURL = trimmedStringPtr(*faviconURL)
+	}
 	profile.UpdatedAt = formatTime(now)
 
 	tx, err := p.pool.Begin(ctx)
@@ -489,8 +508,11 @@ func (p *Postgres) UpdatePortfolioContactProfile(
 
 	createdAt := profile.CreatedAt
 	_, err = tx.Exec(ctx, `
-		INSERT INTO contact_profiles (id, workspace_id, full_name, headline, email, phone, location, website, linked_in, github, photo_url, linkedin_photo_url, github_photo_url, created_at, updated_at)
-		VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14::timestamptz, $15::timestamptz)
+		INSERT INTO contact_profiles (
+			id, workspace_id, full_name, headline, email, phone, location, website, linked_in, github,
+			photo_url, linkedin_photo_url, github_photo_url, og_image_url, favicon_url, created_at, updated_at
+		)
+		VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14, $15, $16::timestamptz, $17::timestamptz)
 		ON CONFLICT (id) DO UPDATE SET
 			full_name = EXCLUDED.full_name,
 			headline = EXCLUDED.headline,
@@ -503,10 +525,12 @@ func (p *Postgres) UpdatePortfolioContactProfile(
 			photo_url = EXCLUDED.photo_url,
 			linkedin_photo_url = EXCLUDED.linkedin_photo_url,
 			github_photo_url = EXCLUDED.github_photo_url,
+			og_image_url = EXCLUDED.og_image_url,
+			favicon_url = EXCLUDED.favicon_url,
 			updated_at = EXCLUDED.updated_at
 	`, profile.ID, profile.WorkspaceID, profile.FullName, profile.Headline, profile.Email,
 		profile.Phone, profile.Location, profile.Website, profile.LinkedIn, profile.Github, profile.PhotoURL,
-		profile.LinkedinPhotoURL, profile.GithubPhotoURL,
+		profile.LinkedinPhotoURL, profile.GithubPhotoURL, profile.OgImageURL, profile.FaviconURL,
 		createdAt, now)
 	if err != nil {
 		return nil, fmt.Errorf("save contact profile: %w", err)
@@ -557,8 +581,8 @@ func (p *Postgres) DuplicatePortfolio(sourceID string) (*model.Portfolio, error)
 	defer func() { _ = tx.Rollback(ctx) }()
 
 	_, err = tx.Exec(ctx, `
-		INSERT INTO portfolios (id, workspace_id, title, tagline, about, contact_profile_id, created_by, created_at, updated_at)
-		VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $8)
+		INSERT INTO portfolios (id, workspace_id, title, slug, tagline, about, contact_profile_id, created_by, created_at, updated_at)
+		VALUES ($1, $2, $3, NULL, $4, $5, $6, $7, $8, $8)
 	`, newPortfolio.ID, newPortfolio.WorkspaceID, newPortfolio.Title, newPortfolio.Tagline, newPortfolio.About,
 		newPortfolio.ContactProfileID, newPortfolio.CreatedBy, now)
 	if err != nil {
@@ -567,9 +591,14 @@ func (p *Postgres) DuplicatePortfolio(sourceID string) (*model.Portfolio, error)
 
 	settings := p.GetPortfolioSettings(sourceID)
 	_, err = tx.Exec(ctx, `
-		INSERT INTO portfolio_settings (portfolio_id, theme_id, layout, accent_color, show_photo, locale)
-		VALUES ($1, $2, $3, $4, $5, $6)
-	`, newID, settings.ThemeID, string(settings.Layout), settings.AccentColor, settings.ShowPhoto, settings.Locale)
+		INSERT INTO portfolio_settings (
+			portfolio_id, theme_id, layout, accent_color, show_photo, locale,
+			project_grid_columns, project_card_style, typography_scale, hero_style, navigation_style, animation_level
+		)
+		VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12)
+	`, newID, settings.ThemeID, string(settings.Layout), settings.AccentColor, settings.ShowPhoto, settings.Locale,
+		string(settings.ProjectGridColumns), string(settings.ProjectCardStyle), string(settings.TypographyScale),
+		string(settings.HeroStyle), string(settings.NavigationStyle), string(settings.AnimationLevel))
 	if err != nil {
 		return nil, err
 	}
@@ -650,16 +679,21 @@ func (p *Postgres) CreatePortfolio(title string) *model.Portfolio {
 	defer func() { _ = tx.Rollback(ctx) }()
 
 	_, err = tx.Exec(ctx, `
-		INSERT INTO portfolios (id, workspace_id, title, tagline, about, created_by, created_at, updated_at)
-		VALUES ($1, $2, $3, '', '', $4, $5, $5)
+		INSERT INTO portfolios (id, workspace_id, title, slug, tagline, about, created_by, created_at, updated_at)
+		VALUES ($1, $2, $3, NULL, '', '', $4, $5, $5)
 	`, portfolio.ID, portfolio.WorkspaceID, portfolio.Title, portfolio.CreatedBy, now)
 	if err != nil {
 		return portfolio
 	}
 	_, err = tx.Exec(ctx, `
-		INSERT INTO portfolio_settings (portfolio_id, theme_id, layout, accent_color, show_photo, locale)
-		VALUES ($1, $2, $3, $4, $5, $6)
-	`, settings.PortfolioID, settings.ThemeID, string(settings.Layout), settings.AccentColor, settings.ShowPhoto, settings.Locale)
+		INSERT INTO portfolio_settings (
+			portfolio_id, theme_id, layout, accent_color, show_photo, locale,
+			project_grid_columns, project_card_style, typography_scale, hero_style, navigation_style, animation_level
+		)
+		VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12)
+	`, settings.PortfolioID, settings.ThemeID, string(settings.Layout), settings.AccentColor, settings.ShowPhoto, settings.Locale,
+		string(settings.ProjectGridColumns), string(settings.ProjectCardStyle), string(settings.TypographyScale),
+		string(settings.HeroStyle), string(settings.NavigationStyle), string(settings.AnimationLevel))
 	if err != nil {
 		return portfolio
 	}
@@ -759,10 +793,12 @@ func optionalStringValue(s *string) any {
 
 func scanPortfolio(row scannable) (*model.Portfolio, error) {
 	var pf model.Portfolio
+	var slug *string
 	var createdAt, updatedAt time.Time
-	if err := row.Scan(&pf.ID, &pf.WorkspaceID, &pf.Title, &pf.Tagline, &pf.About, &pf.ContactProfileID, &pf.CreatedBy, &createdAt, &updatedAt); err != nil {
+	if err := row.Scan(&pf.ID, &pf.WorkspaceID, &pf.Title, &slug, &pf.Tagline, &pf.About, &pf.ContactProfileID, &pf.CreatedBy, &createdAt, &updatedAt); err != nil {
 		return nil, err
 	}
+	pf.Slug = slug
 	pf.CreatedAt = formatTime(createdAt)
 	pf.UpdatedAt = formatTime(updatedAt)
 	return clonePortfolio(&pf), nil
@@ -772,10 +808,12 @@ func scanPortfolios(rows pgx.Rows) []*model.Portfolio {
 	out := make([]*model.Portfolio, 0)
 	for rows.Next() {
 		var pf model.Portfolio
+		var slug *string
 		var createdAt, updatedAt time.Time
-		if err := rows.Scan(&pf.ID, &pf.WorkspaceID, &pf.Title, &pf.Tagline, &pf.About, &pf.ContactProfileID, &pf.CreatedBy, &createdAt, &updatedAt); err != nil {
+		if err := rows.Scan(&pf.ID, &pf.WorkspaceID, &pf.Title, &slug, &pf.Tagline, &pf.About, &pf.ContactProfileID, &pf.CreatedBy, &createdAt, &updatedAt); err != nil {
 			continue
 		}
+		pf.Slug = slug
 		pf.CreatedAt = formatTime(createdAt)
 		pf.UpdatedAt = formatTime(updatedAt)
 		out = append(out, clonePortfolio(&pf))
@@ -785,11 +823,20 @@ func scanPortfolios(rows pgx.Rows) []*model.Portfolio {
 
 func scanPortfolioSettings(row scannable) (*model.PortfolioSettings, error) {
 	var s model.PortfolioSettings
-	var layout string
-	if err := row.Scan(&s.PortfolioID, &s.ThemeID, &layout, &s.AccentColor, &s.ShowPhoto, &s.Locale); err != nil {
+	var layout, projectGridColumns, projectCardStyle, typographyScale, heroStyle, navigationStyle, animationLevel string
+	if err := row.Scan(
+		&s.PortfolioID, &s.ThemeID, &layout, &s.AccentColor, &s.ShowPhoto, &s.Locale,
+		&projectGridColumns, &projectCardStyle, &typographyScale, &heroStyle, &navigationStyle, &animationLevel,
+	); err != nil {
 		return nil, err
 	}
 	s.Layout = model.PortfolioLayout(layout)
+	s.ProjectGridColumns = model.PortfolioProjectGridColumns(projectGridColumns)
+	s.ProjectCardStyle = model.PortfolioProjectCardStyle(projectCardStyle)
+	s.TypographyScale = model.PortfolioTypographyScale(typographyScale)
+	s.HeroStyle = model.PortfolioHeroStyle(heroStyle)
+	s.NavigationStyle = model.PortfolioNavigationStyle(navigationStyle)
+	s.AnimationLevel = model.PortfolioAnimationLevel(animationLevel)
 	return clonePortfolioSettings(&s), nil
 }
 
