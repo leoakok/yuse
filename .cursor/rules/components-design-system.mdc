@@ -7,9 +7,9 @@ alwaysApply: true
 
 ## Folder structure
 
-- `src/components/ui/` — shadcn primitives only. Do not add feature logic here.
-- `src/components/{domain}/` — reusable feature UI (`cv/`, `agent/`, `layout/`).
-- `src/app/**/page.tsx` — thin composition only. No large inline JSX or business logic.
+- `src/components/ui/`: shadcn primitives only. Do not add feature logic here.
+- `src/components/{domain}/`: reusable feature UI (`cv/`, `agent/`, `layout/`).
+- `src/app/**/page.tsx`: thin composition only. No large inline JSX or business logic.
 
 ## When to extract a component
 
@@ -24,23 +24,38 @@ Extract when:
 - Agent/assistant UI belongs in `src/components/agent/` (status badge, progress stream, floating panel).
 - CV domain UI belongs in `src/components/cv/` (preview, grids, lists, workspace).
 - Data access goes through `src/lib/api/cv-api.ts`, not direct store imports from pages.
-- Use plain, non-technical copy in all user-facing text.
+- Use plain, non-technical copy in all user-facing text. **No em dashes** (see `no-em-dash.mdc`).
 - Colocate private helpers in the same file only when not reusable elsewhere.
+
+## Shell layout: one purpose per zone
+
+- **`PageHeader`**: platform navigation only (logo, nav, account menu). Do not put create/import/export or other document actions here.
+- **`PageTitle`**: page heading plus optional **page actions** (e.g. Import a resume) aligned top-right of the title row.
+- **`AppWorkspace` toolbar**: in-editor actions for the open document (download, duplicate, etc.), not catalog-level create/import.
+
+```tsx
+// BAD: import lives in the global header
+<CatalogShell actions={<Button>Import a resume</Button>} /> // if passed to PageHeader
+
+// GOOD: import beside the page title
+<CatalogShell title="Resumes" actions={<Button>Import a resume</Button>} />
+// CatalogShell forwards actions to PageTitle, not PageHeader
+```
 
 ## Examples
 
 ```tsx
-// BAD — page fetches data inline instead of API layer
+// BAD: page fetches data inline instead of API layer
 import { listResumes } from "./local-data";
 
-// GOOD — page uses API layer
+// GOOD: page uses API layer
 import { listResumes } from "@/lib/api/cv-api";
 ```
 
 ```tsx
-// BAD — feature component in ui/
+// BAD: feature component in ui/
 src/components/ui/cv-preview.tsx
 
-// GOOD — domain folder
+// GOOD: domain folder
 src/components/cv/cv-preview.tsx
 ```

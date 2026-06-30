@@ -6,15 +6,15 @@ Thank you for your interest in contributing. This guide covers the basics for ge
 
 - Search [existing issues](https://github.com/leoakok/yuse/issues) to avoid duplicate work.
 - For large features, open an issue first so we can align on scope.
-- Keep pull requests focused — one logical change per PR when possible.
+- Keep pull requests focused, one logical change per PR when possible.
 
 ## Development setup
 
 1. Fork and clone the repository.
 2. Follow the [README quick start](README.md#quick-start) to run the full stack locally.
 3. Read the supporting docs:
-   - [docs/AUTH.md](docs/AUTH.md) — Google OAuth, email sign-in, JWT flow
-   - [docs/DOCKER.md](docs/DOCKER.md) — Docker Compose, ports, troubleshooting
+   - [docs/AUTH.md](docs/AUTH.md), Google OAuth, email sign-in, JWT flow
+   - [docs/DOCKER.md](docs/DOCKER.md), Docker Compose, ports, troubleshooting
 
 ## Branch and commit workflow
 
@@ -38,11 +38,11 @@ Thank you for your interest in contributing. This guide covers the basics for ge
 
 ### Frontend (`src/`)
 
-- **Pages** (`src/app/**/page.tsx`) — thin composition only; no large inline JSX or business logic.
-- **UI primitives** live in `src/components/ui/` (shadcn only — no feature logic).
+- **Pages** (`src/app/**/page.tsx`), thin composition only; no large inline JSX or business logic.
+- **UI primitives** live in `src/components/ui/` (shadcn only, no feature logic).
 - **Feature components** live in domain folders: `src/components/cv/`, `src/components/agent/`, `src/components/layout/`, etc.
 - **Data access** goes through `src/lib/api/cv-api.ts`, not direct store imports from pages.
-- **User-facing copy** — plain, non-technical language.
+- **User-facing copy**, plain, non-technical language.
 - One primary export per file; `PascalCase` filename matching the export.
 
 See [.cursor/rules/components-design-system.mdc](.cursor/rules/components-design-system.mdc) for the full component conventions.

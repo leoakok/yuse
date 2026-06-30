@@ -1,4 +1,4 @@
-# CV Builder — Go GraphQL API
+# CV Builder, Go GraphQL API
 
 OpenAI-powered backend for CV library management and assistant-driven edits.
 
@@ -28,16 +28,16 @@ Requires a running Postgres instance. Migrations run automatically on server sta
 
 | Variable | Required | Default | Description |
 |----------|----------|---------|-------------|
-| `DATABASE_URL` | Yes | — | Postgres connection string |
-| `AUTH_SECRET` | Yes | — | HS256 secret (must match frontend) |
-| `OPENAI_API_KEY` | For assistant | — | OpenAI key; assistant returns an error if missing |
+| `DATABASE_URL` | Yes |, | Postgres connection string |
+| `AUTH_SECRET` | Yes |, | HS256 secret (must match frontend) |
+| `OPENAI_API_KEY` | For assistant |, | OpenAI key; assistant returns an error if missing |
 | `OPENAI_MINI_MODEL` | No | `gpt-4o` | Primary agent model |
 | `OPENAI_FALLBACK_MODEL` | No | `gpt-4o-mini` | Retry model if primary returns empty |
 | `PORT` | No | `8080` | HTTP port |
 | `CORS_ORIGIN` | No | `http://localhost:3000` | Frontend origin |
-| `GITHUB_TOKEN` | No | — | Fallback GitHub API token when user has not connected OAuth |
-| `GITHUB_CLIENT_ID` | For Connections | — | GitHub OAuth app client ID |
-| `GITHUB_CLIENT_SECRET` | For Connections | — | GitHub OAuth app client secret |
+| `GITHUB_TOKEN` | No |, | Fallback GitHub API token when user has not connected OAuth |
+| `GITHUB_CLIENT_ID` | For Connections |, | GitHub OAuth app client ID |
+| `GITHUB_CLIENT_SECRET` | For Connections |, | GitHub OAuth app client secret |
 | `GITHUB_OAUTH_CALLBACK_URL` | No | `{CORS_ORIGIN}/api/auth/github/callback` | OAuth redirect URI registered with GitHub |
 
 ## Frontend wiring

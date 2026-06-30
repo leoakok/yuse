@@ -4,9 +4,9 @@ Three slingshot logo concepts generated with OpenAI `gpt-image-1`, then refined 
 
 | Option | Concept | SVG | PNG (AI reference) |
 |--------|---------|-----|-------------------|
-| **A** | Literal slingshot — Y-fork frame, elastic, pouch, stone | [option-a.svg](./option-a.svg) | [option-a.png](./option-a.png) |
-| **B** | Letter Y — bold Y forks with amber band across tips | [option-b.svg](./option-b.svg) | [option-b.png](./option-b.png) |
-| **C** | Mascot — rounded slingshot with smile + briefcase | [option-c.svg](./option-c.svg) | [option-c.png](./option-c.png) |
+| **A** | Literal slingshot, Y-fork frame, elastic, pouch, stone | [option-a.svg](./option-a.svg) | [option-a.png](./option-a.png) |
+| **B** | Letter Y, bold Y forks with amber band across tips | [option-b.svg](./option-b.svg) | [option-b.png](./option-b.png) |
+| **C** | Mascot, rounded slingshot with smile + briefcase | [option-c.svg](./option-c.svg) | [option-c.png](./option-c.png) |
 
 ## Preview in the app
 
@@ -32,4 +32,4 @@ Or import directly:
 import { YuseLogoA, YuseLogoB, YuseLogoC } from "@/components/brand/yuse-logo-options";
 ```
 
-The default `YuseLogo` (no variant) renders Option C — the mascot slingshot mark.
+The default `YuseLogo` (no variant) renders Option C, the mascot slingshot mark.

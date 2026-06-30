@@ -2,8 +2,8 @@
 
 MCP (Model Context Protocol) tools for the CV Builder platform. The same tool registry powers:
 
-1. **In-process AI assistant** — OpenAI tool-calling loop in `backend/internal/llm`
-2. **Standalone stdio MCP server** — for Cursor and other MCP clients
+1. **In-process AI assistant**, OpenAI tool-calling loop in `backend/internal/llm`
+2. **Standalone stdio MCP server**, for Cursor and other MCP clients
 
 ## Schema design (anti-smell)
 
@@ -13,14 +13,14 @@ Tool descriptions follow practices from [*MCP Tool Descriptions Are Smelly!*](ht
 |-----------|-----------------|
 | **Concise tool description** | What/when/when-not at tool level; per-section rules in `add_section_item` with GOOD/BAD examples. |
 | **Schema as specification** | Enums, typed fields, `required`/`recommended` per section in `section_schema.go`, `examples` on parameters. |
-| **Opaque parameters → explicit fields** | `company`, `institution`, `startDate`, `endDate`, `location`, `url`, `level`, `endDatePresent` — not a vague `metadata` bag. |
+| **Opaque parameters → explicit fields** | `company`, `institution`, `startDate`, `endDate`, `location`, `url`, `level`, `endDatePresent`, not a vague `metadata` bag. |
 | **Post-write fieldHints** | Writes return `fieldHints` when structured fields are missing or body contains metadata. Agent loop nudges fixes. |
 | **get_resume_content fieldGuide** | Structured object per section: `required`, `recommended`, `fields`, `goodExample`, `badExample`, `notes`. |
 | **Validation + normalization** | `normalizeSectionItemArgs` splits `headline at Company`, extracts dates from body; `validateSectionItemInput` rejects metadata dumps. |
 | **Disambiguate similar tools** | `explore_website` vs `fetch_url`; `fetch_linkedin_profile` for /in/ URLs; `update_contact_profile` ≠ section items. |
 | **Backward compatibility** | `metadata` object still accepted; flat fields merge into it at execution. |
 
-Avoid duplicating schema detail in system prompts — `ToolCatalog()`, JSON Schema, and `fieldGuide` are the source of truth.
+Avoid duplicating schema detail in system prompts, `ToolCatalog()`, JSON Schema, and `fieldGuide` are the source of truth.
 
 ## Per-section field conventions
 
@@ -28,9 +28,9 @@ Avoid duplicating schema detail in system prompts — `ToolCatalog()`, JSON Sche
 |---------|----------|---------------|
 | EXPERIENCE | headline, company, startDate | Achievement bullets ONLY |
 | EDUCATION | headline, institution | Honors/coursework optional |
-| SKILLS | headline, level | Optional notes — one skill per item |
-| LANGUAGES | headline, level | Optional notes — one language per item |
-| PROJECTS | headline | Description/impact — url in `url` field |
+| SKILLS | headline, level | Optional notes, one skill per item |
+| LANGUAGES | headline, level | Optional notes, one language per item |
+| PROJECTS | headline | Description/impact, url in `url` field |
 | SUMMARY | body | Summary paragraph |
 
 See `section_schema.go` for full specs and examples.
@@ -66,15 +66,15 @@ Tools map 1:1 to GraphQL mutations/queries. No duplicate business logic.
 | `get_resume_content` | Full resume with structured fieldGuide per section |
 | `update_contact_profile` | Edit profile header (not section items) |
 | `list_sections` | List sections (optional type filter) |
-| `add_section_item` | Add item — per-section schema with validation |
-| `update_section_item` | Edit section item — returns fieldHints |
+| `add_section_item` | Add item, per-section schema with validation |
+| `update_section_item` | Edit section item, returns fieldHints |
 | `set_item_visibility` | Show/hide item in preview |
 | `update_resume_settings` | Page format, theme, font size |
 | `list_cv_themes` | Available themes |
 | `list_twin_entries` | Digital Twin entries |
 | `get_twin_entry` | Single twin entry |
-| `create_twin_entry` | New twin entry — STAR/PAR fields |
-| `update_twin_entry` | Edit twin entry — returns fieldHints |
+| `create_twin_entry` | New twin entry, STAR/PAR fields |
+| `update_twin_entry` | Edit twin entry, returns fieldHints |
 | `delete_twin_entry` | Delete twin entry |
 | `list_tracked_jobs` | Job tracker applications |
 | `get_tracked_job` | Single tracked job |
