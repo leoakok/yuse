@@ -33,13 +33,13 @@ services:
       - path: ./backend/.env
         required: false
     environment:
-      # Do not set OPENAI_API_KEY here — an empty host value would override env_file.
+      # Do not set OPENAI_API_KEY here, an empty host value would override env_file.
       DATABASE_URL: postgres://${POSTGRES_USER:-cvbuilder}:${POSTGRES_PASSWORD:-cvbuilder}@postgres:5432/${POSTGRES_DB:-cvbuilder}?sslmode=disable
       PORT: "8080"
       CORS_ORIGIN: ${CORS_ORIGIN:-http://localhost:3000}
       AUTH_SECRET: ${AUTH_SECRET:-}
       # GitHub OAuth vars come from backend/.env via env_file above.
-      # Do not set GITHUB_* here with ${VAR:-} — an empty host value overrides env_file.
+      # Do not set GITHUB_* here with ${VAR:-}, an empty host value overrides env_file.
     ports:
       - "${BACKEND_PORT:-8080}:8080"
     healthcheck:

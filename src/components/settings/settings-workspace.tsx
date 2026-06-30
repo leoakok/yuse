@@ -1,9 +1,11 @@
 "use client";
 
-import { FileText, LogOut, Mail, UserCircle } from "lucide-react";
+import { useEffect, useState } from "react";
+import { FileText, Loader2, LogOut, Mail, UserCircle } from "lucide-react";
 import { YuseLogo } from "@/components/brand/yuse-logo";
 import { signOut } from "next-auth/react";
 import Link from "next/link";
+import { toast } from "sonner";
 import { useWorkspace } from "@/components/layout/workspace-provider";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Button, buttonVariants } from "@/components/ui/button";
@@ -14,7 +16,11 @@ import {
   CardHeader,
   CardTitle,
 } from "@/components/ui/card";
+import { Input } from "@/components/ui/input";
 import { Separator } from "@/components/ui/separator";
+import { setUsername } from "@/lib/api/portfolio-api";
+import { portfolioSiteOrigin } from "@/lib/portfolio/share-url";
+import { validateSlug } from "@/lib/portfolio/slug";
 import { SUPPORT_MAILTO } from "@/lib/support";
 import { cn } from "@/lib/utils";
 
@@ -38,7 +44,36 @@ function planLabel(plan: string) {
 }
 
 export function SettingsWorkspace() {
-  const { user, workspace } = useWorkspace();
+  const { user, workspace, updateUser } = useWorkspace();
+  const [usernameInput, setUsernameInput] = useState(user.username ?? "");
+  const [savingUsername, setSavingUsername] = useState(false);
+
+  useEffect(() => {
+    setUsernameInput(user.username ?? "");
+  }, [user.username]);
+
+  async function handleSaveUsername() {
+    const result = validateSlug(usernameInput);
+    if (!result.ok) {
+      toast.error(result.message);
+      return;
+    }
+    setSavingUsername(true);
+    try {
+      const updated = await setUsername(result.value);
+      if (updated.username) {
+        updateUser({ username: updated.username });
+        setUsernameInput(updated.username);
+        toast.success("Username saved.");
+      }
+    } catch (error) {
+      toast.error(error instanceof Error ? error.message : "Could not save username.");
+    } finally {
+      setSavingUsername(false);
+    }
+  }
+
+  const siteHost = portfolioSiteOrigin().replace(/^https?:\/\//, "");
 
   return (
     <div className="space-y-6">
@@ -76,6 +111,33 @@ export function SettingsWorkspace() {
               <dd className="font-medium">{planLabel(workspace.plan)}</dd>
             </div>
           </dl>
+          <Separator />
+          <div id="username" className="space-y-2 scroll-mt-6">
+            <label htmlFor="settings-username" className="text-sm font-medium">
+              Username
+            </label>
+            <div className="flex gap-2">
+              <Input
+                id="settings-username"
+                value={usernameInput}
+                onChange={(e) => setUsernameInput(e.target.value)}
+                placeholder="leo"
+                autoComplete="off"
+                spellCheck={false}
+              />
+              <Button
+                type="button"
+                variant="secondary"
+                onClick={() => void handleSaveUsername()}
+                disabled={savingUsername}
+              >
+                {savingUsername ? <Loader2 className="size-4 animate-spin" /> : "Save"}
+              </Button>
+            </div>
+            <p className="text-xs text-muted-foreground">
+              Your public portfolio URL: {siteHost}/{usernameInput.trim() || "username"}
+            </p>
+          </div>
         </CardContent>
       </Card>
 
@@ -94,7 +156,7 @@ export function SettingsWorkspace() {
               <p className="font-medium">Resumes</p>
               <p className="text-muted-foreground">
                 Each resume is a tailored CV with its own title, contact details, and
-                design. Sections and items are shared across resumes — you choose what
+                design. Sections and items are shared across resumes, you choose what
                 shows on each one.
               </p>
               <Link
@@ -126,7 +188,7 @@ export function SettingsWorkspace() {
             Help &amp; support
           </CardTitle>
           <CardDescription>
-            Questions, bugs, or feedback — we are happy to help.
+            Questions, bugs, or feedback, we are happy to help.
           </CardDescription>
         </CardHeader>
         <CardContent className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">

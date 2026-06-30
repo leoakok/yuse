@@ -101,7 +101,7 @@ add_vercel_env() {
   local name="$1"
   local value="$2"
   if vercel env ls production 2>/dev/null | grep -q " ${name} "; then
-    echo "  ${name} already exists — remove with: vercel env rm ${name} production"
+    echo "  ${name} already exists, remove with: vercel env rm ${name} production"
   else
     printf '%s' "$value" | vercel env add "$name" production
     echo "  added ${name}"
@@ -114,7 +114,7 @@ if [[ "$SKIP_LOCAL" == "false" ]]; then
   set_env_var "$BACKEND_ENV" "AWS_S3_BUCKET" "$BUCKET"
   set_env_var "$BACKEND_ENV" "AWS_ACCESS_KEY_ID" "$ACCESS_KEY_ID"
   set_env_var "$BACKEND_ENV" "AWS_SECRET_ACCESS_KEY" "$SECRET_ACCESS_KEY"
-  # Leave AWS_S3_PUBLIC_URL_PREFIX unset — direct S3 URLs match backend defaults.
+  # Leave AWS_S3_PUBLIC_URL_PREFIX unset, direct S3 URLs match backend defaults.
   echo "Local backend/.env updated. Restart Docker backend: docker compose up -d --build backend"
 fi
 

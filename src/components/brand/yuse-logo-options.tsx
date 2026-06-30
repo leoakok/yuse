@@ -45,7 +45,7 @@ function accentOpacity(monochrome: boolean) {
   return monochrome ? 0.55 : 1;
 }
 
-/** Option A — literal Y-fork slingshot with elastic, pouch, and stone. */
+/** Option A, literal Y-fork slingshot with elastic, pouch, and stone. */
 export function YuseLogoA({
   className,
   size,
@@ -100,7 +100,7 @@ export function YuseLogoA({
   );
 }
 
-/** Option B — bold letter Y where fork arms connect via an elastic band. */
+/** Option B, bold letter Y where fork arms connect via an elastic band. */
 export function YuseLogoB({
   className,
   size,
@@ -145,7 +145,7 @@ export function YuseLogoB({
   );
 }
 
-/** Option C — rounded mascot slingshot with briefcase (PNG, app-icon friendly). */
+/** Option C, rounded mascot slingshot with briefcase (PNG, app-icon friendly). */
 export function YuseLogoC({
   className,
   size,

@@ -2,7 +2,7 @@
 
 import { useCallback, useEffect, useState } from "react";
 import { useSearchParams } from "next/navigation";
-import { Link2, Unlink } from "lucide-react";
+import { Link2, Loader2, Unlink } from "lucide-react";
 import { GitHubMark } from "@/components/brand/github-mark";
 import { toast } from "sonner";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
@@ -14,7 +14,6 @@ import {
   CardHeader,
   CardTitle,
 } from "@/components/ui/card";
-import { Skeleton } from "@/components/ui/skeleton";
 import { graphqlRequest } from "@/lib/graphql/client";
 import {
   CONNECTION_STATUS_QUERY,
@@ -91,15 +90,15 @@ export function ConnectionsWorkspace() {
           GitHub
         </CardTitle>
         <CardDescription>
-          Connect GitHub to let the assistant search your repos — including private ones — when
+          Connect GitHub to let the assistant search your repos, including private ones, when
           building your CV. Without a connection, public pages still work via web explore.
         </CardDescription>
       </CardHeader>
       <CardContent className="space-y-4">
         {loading ? (
-          <div className="space-y-3">
-            <Skeleton className="h-10 w-full" />
-            <Skeleton className="h-9 w-32" />
+          <div className="flex items-center gap-2 py-2 text-sm text-muted-foreground">
+            <Loader2 className="size-4 animate-spin" aria-hidden />
+            Checking connection…
           </div>
         ) : status?.connected ? (
           <>
@@ -136,7 +135,7 @@ export function ConnectionsWorkspace() {
         ) : (
           <>
             <p className="text-sm text-muted-foreground">
-              Not connected. You can still import public GitHub profiles — connecting unlocks your
+              Not connected. You can still import public GitHub profiles, connecting unlocks your
               private repos and higher API limits.
             </p>
             <Button nativeButton={false} render={<a href="/api/auth/github/start" />}>

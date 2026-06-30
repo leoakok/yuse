@@ -94,7 +94,7 @@ if command -v gcloud >/dev/null 2>&1; then
     warn "gcloud found but not authenticated. Run: gcloud auth login"
   fi
 else
-  warn "gcloud CLI not installed — use the manual Console link in docs/AUTH.md"
+  warn "gcloud CLI not installed, use the manual Console link in docs/AUTH.md"
   echo "  https://console.cloud.google.com/apis/credentials"
 fi
 

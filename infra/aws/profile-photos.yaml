@@ -1,6 +1,6 @@
 AWSTemplateFormatVersion: "2010-09-09"
 Description: >
-  Yuse profile photo storage — S3 bucket with public read, CORS for browser
+  Yuse profile photo storage, S3 bucket with public read, CORS for browser
   presigned PUT uploads, and a minimal IAM user for the Go backend.
 
 Parameters:
