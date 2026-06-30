@@ -3,10 +3,23 @@ import type { CvTheme } from "@/lib/types/theme";
 
 export type PortfolioLayout = "SINGLE" | "SPLIT";
 
+export type PortfolioProjectGridColumns = "ONE" | "TWO" | "THREE";
+
+export type PortfolioProjectCardStyle = "STANDARD" | "MINIMAL" | "IMAGE";
+
+export type PortfolioTypographyScale = "COMPACT" | "NORMAL" | "SPACIOUS";
+
+export type PortfolioHeroStyle = "GRADIENT" | "MINIMAL" | "CENTERED";
+
+export type PortfolioNavigationStyle = "NONE" | "TOP" | "STICKY";
+
+export type PortfolioAnimationLevel = "NONE" | "SUBTLE" | "FULL";
+
 export interface Portfolio {
   id: string;
   workspaceId: string;
   title: string;
+  slug?: string | null;
   tagline: string;
   about: string;
   contactProfileId?: string;
@@ -22,6 +35,12 @@ export interface PortfolioSettings {
   accentColor: string;
   showPhoto: boolean;
   locale: string;
+  projectGridColumns: PortfolioProjectGridColumns;
+  projectCardStyle: PortfolioProjectCardStyle;
+  typographyScale: PortfolioTypographyScale;
+  heroStyle: PortfolioHeroStyle;
+  navigationStyle: PortfolioNavigationStyle;
+  animationLevel: PortfolioAnimationLevel;
 }
 
 export interface PortfolioProject {

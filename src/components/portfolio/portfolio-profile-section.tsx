@@ -54,12 +54,12 @@ export function PortfolioProfileSection({
           <Button
             type="button"
             variant="ghost"
-            size="icon-xs"
+            size="sm"
             className="shrink-0 text-muted-foreground"
-            aria-label="Edit profile"
             onClick={openEdit}
           >
-            <Pencil />
+            <Pencil className="mr-1.5 size-3.5" />
+            Edit
           </Button>
         </div>
         <div
