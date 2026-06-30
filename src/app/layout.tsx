@@ -13,7 +13,7 @@ export const metadata: Metadata = {
     type: "website",
     locale: "en_GB",
     url: siteUrl,
-    images: [{ url: "/social/og-homepage.png", width: 1200, height: 900, alt: "Yuse — AI-native CV builder" }],
+    images: [{ url: "/social/og-homepage.png", width: 1200, height: 900, alt: "Yuse, AI-native CV builder" }],
   },
   twitter: {
     card: "summary_large_image",
