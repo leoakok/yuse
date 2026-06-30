@@ -194,10 +194,152 @@ func (s *Service) UpdateResumeSettings(input model.UpdateResumeSettingsInput) (*
 		if input.ItemTitleLayout != nil {
 			settings.ItemTitleLayout = *input.ItemTitleLayout
 		}
+		if input.ItemTitleSeparator != nil {
+			settings.ItemTitleSeparator = *input.ItemTitleSeparator
+		}
+		if input.ItemTitleOrder != nil {
+			settings.ItemTitleOrder = *input.ItemTitleOrder
+		}
+		if input.FontFamily != nil {
+			settings.FontFamily = *input.FontFamily
+		}
+		if input.AccentColor != nil {
+			settings.AccentColor = *input.AccentColor
+		}
+		if input.SectionDividerStyle != nil {
+			settings.SectionDividerStyle = *input.SectionDividerStyle
+		}
+		if input.DateFormat != nil {
+			settings.DateFormat = *input.DateFormat
+		}
+		if input.DatePosition != nil {
+			settings.DatePosition = *input.DatePosition
+		}
+		if input.SkillsLayout != nil {
+			settings.SkillsLayout = *input.SkillsLayout
+		}
+		if input.AtsMode != nil {
+			settings.AtsMode = *input.AtsMode
+		}
+		if input.ColumnLayout != nil {
+			settings.ColumnLayout = *input.ColumnLayout
+		}
+		if input.SidebarPosition != nil {
+			settings.SidebarPosition = *input.SidebarPosition
+		}
+		if input.SidebarWidth != nil {
+			settings.SidebarWidth = *input.SidebarWidth
+		}
+		if input.DesignPresetID != nil {
+			settings.DesignPresetID = *input.DesignPresetID
+		}
+		if input.PhotoPosition != nil {
+			settings.PhotoPosition = *input.PhotoPosition
+		}
+		if input.PhotoSize != nil {
+			settings.PhotoSize = *input.PhotoSize
+		}
+		if input.ContactLayout != nil {
+			settings.ContactLayout = *input.ContactLayout
+		}
+		if input.ContactFields != nil {
+			settings.ContactFields = input.ContactFields
+		}
+		if input.SectionSpacing != nil {
+			settings.SectionSpacing = *input.SectionSpacing
+		}
+		if input.ItemSpacing != nil {
+			settings.ItemSpacing = *input.ItemSpacing
+		}
+		if input.DescriptionStyle != nil {
+			settings.DescriptionStyle = *input.DescriptionStyle
+		}
+		if input.BulletChar != nil {
+			settings.BulletChar = *input.BulletChar
+		}
+		if input.ItemTitleEmphasis != nil {
+			settings.ItemTitleEmphasis = *input.ItemTitleEmphasis
+		}
+		if input.HighlightCurrentRole != nil {
+			settings.HighlightCurrentRole = *input.HighlightCurrentRole
+		}
+		if input.LocationDisplay != nil {
+			settings.LocationDisplay = *input.LocationDisplay
+		}
+		if input.HeadingFontFamily != nil {
+			settings.HeadingFontFamily = *input.HeadingFontFamily
+		}
+		if input.BodyFontFamily != nil {
+			settings.BodyFontFamily = *input.BodyFontFamily
+		}
+		if input.NameFontWeight != nil {
+			settings.NameFontWeight = *input.NameFontWeight
+		}
+		if input.SectionTitleFontWeight != nil {
+			settings.SectionTitleFontWeight = *input.SectionTitleFontWeight
+		}
+		if input.LineHeight != nil {
+			settings.LineHeight = *input.LineHeight
+		}
+		if input.HeadingLetterSpacing != nil {
+			settings.HeadingLetterSpacing = *input.HeadingLetterSpacing
+		}
+		if input.SectionTitleSmallCaps != nil {
+			settings.SectionTitleSmallCaps = *input.SectionTitleSmallCaps
+		}
+		if input.TextPrimaryColor != nil {
+			settings.TextPrimaryColor = *input.TextPrimaryColor
+		}
+		if input.TextMutedColor != nil {
+			settings.TextMutedColor = *input.TextMutedColor
+		}
+		if input.PageBackground != nil {
+			settings.PageBackground = *input.PageBackground
+		}
+		if input.LinkColor != nil {
+			settings.LinkColor = *input.LinkColor
+		}
+		if input.SkillsProficiency != nil {
+			settings.SkillsProficiency = *input.SkillsProficiency
+		}
+		if input.LanguagesLayout != nil {
+			settings.LanguagesLayout = *input.LanguagesLayout
+		}
+		if input.CertificationsLayout != nil {
+			settings.CertificationsLayout = *input.CertificationsLayout
+		}
+		if input.KeepSectionsTogether != nil {
+			settings.KeepSectionsTogether = *input.KeepSectionsTogether
+		}
+		if input.MaxItemsBeforeBreak != nil {
+			settings.MaxItemsBeforeBreak = input.MaxItemsBeforeBreak
+		}
+		if input.FooterStyle != nil {
+			settings.FooterStyle = *input.FooterStyle
+		}
+		if input.ExportFilenameTemplate != nil {
+			settings.ExportFilenameTemplate = *input.ExportFilenameTemplate
+		}
 		if input.Locale != nil {
 			settings.Locale = *input.Locale
 		}
 	})
+}
+
+func (s *Service) UpdateResumeSectionDisplayTitle(
+	input model.UpdateResumeSectionDisplayTitleInput,
+) (*model.ResumeWithContent, error) {
+	return s.store.UpdateResumeSectionDisplayTitle(input.ResumeID, input.SectionID, input.DisplayTitle)
+}
+
+func (s *Service) ReorderResumeSections(input model.ReorderResumeSectionsInput) (*model.ResumeWithContent, error) {
+	return s.store.ReorderResumeSections(input.ResumeID, input.SectionIds)
+}
+
+func (s *Service) UpdateResumeSectionVisibility(
+	input model.UpdateResumeSectionVisibilityInput,
+) (*model.ResumeWithContent, error) {
+	return s.store.UpdateResumeSectionVisibility(input.ResumeID, input.SectionID, input.ShowInPreview)
 }
 
 func (s *Service) UpdateResumeSectionItemVisibility(

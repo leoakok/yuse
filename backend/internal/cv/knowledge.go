@@ -121,7 +121,7 @@ func (s *Service) DeleteKnowledgeEntry(id string) (bool, error) {
 }
 
 // ClassifyAssistantMessage runs the cheap intent layer for a test message and
-// returns the full breakdown (admin only — powers the experiment page).
+// returns the full breakdown (admin only, powers the experiment page).
 func (s *Service) ClassifyAssistantMessage(
 	ctx context.Context,
 	text string,

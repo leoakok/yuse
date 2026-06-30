@@ -23,6 +23,9 @@ type Store interface {
 	GetContactProfile(id string) (*model.ContactProfile, error)
 	GetResumeSettings(resumeID string) *model.ResumeSettings
 	UpdateResumeSettings(resumeID string, update func(*model.ResumeSettings)) (*model.ResumeSettings, error)
+	UpdateResumeSectionDisplayTitle(resumeID, sectionID string, displayTitle *string) (*model.ResumeWithContent, error)
+	ReorderResumeSections(resumeID string, sectionIDs []string) (*model.ResumeWithContent, error)
+	UpdateResumeSectionVisibility(resumeID, sectionID string, showInPreview bool) (*model.ResumeWithContent, error)
 	UpdateResumeSectionItemVisibility(resumeID, sectionID, sectionItemID string, showInPreview bool) (*model.ResumeWithContent, error)
 	AddResumeSectionItem(resumeID, sectionID, headline, body string, metadata map[string]any) (*model.ResumeWithContent, error)
 	UpdateResumeSectionItem(resumeID, sectionID, sectionItemID string, headline, body *string, metadata map[string]any) (*model.ResumeWithContent, error)
@@ -48,7 +51,7 @@ type Store interface {
 	SavePortfolio(portfolio *model.Portfolio)
 	GetPortfolioSettings(portfolioID string) *model.PortfolioSettings
 	UpdatePortfolioSettings(portfolioID string, update func(*model.PortfolioSettings)) (*model.PortfolioSettings, error)
-	UpdatePortfolioContactProfile(portfolioID string, fullName, headline, email, phone, location, website, linkedIn, github, photoURL, linkedinPhotoURL, githubPhotoURL *string) (*model.PortfolioWithContent, error)
+	UpdatePortfolioContactProfile(portfolioID string, fullName, headline, email, phone, location, website, linkedIn, github, photoURL, linkedinPhotoURL, githubPhotoURL, ogImageURL, faviconURL *string) (*model.PortfolioWithContent, error)
 	PortfolioWithContent(portfolioID string) (*model.PortfolioWithContent, error)
 	AddPortfolioProject(input model.AddPortfolioProjectInput) (*model.PortfolioWithContent, error)
 	UpdatePortfolioProject(input model.UpdatePortfolioProjectInput) (*model.PortfolioWithContent, error)
@@ -63,6 +66,9 @@ type Store interface {
 	DuplicatePortfolio(sourceID string) (*model.Portfolio, error)
 	DeletePortfolio(id string) error
 	CreatePortfolio(title string) *model.Portfolio
+	SetUsername(userID, username string) (*model.User, error)
+	SetPortfolioSlug(userID, portfolioID, slug string) (*model.Portfolio, error)
+	PublicPortfolioWithContent(username string, slug *string) (*model.PortfolioWithContent, error)
 	ListTwinEntries() []*model.TwinEntry
 	GetTwinEntry(id string) (*model.TwinEntry, error)
 	CreateTwinEntry(entry *model.TwinEntry) *model.TwinEntry
