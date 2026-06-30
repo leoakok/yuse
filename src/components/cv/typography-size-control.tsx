@@ -36,7 +36,12 @@ export function TypographySizeControl({
         <span className="text-sm font-semibold leading-none">{label}</span>
         <span className="shrink-0 text-sm tabular-nums text-muted-foreground">{valueLabel}</span>
       </div>
-      <DiscreteSlider steps={FONT_SIZE_STEPS} value={value} onChange={onChange} />
+      <DiscreteSlider
+        layout="segmented"
+        steps={FONT_SIZE_STEPS}
+        value={value}
+        onChange={onChange}
+      />
     </div>
   );
 }

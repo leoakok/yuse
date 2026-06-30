@@ -1,48 +1,48 @@
 "use client";
 
-import { useCallback, useRef, type PointerEvent } from "react";
+import { useCallback, useMemo, useRef, type PointerEvent } from "react";
 import { Minus, Plus } from "lucide-react";
 import { cn } from "@/lib/utils";
+import {
+  buildSliderGeometry,
+  indexToLeftStyle,
+  pointerRatioFromTrackRect,
+  ratioToIndex,
+  tickRatioToLeftStyle,
+  visibleTickGaps,
+  type DiscreteSliderLayout,
+} from "@/lib/cv/discrete-slider-geometry";
+
+export type { DiscreteSliderLayout };
 
 interface DiscreteSliderProps<T extends string | number> {
   steps: { value: T }[];
   value: T;
   onChange: (value: T) => void;
+  /** Segmented: zone-centered snaps with (n−1)/2 tick lines. Linear: evenly spaced snaps, sparse ticks. */
+  layout?: DiscreteSliderLayout;
   className?: string;
-}
-
-/** Gap indices (between snap points) that get a visible tick mark. */
-function visibleTickGaps(gapCount: number): number[] {
-  if (gapCount <= 0) return [];
-  const maxTicks = 8;
-  if (gapCount <= maxTicks) {
-    return Array.from({ length: gapCount }, (_, j) => j);
-  }
-  const stride = Math.ceil(gapCount / maxTicks);
-  const gaps: number[] = [];
-  for (let j = 0; j < gapCount; j += stride) {
-    gaps.push(j);
-  }
-  if (gaps[gaps.length - 1] !== gapCount - 1) {
-    gaps.push(gapCount - 1);
-  }
-  return gaps;
 }
 
 export function DiscreteSlider<T extends string | number>({
   steps,
   value,
   onChange,
+  layout = "linear",
   className,
 }: DiscreteSliderProps<T>) {
   const trackRef = useRef<HTMLDivElement>(null);
-  const innerRef = useRef<HTMLDivElement>(null);
   const draggingRef = useRef(false);
+
+  const stepCount = steps.length;
+  const geometry = useMemo(
+    () => buildSliderGeometry({ layout, stepCount }),
+    [layout, stepCount]
+  );
+  const { maxIndex, snapRatios, isSegmented } = geometry;
 
   const index = steps.findIndex((step) => step.value === value);
   const currentIndex = index >= 0 ? index : 0;
-  const maxIndex = Math.max(0, steps.length - 1);
-  const gapCount = maxIndex;
 
   const setIndex = useCallback(
     (nextIndex: number) => {
@@ -54,25 +54,14 @@ export function DiscreteSlider<T extends string | number>({
 
   const indexFromClientX = useCallback(
     (clientX: number) => {
-      const inner = innerRef.current;
-      if (!inner || maxIndex === 0) return 0;
-      const rect = inner.getBoundingClientRect();
-      const ratio = Math.max(0, Math.min(1, (clientX - rect.left) / rect.width));
-      return Math.round(ratio * maxIndex);
+      const track = trackRef.current;
+      if (!track || maxIndex === 0) return 0;
+      const rect = track.getBoundingClientRect();
+      const ratio = pointerRatioFromTrackRect(clientX, rect, geometry);
+      return ratioToIndex(ratio, snapRatios);
     },
-    [maxIndex]
+    [geometry, maxIndex, snapRatios]
   );
-
-  // Snap points sit on the padded inner rail; ticks fall halfway between them.
-  const snapLeftPercent = (stepIndex: number) =>
-    maxIndex === 0 ? 50 : (stepIndex / maxIndex) * 100;
-
-  const tickLeftPercent = (gapIndex: number) =>
-    maxIndex === 0 ? 50 : ((gapIndex + 0.5) / maxIndex) * 100;
-
-  // Match vertical thumb inset ( (32px track − 16px thumb) / 2 = 8px ) on both axes:
-  // rail inset = gap (8px) + thumb radius (8px) = 16px (inset-x-4).
-  const THUMB_INSET_CLASS = "inset-x-4";
 
   const handlePointerDown = (event: PointerEvent<HTMLDivElement>) => {
     event.preventDefault();
@@ -93,7 +82,12 @@ export function DiscreteSlider<T extends string | number>({
     }
   };
 
-  const tickGaps = visibleTickGaps(gapCount);
+  const tickPositions = isSegmented
+    ? geometry.tickRatios.map((ratio, j) => ({ key: j, ratio }))
+    : visibleTickGaps(maxIndex).map((gapIndex) => ({
+        key: gapIndex,
+        ratio: geometry.tickRatios[gapIndex] ?? 0.5,
+      }));
 
   return (
     <div className={cn("flex items-center gap-2", className)}>
@@ -118,26 +112,23 @@ export function DiscreteSlider<T extends string | number>({
         onPointerMove={handlePointerMove}
         onPointerUp={endDrag}
         onPointerCancel={endDrag}
-        className="relative h-8 min-w-0 flex-1 cursor-pointer touch-none select-none rounded-lg bg-muted"
+        className={cn(
+          "relative h-8 min-w-0 flex-1 cursor-pointer touch-none select-none rounded-lg bg-muted",
+          !isSegmented && "px-4"
+        )}
       >
-        <div
-          ref={innerRef}
-          data-slider-inner
-          className={cn("absolute inset-y-0", THUMB_INSET_CLASS)}
-        >
-          {tickGaps.map((gapIndex) => (
-            <span
-              key={gapIndex}
-              className="pointer-events-none absolute top-1/2 h-4 w-px -translate-x-1/2 -translate-y-1/2 bg-border/70"
-              style={{ left: `${tickLeftPercent(gapIndex)}%` }}
-              aria-hidden
-            />
-          ))}
-          <div
-            className="pointer-events-none absolute top-1/2 z-10 size-4 -translate-x-1/2 -translate-y-1/2 rounded-[5px] bg-primary shadow-sm"
-            style={{ left: `${snapLeftPercent(currentIndex)}%` }}
+        {tickPositions.map(({ key, ratio }) => (
+          <span
+            key={key}
+            className="pointer-events-none absolute top-1/2 h-4 w-px -translate-x-1/2 -translate-y-1/2 bg-border/70"
+            style={{ left: tickRatioToLeftStyle(ratio, geometry) }}
+            aria-hidden
           />
-        </div>
+        ))}
+        <div
+          className="pointer-events-none absolute top-1/2 z-10 size-4 -translate-x-1/2 -translate-y-1/2 rounded-[5px] bg-primary shadow-sm"
+          style={{ left: indexToLeftStyle(currentIndex, geometry) }}
+        />
       </div>
       <div className="flex shrink-0 gap-1">
         <button

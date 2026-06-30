@@ -22,6 +22,7 @@ import {
 } from "@/components/ui/dialog";
 import { Input } from "@/components/ui/input";
 import { Separator } from "@/components/ui/separator";
+import { normalizeLinkedInProfileUrl } from "@/lib/cv/linkedin-profile-url";
 import { cn } from "@/lib/utils";
 
 const RESUME_FILE_ACCEPT = ".pdf,.doc,.docx";
@@ -54,22 +55,6 @@ function validateResumeFile(file: File): string | null {
     return `File must be ${formatFileSize(MAX_ATTACHMENT_SIZE_BYTES)} or smaller.`;
   }
   return null;
-}
-
-function normalizeLinkedInProfileUrl(input: string): string | null {
-  const trimmed = input.trim();
-  if (!trimmed) return null;
-
-  if (/^https?:\/\//i.test(trimmed)) {
-    return /linkedin\.com\/in\//i.test(trimmed) ? trimmed : null;
-  }
-
-  const slug = trimmed.replace(/^@/, "").replace(/\/$/, "");
-  if (!slug || slug.includes("/") || slug.includes(" ")) {
-    return null;
-  }
-
-  return `https://www.linkedin.com/in/${slug}`;
 }
 
 export function ResumeImportDialog({ open, onOpenChange }: ResumeImportDialogProps) {

@@ -13,8 +13,40 @@ import {
   Trash2,
 } from "lucide-react";
 import { toast } from "sonner";
-import type { ItemTitleLayout, PageFormat, ResumeWithContent, SectionItem, SectionItemUsage } from "@/lib/types/cv";
+import type {
+  ColumnLayout,
+  ContactField,
+  ContactLayout,
+  DateFormat,
+  DatePosition,
+  DesignPresetId,
+  FontFamily,
+  ItemTitleLayout,
+  ItemTitleOrder,
+  ItemTitleSeparator,
+  PageFormat,
+  PhotoPosition,
+  PhotoSize,
+  ResumeSettings,
+  ResumeWithContent,
+  SectionDividerStyle,
+  SidebarPosition,
+  SidebarWidth,
+  SkillsLayout,
+  SectionItem,
+  SectionItemUsage,
+} from "@/lib/types/cv";
+import { DEFAULT_RESUME_ACCENT_COLOR } from "@/lib/cv/accent";
+import { DEFAULT_CONTACT_FIELDS } from "@/lib/cv/contact-header";
+import { DEFAULT_CV_FONT_FAMILY } from "@/lib/cv/fonts";
+import { DEFAULT_PHOTO_POSITION, DEFAULT_PHOTO_SIZE } from "@/lib/cv/photo";
+import {
+  DEFAULT_RESUME_DESIGN_EXTENSION,
+  pickResumeDesignExtension,
+  type ResumeDesignExtensionFields,
+} from "@/lib/cv/resume-design";
 import { DEFAULT_CV_TYPOGRAPHY_SETTINGS, type CvTypographySettings } from "@/lib/cv/typography";
+import type { ResumeDesignSnapshot } from "@/components/cv/resume-design-settings";
 import { ResumeDesignSettings } from "@/components/cv/resume-design-settings";
 import { ResumeProfileSection } from "@/components/cv/resume-profile-section";
 import { ResumeSectionItemRow } from "@/components/cv/resume-section-item-row";
@@ -82,6 +114,16 @@ interface ResumeWorkspaceProps {
   onPageFormatPreviewChange?: (format: PageFormat) => void;
   onShowPhotoPreviewChange?: (showPhoto: boolean) => void;
   onItemTitleLayoutPreviewChange?: (layout: ItemTitleLayout) => void;
+  onItemTitleSeparatorPreviewChange?: (separator: ItemTitleSeparator) => void;
+  onItemTitleOrderPreviewChange?: (order: ItemTitleOrder) => void;
+  onFontFamilyPreviewChange?: (fontFamily: FontFamily) => void;
+  onAccentColorPreviewChange?: (color: string) => void;
+  onSectionDividerStylePreviewChange?: (style: SectionDividerStyle) => void;
+  onDateFormatPreviewChange?: (format: DateFormat) => void;
+  onDatePositionPreviewChange?: (position: DatePosition) => void;
+  onSkillsLayoutPreviewChange?: (layout: SkillsLayout) => void;
+  onAtsModePreviewChange?: (enabled: boolean) => void;
+  onDesignSettingsPreviewChange?: (patch: Partial<ResumeSettings>) => void;
   onTypographyPreviewChange?: (typography: CvTypographySettings) => void;
   onMarginHorizontalPreviewChange?: (value: number) => void;
   onMarginVerticalPreviewChange?: (value: number) => void;
@@ -97,6 +139,16 @@ export function ResumeWorkspace({
   onPageFormatPreviewChange,
   onShowPhotoPreviewChange,
   onItemTitleLayoutPreviewChange,
+  onItemTitleSeparatorPreviewChange,
+  onItemTitleOrderPreviewChange,
+  onFontFamilyPreviewChange,
+  onAccentColorPreviewChange,
+  onSectionDividerStylePreviewChange,
+  onDateFormatPreviewChange,
+  onDatePositionPreviewChange,
+  onSkillsLayoutPreviewChange,
+  onAtsModePreviewChange,
+  onDesignSettingsPreviewChange,
   onTypographyPreviewChange,
   onMarginHorizontalPreviewChange,
   onMarginVerticalPreviewChange,
@@ -133,11 +185,115 @@ export function ResumeWorkspace({
   const [savedItemTitleLayout, setSavedItemTitleLayout] = useState<ItemTitleLayout>(
     content.settings.itemTitleLayout ?? "STACKED"
   );
+  const [itemTitleSeparator, setItemTitleSeparator] = useState<ItemTitleSeparator>(
+    content.settings.itemTitleSeparator ?? "DOT"
+  );
+  const [savedItemTitleSeparator, setSavedItemTitleSeparator] = useState<ItemTitleSeparator>(
+    content.settings.itemTitleSeparator ?? "DOT"
+  );
+  const [itemTitleOrder, setItemTitleOrder] = useState<ItemTitleOrder>(
+    content.settings.itemTitleOrder ?? "TITLE_FIRST"
+  );
+  const [savedItemTitleOrder, setSavedItemTitleOrder] = useState<ItemTitleOrder>(
+    content.settings.itemTitleOrder ?? "TITLE_FIRST"
+  );
+  const [fontFamily, setFontFamily] = useState<FontFamily>(
+    content.settings.fontFamily ?? DEFAULT_CV_FONT_FAMILY
+  );
+  const [savedFontFamily, setSavedFontFamily] = useState<FontFamily>(
+    content.settings.fontFamily ?? DEFAULT_CV_FONT_FAMILY
+  );
+  const [accentColor, setAccentColor] = useState(
+    content.settings.accentColor ?? DEFAULT_RESUME_ACCENT_COLOR
+  );
+  const [savedAccentColor, setSavedAccentColor] = useState(
+    content.settings.accentColor ?? DEFAULT_RESUME_ACCENT_COLOR
+  );
+  const [sectionDividerStyle, setSectionDividerStyle] = useState<SectionDividerStyle>(
+    content.settings.sectionDividerStyle ?? "FULL"
+  );
+  const [savedSectionDividerStyle, setSavedSectionDividerStyle] = useState<SectionDividerStyle>(
+    content.settings.sectionDividerStyle ?? "FULL"
+  );
+  const [dateFormat, setDateFormat] = useState<DateFormat>(
+    content.settings.dateFormat ?? "MON_YYYY"
+  );
+  const [savedDateFormat, setSavedDateFormat] = useState<DateFormat>(
+    content.settings.dateFormat ?? "MON_YYYY"
+  );
+  const [datePosition, setDatePosition] = useState<DatePosition>(
+    content.settings.datePosition ?? "RIGHT"
+  );
+  const [savedDatePosition, setSavedDatePosition] = useState<DatePosition>(
+    content.settings.datePosition ?? "RIGHT"
+  );
+  const [skillsLayout, setSkillsLayout] = useState<SkillsLayout>(
+    content.settings.skillsLayout ?? "LIST"
+  );
+  const [savedSkillsLayout, setSavedSkillsLayout] = useState<SkillsLayout>(
+    content.settings.skillsLayout ?? "LIST"
+  );
+  const [atsMode, setAtsMode] = useState(content.settings.atsMode ?? false);
+  const [savedAtsMode, setSavedAtsMode] = useState(content.settings.atsMode ?? false);
+  const [columnLayout, setColumnLayout] = useState<ColumnLayout>(
+    content.settings.columnLayout ?? "SINGLE"
+  );
+  const [savedColumnLayout, setSavedColumnLayout] = useState<ColumnLayout>(
+    content.settings.columnLayout ?? "SINGLE"
+  );
+  const [sidebarPosition, setSidebarPosition] = useState<SidebarPosition>(
+    content.settings.sidebarPosition ?? "LEFT"
+  );
+  const [savedSidebarPosition, setSavedSidebarPosition] = useState<SidebarPosition>(
+    content.settings.sidebarPosition ?? "LEFT"
+  );
+  const [sidebarWidth, setSidebarWidth] = useState<SidebarWidth>(
+    content.settings.sidebarWidth ?? "MEDIUM"
+  );
+  const [savedSidebarWidth, setSavedSidebarWidth] = useState<SidebarWidth>(
+    content.settings.sidebarWidth ?? "MEDIUM"
+  );
+  const [designPresetId, setDesignPresetId] = useState<DesignPresetId>(
+    content.settings.designPresetId ?? "MODERN"
+  );
+  const [savedDesignPresetId, setSavedDesignPresetId] = useState<DesignPresetId>(
+    content.settings.designPresetId ?? "MODERN"
+  );
+  const [photoPosition, setPhotoPosition] = useState<PhotoPosition>(
+    content.settings.photoPosition ?? DEFAULT_PHOTO_POSITION
+  );
+  const [savedPhotoPosition, setSavedPhotoPosition] = useState<PhotoPosition>(
+    content.settings.photoPosition ?? DEFAULT_PHOTO_POSITION
+  );
+  const [photoSize, setPhotoSize] = useState<PhotoSize>(
+    content.settings.photoSize ?? DEFAULT_PHOTO_SIZE
+  );
+  const [savedPhotoSize, setSavedPhotoSize] = useState<PhotoSize>(
+    content.settings.photoSize ?? DEFAULT_PHOTO_SIZE
+  );
+  const [contactLayout, setContactLayout] = useState<ContactLayout>(
+    content.settings.contactLayout ?? "INLINE"
+  );
+  const [savedContactLayout, setSavedContactLayout] = useState<ContactLayout>(
+    content.settings.contactLayout ?? "INLINE"
+  );
+  const [contactFields, setContactFields] = useState<ContactField[]>(
+    content.settings.contactFields ?? DEFAULT_CONTACT_FIELDS
+  );
+  const [savedContactFields, setSavedContactFields] = useState<ContactField[]>(
+    content.settings.contactFields ?? DEFAULT_CONTACT_FIELDS
+  );
   const [typography, setTypography] = useState<CvTypographySettings>(() =>
     pickTypography(content.settings)
   );
   const [savedTypography, setSavedTypography] = useState<CvTypographySettings>(() =>
     pickTypography(content.settings)
+  );
+  const [designExtension, setDesignExtension] = useState<ResumeDesignExtensionFields>(() =>
+    pickResumeDesignExtension(content.settings)
+  );
+  const [savedDesignExtension, setSavedDesignExtension] = useState<ResumeDesignExtensionFields>(
+    () => pickResumeDesignExtension(content.settings)
   );
   const [itemDialog, setItemDialog] = useState<SectionItemDialogState | null>(null);
   const [deleteOpen, setDeleteOpen] = useState(false);
@@ -188,32 +344,157 @@ export function ResumeWorkspace({
     onItemTitleLayoutPreviewChange?.(nextLayout);
   }
 
+  function handleItemTitleSeparatorChange(nextSeparator: ItemTitleSeparator) {
+    setItemTitleSeparator(nextSeparator);
+    onItemTitleSeparatorPreviewChange?.(nextSeparator);
+  }
+
+  function handleItemTitleOrderChange(nextOrder: ItemTitleOrder) {
+    setItemTitleOrder(nextOrder);
+    onItemTitleOrderPreviewChange?.(nextOrder);
+  }
+
+  function handleFontFamilyChange(nextFontFamily: FontFamily) {
+    setFontFamily(nextFontFamily);
+    onFontFamilyPreviewChange?.(nextFontFamily);
+  }
+
+  function handleAccentColorChange(nextColor: string) {
+    setAccentColor(nextColor);
+    onAccentColorPreviewChange?.(nextColor);
+  }
+
+  function handleSectionDividerStyleChange(nextStyle: SectionDividerStyle) {
+    setSectionDividerStyle(nextStyle);
+    onSectionDividerStylePreviewChange?.(nextStyle);
+  }
+
+  function handleDateFormatChange(nextFormat: DateFormat) {
+    setDateFormat(nextFormat);
+    onDateFormatPreviewChange?.(nextFormat);
+  }
+
+  function handleDatePositionChange(nextPosition: DatePosition) {
+    setDatePosition(nextPosition);
+    onDatePositionPreviewChange?.(nextPosition);
+  }
+
+  function handleSkillsLayoutChange(nextLayout: SkillsLayout) {
+    setSkillsLayout(nextLayout);
+    onSkillsLayoutPreviewChange?.(nextLayout);
+  }
+
+  function handleAtsModeChange(nextAtsMode: boolean) {
+    setAtsMode(nextAtsMode);
+    onAtsModePreviewChange?.(nextAtsMode);
+    onDesignSettingsPreviewChange?.({ atsMode: nextAtsMode });
+  }
+
+  function patchDesignPreview(patch: Partial<ResumeSettings>) {
+    onDesignSettingsPreviewChange?.(patch);
+  }
+
+  function handleColumnLayoutChange(next: ColumnLayout) {
+    setColumnLayout(next);
+    patchDesignPreview({ columnLayout: next });
+  }
+
+  function handleSidebarPositionChange(next: SidebarPosition) {
+    setSidebarPosition(next);
+    patchDesignPreview({ sidebarPosition: next });
+  }
+
+  function handleSidebarWidthChange(next: SidebarWidth) {
+    setSidebarWidth(next);
+    patchDesignPreview({ sidebarWidth: next });
+  }
+
+  function handleDesignPresetChange(next: DesignPresetId) {
+    setDesignPresetId(next);
+    patchDesignPreview({ designPresetId: next });
+  }
+
+  function handlePhotoPositionChange(next: PhotoPosition) {
+    setPhotoPosition(next);
+    patchDesignPreview({ photoPosition: next });
+  }
+
+  function handlePhotoSizeChange(next: PhotoSize) {
+    setPhotoSize(next);
+    patchDesignPreview({ photoSize: next });
+  }
+
+  function handleContactLayoutChange(next: ContactLayout) {
+    setContactLayout(next);
+    patchDesignPreview({ contactLayout: next });
+  }
+
+  function handleContactFieldsChange(next: ContactField[]) {
+    setContactFields(next);
+    patchDesignPreview({ contactFields: next });
+  }
+
   function handleTypographyChange(nextTypography: CvTypographySettings) {
     setTypography(nextTypography);
     onTypographyPreviewChange?.(nextTypography);
   }
 
-  function handleDesignSaved({
-    pageFormat: format,
-    showPhoto: nextShowPhoto,
-    itemTitleLayout: nextItemTitleLayout,
-    marginHorizontalMm: horizontal,
-    marginVerticalMm: vertical,
-    typography: nextTypography,
-  }: {
-    pageFormat: PageFormat;
-    showPhoto: boolean;
-    itemTitleLayout: ItemTitleLayout;
-    marginHorizontalMm: number;
-    marginVerticalMm: number;
-    typography: CvTypographySettings;
-  }) {
+  function handleDesignExtensionChange(next: ResumeDesignExtensionFields) {
+    setDesignExtension(next);
+    patchDesignPreview(next);
+  }
+
+  function handleDesignSaved(snapshot: ResumeDesignSnapshot) {
+    const {
+      pageFormat: format,
+      showPhoto: nextShowPhoto,
+      itemTitleLayout: nextItemTitleLayout,
+      itemTitleSeparator: nextItemTitleSeparator,
+      itemTitleOrder: nextItemTitleOrder,
+      fontFamily: nextFontFamily,
+      accentColor: nextAccentColor,
+      sectionDividerStyle: nextSectionDividerStyle,
+      dateFormat: nextDateFormat,
+      datePosition: nextDatePosition,
+      skillsLayout: nextSkillsLayout,
+      atsMode: nextAtsMode,
+      columnLayout: nextColumnLayout,
+      sidebarPosition: nextSidebarPosition,
+      sidebarWidth: nextSidebarWidth,
+      designPresetId: nextDesignPresetId,
+      photoPosition: nextPhotoPosition,
+      photoSize: nextPhotoSize,
+      contactLayout: nextContactLayout,
+      contactFields: nextContactFields,
+      marginHorizontalMm: horizontal,
+      marginVerticalMm: vertical,
+      typography: nextTypography,
+      designExtension: nextDesignExtension,
+    } = snapshot;
     setSavedPageFormat(format);
     setSavedShowPhoto(nextShowPhoto);
     setSavedItemTitleLayout(nextItemTitleLayout);
+    setSavedItemTitleSeparator(nextItemTitleSeparator);
+    setSavedItemTitleOrder(nextItemTitleOrder);
+    setSavedFontFamily(nextFontFamily);
+    setSavedAccentColor(nextAccentColor);
+    setSavedSectionDividerStyle(nextSectionDividerStyle);
+    setSavedDateFormat(nextDateFormat);
+    setSavedDatePosition(nextDatePosition);
+    setSavedSkillsLayout(nextSkillsLayout);
+    setSavedAtsMode(nextAtsMode);
+    setSavedColumnLayout(nextColumnLayout);
+    setSavedSidebarPosition(nextSidebarPosition);
+    setSavedSidebarWidth(nextSidebarWidth);
+    setSavedDesignPresetId(nextDesignPresetId);
+    setSavedPhotoPosition(nextPhotoPosition);
+    setSavedPhotoSize(nextPhotoSize);
+    setSavedContactLayout(nextContactLayout);
+    setSavedContactFields(nextContactFields);
     setSavedMarginHorizontalMm(horizontal);
     setSavedMarginVerticalMm(vertical);
     setSavedTypography(nextTypography);
+    setSavedDesignExtension(nextDesignExtension);
     onContentChange({
       ...content,
       settings: {
@@ -221,14 +502,51 @@ export function ResumeWorkspace({
         pageFormat: format,
         showPhoto: nextShowPhoto,
         itemTitleLayout: nextItemTitleLayout,
+        itemTitleSeparator: nextItemTitleSeparator,
+        itemTitleOrder: nextItemTitleOrder,
+        fontFamily: nextFontFamily,
+        accentColor: nextAccentColor,
+        sectionDividerStyle: nextSectionDividerStyle,
+        dateFormat: nextDateFormat,
+        datePosition: nextDatePosition,
+        skillsLayout: nextSkillsLayout,
+        atsMode: nextAtsMode,
+        columnLayout: nextColumnLayout,
+        sidebarPosition: nextSidebarPosition,
+        sidebarWidth: nextSidebarWidth,
+        designPresetId: nextDesignPresetId,
+        photoPosition: nextPhotoPosition,
+        photoSize: nextPhotoSize,
+        contactLayout: nextContactLayout,
+        contactFields: nextContactFields,
         marginHorizontalMm: horizontal,
         marginVerticalMm: vertical,
         ...nextTypography,
+        ...nextDesignExtension,
       },
     });
     onPageFormatPreviewChange?.(format);
     onShowPhotoPreviewChange?.(nextShowPhoto);
     onItemTitleLayoutPreviewChange?.(nextItemTitleLayout);
+    onItemTitleSeparatorPreviewChange?.(nextItemTitleSeparator);
+    onItemTitleOrderPreviewChange?.(nextItemTitleOrder);
+    onFontFamilyPreviewChange?.(nextFontFamily);
+    onAccentColorPreviewChange?.(nextAccentColor);
+    onSectionDividerStylePreviewChange?.(nextSectionDividerStyle);
+    onDateFormatPreviewChange?.(nextDateFormat);
+    onDatePositionPreviewChange?.(nextDatePosition);
+    onSkillsLayoutPreviewChange?.(nextSkillsLayout);
+    onAtsModePreviewChange?.(nextAtsMode);
+    onDesignSettingsPreviewChange?.({
+      columnLayout: nextColumnLayout,
+      sidebarPosition: nextSidebarPosition,
+      sidebarWidth: nextSidebarWidth,
+      designPresetId: nextDesignPresetId,
+      photoPosition: nextPhotoPosition,
+      photoSize: nextPhotoSize,
+      contactLayout: nextContactLayout,
+      contactFields: nextContactFields,
+    });
     onMarginHorizontalPreviewChange?.(horizontal);
     onMarginVerticalPreviewChange?.(vertical);
   }
@@ -423,6 +741,26 @@ export function ResumeWorkspace({
             <ResumeDesignSettings
               resumeId={content.resume.id}
               themeName={content.theme.name}
+              sections={content.sections.map((row) => ({
+                section: row.section,
+                showInPreview: row.showInPreview,
+                displayTitle: row.displayTitle,
+              }))}
+              onSectionsChange={(nextSections) =>
+                onContentChange({
+                  ...content,
+                  sections: nextSections.map((row) => {
+                    const existing = content.sections.find(
+                      (entry) => entry.section.id === row.section.id
+                    );
+                    return {
+                      section: row.section,
+                      showInPreview: row.showInPreview,
+                      items: existing?.items ?? [],
+                    };
+                  }),
+                })
+              }
               pageFormat={pageFormat}
               savedPageFormat={savedPageFormat}
               showPhoto={showPhoto}
@@ -433,12 +771,66 @@ export function ResumeWorkspace({
               savedMarginVerticalMm={savedMarginVerticalMm}
               itemTitleLayout={itemTitleLayout}
               savedItemTitleLayout={savedItemTitleLayout}
+              itemTitleSeparator={itemTitleSeparator}
+              savedItemTitleSeparator={savedItemTitleSeparator}
+              itemTitleOrder={itemTitleOrder}
+              savedItemTitleOrder={savedItemTitleOrder}
+              fontFamily={fontFamily}
+              savedFontFamily={savedFontFamily}
+              accentColor={accentColor}
+              savedAccentColor={savedAccentColor}
+              sectionDividerStyle={sectionDividerStyle}
+              savedSectionDividerStyle={savedSectionDividerStyle}
+              dateFormat={dateFormat}
+              savedDateFormat={savedDateFormat}
+              datePosition={datePosition}
+              savedDatePosition={savedDatePosition}
+              skillsLayout={skillsLayout}
+              savedSkillsLayout={savedSkillsLayout}
+              atsMode={atsMode}
+              savedAtsMode={savedAtsMode}
+              columnLayout={columnLayout}
+              savedColumnLayout={savedColumnLayout}
+              sidebarPosition={sidebarPosition}
+              savedSidebarPosition={savedSidebarPosition}
+              sidebarWidth={sidebarWidth}
+              savedSidebarWidth={savedSidebarWidth}
+              designPresetId={designPresetId}
+              savedDesignPresetId={savedDesignPresetId}
+              photoPosition={photoPosition}
+              savedPhotoPosition={savedPhotoPosition}
+              photoSize={photoSize}
+              savedPhotoSize={savedPhotoSize}
+              contactLayout={contactLayout}
+              savedContactLayout={savedContactLayout}
+              contactFields={contactFields}
+              savedContactFields={savedContactFields}
               typography={typography}
               savedTypography={savedTypography}
               onPageFormatChange={handlePageFormatChange}
               onShowPhotoChange={handleShowPhotoChange}
               onItemTitleLayoutChange={handleItemTitleLayoutChange}
+              onItemTitleSeparatorChange={handleItemTitleSeparatorChange}
+              onItemTitleOrderChange={handleItemTitleOrderChange}
+              onFontFamilyChange={handleFontFamilyChange}
+              onAccentColorChange={handleAccentColorChange}
+              onSectionDividerStyleChange={handleSectionDividerStyleChange}
+              onDateFormatChange={handleDateFormatChange}
+              onDatePositionChange={handleDatePositionChange}
+              onSkillsLayoutChange={handleSkillsLayoutChange}
+              onAtsModeChange={handleAtsModeChange}
+              onColumnLayoutChange={handleColumnLayoutChange}
+              onSidebarPositionChange={handleSidebarPositionChange}
+              onSidebarWidthChange={handleSidebarWidthChange}
+              onDesignPresetChange={handleDesignPresetChange}
+              onPhotoPositionChange={handlePhotoPositionChange}
+              onPhotoSizeChange={handlePhotoSizeChange}
+              onContactLayoutChange={handleContactLayoutChange}
+              onContactFieldsChange={handleContactFieldsChange}
               onTypographyChange={handleTypographyChange}
+              designExtension={designExtension}
+              savedDesignExtension={savedDesignExtension}
+              onDesignExtensionChange={handleDesignExtensionChange}
               onMarginHorizontalChange={handleMarginHorizontalChange}
               onMarginVerticalChange={handleMarginVerticalChange}
               onSaved={handleDesignSaved}

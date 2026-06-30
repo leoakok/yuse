@@ -15,7 +15,13 @@ import {
 import { exportResumePdf } from "@/lib/cv/export-pdf";
 import { CvPreview } from "@/components/cv/cv-preview";
 import { Button } from "@/components/ui/button";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import {
+  Card,
+  CardAction,
+  CardContent,
+  CardHeader,
+  CardTitle,
+} from "@/components/ui/card";
 import {
   Dialog,
   DialogContent,
@@ -30,7 +36,6 @@ import {
   DropdownMenuItem,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
-import { Skeleton } from "@/components/ui/skeleton";
 
 interface ResumeCardProps {
   resume: Resume;
@@ -121,83 +126,89 @@ function ResumeCard({ resume, onDeleted }: ResumeCardProps) {
   return (
     <>
       <Card className="group flex h-full flex-col overflow-hidden transition-colors hover:bg-muted/40">
-        <div className="relative h-52 overflow-hidden border-b bg-muted/30">
-          <Link href={resumePath(resume.id)} className="absolute inset-0 block">
-            {loading ? (
-              <Skeleton className="absolute inset-0 rounded-none" />
-            ) : content ? (
-              <div className="absolute inset-0 flex justify-center overflow-hidden pt-3">
-                <div
-                  className="origin-top shadow-sm"
-                  style={{ transform: "scale(0.38)" }}
-                >
-                  <CvPreview content={content} className="shadow-none" singlePage />
-                </div>
+        <Link
+          href={resumePath(resume.id)}
+          className="relative block h-52 overflow-hidden border-b bg-muted/30"
+        >
+          {loading ? (
+            <div className="flex h-full items-center justify-center">
+              <Loader2 className="size-5 animate-spin text-muted-foreground" aria-hidden />
+              <span className="sr-only">Loading preview</span>
+            </div>
+          ) : content ? (
+            <div className="absolute inset-0 flex justify-center overflow-hidden">
+              <div
+                className="origin-top shadow-sm"
+                style={{ transform: "scale(0.38)" }}
+              >
+                <CvPreview content={content} className="shadow-none" singlePage interactive={false} />
               </div>
-            ) : (
-              <div className="flex h-full items-center justify-center text-xs text-muted-foreground">
-                Preview unavailable
-              </div>
-            )}
-          </Link>
-          <div
-            className="absolute right-2 top-2 z-10"
-            onClick={(event) => event.stopPropagation()}
-            onKeyDown={(event) => event.stopPropagation()}
-          >
-            <DropdownMenu>
-              <DropdownMenuTrigger
-                render={
-                  <Button
-                    type="button"
-                    variant="secondary"
-                    size="icon-xs"
-                    className="size-7 bg-background/90 shadow-sm backdrop-blur-sm"
-                    aria-label={`Actions for ${resume.title}`}
-                    onClick={(event) => event.preventDefault()}
-                  >
-                    <MoreHorizontal />
-                  </Button>
-                }
-              />
-              <DropdownMenuContent align="end" className="min-w-40">
-                <DropdownMenuItem
-                  disabled={isDownloading}
-                  onClick={() => void handleDownload()}
-                >
-                  {isDownloading ? <Loader2 className="animate-spin" /> : <Download />}
-                  Download
-                </DropdownMenuItem>
-                <DropdownMenuItem
-                  disabled={isDuplicating}
-                  onClick={() => void handleDuplicate()}
-                >
-                  <Copy />
-                  Duplicate
-                </DropdownMenuItem>
-                <DropdownMenuItem
-                  variant="warning"
-                  onClick={() => setDeleteOpen(true)}
-                >
-                  <Trash2 />
-                  Delete
-                </DropdownMenuItem>
-              </DropdownMenuContent>
-            </DropdownMenu>
-          </div>
-        </div>
-        <Link href={resumePath(resume.id)} className="flex flex-1 flex-col">
+            </div>
+          ) : (
+            <div className="flex h-full items-center justify-center text-xs text-muted-foreground">
+              Preview unavailable
+            </div>
+          )}
+        </Link>
+        <div className="flex flex-1 flex-col">
           <CardHeader className="pb-2">
-            <CardTitle className="text-base group-hover:text-primary">
-              {resume.title}
+            <CardTitle className="text-base">
+              <Link
+                href={resumePath(resume.id)}
+                className="line-clamp-2 group-hover:text-primary"
+              >
+                {resume.title}
+              </Link>
             </CardTitle>
+            <CardAction>
+              <DropdownMenu>
+                <DropdownMenuTrigger
+                  render={
+                    <Button
+                      type="button"
+                      variant="ghost"
+                      size="icon"
+                      className="size-8 shrink-0 text-muted-foreground"
+                      aria-label={`Actions for ${resume.title}`}
+                    >
+                      <MoreHorizontal />
+                    </Button>
+                  }
+                />
+                <DropdownMenuContent align="end" className="min-w-40">
+                  <DropdownMenuItem
+                    disabled={isDownloading}
+                    onClick={() => void handleDownload()}
+                  >
+                    {isDownloading ? <Loader2 className="animate-spin" /> : <Download />}
+                    Download
+                  </DropdownMenuItem>
+                  <DropdownMenuItem
+                    disabled={isDuplicating}
+                    onClick={() => void handleDuplicate()}
+                  >
+                    <Copy />
+                    Duplicate
+                  </DropdownMenuItem>
+                  <DropdownMenuItem
+                    variant="warning"
+                    onClick={() => setDeleteOpen(true)}
+                  >
+                    <Trash2 />
+                    Delete
+                  </DropdownMenuItem>
+                </DropdownMenuContent>
+              </DropdownMenu>
+            </CardAction>
           </CardHeader>
           <CardContent className="mt-auto">
-            <p className="text-xs text-muted-foreground">
-              Updated {formatDate(resume.updatedAt)}
-            </p>
+            <Link href={resumePath(resume.id)}>
+              <p className="text-xs text-muted-foreground">
+                Updated {formatDate(resume.updatedAt)}
+              </p>
+            </Link>
           </CardContent>
-        </Link>
+        </div>
       </Card>
       <Dialog open={deleteOpen} onOpenChange={setDeleteOpen}>
         <DialogContent showCloseButton={!isDeleting}>
