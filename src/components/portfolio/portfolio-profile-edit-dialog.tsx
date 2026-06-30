@@ -24,6 +24,8 @@ interface ProfileFormState {
   website: string;
   linkedIn: string;
   github: string;
+  ogImageUrl: string;
+  faviconUrl: string;
 }
 
 function emptyFormState(): ProfileFormState {
@@ -36,6 +38,8 @@ function emptyFormState(): ProfileFormState {
     website: "",
     linkedIn: "",
     github: "",
+    ogImageUrl: "",
+    faviconUrl: "",
   };
 }
 
@@ -50,6 +54,8 @@ function formStateFromProfile(profile?: ContactProfile): ProfileFormState {
     website: profile.website ?? "",
     linkedIn: profile.linkedIn ?? "",
     github: profile.github ?? "",
+    ogImageUrl: profile.ogImageUrl ?? "",
+    faviconUrl: profile.faviconUrl ?? "",
   };
 }
 
@@ -115,6 +121,8 @@ export function PortfolioProfileEditDialog({
         website: form.website,
         linkedIn: form.linkedIn,
         github: form.github,
+        ogImageUrl: form.ogImageUrl || null,
+        faviconUrl: form.faviconUrl || null,
       });
       onSaved(updated);
       onOpenChange(false);
@@ -194,6 +202,27 @@ export function PortfolioProfileEditDialog({
               placeholder="github.com/you"
             />
           </FieldGroup>
+          <div className="border-t pt-4">
+            <p className="mb-3 text-xs text-muted-foreground">
+              Social preview images for your public portfolio link.
+            </p>
+            <div className="grid gap-4">
+              <FieldGroup label="Share image URL">
+                <Input
+                  value={form.ogImageUrl}
+                  onChange={(e) => updateField("ogImageUrl", e.target.value)}
+                  placeholder="https://example.com/og-image.jpg"
+                />
+              </FieldGroup>
+              <FieldGroup label="Favicon URL">
+                <Input
+                  value={form.faviconUrl}
+                  onChange={(e) => updateField("faviconUrl", e.target.value)}
+                  placeholder="https://example.com/favicon.ico"
+                />
+              </FieldGroup>
+            </div>
+          </div>
         </div>
 
         <DialogFooter>

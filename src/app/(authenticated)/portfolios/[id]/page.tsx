@@ -2,6 +2,7 @@
 
 import { useEffect, useMemo, useState } from "react";
 import { use } from "react";
+import { Loader2 } from "lucide-react";
 import { AppWorkspace } from "@/components/layout/app-workspace";
 import { PortfolioWorkspace } from "@/components/portfolio/portfolio-workspace";
 import { PortfolioLivePreview } from "@/components/portfolio/portfolio-live-preview";
@@ -55,7 +56,17 @@ export default function PortfolioPage({ params }: PortfolioPageProps) {
   useRedirectIfPortfolioMissing(id, loading, content !== null);
 
   if (!loading && !content) return null;
-  if (!content) return null;
+
+  if (loading || !content) {
+    return (
+      <AppWorkspace>
+        <div className="flex flex-1 items-center justify-center p-8">
+          <Loader2 className="size-6 animate-spin text-muted-foreground" aria-hidden />
+          <span className="sr-only">Loading portfolio</span>
+        </div>
+      </AppWorkspace>
+    );
+  }
 
   return (
     <AppWorkspace preview={previewContent ? <PortfolioLivePreview content={previewContent} /> : null}>

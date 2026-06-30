@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
 import {
   Copy,
@@ -11,12 +11,18 @@ import {
   Loader2,
   MoreHorizontal,
   Plus,
+  Share2,
   Star,
   Trash2,
 } from "lucide-react";
 import { toast } from "sonner";
-import type { PortfolioLayout, PortfolioWithContent } from "@/lib/types/portfolio";
-import { PortfolioDesignSettings } from "@/components/portfolio/portfolio-design-settings";
+import type { PortfolioWithContent } from "@/lib/types/portfolio";
+import {
+  PortfolioDesignSettings,
+  portfolioDesignSnapshotFromSettings,
+  type PortfolioDesignSnapshot,
+} from "@/components/portfolio/portfolio-design-settings";
+import { PortfolioShareDialog } from "@/components/portfolio/portfolio-share-dialog";
 import { PortfolioProfileSection } from "@/components/portfolio/portfolio-profile-section";
 import {
   PortfolioProjectEditDialog,
@@ -52,6 +58,7 @@ import {
   updatePortfolioProject,
 } from "@/lib/api/portfolio-api";
 import { portfolioPath } from "@/lib/portfolio/routes";
+import { useWorkspace } from "@/components/layout/workspace-provider";
 import { cn } from "@/lib/utils";
 
 type WorkspaceMode = "content" | "design";
@@ -68,13 +75,16 @@ export function PortfolioWorkspace({
   onPreviewSettingsChange,
 }: PortfolioWorkspaceProps) {
   const router = useRouter();
+  const { user } = useWorkspace();
   const [mode, setMode] = useState<WorkspaceMode>("content");
-  const [layout, setLayout] = useState<PortfolioLayout>(content.settings.layout ?? "SINGLE");
-  const [savedLayout, setSavedLayout] = useState<PortfolioLayout>(content.settings.layout ?? "SINGLE");
-  const [accentColor, setAccentColor] = useState(content.settings.accentColor ?? "#2563eb");
-  const [savedAccentColor, setSavedAccentColor] = useState(content.settings.accentColor ?? "#2563eb");
-  const [showPhoto, setShowPhoto] = useState(content.settings.showPhoto);
-  const [savedShowPhoto, setSavedShowPhoto] = useState(content.settings.showPhoto);
+  const [shareOpen, setShareOpen] = useState(false);
+  const [publicUsername, setPublicUsername] = useState<string | null>(user.username ?? null);
+  const [design, setDesign] = useState<PortfolioDesignSnapshot>(() =>
+    portfolioDesignSnapshotFromSettings(content.settings)
+  );
+  const [savedDesign, setSavedDesign] = useState<PortfolioDesignSnapshot>(() =>
+    portfolioDesignSnapshotFromSettings(content.settings)
+  );
   const [about, setAbout] = useState(content.portfolio.about);
   const [tagline, setTagline] = useState(content.portfolio.tagline);
   const [projectDialog, setProjectDialog] = useState<ProjectDialogState | null>(null);
@@ -85,6 +95,10 @@ export function PortfolioWorkspace({
   const [savingAbout, setSavingAbout] = useState(false);
 
   const portfolioId = content.portfolio.id;
+
+  useEffect(() => {
+    setPublicUsername(user.username ?? null);
+  }, [user.username]);
 
   async function handleSaveAbout() {
     setSavingAbout(true);
@@ -161,35 +175,68 @@ export function PortfolioWorkspace({
             <LayoutTemplate className="mr-1.5 size-4" /> Design
           </Button>
         </div>
-        <DropdownMenu>
-          <DropdownMenuTrigger
-            render={
-              <Button variant="ghost" size="icon" aria-label="Portfolio actions">
-                <MoreHorizontal className="size-4" />
-              </Button>
-            }
-          />
-          <DropdownMenuContent align="end">
-            <DropdownMenuItem
-              disabled={isDuplicating}
-              onClick={() => {
-                setIsDuplicating(true);
-                void duplicatePortfolio(portfolioId)
-                  .then((p) => {
-                    toast.success("Portfolio duplicated.");
-                    router.push(portfolioPath(p.id));
-                  })
-                  .finally(() => setIsDuplicating(false));
-              }}
-            >
-              <Copy className="mr-2 size-4" /> Duplicate
-            </DropdownMenuItem>
-            <DropdownMenuItem className="text-destructive" onClick={() => setDeleteOpen(true)}>
-              <Trash2 className="mr-2 size-4" /> Delete
-            </DropdownMenuItem>
-          </DropdownMenuContent>
-        </DropdownMenu>
+        <div className="flex items-center gap-1">
+          <Button
+            type="button"
+            variant="ghost"
+            size="icon"
+            className="size-8 text-muted-foreground"
+            aria-label="Share portfolio"
+            onClick={() => setShareOpen(true)}
+          >
+            <Share2 className="size-4" />
+          </Button>
+          <DropdownMenu>
+            <DropdownMenuTrigger
+              render={
+                <Button
+                  type="button"
+                  variant="ghost"
+                  size="icon"
+                  className="size-8 text-muted-foreground"
+                  aria-label="Portfolio actions"
+                >
+                  <MoreHorizontal className="size-4" />
+                </Button>
+              }
+            />
+            <DropdownMenuContent align="end">
+              <DropdownMenuItem
+                disabled={isDuplicating}
+                onClick={() => {
+                  setIsDuplicating(true);
+                  void duplicatePortfolio(portfolioId)
+                    .then((p) => {
+                      toast.success("Portfolio duplicated.");
+                      router.push(portfolioPath(p.id));
+                    })
+                    .finally(() => setIsDuplicating(false));
+                }}
+              >
+                <Copy className="mr-2 size-4" /> Duplicate
+              </DropdownMenuItem>
+              <DropdownMenuItem className="text-destructive" onClick={() => setDeleteOpen(true)}>
+                <Trash2 className="mr-2 size-4" /> Delete
+              </DropdownMenuItem>
+            </DropdownMenuContent>
+          </DropdownMenu>
+        </div>
       </div>
+
+      <PortfolioShareDialog
+        open={shareOpen}
+        onOpenChange={setShareOpen}
+        portfolioId={portfolioId}
+        portfolioTitle={content.portfolio.title}
+        portfolioSlug={content.portfolio.slug}
+        username={publicUsername}
+        onPortfolioSlugChange={(slug) =>
+          onContentChange({
+            ...content,
+            portfolio: { ...content.portfolio, slug },
+          })
+        }
+      />
 
       <ScrollArea className="min-h-0 flex-1">
         <div className="space-y-6 p-4">
@@ -197,29 +244,13 @@ export function PortfolioWorkspace({
             <PortfolioDesignSettings
               portfolioId={portfolioId}
               themeName={content.theme?.name ?? "Modern"}
-              layout={layout}
-              savedLayout={savedLayout}
-              accentColor={accentColor}
-              savedAccentColor={savedAccentColor}
-              showPhoto={showPhoto}
-              savedShowPhoto={savedShowPhoto}
-              onLayoutChange={(v) => {
-                setLayout(v);
-                onPreviewSettingsChange?.({ layout: v });
+              snapshot={design}
+              savedSnapshot={savedDesign}
+              onChange={(patch) => {
+                setDesign((current) => ({ ...current, ...patch }));
+                onPreviewSettingsChange?.(patch);
               }}
-              onAccentColorChange={(v) => {
-                setAccentColor(v);
-                onPreviewSettingsChange?.({ accentColor: v });
-              }}
-              onShowPhotoChange={(v) => {
-                setShowPhoto(v);
-                onPreviewSettingsChange?.({ showPhoto: v });
-              }}
-              onSaved={(s) => {
-                setSavedLayout(s.layout);
-                setSavedAccentColor(s.accentColor);
-                setSavedShowPhoto(s.showPhoto);
-              }}
+              onSaved={setSavedDesign}
             />
           ) : (
             <>
@@ -231,7 +262,6 @@ export function PortfolioWorkspace({
 
               <section className="rounded-lg border bg-card p-4">
                 <h2 className="text-sm font-medium">About</h2>
-                <p className="mt-1 text-xs text-muted-foreground">Short bio for your portfolio site.</p>
                 <div className="mt-4 space-y-3">
                   <Input
                     value={tagline}
@@ -252,10 +282,7 @@ export function PortfolioWorkspace({
 
               <section className="rounded-lg border bg-card p-4">
                 <div className="flex items-center justify-between">
-                  <div>
-                    <h2 className="text-sm font-medium">Projects</h2>
-                    <p className="mt-1 text-xs text-muted-foreground">Case studies with problem, approach, and outcome.</p>
-                  </div>
+                  <h2 className="text-sm font-medium">Projects</h2>
                   <Button size="sm" onClick={() => setProjectDialog({ mode: "create" })}>
                     <Plus className="mr-1 size-4" /> Add
                   </Button>
@@ -282,33 +309,36 @@ export function PortfolioWorkspace({
                       </button>
                       <Button
                         variant="ghost"
-                        size="icon"
-                        className="size-8 shrink-0"
+                        size="sm"
+                        className="h-8 shrink-0 px-2"
                         onClick={() => void handleToggleProject(project.id, !project.showInPreview)}
-                        aria-label={project.showInPreview ? "Hide from preview" : "Show in preview"}
                       >
-                        {project.showInPreview ? <Eye className="size-4" /> : <EyeOff className="size-4" />}
+                        {project.showInPreview ? (
+                          <Eye className="mr-1 size-3.5" />
+                        ) : (
+                          <EyeOff className="mr-1 size-3.5" />
+                        )}
+                        {project.showInPreview ? "Hide" : "Show"}
                       </Button>
                       <Button
                         variant="ghost"
-                        size="icon"
-                        className="size-8 shrink-0 text-destructive"
+                        size="sm"
+                        className="h-8 shrink-0 px-2 text-destructive"
                         onClick={() => void handleDeleteProject(project.id)}
-                        aria-label="Delete project"
                       >
-                        <Trash2 className="size-4" />
+                        <Trash2 className="mr-1 size-3.5" />
+                        Delete
                       </Button>
                     </li>
                   ))}
                   {content.projects.length === 0 ? (
-                    <p className="py-4 text-center text-xs text-muted-foreground">No projects yet — add 3–5 strong case studies.</p>
+                    <p className="py-4 text-center text-xs text-muted-foreground">No projects yet, add 3–5 strong case studies.</p>
                   ) : null}
                 </ul>
               </section>
 
               <section className="rounded-lg border bg-card p-4">
                 <h2 className="text-sm font-medium">Skills</h2>
-                <p className="mt-1 text-xs text-muted-foreground">Technologies and tools to highlight.</p>
                 <div className="mt-3 flex flex-wrap gap-2">
                   {content.skills.map((skill) => (
                     <span

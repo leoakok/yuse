@@ -1,3 +1,4 @@
+import type { User } from "@/lib/types/user";
 import type {
   Portfolio,
   PortfolioProject,
@@ -16,6 +17,8 @@ import {
   UPDATE_PORTFOLIO_MUTATION,
   UPDATE_PORTFOLIO_SETTINGS_MUTATION,
   UPDATE_PORTFOLIO_CONTACT_PROFILE_MUTATION,
+  SET_USERNAME_MUTATION,
+  SET_PORTFOLIO_SLUG_MUTATION,
   ADD_PORTFOLIO_PROJECT_MUTATION,
   UPDATE_PORTFOLIO_PROJECT_MUTATION,
   DELETE_PORTFOLIO_PROJECT_MUTATION,
@@ -77,7 +80,20 @@ export async function updatePortfolio(
 
 export async function updatePortfolioSettings(
   portfolioId: string,
-  patch: Pick<Partial<PortfolioSettings>, "layout" | "accentColor" | "themeId" | "showPhoto" | "locale">
+  patch: Pick<
+    Partial<PortfolioSettings>,
+    | "layout"
+    | "accentColor"
+    | "themeId"
+    | "showPhoto"
+    | "locale"
+    | "projectGridColumns"
+    | "projectCardStyle"
+    | "typographyScale"
+    | "heroStyle"
+    | "navigationStyle"
+    | "animationLevel"
+  >
 ): Promise<PortfolioSettings> {
   const input: Record<string, unknown> = { portfolioId };
   if (patch.layout != null) input.layout = patch.layout;
@@ -85,6 +101,12 @@ export async function updatePortfolioSettings(
   if (patch.themeId != null) input.themeId = patch.themeId;
   if (patch.showPhoto != null) input.showPhoto = patch.showPhoto;
   if (patch.locale != null) input.locale = patch.locale;
+  if (patch.projectGridColumns != null) input.projectGridColumns = patch.projectGridColumns;
+  if (patch.projectCardStyle != null) input.projectCardStyle = patch.projectCardStyle;
+  if (patch.typographyScale != null) input.typographyScale = patch.typographyScale;
+  if (patch.heroStyle != null) input.heroStyle = patch.heroStyle;
+  if (patch.navigationStyle != null) input.navigationStyle = patch.navigationStyle;
+  if (patch.animationLevel != null) input.animationLevel = patch.animationLevel;
 
   const data = await graphqlRequest<{ updatePortfolioSettings: PortfolioSettings }>(
     UPDATE_PORTFOLIO_SETTINGS_MUTATION,
@@ -105,6 +127,8 @@ export async function updatePortfolioContactProfile(
     linkedIn?: string;
     github?: string;
     photoUrl?: string | null;
+    ogImageUrl?: string | null;
+    faviconUrl?: string | null;
   }
 ): Promise<PortfolioWithContent> {
   const input: Record<string, unknown> = { portfolioId };
@@ -236,6 +260,19 @@ export async function addPortfolioTestimonial(
     { input: { portfolioId, quote, author, role } }
   );
   return mapPortfolioWithContent(data.addPortfolioTestimonial);
+}
+
+export async function setUsername(username: string): Promise<User> {
+  const data = await graphqlRequest<{ setUsername: User }>(SET_USERNAME_MUTATION, { username });
+  return data.setUsername;
+}
+
+export async function setPortfolioSlug(portfolioId: string, slug: string): Promise<Portfolio> {
+  const data = await graphqlRequest<{ setPortfolioSlug: Portfolio }>(SET_PORTFOLIO_SLUG_MUTATION, {
+    portfolioId,
+    slug,
+  });
+  return data.setPortfolioSlug;
 }
 
 export { mapPortfolioWithContent };

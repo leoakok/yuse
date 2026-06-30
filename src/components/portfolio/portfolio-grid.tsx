@@ -14,7 +14,13 @@ import {
 } from "@/lib/api/portfolio-api";
 import { PortfolioSitePreview } from "@/components/portfolio/portfolio-site-preview";
 import { Button } from "@/components/ui/button";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import {
+  Card,
+  CardAction,
+  CardContent,
+  CardHeader,
+  CardTitle,
+} from "@/components/ui/card";
 import {
   Dialog,
   DialogContent,
@@ -29,7 +35,6 @@ import {
   DropdownMenuItem,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
-import { Skeleton } from "@/components/ui/skeleton";
 
 interface PortfolioCardProps {
   portfolio: Portfolio;
@@ -97,76 +102,82 @@ function PortfolioCard({ portfolio, onDeleted }: PortfolioCardProps) {
   return (
     <>
       <Card className="group flex h-full flex-col overflow-hidden transition-colors hover:bg-muted/40">
-        <div className="relative h-52 overflow-hidden border-b bg-muted/30">
-          <Link href={portfolioPath(portfolio.id)} className="absolute inset-0 block">
-            {loading ? (
-              <Skeleton className="absolute inset-0 rounded-none" />
-            ) : content ? (
-              <div className="absolute inset-0 flex justify-center overflow-hidden pt-3">
-                <div
-                  className="origin-top shadow-sm"
-                  style={{ transform: "scale(0.32)" }}
-                >
-                  <PortfolioSitePreview content={content} className="w-[640px]" />
-                </div>
+        <Link
+          href={portfolioPath(portfolio.id)}
+          className="relative block h-52 overflow-hidden border-b bg-muted/30"
+        >
+          {loading ? (
+            <div className="flex h-full items-center justify-center">
+              <Loader2 className="size-5 animate-spin text-muted-foreground" aria-hidden />
+              <span className="sr-only">Loading preview</span>
+            </div>
+          ) : content ? (
+            <div className="absolute inset-0 flex justify-center overflow-hidden">
+              <div
+                className="origin-top shadow-sm"
+                style={{ transform: "scale(0.32)" }}
+              >
+                <PortfolioSitePreview content={content} className="w-[640px]" interactive={false} />
               </div>
-            ) : (
-              <div className="flex h-full items-center justify-center text-xs text-muted-foreground">
-                Preview unavailable
-              </div>
-            )}
-          </Link>
-          <div
-            className="absolute right-2 top-2 z-10"
-            onClick={(event) => event.stopPropagation()}
-            onKeyDown={(event) => event.stopPropagation()}
-          >
-            <DropdownMenu>
-              <DropdownMenuTrigger
-                render={
-                  <Button
-                    type="button"
-                    variant="secondary"
-                    size="icon-xs"
-                    className="size-7 bg-background/90 shadow-sm backdrop-blur-sm"
-                    aria-label={`Actions for ${portfolio.title}`}
-                    onClick={(event) => event.preventDefault()}
-                  >
-                    <MoreHorizontal />
-                  </Button>
-                }
-              />
-              <DropdownMenuContent align="end" className="min-w-40">
-                <DropdownMenuItem
-                  disabled={isDuplicating}
-                  onClick={() => void handleDuplicate()}
-                >
-                  <Copy />
-                  Duplicate
-                </DropdownMenuItem>
-                <DropdownMenuItem
-                  variant="warning"
-                  onClick={() => setDeleteOpen(true)}
-                >
-                  <Trash2 />
-                  Delete
-                </DropdownMenuItem>
-              </DropdownMenuContent>
-            </DropdownMenu>
-          </div>
-        </div>
-        <Link href={portfolioPath(portfolio.id)} className="flex flex-1 flex-col">
+            </div>
+          ) : (
+            <div className="flex h-full items-center justify-center text-xs text-muted-foreground">
+              Preview unavailable
+            </div>
+          )}
+        </Link>
+        <div className="flex flex-1 flex-col">
           <CardHeader className="pb-2">
-            <CardTitle className="text-base group-hover:text-primary">
-              {portfolio.title}
+            <CardTitle className="text-base">
+              <Link
+                href={portfolioPath(portfolio.id)}
+                className="line-clamp-2 group-hover:text-primary"
+              >
+                {portfolio.title}
+              </Link>
             </CardTitle>
+            <CardAction>
+              <DropdownMenu>
+                <DropdownMenuTrigger
+                  render={
+                    <Button
+                      type="button"
+                      variant="ghost"
+                      size="sm"
+                      className="shrink-0 text-muted-foreground"
+                    >
+                      <MoreHorizontal className="mr-1.5 size-4" />
+                      Actions
+                    </Button>
+                  }
+                />
+                <DropdownMenuContent align="end" className="min-w-40">
+                  <DropdownMenuItem
+                    disabled={isDuplicating}
+                    onClick={() => void handleDuplicate()}
+                  >
+                    <Copy />
+                    Duplicate
+                  </DropdownMenuItem>
+                  <DropdownMenuItem
+                    variant="warning"
+                    onClick={() => setDeleteOpen(true)}
+                  >
+                    <Trash2 />
+                    Delete
+                  </DropdownMenuItem>
+                </DropdownMenuContent>
+              </DropdownMenu>
+            </CardAction>
           </CardHeader>
           <CardContent className="mt-auto">
-            <p className="text-xs text-muted-foreground">
-              Updated {formatDate(portfolio.updatedAt)}
-            </p>
+            <Link href={portfolioPath(portfolio.id)}>
+              <p className="text-xs text-muted-foreground">
+                Updated {formatDate(portfolio.updatedAt)}
+              </p>
+            </Link>
           </CardContent>
-        </Link>
+        </div>
       </Card>
       <Dialog open={deleteOpen} onOpenChange={setDeleteOpen}>
         <DialogContent showCloseButton={!isDeleting}>
