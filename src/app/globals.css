@@ -233,7 +233,7 @@
     background: #ffffff !important;
   }
 
-  .cv-print-root article {
+  .cv-print-page {
     background-color: #ffffff !important;
     color: #18181b !important;
     box-shadow: none !important;
@@ -243,27 +243,27 @@
     page-break-inside: avoid;
   }
 
-  .cv-print-root article:not(:last-child) {
+  .cv-print-page:not(:last-child) {
     break-after: page;
     page-break-after: always;
   }
 
-  .cv-print-root article:last-child {
+  .cv-print-page:last-child {
     break-after: auto;
     page-break-after: auto;
   }
 
-  .cv-print-root .text-zinc-600,
-  .cv-print-root .dark\:text-zinc-400 {
+  .cv-print-page .text-zinc-600,
+  .cv-print-page .dark\:text-zinc-400 {
     color: #52525b !important;
   }
 
-  .cv-print-root .text-zinc-500 {
+  .cv-print-page .text-zinc-500 {
     color: #71717a !important;
   }
 
-  .cv-print-root .border-zinc-200,
-  .cv-print-root .dark\:border-zinc-800 {
+  .cv-print-page .border-zinc-200,
+  .cv-print-page .dark\:border-zinc-800 {
     border-color: #e4e4e7 !important;
   }
 
@@ -310,7 +310,22 @@
     height: auto !important;
   }
 
+  .cv-print-page a[href] {
+    color: inherit !important;
+    text-decoration: underline !important;
+  }
+
   .resume-print-target {
     box-shadow: none !important;
+  }
+
+  .cv-print-footer {
+    display: block !important;
+    position: fixed;
+    bottom: 0;
+    width: 100%;
+    text-align: center;
+    font-size: 9pt;
+    color: #52525b !important;
   }
 }

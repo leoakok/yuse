@@ -12,8 +12,11 @@ const widthClass: Record<CatalogShellWidth, string> = {
 export interface CatalogShellProps {
   title: string;
   description?: string;
+  /** Primary actions for this catalog page (import, create), rendered beside the page title. */
   actions?: ReactNode;
   width?: CatalogShellWidth;
+  /** Stretch page content to fill remaining viewport height below the title. */
+  fillHeight?: boolean;
   children: ReactNode;
 }
 
@@ -22,15 +25,33 @@ export function CatalogShell({
   description,
   actions,
   width = "default",
+  fillHeight = false,
   children,
 }: CatalogShellProps) {
   return (
     <div className="flex min-h-dvh flex-col bg-background">
-      <PageHeader actions={actions} />
-      <main className="flex-1 overflow-y-auto">
-        <div className={cn("mx-auto px-4 py-8", widthClass[width])}>
-          <PageTitle title={title} description={description} />
-          {children}
+      <PageHeader />
+      <main
+        className={cn(
+          "w-full flex-1",
+          fillHeight ? "flex min-h-0 flex-col overflow-hidden" : "overflow-y-auto"
+        )}
+      >
+        <div
+          className={cn(
+            "mx-auto w-full min-w-0 px-4 py-8",
+            widthClass[width],
+            fillHeight && "flex min-h-0 flex-1 flex-col"
+          )}
+        >
+          <div className={cn(fillHeight && "shrink-0")}>
+            <PageTitle title={title} description={description} actions={actions} />
+          </div>
+          <div
+            className={cn(fillHeight && "flex min-h-0 min-w-0 w-full flex-1 flex-col")}
+          >
+            {children}
+          </div>
         </div>
       </main>
     </div>

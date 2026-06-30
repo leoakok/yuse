@@ -2,6 +2,7 @@
 
 import {
   createContext,
+  useCallback,
   useContext,
   useEffect,
   useRef,
@@ -22,6 +23,7 @@ interface WorkspaceContextValue {
   user: User;
   workspace: Workspace;
   loading: boolean;
+  updateUser: (patch: Partial<User>) => void;
 }
 
 const WorkspaceContext = createContext<WorkspaceContextValue | null>(null);
@@ -59,6 +61,10 @@ export function WorkspaceProvider({ children }: { children: ReactNode }) {
   const [workspace, setWorkspace] = useState<Workspace | null>(null);
   const [loading, setLoading] = useState(true);
   const [bootstrapError, setBootstrapError] = useState<string | null>(null);
+
+  const updateUser = useCallback((patch: Partial<User>) => {
+    setUser((current) => (current ? { ...current, ...patch } : current));
+  }, []);
 
   useEffect(() => {
     clearLegacyLastOpenedResumePreference();
@@ -139,7 +145,7 @@ export function WorkspaceProvider({ children }: { children: ReactNode }) {
   }
 
   return (
-    <WorkspaceContext.Provider value={{ user, workspace, loading }}>
+    <WorkspaceContext.Provider value={{ user, workspace, loading, updateUser }}>
       {children}
     </WorkspaceContext.Provider>
   );
