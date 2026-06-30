@@ -1,0 +1,3 @@
+ALTER TABLE resume_settings
+    ADD COLUMN IF NOT EXISTS accent_color TEXT NOT NULL DEFAULT '#c45c3e',
+    ADD COLUMN IF NOT EXISTS section_divider_style TEXT NOT NULL DEFAULT 'FULL';
