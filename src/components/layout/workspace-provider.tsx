@@ -15,6 +15,7 @@ import {
   handleWorkspaceLoadFailure,
   isSigningOut,
 } from "@/lib/auth/session-invalid";
+import { AppShellSkeleton } from "@/components/layout/app-shell-skeleton";
 import { clearLegacyLastOpenedResumePreference } from "@/lib/cv/preferences";
 
 interface WorkspaceContextValue {
@@ -125,18 +126,16 @@ export function WorkspaceProvider({ children }: { children: ReactNode }) {
   }, [status, session?.sessionBootstrap]);
 
   if (status === "loading" || loading || !user || !workspace) {
-    return (
-      <div className="flex min-h-full flex-1 flex-col items-center justify-center gap-2 p-6 text-sm text-muted-foreground">
-        {bootstrapError ? (
-          <>
-            <p className="text-center text-destructive">{bootstrapError}</p>
-            <p className="text-center">Run `npm run start` to launch Postgres and the backend.</p>
-          </>
-        ) : (
-          <p>Loading your workspace…</p>
-        )}
-      </div>
-    );
+    if (bootstrapError) {
+      return (
+        <div className="flex min-h-full flex-1 flex-col items-center justify-center gap-2 p-6 text-sm text-muted-foreground">
+          <p className="text-center text-destructive">{bootstrapError}</p>
+          <p className="text-center">Run `npm run start` to launch Postgres and the backend.</p>
+        </div>
+      );
+    }
+
+    return <AppShellSkeleton />;
   }
 
   return (

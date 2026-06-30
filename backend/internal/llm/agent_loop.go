@@ -25,8 +25,9 @@ func (s *Service) RunAgent(
 	githubConnected bool,
 	githubLogin string,
 	tools *mcp.Registry,
+	knowledge []*model.KnowledgeEntry,
 ) (*AgentTurn, error) {
-	return s.RunAgentStream(ctx, userText, assistantContext, history, attachmentInputs, twinContext, githubConnected, githubLogin, tools, nil)
+	return s.RunAgentStream(ctx, userText, assistantContext, history, attachmentInputs, twinContext, githubConnected, githubLogin, tools, knowledge, nil)
 }
 
 func (s *Service) RunAgentStream(
@@ -39,6 +40,7 @@ func (s *Service) RunAgentStream(
 	githubConnected bool,
 	githubLogin string,
 	tools *mcp.Registry,
+	knowledge []*model.KnowledgeEntry,
 	sink StreamSink,
 ) (*AgentTurn, error) {
 	if !s.hasAPIKey || tools == nil {
@@ -49,10 +51,30 @@ func (s *Service) RunAgentStream(
 	}
 
 	attachments := enrichAttachments(attachmentsFromInput(attachmentInputs))
+
+	// Cheap pre-classification (one small structured-output call, not a second
+	// full agent). Attachments and workflow continuations are always actionable.
+	var class Classification
+	if len(attachments) > 0 || isWorkflowContinuation(userText, history) {
+		class = Classification{Category: model.AssistantCategoryUpdateCv, Confidence: 1, Source: "fast-path", Reason: "attachment or continuation"}
+	} else {
+		class = s.Classify(ctx, userText, assistantContext, history)
+	}
+
+	// Scope handling — out of scope / unclear / chit-chat get a friendly canned
+	// reply with no tool calls and no main-agent cost.
+	if isScopeHandled(class.Category) {
+		reply := ScopeReply(class, userText)
+		sink.Delta(reply)
+		return &AgentTurn{Reply: reply, Executions: nil}, nil
+	}
+
+	guidance := BuildKnowledgeGuidance(class.Category, SelectKnowledge(knowledge, class))
+
 	primary, secondary := selectModel(needsVisionModel(attachments), s.miniModel, s.fallbackModel, s.visionModel)
-	turn, err := s.agentLoop(ctx, primary, userText, assistantContext, history, attachments, twinContext, githubConnected, githubLogin, tools, sink)
+	turn, err := s.agentLoop(ctx, primary, userText, assistantContext, history, attachments, twinContext, githubConnected, githubLogin, tools, class.Category, guidance, sink)
 	if shouldRetryWithFallbackModel(err, turn, userText, assistantContext) {
-		turn, err = s.agentLoop(ctx, secondary, userText, assistantContext, history, attachments, twinContext, githubConnected, githubLogin, tools, sink)
+		turn, err = s.agentLoop(ctx, secondary, userText, assistantContext, history, attachments, twinContext, githubConnected, githubLogin, tools, class.Category, guidance, sink)
 	}
 	if err != nil {
 		return nil, err
@@ -75,10 +97,16 @@ func (s *Service) agentLoop(
 	githubConnected bool,
 	githubLogin string,
 	tools *mcp.Registry,
+	category model.AssistantCategory,
+	guidance string,
 	sink StreamSink,
 ) (*AgentTurn, error) {
+	systemPrompt := buildAgentSystemPrompt(assistantContext, twinContext, githubConnected, githubLogin)
+	if guidance != "" {
+		systemPrompt += "\n" + guidance
+	}
 	messages := []openai.ChatCompletionMessage{
-		{Role: openai.ChatMessageRoleSystem, Content: buildAgentSystemPrompt(assistantContext, twinContext, githubConnected, githubLogin)},
+		{Role: openai.ChatMessageRoleSystem, Content: systemPrompt},
 	}
 	for _, message := range history {
 		role := openai.ChatMessageRoleUser
@@ -97,7 +125,7 @@ func (s *Service) agentLoop(
 	var lastContent string
 
 	for range maxAgentIterations {
-		sink.Status("Thinking…")
+		sink.Status("Give me a moment…")
 
 		choice, err := s.streamCompletion(ctx, modelName, messages, openaiTools, sink)
 		if err != nil {
@@ -110,7 +138,7 @@ func (s *Service) agentLoop(
 				return &AgentTurn{Reply: reply, Executions: executions}, nil
 			}
 			if successfulWriteTool(executions) && isOpenAIRateLimit(err) {
-				sink.Status("Continuing resume population…")
+				sink.Status("Still building your resume…")
 				messages = append(messages, openai.ChatCompletionMessage{
 					Role:    openai.ChatMessageRoleUser,
 					Content: resumePopulateNudge,
@@ -126,7 +154,7 @@ func (s *Service) agentLoop(
 
 		if len(choice.ToolCalls) == 0 {
 			if shouldNudgeJobTracker(userText, assistantContext, executions, lastContent) {
-				sink.Status("Finishing job application…")
+				sink.Status("Wrapping up your application…")
 				messages = append(messages, choice)
 				messages = append(messages, openai.ChatCompletionMessage{
 					Role:    openai.ChatMessageRoleUser,
@@ -136,7 +164,7 @@ func (s *Service) agentLoop(
 				continue
 			}
 			if shouldNudgeResumeWrites(userText, executions, lastContent) {
-				sink.Status("Saving resume to workspace…")
+				sink.Status("Saving your resume…")
 				messages = append(messages, choice)
 				messages = append(messages, openai.ChatCompletionMessage{
 					Role:    openai.ChatMessageRoleUser,
@@ -146,7 +174,7 @@ func (s *Service) agentLoop(
 				continue
 			}
 			if shouldNudgeWebsiteImport(userText, executions, lastContent) {
-				sink.Status("Importing from website…")
+				sink.Status("Pulling in info from that site…")
 				messages = append(messages, choice)
 				messages = append(messages, openai.ChatCompletionMessage{
 					Role:    openai.ChatMessageRoleUser,
@@ -156,7 +184,7 @@ func (s *Service) agentLoop(
 				continue
 			}
 			if shouldNudgeThinStructuredFields(executions, lastContent) {
-				sink.Status("Fixing structured fields…")
+				sink.Status("Cleaning up the details…")
 				messages = append(messages, choice)
 				messages = append(messages, openai.ChatCompletionMessage{
 					Role:    openai.ChatMessageRoleUser,
@@ -186,6 +214,21 @@ func (s *Service) agentLoop(
 			}
 			if args == nil {
 				args = map[string]any{}
+			}
+			if shouldBlockHighImpactTool(category, fn.Name) {
+				exec := mcp.Execution{
+					Tool:      fn.Name,
+					Arguments: args,
+					Error:     "blocked: message too short or unclear — ask one clarifying question instead",
+				}
+				executions = append(executions, exec)
+				sink.ToolEnd(exec)
+				messages = append(messages, openai.ChatCompletionMessage{
+					Role:       openai.ChatMessageRoleTool,
+					ToolCallID: call.ID,
+					Content:    exec.ResultJSON(),
+				})
+				continue
 			}
 			startLabel := mcp.ToolActivityStartLabel(fn.Name, args)
 			sink.Status(startLabel)
@@ -287,7 +330,7 @@ func (s *Service) streamCompletion(
 	for attempt := 0; attempt < 5; attempt++ {
 		if attempt > 0 {
 			wait := time.Duration(attempt*3) * time.Second
-			sink.Status("Waiting for model capacity…")
+			sink.Status("Give me a moment — getting ready…")
 			select {
 			case <-ctx.Done():
 				return openai.ChatCompletionMessage{}, ctx.Err()

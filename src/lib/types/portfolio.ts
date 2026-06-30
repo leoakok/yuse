@@ -1,16 +1,14 @@
-import type {
-  ContactProfile,
-  PageFormat,
-  Section,
-  SectionItem,
-  SectionType,
-} from "@/lib/types/cv";
+import type { ContactProfile } from "@/lib/types/cv";
 import type { CvTheme } from "@/lib/types/theme";
+
+export type PortfolioLayout = "SINGLE" | "SPLIT";
 
 export interface Portfolio {
   id: string;
   workspaceId: string;
   title: string;
+  tagline: string;
+  about: string;
   contactProfileId?: string;
   createdBy: string;
   createdAt: string;
@@ -20,17 +18,48 @@ export interface Portfolio {
 export interface PortfolioSettings {
   portfolioId: string;
   themeId: string;
-  fontSize: "S" | "M" | "L";
-  pageFormat: PageFormat;
-  marginHorizontalMm: number;
-  marginVerticalMm: number;
+  layout: PortfolioLayout;
+  accentColor: string;
   showPhoto: boolean;
   locale: string;
 }
 
-export interface PortfolioSection {
-  section: Section;
-  items: SectionItem[];
+export interface PortfolioProject {
+  id: string;
+  portfolioId: string;
+  title: string;
+  tagline: string;
+  problem: string;
+  approach: string;
+  outcome: string;
+  techStack: string[];
+  liveUrl?: string | null;
+  repoUrl?: string | null;
+  imageUrl?: string | null;
+  featured: boolean;
+  showInPreview: boolean;
+  sortOrder: number;
+  createdAt: string;
+  updatedAt: string;
+}
+
+export interface PortfolioSkill {
+  id: string;
+  portfolioId: string;
+  name: string;
+  category?: string | null;
+  showInPreview: boolean;
+  sortOrder: number;
+}
+
+export interface PortfolioTestimonial {
+  id: string;
+  portfolioId: string;
+  quote: string;
+  author: string;
+  role: string;
+  showInPreview: boolean;
+  sortOrder: number;
 }
 
 export interface PortfolioWithContent {
@@ -38,7 +67,9 @@ export interface PortfolioWithContent {
   contactProfile?: ContactProfile;
   settings: PortfolioSettings;
   theme: CvTheme;
-  sections: PortfolioSection[];
+  projects: PortfolioProject[];
+  skills: PortfolioSkill[];
+  testimonials: PortfolioTestimonial[];
 }
 
-export type { SectionType, SectionItem, Section, ContactProfile, PageFormat };
+export type { ContactProfile };

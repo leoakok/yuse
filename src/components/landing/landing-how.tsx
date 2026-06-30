@@ -1,7 +1,9 @@
 import type { ReactNode } from "react";
-import { Brain, GitBranch, Wand2 } from "lucide-react";
+import { Brain, Wand2 } from "lucide-react";
+import { GitHubMark } from "@/components/brand/github-mark";
 import { Reveal } from "@/components/landing/reveal";
 import { TailorDemo } from "@/components/landing/tailor-demo";
+import { TailorCvShowcase } from "@/components/landing/tailor-cv-showcase";
 import { LinkedInMark } from "@/components/landing/brand-icons";
 
 type Step = {
@@ -17,7 +19,7 @@ const STEPS: Step[] = [
     body: "We talk, and I remember. I build a Digital Twin of your real work — every project, decision, and result — kept in a clear story structure so nothing about you gets lost.",
   },
   {
-    icon: <GitBranch className="size-5" />,
+    icon: <GitHubMark className="size-5" />,
     title: "I connect to your GitHub",
     body: "I read your actual repositories and pull out the projects you really shipped, so your CV is grounded in what you've truly built.",
   },
@@ -75,6 +77,10 @@ export function LandingHow() {
 
         <Reveal className="mt-16" delay={80}>
           <TailorDemo />
+        </Reveal>
+
+        <Reveal className="mt-14" delay={120}>
+          <TailorCvShowcase />
         </Reveal>
 
         <Reveal className="mx-auto mt-14 max-w-2xl text-center">

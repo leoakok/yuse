@@ -1,11 +1,13 @@
 export type WorkspacePlan = "free" | "pro";
 export type WorkspaceRole = "OWNER" | "EDITOR" | "VIEWER";
+export type UserRole = "USER" | "ADMIN";
 
 export interface User {
   id: string;
   email: string;
   displayName: string;
   avatarUrl?: string;
+  role: UserRole;
   createdAt: string;
   updatedAt: string;
 }

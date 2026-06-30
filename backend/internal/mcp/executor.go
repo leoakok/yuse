@@ -26,12 +26,19 @@ type Executor interface {
 	CreatePortfolio(title string) *model.Portfolio
 	DuplicatePortfolio(id string) (*model.Portfolio, error)
 	DeletePortfolio(id string) (bool, error)
-	UpdatePortfolio(id string, title *string, contactProfileID *string) (*model.Portfolio, error)
+	UpdatePortfolio(id string, title, tagline, about *string, contactProfileID *string) (*model.Portfolio, error)
 	GetPortfolioWithContent(id string) (*model.PortfolioWithContent, error)
 	UpdatePortfolioContactProfile(ctx context.Context, input model.UpdatePortfolioContactProfileInput) (*model.PortfolioWithContent, error)
-	AddPortfolioSectionItem(input model.AddPortfolioSectionItemInput) (*model.PortfolioWithContent, error)
-	UpdatePortfolioSectionItem(input model.UpdatePortfolioSectionItemInput) (*model.PortfolioWithContent, error)
-	UpdatePortfolioSectionItemVisibility(input model.UpdatePortfolioSectionItemVisibilityInput) (*model.PortfolioWithContent, error)
+	AddPortfolioProject(input model.AddPortfolioProjectInput) (*model.PortfolioWithContent, error)
+	UpdatePortfolioProject(input model.UpdatePortfolioProjectInput) (*model.PortfolioWithContent, error)
+	DeletePortfolioProject(portfolioID, projectID string) (*model.PortfolioWithContent, error)
+	SetPortfolioProjectVisibility(input model.SetPortfolioProjectVisibilityInput) (*model.PortfolioWithContent, error)
+	AddPortfolioSkill(input model.AddPortfolioSkillInput) (*model.PortfolioWithContent, error)
+	UpdatePortfolioSkill(input model.UpdatePortfolioSkillInput) (*model.PortfolioWithContent, error)
+	DeletePortfolioSkill(portfolioID, skillID string) (*model.PortfolioWithContent, error)
+	AddPortfolioTestimonial(input model.AddPortfolioTestimonialInput) (*model.PortfolioWithContent, error)
+	UpdatePortfolioTestimonial(input model.UpdatePortfolioTestimonialInput) (*model.PortfolioWithContent, error)
+	DeletePortfolioTestimonial(portfolioID, testimonialID string) (*model.PortfolioWithContent, error)
 	UpdatePortfolioSettings(input model.UpdatePortfolioSettingsInput) (*model.PortfolioSettings, error)
 	ListSections(sectionType *model.SectionType) []*model.Section
 	ListCvThemes() []*model.CvTheme

@@ -367,15 +367,17 @@ func contactProfileFromContent(content *model.ResumeWithContent) map[string]any 
 	}
 	cp := content.ContactProfile
 	return map[string]any{
-		"fullName": cp.FullName,
-		"headline": cp.Headline,
-		"email":    cp.Email,
-		"phone":    cp.Phone,
-		"location": cp.Location,
-		"website":  cp.Website,
-		"linkedIn": cp.LinkedIn,
-		"github":   cp.Github,
-		"photoUrl": cp.PhotoURL,
+		"fullName":         cp.FullName,
+		"headline":         cp.Headline,
+		"email":            cp.Email,
+		"phone":            cp.Phone,
+		"location":         cp.Location,
+		"website":          cp.Website,
+		"linkedIn":         cp.LinkedIn,
+		"github":           cp.Github,
+		"photoUrl":         cp.PhotoURL,
+		"linkedinPhotoUrl": cp.LinkedinPhotoURL,
+		"githubPhotoUrl":   cp.GithubPhotoURL,
 	}
 }
 

@@ -224,7 +224,7 @@ export function AssistantComposer({
           </p>
         ) : null}
 
-        <div className="flex items-end gap-2">
+        <div className="flex items-center gap-2">
           {isEditing ? (
             <Button
               type="button"
@@ -272,8 +272,8 @@ export function AssistantComposer({
             onKeyDown={onKeyDown}
             placeholder={isEditing ? "Edit your message…" : placeholder}
             disabled={isBusy}
-            rows={2}
-            className="min-h-[44px] resize-none border-0 bg-transparent text-sm shadow-none focus-visible:ring-0"
+            rows={1}
+            className="min-h-9 resize-none border-0 bg-transparent px-0 py-1.5 text-sm leading-5 shadow-none focus-visible:ring-0"
           />
           <Button
             type="submit"

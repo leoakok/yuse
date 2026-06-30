@@ -5,29 +5,20 @@ import {
   getSectionItemSubtitle,
 } from "@/lib/cv/section-item-display";
 import { getPageMargins, getPageSizeMm } from "@/lib/cv/page-format";
+import { resolveCvTypography, typographyToPt } from "@/lib/cv/typography";
 import { stripMarkdown } from "@/lib/markdown/render";
 
 const PT_TO_MM = 25.4 / 72;
-
-type FontSizeSetting = ResumeWithContent["settings"]["fontSize"];
 
 interface Typography {
   bodyPt: number;
   smallPt: number;
   namePt: number;
+  headlinePt: number;
+  contactDetailsPt: number;
   sectionPt: number;
+  itemTitlePt: number;
   lineHeight: number;
-}
-
-function getTypography(fontSize: FontSizeSetting): Typography {
-  const bodyPx = fontSize === "S" ? 11 : fontSize === "L" ? 15 : 13;
-  return {
-    bodyPt: bodyPx * 0.75,
-    smallPt: 9,
-    namePt: 18,
-    sectionPt: 9,
-    lineHeight: 1.4,
-  };
 }
 
 function lineHeightMm(pdf: import("jspdf").jsPDF, typo: Typography): number {
@@ -173,7 +164,7 @@ class VectorPdfLayout {
 
     if (contact.headline) {
       this.pdf.setFont("helvetica", "normal");
-      this.pdf.setFontSize(this.typo.bodyPt);
+      this.pdf.setFontSize(this.typo.headlinePt);
       const headlineLines = this.pdf.splitTextToSize(contact.headline, this.contentWidth);
       this.drawWrappedLines(headlineLines, { color: [82, 82, 91] });
       this.gap(headlineGap);
@@ -188,7 +179,7 @@ class VectorPdfLayout {
 
     if (contactParts.length > 0) {
       this.pdf.setFont("helvetica", "normal");
-      this.pdf.setFontSize(this.typo.smallPt);
+      this.pdf.setFontSize(this.typo.contactDetailsPt);
       this.ensureSpace(lineHeightMm(this.pdf, this.typo));
       this.pdf.setTextColor(113, 113, 122);
       this.pdf.text(contactParts.join("   "), this.marginH, this.y);
@@ -231,7 +222,7 @@ class VectorPdfLayout {
     const itemGap = 3.5;
 
     this.pdf.setFont("helvetica", "bold");
-    this.pdf.setFontSize(this.typo.bodyPt);
+    this.pdf.setFontSize(this.typo.itemTitlePt);
 
     let headlineWidth = this.contentWidth;
     if (dates) {
@@ -239,7 +230,7 @@ class VectorPdfLayout {
       this.pdf.setFontSize(this.typo.smallPt);
       const datesWidth = this.pdf.getTextWidth(dates) + 4;
       this.pdf.setFont("helvetica", "bold");
-      this.pdf.setFontSize(this.typo.bodyPt);
+      this.pdf.setFontSize(this.typo.itemTitlePt);
       headlineWidth = Math.max(20, this.contentWidth - datesWidth);
     }
 
@@ -247,7 +238,7 @@ class VectorPdfLayout {
     const headlineLh = lineHeightMm(this.pdf, this.typo);
 
     this.pdf.setFont("helvetica", "bold");
-    this.pdf.setFontSize(this.typo.bodyPt);
+    this.pdf.setFontSize(this.typo.itemTitlePt);
     this.pdf.setTextColor(24, 24, 27);
 
     if (dates && headlineLines.length === 1) {
@@ -313,7 +304,7 @@ export async function exportResumePdfVector(options: {
   const { content, filename } = options;
   const pageFormat =
     options.pageFormat ?? content.settings.pageFormat ?? "A4";
-  const typo = getTypography(content.settings.fontSize ?? "M");
+  const typo = typographyToPt(resolveCvTypography(content.settings));
 
   const { jsPDF } = await import("jspdf");
   const pageSizeMm = getPageSizeMm(pageFormat);

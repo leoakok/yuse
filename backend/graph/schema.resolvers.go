@@ -12,6 +12,11 @@ import (
 	"github.com/leo/ai-weekend/backend/internal/scope"
 )
 
+// EffectivePhotoURL is the resolver for the effectivePhotoUrl field.
+func (r *contactProfileResolver) EffectivePhotoURL(ctx context.Context, obj *model.ContactProfile) (*string, error) {
+	return cv.EffectiveContactPhotoURL(obj), nil
+}
+
 // CreateResume is the resolver for the createResume field.
 func (r *mutationResolver) CreateResume(ctx context.Context, title string) (*model.Resume, error) {
 	return scope.CV(ctx).CreateResume(title), nil
@@ -78,8 +83,8 @@ func (r *mutationResolver) DeletePortfolio(ctx context.Context, id string) (bool
 }
 
 // UpdatePortfolio is the resolver for the updatePortfolio field.
-func (r *mutationResolver) UpdatePortfolio(ctx context.Context, id string, title *string, contactProfileID *string) (*model.Portfolio, error) {
-	return scope.CV(ctx).UpdatePortfolio(id, title, contactProfileID)
+func (r *mutationResolver) UpdatePortfolio(ctx context.Context, id string, title *string, tagline *string, about *string, contactProfileID *string) (*model.Portfolio, error) {
+	return scope.CV(ctx).UpdatePortfolio(id, title, tagline, about, contactProfileID)
 }
 
 // UpdatePortfolioSettings is the resolver for the updatePortfolioSettings field.
@@ -87,29 +92,59 @@ func (r *mutationResolver) UpdatePortfolioSettings(ctx context.Context, input mo
 	return scope.CV(ctx).UpdatePortfolioSettings(input)
 }
 
-// UpdatePortfolioSectionItemVisibility is the resolver for the updatePortfolioSectionItemVisibility field.
-func (r *mutationResolver) UpdatePortfolioSectionItemVisibility(ctx context.Context, input model.UpdatePortfolioSectionItemVisibilityInput) (*model.PortfolioWithContent, error) {
-	return scope.CV(ctx).UpdatePortfolioSectionItemVisibility(input)
-}
-
-// UpdatePortfolioSectionItem is the resolver for the updatePortfolioSectionItem field.
-func (r *mutationResolver) UpdatePortfolioSectionItem(ctx context.Context, input model.UpdatePortfolioSectionItemInput) (*model.PortfolioWithContent, error) {
-	return scope.CV(ctx).UpdatePortfolioSectionItem(input)
-}
-
-// AddPortfolioSectionItem is the resolver for the addPortfolioSectionItem field.
-func (r *mutationResolver) AddPortfolioSectionItem(ctx context.Context, input model.AddPortfolioSectionItemInput) (*model.PortfolioWithContent, error) {
-	return scope.CV(ctx).AddPortfolioSectionItem(input)
-}
-
-// DeletePortfolioSectionItem is the resolver for the deletePortfolioSectionItem field.
-func (r *mutationResolver) DeletePortfolioSectionItem(ctx context.Context, portfolioID string, sectionItemID string) (*model.PortfolioWithContent, error) {
-	return scope.CV(ctx).DeletePortfolioSectionItem(portfolioID, sectionItemID)
-}
-
 // UpdatePortfolioContactProfile is the resolver for the updatePortfolioContactProfile field.
 func (r *mutationResolver) UpdatePortfolioContactProfile(ctx context.Context, input model.UpdatePortfolioContactProfileInput) (*model.PortfolioWithContent, error) {
 	return scope.CV(ctx).UpdatePortfolioContactProfile(ctx, input)
+}
+
+// AddPortfolioProject is the resolver for the addPortfolioProject field.
+func (r *mutationResolver) AddPortfolioProject(ctx context.Context, input model.AddPortfolioProjectInput) (*model.PortfolioWithContent, error) {
+	return scope.CV(ctx).AddPortfolioProject(input)
+}
+
+// UpdatePortfolioProject is the resolver for the updatePortfolioProject field.
+func (r *mutationResolver) UpdatePortfolioProject(ctx context.Context, input model.UpdatePortfolioProjectInput) (*model.PortfolioWithContent, error) {
+	return scope.CV(ctx).UpdatePortfolioProject(input)
+}
+
+// DeletePortfolioProject is the resolver for the deletePortfolioProject field.
+func (r *mutationResolver) DeletePortfolioProject(ctx context.Context, portfolioID string, projectID string) (*model.PortfolioWithContent, error) {
+	return scope.CV(ctx).DeletePortfolioProject(portfolioID, projectID)
+}
+
+// SetPortfolioProjectVisibility is the resolver for the setPortfolioProjectVisibility field.
+func (r *mutationResolver) SetPortfolioProjectVisibility(ctx context.Context, input model.SetPortfolioProjectVisibilityInput) (*model.PortfolioWithContent, error) {
+	return scope.CV(ctx).SetPortfolioProjectVisibility(input)
+}
+
+// AddPortfolioSkill is the resolver for the addPortfolioSkill field.
+func (r *mutationResolver) AddPortfolioSkill(ctx context.Context, input model.AddPortfolioSkillInput) (*model.PortfolioWithContent, error) {
+	return scope.CV(ctx).AddPortfolioSkill(input)
+}
+
+// UpdatePortfolioSkill is the resolver for the updatePortfolioSkill field.
+func (r *mutationResolver) UpdatePortfolioSkill(ctx context.Context, input model.UpdatePortfolioSkillInput) (*model.PortfolioWithContent, error) {
+	return scope.CV(ctx).UpdatePortfolioSkill(input)
+}
+
+// DeletePortfolioSkill is the resolver for the deletePortfolioSkill field.
+func (r *mutationResolver) DeletePortfolioSkill(ctx context.Context, portfolioID string, skillID string) (*model.PortfolioWithContent, error) {
+	return scope.CV(ctx).DeletePortfolioSkill(portfolioID, skillID)
+}
+
+// AddPortfolioTestimonial is the resolver for the addPortfolioTestimonial field.
+func (r *mutationResolver) AddPortfolioTestimonial(ctx context.Context, input model.AddPortfolioTestimonialInput) (*model.PortfolioWithContent, error) {
+	return scope.CV(ctx).AddPortfolioTestimonial(input)
+}
+
+// UpdatePortfolioTestimonial is the resolver for the updatePortfolioTestimonial field.
+func (r *mutationResolver) UpdatePortfolioTestimonial(ctx context.Context, input model.UpdatePortfolioTestimonialInput) (*model.PortfolioWithContent, error) {
+	return scope.CV(ctx).UpdatePortfolioTestimonial(input)
+}
+
+// DeletePortfolioTestimonial is the resolver for the deletePortfolioTestimonial field.
+func (r *mutationResolver) DeletePortfolioTestimonial(ctx context.Context, portfolioID string, testimonialID string) (*model.PortfolioWithContent, error) {
+	return scope.CV(ctx).DeletePortfolioTestimonial(portfolioID, testimonialID)
 }
 
 // RequestProfilePhotoUpload is the resolver for the requestProfilePhotoUpload field.
@@ -165,6 +200,21 @@ func (r *mutationResolver) SendAssistantMessage(ctx context.Context, threadID st
 // DisconnectConnection is the resolver for the disconnectConnection field.
 func (r *mutationResolver) DisconnectConnection(ctx context.Context, provider model.ConnectionProvider) (bool, error) {
 	return scope.CV(ctx).DisconnectConnection(provider)
+}
+
+// CreateKnowledgeEntry is the resolver for the createKnowledgeEntry field.
+func (r *mutationResolver) CreateKnowledgeEntry(ctx context.Context, input model.CreateKnowledgeEntryInput) (*model.KnowledgeEntry, error) {
+	return scope.CV(ctx).CreateKnowledgeEntry(input)
+}
+
+// UpdateKnowledgeEntry is the resolver for the updateKnowledgeEntry field.
+func (r *mutationResolver) UpdateKnowledgeEntry(ctx context.Context, input model.UpdateKnowledgeEntryInput) (*model.KnowledgeEntry, error) {
+	return scope.CV(ctx).UpdateKnowledgeEntry(input)
+}
+
+// DeleteKnowledgeEntry is the resolver for the deleteKnowledgeEntry field.
+func (r *mutationResolver) DeleteKnowledgeEntry(ctx context.Context, id string) (bool, error) {
+	return scope.CV(ctx).DeleteKnowledgeEntry(id)
 }
 
 // Me is the resolver for the me field.
@@ -266,15 +316,6 @@ func (r *queryResolver) PortfolioWithContent(ctx context.Context, id string) (*m
 	return content, err
 }
 
-// PortfoliosForSection is the resolver for the portfoliosForSection field.
-func (r *queryResolver) PortfoliosForSection(ctx context.Context, sectionID string) ([]*model.Portfolio, error) {
-	portfolios, err := scope.CV(ctx).PortfoliosForSection(sectionID)
-	if cv.NotFound(err) {
-		return nil, nil
-	}
-	return portfolios, err
-}
-
 // SectionItemUsage is the resolver for the sectionItemUsage field.
 func (r *queryResolver) SectionItemUsage(ctx context.Context, id string) (*model.SectionItemUsage, error) {
 	usage, err := scope.CV(ctx).GetSectionItemUsage(id)
@@ -349,11 +390,29 @@ func (r *queryResolver) ConnectionStatus(ctx context.Context, provider model.Con
 	return scope.CV(ctx).ConnectionStatus(provider)
 }
 
+// KnowledgeEntries is the resolver for the knowledgeEntries field.
+func (r *queryResolver) KnowledgeEntries(ctx context.Context, includeDisabled *bool) ([]*model.KnowledgeEntry, error) {
+	include := true
+	if includeDisabled != nil {
+		include = *includeDisabled
+	}
+	return scope.CV(ctx).ListKnowledgeEntries(include)
+}
+
+// ClassifyAssistantMessage is the resolver for the classifyAssistantMessage field.
+func (r *queryResolver) ClassifyAssistantMessage(ctx context.Context, text string, context model.AssistantContextInput) (*model.AssistantClassification, error) {
+	return scope.CV(ctx).ClassifyAssistantMessage(ctx, text, context)
+}
+
+// ContactProfile returns ContactProfileResolver implementation.
+func (r *Resolver) ContactProfile() ContactProfileResolver { return &contactProfileResolver{r} }
+
 // Mutation returns MutationResolver implementation.
 func (r *Resolver) Mutation() MutationResolver { return &mutationResolver{r} }
 
 // Query returns QueryResolver implementation.
 func (r *Resolver) Query() QueryResolver { return &queryResolver{r} }
 
+type contactProfileResolver struct{ *Resolver }
 type mutationResolver struct{ *Resolver }
 type queryResolver struct{ *Resolver }

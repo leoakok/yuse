@@ -39,6 +39,33 @@ type portfolioItemVisibilityLink struct {
 	showInPreview bool
 }
 
+func clonePortfolioProject(p *model.PortfolioProject) *model.PortfolioProject {
+	if p == nil {
+		return nil
+	}
+	c := *p
+	if p.TechStack != nil {
+		c.TechStack = append([]string(nil), p.TechStack...)
+	}
+	return &c
+}
+
+func clonePortfolioSkill(s *model.PortfolioSkill) *model.PortfolioSkill {
+	if s == nil {
+		return nil
+	}
+	c := *s
+	return &c
+}
+
+func clonePortfolioTestimonial(t *model.PortfolioTestimonial) *model.PortfolioTestimonial {
+	if t == nil {
+		return nil
+	}
+	c := *t
+	return &c
+}
+
 func strPtr(s string) *string { return &s }
 
 func trimmedStringPtr(s string) *string {
@@ -281,27 +308,32 @@ func cloneTwinEntry(entry *model.TwinEntry) *model.TwinEntry {
 
 func defaultResumeSettings(resumeID string) *model.ResumeSettings {
 	return &model.ResumeSettings{
-		ResumeID:           resumeID,
-		ThemeID:            "theme-modern",
-		FontSize:           model.FontSizeM,
-		PageFormat:         model.PageFormatA4,
-		MarginHorizontalMm: 12,
-		MarginVerticalMm:   12,
-		ShowPhoto:          false,
-		Locale:             "en-US",
+		ResumeID:                resumeID,
+		ThemeID:                 "theme-modern",
+		FontSize:                model.FontSizeM,
+		ContactNameFontSize:     model.FontSizeM,
+		ContactHeadlineFontSize: model.FontSizeM,
+		ContactDetailsFontSize:  model.FontSizeM,
+		SectionTitleFontSize:    model.FontSizeM,
+		ItemTitleFontSize:       model.FontSizeM,
+		ItemMetaFontSize:        model.FontSizeM,
+		PageFormat:              model.PageFormatA4,
+		MarginHorizontalMm:      12,
+		MarginVerticalMm:        12,
+		ShowPhoto:               false,
+		ItemTitleLayout:         model.ItemTitleLayoutStacked,
+		Locale:                  "en-US",
 	}
 }
 
 func defaultPortfolioSettings(portfolioID string) *model.PortfolioSettings {
 	return &model.PortfolioSettings{
-		PortfolioID:        portfolioID,
-		ThemeID:            "theme-modern",
-		FontSize:           model.FontSizeM,
-		PageFormat:         model.PageFormatA4,
-		MarginHorizontalMm: 12,
-		MarginVerticalMm:   12,
-		ShowPhoto:          false,
-		Locale:             "en-US",
+		PortfolioID: portfolioID,
+		ThemeID:     "theme-modern",
+		Layout:      model.PortfolioLayoutSingle,
+		AccentColor: "#2563eb",
+		ShowPhoto:   false,
+		Locale:      "en-US",
 	}
 }
 

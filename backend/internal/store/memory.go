@@ -32,16 +32,18 @@ type Memory struct {
 	sections          map[string]*model.Section
 	sectionItems      map[string]*model.SectionItem
 	resumeSections          []resumeSectionLink
-	portfolioSections       []portfolioSectionLink
 	sectionItemLinks        []sectionItemLink
 	itemVisibilityLinks     []resumeItemVisibilityLink
-	portfolioVisibilityLinks []portfolioItemVisibilityLink
 	resumeSettings          map[string]*model.ResumeSettings
 	portfolioSettings       map[string]*model.PortfolioSettings
 	portfolios              map[string]*model.Portfolio
+	portfolioProjects       map[string]*model.PortfolioProject
+	portfolioSkills         map[string]*model.PortfolioSkill
+	portfolioTestimonials   map[string]*model.PortfolioTestimonial
 	themes            []*model.CvTheme
 	twinEntries       map[string]*model.TwinEntry
 	trackedJobs         map[string]*model.TrackedJob
+	knowledgeEntries    map[string]*model.KnowledgeEntry
 }
 
 func NewMemory() *Memory {
@@ -49,12 +51,16 @@ func NewMemory() *Memory {
 		contactProfiles:  make(map[string]*model.ContactProfile),
 		resumes:              make(map[string]*model.Resume),
 		portfolios:           make(map[string]*model.Portfolio),
+		portfolioProjects:    make(map[string]*model.PortfolioProject),
+		portfolioSkills:      make(map[string]*model.PortfolioSkill),
+		portfolioTestimonials: make(map[string]*model.PortfolioTestimonial),
 		sections:             make(map[string]*model.Section),
 		sectionItems:         make(map[string]*model.SectionItem),
 		resumeSettings:       make(map[string]*model.ResumeSettings),
 		portfolioSettings:    make(map[string]*model.PortfolioSettings),
 		twinEntries:      make(map[string]*model.TwinEntry),
 		trackedJobs:      make(map[string]*model.TrackedJob),
+		knowledgeEntries: make(map[string]*model.KnowledgeEntry),
 		threads:          make(map[string]*model.AssistantThread),
 		messages:         []*model.AssistantMessage{},
 		actionLogs:       []*model.AssistantActionLog{},
@@ -73,6 +79,7 @@ func (m *Memory) seed() {
 		ID:          DemoUserID,
 		Email:       "demo@cvbuilder.local",
 		DisplayName: "Demo User",
+		Role:        model.UserRoleAdmin,
 		CreatedAt:   ago(30 * 24 * time.Hour),
 		UpdatedAt:   now.Format(time.RFC3339),
 	}
@@ -239,16 +246,16 @@ func (m *Memory) seed() {
 		{resumeID: "resume-startup", sectionID: "section-skills", sectionItemID: "item-skill-go", showInPreview: true},
 	}
 
-	m.resumeSettings["resume-swe"] = &model.ResumeSettings{
-		ResumeID: "resume-swe", ThemeID: "theme-modern", FontSize: model.FontSizeM,
-		PageFormat: model.PageFormatA4, MarginHorizontalMm: 12, MarginVerticalMm: 12, ShowPhoto: false, Locale: "en-US",
-	}
-	m.resumeSettings["resume-startup"] = &model.ResumeSettings{
-		ResumeID: "resume-startup", ThemeID: "theme-compact", FontSize: model.FontSizeS,
-		PageFormat: model.PageFormatLetter, MarginHorizontalMm: 12, MarginVerticalMm: 12, ShowPhoto: false, Locale: "en-US",
-	}
+	m.resumeSettings["resume-swe"] = defaultResumeSettings("resume-swe")
+
+	startupSettings := defaultResumeSettings("resume-startup")
+	startupSettings.ThemeID = "theme-compact"
+	startupSettings.FontSize = model.FontSizeS
+	startupSettings.PageFormat = model.PageFormatLetter
+	m.resumeSettings["resume-startup"] = startupSettings
 
 	seedTwinEntries(m, now)
+	seedKnowledgeEntries(m, now)
 }
 
 func (m *Memory) User() *model.User {
@@ -489,10 +496,7 @@ func (m *Memory) GetResumeSettings(resumeID string) *model.ResumeSettings {
 	if s, ok := m.resumeSettings[resumeID]; ok {
 		return cloneResumeSettings(s)
 	}
-	return &model.ResumeSettings{
-		ResumeID: resumeID, ThemeID: "theme-modern", FontSize: model.FontSizeM,
-		PageFormat: model.PageFormatA4, MarginHorizontalMm: 12, MarginVerticalMm: 12, ShowPhoto: false, Locale: "en-US",
-	}
+	return defaultResumeSettings(resumeID)
 }
 
 func (m *Memory) UpdateResumeSettings(resumeID string, update func(*model.ResumeSettings)) (*model.ResumeSettings, error) {
@@ -505,10 +509,7 @@ func (m *Memory) UpdateResumeSettings(resumeID string, update func(*model.Resume
 
 	settings := m.resumeSettings[resumeID]
 	if settings == nil {
-		settings = &model.ResumeSettings{
-			ResumeID: resumeID, ThemeID: "theme-modern", FontSize: model.FontSizeM,
-			PageFormat: model.PageFormatA4, MarginHorizontalMm: 12, MarginVerticalMm: 12, ShowPhoto: false, Locale: "en-US",
-		}
+		settings = defaultResumeSettings(resumeID)
 	} else {
 		settings = cloneResumeSettings(settings)
 	}
@@ -713,7 +714,7 @@ func (m *Memory) UpdateResumeSectionItem(
 
 func (m *Memory) UpdateContactProfile(
 	resumeID string,
-	fullName, headline, email, phone, location, website, linkedIn, github, photoURL *string,
+	fullName, headline, email, phone, location, website, linkedIn, github, photoURL, linkedinPhotoURL, githubPhotoURL *string,
 ) (*model.ResumeWithContent, error) {
 	m.mu.Lock()
 	defer m.mu.Unlock()
@@ -782,6 +783,12 @@ func (m *Memory) UpdateContactProfile(
 			profile.PhotoURL = &trimmed
 		}
 	}
+	if linkedinPhotoURL != nil {
+		profile.LinkedinPhotoURL = trimmedStringPtr(*linkedinPhotoURL)
+	}
+	if githubPhotoURL != nil {
+		profile.GithubPhotoURL = trimmedStringPtr(*githubPhotoURL)
+	}
 
 	profile.UpdatedAt = now
 	m.contactProfiles[profile.ID] = cloneContactProfile(profile)
@@ -807,7 +814,7 @@ func (m *Memory) resumeWithContentLocked(resumeID string) (*model.ResumeWithCont
 	if settings == nil {
 		settings = &model.ResumeSettings{
 			ResumeID: resumeID, ThemeID: "theme-modern", FontSize: model.FontSizeM,
-			PageFormat: model.PageFormatA4, MarginHorizontalMm: 12, MarginVerticalMm: 12, ShowPhoto: false, Locale: "en-US",
+			PageFormat: model.PageFormatA4, MarginHorizontalMm: 12, MarginVerticalMm: 12, ShowPhoto: false, ItemTitleLayout: model.ItemTitleLayoutStacked, Locale: "en-US",
 		}
 	}
 
@@ -898,26 +905,11 @@ func (m *Memory) SectionItemUsage(itemID string) (*model.SectionItemUsage, error
 		}
 	}
 
-	portfolioIDSet := map[string]struct{}{}
-	for _, sid := range sectionIDs {
-		for _, pl := range m.portfolioSections {
-			if pl.sectionID == sid {
-				portfolioIDSet[pl.portfolioID] = struct{}{}
-			}
-		}
-	}
-	portfolios := make([]*model.Portfolio, 0, len(portfolioIDSet))
-	for pid := range portfolioIDSet {
-		if pf := m.portfolios[pid]; pf != nil {
-			portfolios = append(portfolios, clonePortfolio(pf))
-		}
-	}
-
 	return &model.SectionItemUsage{
 		SectionItem: withDefaultShowInPreview(cloneSectionItem(item)),
 		Sections:    sections,
 		Resumes:     resumes,
-		Portfolios:  portfolios,
+		Portfolios:  []*model.Portfolio{},
 	}, nil
 }
 
@@ -944,14 +936,6 @@ func (m *Memory) DeleteSectionItem(sectionItemID string) error {
 		}
 	}
 	m.itemVisibilityLinks = visibility
-
-	portfolioVisibility := make([]portfolioItemVisibilityLink, 0, len(m.portfolioVisibilityLinks))
-	for _, link := range m.portfolioVisibilityLinks {
-		if link.sectionItemID != sectionItemID {
-			portfolioVisibility = append(portfolioVisibility, link)
-		}
-	}
-	m.portfolioVisibilityLinks = portfolioVisibility
 
 	delete(m.sectionItems, sectionItemID)
 	return nil
@@ -1076,10 +1060,7 @@ func (m *Memory) DuplicateResume(sourceID string) (*model.Resume, error) {
 		copied.ResumeID = newID
 		m.resumeSettings[newID] = copied
 	} else {
-		m.resumeSettings[newID] = &model.ResumeSettings{
-			ResumeID: newID, ThemeID: "theme-modern", FontSize: model.FontSizeM,
-			PageFormat: model.PageFormatA4, MarginHorizontalMm: 12, MarginVerticalMm: 12, ShowPhoto: false, Locale: "en-US",
-		}
+		m.resumeSettings[newID] = defaultResumeSettings(newID)
 	}
 
 	for _, link := range filterResumeSections(m.resumeSections, sourceID) {
@@ -1144,10 +1125,7 @@ func (m *Memory) CreateResume(title string) *model.Resume {
 		UpdatedAt:   now,
 	}
 	m.resumes[id] = cloneResume(resume)
-	m.resumeSettings[id] = &model.ResumeSettings{
-		ResumeID: id, ThemeID: "theme-modern", FontSize: model.FontSizeM,
-		PageFormat: model.PageFormatA4, MarginHorizontalMm: 12, MarginVerticalMm: 12, ShowPhoto: false, Locale: "en-US",
-	}
+	m.resumeSettings[id] = defaultResumeSettings(id)
 
 	specs := resumeDefaultSectionSpecs()
 	for i, spec := range specs {

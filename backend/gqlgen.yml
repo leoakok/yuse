@@ -19,3 +19,7 @@ models:
   JSON:
     model:
       github.com/99designs/gqlgen/graphql.Map
+  ContactProfile:
+    fields:
+      effectivePhotoUrl:
+        resolver: true

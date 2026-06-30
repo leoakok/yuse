@@ -95,17 +95,17 @@ export interface AgentActivity {
 
 export const AGENT_PHASE_LABELS: Record<AgentPhase, string> = {
   idle: "Ready",
-  preparing: "Preparing attachments",
-  sending: "Sending",
-  thinking: "Thinking",
+  preparing: "Getting your files ready…",
+  sending: "Sending your message…",
+  thinking: "Give me a moment…",
   ready: "Done",
   error: "Something went wrong",
 };
 
 export const WORKFLOW_STEP_DEFS: Omit<AgentProgressStep, "status">[] = [
-  { id: "prepare", label: "Preparing attachments" },
-  { id: "send", label: "Sending request" },
-  { id: "think", label: "Thinking" },
+  { id: "prepare", label: "Getting your files ready" },
+  { id: "send", label: "Sending your message" },
+  { id: "think", label: "Give me a moment" },
 ];
 
 /** Client-side file staged in the assistant composer before send. */

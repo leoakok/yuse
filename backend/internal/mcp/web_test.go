@@ -57,6 +57,9 @@ func TestToolActivityStartLabelWebSearch(t *testing.T) {
 	if !strings.Contains(label, "Acme Corp") {
 		t.Fatalf("expected query in label, got %q", label)
 	}
+	if !strings.Contains(label, "Let me search") {
+		t.Fatalf("expected conversational label, got %q", label)
+	}
 }
 
 func TestParseDuckDuckGoResultsRealisticHTML(t *testing.T) {

@@ -1,10 +1,11 @@
 import type {
   Portfolio,
+  PortfolioProject,
   PortfolioSettings,
+  PortfolioSkill,
   PortfolioWithContent,
 } from "@/lib/types/portfolio";
 import { graphqlRequest } from "@/lib/graphql/client";
-import { DEFAULT_PAGE_MARGIN_MM } from "@/lib/cv/page-format";
 import { mapPortfolioWithContent } from "@/lib/portfolio/preview";
 import {
   PORTFOLIOS_QUERY,
@@ -12,18 +13,18 @@ import {
   CREATE_PORTFOLIO_MUTATION,
   DUPLICATE_PORTFOLIO_MUTATION,
   DELETE_PORTFOLIO_MUTATION,
+  UPDATE_PORTFOLIO_MUTATION,
   UPDATE_PORTFOLIO_SETTINGS_MUTATION,
-  UPDATE_PORTFOLIO_SECTION_ITEM_VISIBILITY_MUTATION,
-  UPDATE_PORTFOLIO_SECTION_ITEM_MUTATION,
-  ADD_PORTFOLIO_SECTION_ITEM_MUTATION,
-  DELETE_PORTFOLIO_SECTION_ITEM_MUTATION,
   UPDATE_PORTFOLIO_CONTACT_PROFILE_MUTATION,
+  ADD_PORTFOLIO_PROJECT_MUTATION,
+  UPDATE_PORTFOLIO_PROJECT_MUTATION,
+  DELETE_PORTFOLIO_PROJECT_MUTATION,
+  SET_PORTFOLIO_PROJECT_VISIBILITY_MUTATION,
+  ADD_PORTFOLIO_SKILL_MUTATION,
+  UPDATE_PORTFOLIO_SKILL_MUTATION,
+  DELETE_PORTFOLIO_SKILL_MUTATION,
+  ADD_PORTFOLIO_TESTIMONIAL_MUTATION,
 } from "@/lib/graphql/operations";
-import type { PageFormat } from "@/lib/types/cv";
-
-function mapPageFormat(value: string | undefined): PageFormat {
-  return value === "LETTER" ? "LETTER" : "A4";
-}
 
 export async function listPortfolios(): Promise<Portfolio[]> {
   const data = await graphqlRequest<{ portfolios: Portfolio[] }>(PORTFOLIOS_QUERY);
@@ -63,100 +64,33 @@ export async function deletePortfolio(id: string): Promise<boolean> {
   return data.deletePortfolio;
 }
 
+export async function updatePortfolio(
+  id: string,
+  patch: { title?: string; tagline?: string; about?: string }
+): Promise<Portfolio> {
+  const data = await graphqlRequest<{ updatePortfolio: Portfolio }>(UPDATE_PORTFOLIO_MUTATION, {
+    id,
+    ...patch,
+  });
+  return data.updatePortfolio;
+}
+
 export async function updatePortfolioSettings(
   portfolioId: string,
-  patch: Pick<
-    Partial<PortfolioSettings>,
-    | "pageFormat"
-    | "fontSize"
-    | "themeId"
-    | "showPhoto"
-    | "locale"
-    | "marginHorizontalMm"
-    | "marginVerticalMm"
-  >
+  patch: Pick<Partial<PortfolioSettings>, "layout" | "accentColor" | "themeId" | "showPhoto" | "locale">
 ): Promise<PortfolioSettings> {
   const input: Record<string, unknown> = { portfolioId };
-  if (patch.pageFormat != null) input.pageFormat = patch.pageFormat;
-  if (patch.fontSize != null) input.fontSize = patch.fontSize;
+  if (patch.layout != null) input.layout = patch.layout;
+  if (patch.accentColor != null) input.accentColor = patch.accentColor;
   if (patch.themeId != null) input.themeId = patch.themeId;
   if (patch.showPhoto != null) input.showPhoto = patch.showPhoto;
   if (patch.locale != null) input.locale = patch.locale;
-  if (patch.marginHorizontalMm != null) input.marginHorizontalMm = patch.marginHorizontalMm;
-  if (patch.marginVerticalMm != null) input.marginVerticalMm = patch.marginVerticalMm;
 
   const data = await graphqlRequest<{ updatePortfolioSettings: PortfolioSettings }>(
     UPDATE_PORTFOLIO_SETTINGS_MUTATION,
     { input }
   );
-  return {
-    ...data.updatePortfolioSettings,
-    pageFormat: mapPageFormat(data.updatePortfolioSettings.pageFormat as string),
-    marginHorizontalMm:
-      data.updatePortfolioSettings.marginHorizontalMm ?? DEFAULT_PAGE_MARGIN_MM,
-    marginVerticalMm:
-      data.updatePortfolioSettings.marginVerticalMm ?? DEFAULT_PAGE_MARGIN_MM,
-  };
-}
-
-export async function updatePortfolioSectionItemVisibility(
-  portfolioId: string,
-  sectionId: string,
-  sectionItemId: string,
-  showInPreview: boolean
-): Promise<PortfolioWithContent> {
-  const data = await graphqlRequest<{
-    updatePortfolioSectionItemVisibility: PortfolioWithContent;
-  }>(UPDATE_PORTFOLIO_SECTION_ITEM_VISIBILITY_MUTATION, {
-    input: { portfolioId, sectionId, sectionItemId, showInPreview },
-  });
-  return mapPortfolioWithContent(data.updatePortfolioSectionItemVisibility);
-}
-
-export async function updatePortfolioSectionItem(
-  portfolioId: string,
-  sectionId: string,
-  sectionItemId: string,
-  patch: { headline?: string; body?: string; metadata?: Record<string, unknown> }
-): Promise<PortfolioWithContent> {
-  const input: Record<string, unknown> = { portfolioId, sectionId, sectionItemId };
-  if (patch.headline != null) input.headline = patch.headline;
-  if (patch.body != null) input.body = patch.body;
-  if (patch.metadata != null) input.metadata = patch.metadata;
-
-  const data = await graphqlRequest<{ updatePortfolioSectionItem: PortfolioWithContent }>(
-    UPDATE_PORTFOLIO_SECTION_ITEM_MUTATION,
-    { input }
-  );
-  return mapPortfolioWithContent(data.updatePortfolioSectionItem);
-}
-
-export async function addPortfolioSectionItem(
-  portfolioId: string,
-  sectionId: string,
-  patch?: { headline?: string; body?: string; metadata?: Record<string, unknown> }
-): Promise<PortfolioWithContent> {
-  const input: Record<string, unknown> = { portfolioId, sectionId };
-  if (patch?.headline != null) input.headline = patch.headline;
-  if (patch?.body != null) input.body = patch.body;
-  if (patch?.metadata != null) input.metadata = patch.metadata;
-
-  const data = await graphqlRequest<{ addPortfolioSectionItem: PortfolioWithContent }>(
-    ADD_PORTFOLIO_SECTION_ITEM_MUTATION,
-    { input }
-  );
-  return mapPortfolioWithContent(data.addPortfolioSectionItem);
-}
-
-export async function deletePortfolioSectionItem(
-  portfolioId: string,
-  sectionItemId: string
-): Promise<PortfolioWithContent> {
-  const data = await graphqlRequest<{ deletePortfolioSectionItem: PortfolioWithContent }>(
-    DELETE_PORTFOLIO_SECTION_ITEM_MUTATION,
-    { portfolioId, sectionItemId }
-  );
-  return mapPortfolioWithContent(data.deletePortfolioSectionItem);
+  return data.updatePortfolioSettings;
 }
 
 export async function updatePortfolioContactProfile(
@@ -182,6 +116,126 @@ export async function updatePortfolioContactProfile(
     { input }
   );
   return mapPortfolioWithContent(data.updatePortfolioContactProfile);
+}
+
+export async function addPortfolioProject(
+  portfolioId: string,
+  patch: {
+    title: string;
+    tagline?: string;
+    problem?: string;
+    approach?: string;
+    outcome?: string;
+    techStack?: string[];
+    liveUrl?: string;
+    repoUrl?: string;
+    imageUrl?: string;
+    featured?: boolean;
+  }
+): Promise<PortfolioWithContent> {
+  const data = await graphqlRequest<{ addPortfolioProject: PortfolioWithContent }>(
+    ADD_PORTFOLIO_PROJECT_MUTATION,
+    { input: { portfolioId, ...patch } }
+  );
+  return mapPortfolioWithContent(data.addPortfolioProject);
+}
+
+export async function updatePortfolioProject(
+  portfolioId: string,
+  projectId: string,
+  patch: Partial<
+    Pick<
+      PortfolioProject,
+      | "title"
+      | "tagline"
+      | "problem"
+      | "approach"
+      | "outcome"
+      | "techStack"
+      | "liveUrl"
+      | "repoUrl"
+      | "imageUrl"
+      | "featured"
+      | "showInPreview"
+    >
+  >
+): Promise<PortfolioWithContent> {
+  const data = await graphqlRequest<{ updatePortfolioProject: PortfolioWithContent }>(
+    UPDATE_PORTFOLIO_PROJECT_MUTATION,
+    { input: { portfolioId, projectId, ...patch } }
+  );
+  return mapPortfolioWithContent(data.updatePortfolioProject);
+}
+
+export async function deletePortfolioProject(
+  portfolioId: string,
+  projectId: string
+): Promise<PortfolioWithContent> {
+  const data = await graphqlRequest<{ deletePortfolioProject: PortfolioWithContent }>(
+    DELETE_PORTFOLIO_PROJECT_MUTATION,
+    { portfolioId, projectId }
+  );
+  return mapPortfolioWithContent(data.deletePortfolioProject);
+}
+
+export async function setPortfolioProjectVisibility(
+  portfolioId: string,
+  projectId: string,
+  showInPreview: boolean
+): Promise<PortfolioWithContent> {
+  const data = await graphqlRequest<{ setPortfolioProjectVisibility: PortfolioWithContent }>(
+    SET_PORTFOLIO_PROJECT_VISIBILITY_MUTATION,
+    { input: { portfolioId, projectId, showInPreview } }
+  );
+  return mapPortfolioWithContent(data.setPortfolioProjectVisibility);
+}
+
+export async function addPortfolioSkill(
+  portfolioId: string,
+  name: string,
+  category?: string
+): Promise<PortfolioWithContent> {
+  const data = await graphqlRequest<{ addPortfolioSkill: PortfolioWithContent }>(
+    ADD_PORTFOLIO_SKILL_MUTATION,
+    { input: { portfolioId, name, category } }
+  );
+  return mapPortfolioWithContent(data.addPortfolioSkill);
+}
+
+export async function updatePortfolioSkill(
+  portfolioId: string,
+  skillId: string,
+  patch: Partial<Pick<PortfolioSkill, "name" | "category" | "showInPreview">>
+): Promise<PortfolioWithContent> {
+  const data = await graphqlRequest<{ updatePortfolioSkill: PortfolioWithContent }>(
+    UPDATE_PORTFOLIO_SKILL_MUTATION,
+    { input: { portfolioId, skillId, ...patch } }
+  );
+  return mapPortfolioWithContent(data.updatePortfolioSkill);
+}
+
+export async function deletePortfolioSkill(
+  portfolioId: string,
+  skillId: string
+): Promise<PortfolioWithContent> {
+  const data = await graphqlRequest<{ deletePortfolioSkill: PortfolioWithContent }>(
+    DELETE_PORTFOLIO_SKILL_MUTATION,
+    { portfolioId, skillId }
+  );
+  return mapPortfolioWithContent(data.deletePortfolioSkill);
+}
+
+export async function addPortfolioTestimonial(
+  portfolioId: string,
+  quote: string,
+  author?: string,
+  role?: string
+): Promise<PortfolioWithContent> {
+  const data = await graphqlRequest<{ addPortfolioTestimonial: PortfolioWithContent }>(
+    ADD_PORTFOLIO_TESTIMONIAL_MUTATION,
+    { input: { portfolioId, quote, author, role } }
+  );
+  return mapPortfolioWithContent(data.addPortfolioTestimonial);
 }
 
 export { mapPortfolioWithContent };

@@ -1,11 +1,16 @@
 "use client";
 
-import { useState } from "react";
-import type { PageFormat } from "@/lib/types/cv";
-import { DEFAULT_PAGE_MARGIN_MM, PAGE_FORMATS } from "@/lib/cv/page-format";
+import { useState, type ReactNode } from "react";
+import type { ItemTitleLayout, PageFormat } from "@/lib/types/cv";
+import { DEFAULT_PAGE_MARGIN_MM, marginPresetValues, PAGE_FORMATS, snapMarginMm } from "@/lib/cv/page-format";
+import {
+  DEFAULT_CV_TYPOGRAPHY_SETTINGS,
+  type CvTypographySettings,
+} from "@/lib/cv/typography";
 import { updateResumeSettings } from "@/lib/api/cv-api";
+import { DiscreteSlider } from "@/components/cv/discrete-slider";
+import { TypographySizeControl } from "@/components/cv/typography-size-control";
 import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
 import { cn } from "@/lib/utils";
 
 interface ResumeDesignSettingsProps {
@@ -19,23 +24,114 @@ interface ResumeDesignSettingsProps {
   marginVerticalMm?: number;
   savedMarginHorizontalMm?: number;
   savedMarginVerticalMm?: number;
+  itemTitleLayout?: ItemTitleLayout;
+  savedItemTitleLayout?: ItemTitleLayout;
+  typography?: CvTypographySettings;
+  savedTypography?: CvTypographySettings;
   onPageFormatChange: (format: PageFormat) => void;
   onShowPhotoChange?: (showPhoto: boolean) => void;
+  onItemTitleLayoutChange?: (layout: ItemTitleLayout) => void;
   onMarginHorizontalChange?: (value: number) => void;
   onMarginVerticalChange?: (value: number) => void;
+  onTypographyChange?: (settings: CvTypographySettings) => void;
   onSaved?: (settings: {
     pageFormat: PageFormat;
     showPhoto: boolean;
+    itemTitleLayout: ItemTitleLayout;
     marginHorizontalMm: number;
     marginVerticalMm: number;
+    typography: CvTypographySettings;
   }) => void;
 }
 
-const MARGIN_PRESETS_MM = [8, 10, 12, 15, 20, 25];
+const MARGIN_STEPS = marginPresetValues().map((mm) => ({ value: mm }));
 
-function clampMargin(value: number): number {
-  if (!Number.isFinite(value)) return DEFAULT_PAGE_MARGIN_MM;
-  return Math.min(40, Math.max(0, Math.round(value * 10) / 10));
+const PAGE_SIZE_OPTIONS = PAGE_FORMATS.map((f) => ({
+  id: f.id,
+  label: f.id === "LETTER" ? "US Letter" : f.label,
+}));
+
+const ITEM_TITLE_LAYOUT_OPTIONS: { id: ItemTitleLayout; label: string }[] = [
+  { id: "STACKED", label: "Stacked" },
+  { id: "INLINE", label: "Same line" },
+];
+
+const TYPOGRAPHY_CONTROLS: { key: keyof CvTypographySettings; label: string }[] = [
+  { key: "fontSize", label: "Base font" },
+  { key: "contactNameFontSize", label: "Full name" },
+  { key: "contactHeadlineFontSize", label: "Headline" },
+  { key: "contactDetailsFontSize", label: "Contact" },
+  { key: "sectionTitleFontSize", label: "Section headings" },
+  { key: "itemTitleFontSize", label: "Entry header" },
+  { key: "itemMetaFontSize", label: "Meta" },
+];
+
+function typographyDirty(current: CvTypographySettings, saved: CvTypographySettings): boolean {
+  return TYPOGRAPHY_CONTROLS.some(({ key }) => current[key] !== saved[key]);
+}
+
+function DesignBlock({ title, children }: { title: string; children: ReactNode }) {
+  return (
+    <section className="rounded-lg border bg-card p-3">
+      <h2 className="mb-2.5 text-xs font-medium text-muted-foreground">{title}</h2>
+      {children}
+    </section>
+  );
+}
+
+function OptionPills<T extends string>({
+  options,
+  value,
+  onChange,
+}: {
+  options: { id: T; label: string }[];
+  value: T;
+  onChange: (id: T) => void;
+}) {
+  return (
+    <div className="flex gap-1">
+      {options.map((option) => {
+        const selected = value === option.id;
+        return (
+          <button
+            key={option.id}
+            type="button"
+            onClick={() => onChange(option.id)}
+            className={cn(
+              "flex-1 rounded-md border px-2 py-1.5 text-xs transition-colors",
+              selected
+                ? "border-primary bg-primary/5 font-medium text-foreground"
+                : "text-muted-foreground hover:bg-muted/50"
+            )}
+          >
+            {option.label}
+          </button>
+        );
+      })}
+    </div>
+  );
+}
+
+function MarginControl({
+  label,
+  valueMm,
+  onChange,
+}: {
+  label: string;
+  valueMm: number;
+  onChange: (mm: number) => void;
+}) {
+  const snapped = snapMarginMm(valueMm);
+
+  return (
+    <div className="space-y-2">
+      <div className="flex items-baseline justify-between gap-2">
+        <span className="text-sm font-semibold leading-none">{label}</span>
+        <span className="shrink-0 text-sm tabular-nums text-muted-foreground">{snapped} mm</span>
+      </div>
+      <DiscreteSlider steps={MARGIN_STEPS} value={snapped} onChange={onChange} />
+    </div>
+  );
 }
 
 export function ResumeDesignSettings({
@@ -49,10 +145,16 @@ export function ResumeDesignSettings({
   marginVerticalMm = DEFAULT_PAGE_MARGIN_MM,
   savedMarginHorizontalMm = DEFAULT_PAGE_MARGIN_MM,
   savedMarginVerticalMm = DEFAULT_PAGE_MARGIN_MM,
+  itemTitleLayout = "STACKED",
+  savedItemTitleLayout = "STACKED",
+  typography = DEFAULT_CV_TYPOGRAPHY_SETTINGS,
+  savedTypography = DEFAULT_CV_TYPOGRAPHY_SETTINGS,
   onPageFormatChange,
   onShowPhotoChange = () => {},
+  onItemTitleLayoutChange = () => {},
   onMarginHorizontalChange = () => {},
   onMarginVerticalChange = () => {},
+  onTypographyChange = () => {},
   onSaved,
 }: ResumeDesignSettingsProps) {
   const [saving, setSaving] = useState(false);
@@ -60,8 +162,10 @@ export function ResumeDesignSettings({
   const dirty =
     pageFormat !== savedPageFormat ||
     showPhoto !== savedShowPhoto ||
+    itemTitleLayout !== savedItemTitleLayout ||
     marginHorizontalMm !== savedMarginHorizontalMm ||
-    marginVerticalMm !== savedMarginVerticalMm;
+    marginVerticalMm !== savedMarginVerticalMm ||
+    typographyDirty(typography, savedTypography);
 
   const handleSave = async () => {
     setSaving(true);
@@ -70,148 +174,107 @@ export function ResumeDesignSettings({
       await updateResumeSettings(resumeId, {
         pageFormat,
         showPhoto,
+        itemTitleLayout,
         marginHorizontalMm,
         marginVerticalMm,
+        ...typography,
       });
       setSaved(true);
-      onSaved?.({ pageFormat, showPhoto, marginHorizontalMm, marginVerticalMm });
+      onSaved?.({
+        pageFormat,
+        showPhoto,
+        itemTitleLayout,
+        marginHorizontalMm,
+        marginVerticalMm,
+        typography,
+      });
     } finally {
       setSaving(false);
     }
   };
 
   return (
-    <div className="space-y-6">
-      <section className="rounded-lg border bg-card p-4">
-        <h2 className="text-sm font-medium">Theme</h2>
-        <p className="mt-1 text-xs text-muted-foreground">
-          The visual style applied to your resume preview.
-        </p>
-        <p className="mt-3 text-sm font-medium">{themeName}</p>
-      </section>
+    <div className="space-y-3">
+      <DesignBlock title="Theme">
+        <p className="text-sm font-medium">{themeName}</p>
+      </DesignBlock>
 
-      <section className="rounded-lg border bg-card p-4">
-        <h2 className="text-sm font-medium">Page size</h2>
-        <p className="mt-1 text-xs text-muted-foreground">
-          Choose the paper format for your live preview and PDF export.
-        </p>
-        <div className="mt-4 grid gap-2">
-          {PAGE_FORMATS.map((format) => {
-            const selected = pageFormat === format.id;
-            return (
-              <button
-                key={format.id}
-                type="button"
-                onClick={() => onPageFormatChange(format.id)}
-                className={cn(
-                  "rounded-lg border px-4 py-3 text-left transition-colors",
-                  selected
-                    ? "border-primary bg-primary/5 ring-1 ring-primary"
-                    : "hover:bg-muted/50"
-                )}
-              >
-                <p className="text-sm font-medium">{format.label}</p>
-                <p className="mt-0.5 text-xs text-muted-foreground">{format.description}</p>
-              </button>
-            );
-          })}
-        </div>
-      </section>
-
-      <section className="rounded-lg border bg-card p-4">
-        <h2 className="text-sm font-medium">Page margins</h2>
-        <p className="mt-1 text-xs text-muted-foreground">
-          Horizontal and vertical margins in millimeters. Applies to preview and PDF export.
-        </p>
-        <div className="mt-4 grid gap-4 sm:grid-cols-2">
-          <label className="space-y-1.5">
-            <span className="text-xs font-medium text-muted-foreground">Horizontal</span>
-            <div className="flex items-center gap-2">
-              <Input
-                type="number"
-                min={0}
-                max={40}
-                step={0.5}
-                value={marginHorizontalMm}
-                onChange={(event) => {
-                  onMarginHorizontalChange(clampMargin(Number(event.target.value)));
-                  setSaved(false);
-                }}
-              />
-              <span className="text-xs text-muted-foreground">mm</span>
-            </div>
-          </label>
-          <label className="space-y-1.5">
-            <span className="text-xs font-medium text-muted-foreground">Vertical</span>
-            <div className="flex items-center gap-2">
-              <Input
-                type="number"
-                min={0}
-                max={40}
-                step={0.5}
-                value={marginVerticalMm}
-                onChange={(event) => {
-                  onMarginVerticalChange(clampMargin(Number(event.target.value)));
-                  setSaved(false);
-                }}
-              />
-              <span className="text-xs text-muted-foreground">mm</span>
-            </div>
-          </label>
-        </div>
-        <div className="mt-3 flex flex-wrap gap-2">
-          {MARGIN_PRESETS_MM.map((preset) => (
-            <button
-              key={preset}
-              type="button"
-              onClick={() => {
-                onMarginHorizontalChange(preset);
-                onMarginVerticalChange(preset);
-                setSaved(false);
-              }}
-              className="rounded-md border px-2.5 py-1 text-xs text-muted-foreground transition-colors hover:bg-muted/50"
-            >
-              {preset} mm
-            </button>
-          ))}
-        </div>
-      </section>
-
-      <section className="rounded-lg border bg-card p-4">
-        <h2 className="text-sm font-medium">Profile photo</h2>
-        <p className="mt-1 text-xs text-muted-foreground">
-          Show your profile photo in the resume header when a photo URL is set on your profile.
-        </p>
-        <label className="mt-4 flex items-center gap-2 text-sm">
-          <input
-            type="checkbox"
-            checked={showPhoto}
-            onChange={(event) => {
-              onShowPhotoChange(event.target.checked);
+      <DesignBlock title="Page">
+        <div className="space-y-3">
+          <OptionPills
+            options={PAGE_SIZE_OPTIONS}
+            value={pageFormat}
+            onChange={onPageFormatChange}
+          />
+          <MarginControl
+            label="Horizontal"
+            valueMm={marginHorizontalMm}
+            onChange={(v) => {
+              onMarginHorizontalChange(v);
               setSaved(false);
             }}
-            className="size-4 rounded border"
           />
-          Show photo in preview
-        </label>
-      </section>
+          <MarginControl
+            label="Vertical"
+            valueMm={marginVerticalMm}
+            onChange={(v) => {
+              onMarginVerticalChange(v);
+              setSaved(false);
+            }}
+          />
+        </div>
+      </DesignBlock>
 
-      <section className="rounded-lg border border-dashed bg-muted/20 p-4">
-        <h2 className="text-sm font-medium text-muted-foreground">Coming soon</h2>
-        <ul className="mt-2 space-y-1 text-xs text-muted-foreground">
-          <li>Font family and sizes</li>
-          <li>Accent colors</li>
-          <li>Section spacing</li>
-        </ul>
-      </section>
+      <DesignBlock title="Type">
+        <div className="space-y-4">
+          {TYPOGRAPHY_CONTROLS.map(({ key, label }) => (
+            <TypographySizeControl
+              key={key}
+              label={label}
+              settingKey={key}
+              value={typography[key]}
+              typography={typography}
+              onChange={(next) => {
+                onTypographyChange({ ...typography, [key]: next });
+                setSaved(false);
+              }}
+            />
+          ))}
+        </div>
+      </DesignBlock>
+
+      <DesignBlock title="Layout">
+        <div className="space-y-3">
+          <OptionPills
+            options={ITEM_TITLE_LAYOUT_OPTIONS}
+            value={itemTitleLayout}
+            onChange={(id) => {
+              onItemTitleLayoutChange(id);
+              setSaved(false);
+            }}
+          />
+          <label className="flex items-center gap-2 text-xs">
+            <input
+              type="checkbox"
+              checked={showPhoto}
+              onChange={(event) => {
+                onShowPhotoChange(event.target.checked);
+                setSaved(false);
+              }}
+              className="size-3.5 rounded border"
+            />
+            Show photo
+          </label>
+        </div>
+      </DesignBlock>
 
       {dirty || saved ? (
-        <div className="flex items-center justify-end gap-2">
+        <div className="flex items-center justify-end gap-2 pt-1">
           {saved && !dirty ? (
-            <p className="text-xs text-muted-foreground">Changes saved</p>
+            <span className="text-xs text-muted-foreground">Saved</span>
           ) : null}
           <Button size="sm" onClick={() => void handleSave()} disabled={saving || !dirty}>
-            {saving ? "Saving…" : "Save changes"}
+            {saving ? "Saving…" : "Save"}
           </Button>
         </div>
       ) : null}

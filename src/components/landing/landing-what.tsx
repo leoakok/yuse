@@ -4,7 +4,11 @@ import { buttonVariants } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
 import { Reveal } from "@/components/landing/reveal";
 
-export function LandingWhat() {
+type LandingWhatProps = {
+  isSignedIn?: boolean;
+};
+
+export function LandingWhat({ isSignedIn = false }: LandingWhatProps) {
   return (
     <section className="border-t border-border/60">
       <div className="relative mx-auto w-full max-w-4xl px-5 py-24 sm:px-8 sm:py-28">
@@ -27,22 +31,34 @@ export function LandingWhat() {
           </p>
 
           <div className="mt-9 flex flex-col items-center gap-3 sm:flex-row">
-            <Link
-              href="/login"
-              className={cn(buttonVariants({ size: "lg" }), "px-5")}
-            >
-              Get started
-              <ArrowRight />
-            </Link>
-            <Link
-              href="/login"
-              className={cn(
-                buttonVariants({ variant: "outline", size: "lg" }),
-                "px-5",
-              )}
-            >
-              Sign in
-            </Link>
+            {isSignedIn ? (
+              <Link
+                href="/home"
+                className={cn(buttonVariants({ size: "lg" }), "px-5")}
+              >
+                Go to app
+                <ArrowRight />
+              </Link>
+            ) : (
+              <>
+                <Link
+                  href="/login"
+                  className={cn(buttonVariants({ size: "lg" }), "px-5")}
+                >
+                  Get started
+                  <ArrowRight />
+                </Link>
+                <Link
+                  href="/login"
+                  className={cn(
+                    buttonVariants({ variant: "outline", size: "lg" }),
+                    "px-5",
+                  )}
+                >
+                  Sign in
+                </Link>
+              </>
+            )}
           </div>
         </Reveal>
       </div>

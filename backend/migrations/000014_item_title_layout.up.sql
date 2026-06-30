@@ -1,0 +1,2 @@
+ALTER TABLE resume_settings
+    ADD COLUMN IF NOT EXISTS item_title_layout TEXT NOT NULL DEFAULT 'STACKED';

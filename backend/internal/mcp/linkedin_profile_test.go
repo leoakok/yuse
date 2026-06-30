@@ -92,8 +92,11 @@ func TestToolActivityStartLabelLinkedInProfile(t *testing.T) {
 	label := ToolActivityStartLabel("fetch_linkedin_profile", map[string]any{
 		"profileUrl": "https://www.linkedin.com/in/janedoe",
 	})
-	if !strings.Contains(label, "linkedin.com/in/janedoe") {
-		t.Fatalf("expected linkedin url in label, got %q", label)
+	if !strings.Contains(label, "LinkedIn") {
+		t.Fatalf("expected linkedin in label, got %q", label)
+	}
+	if strings.Contains(label, "linkedin.com") {
+		t.Fatal("label must not expose profile URL")
 	}
 	if strings.Contains(label, "kocgencyetenek") {
 		t.Fatal("label must not expose upstream API host")

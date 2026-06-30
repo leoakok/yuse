@@ -64,6 +64,7 @@ func (x *WebsiteExplorer) exploreGitHub(rawURL string, maxItems int, progress To
 	if err != nil {
 		return nil, err
 	}
+	enrichGitHubProfileResult(ghResult)
 	importRepos, _ := ghResult["importRepos"].([]map[string]any)
 	if importRepos == nil {
 		if anyRepos, ok := ghResult["importRepos"].([]any); ok {

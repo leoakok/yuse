@@ -21,6 +21,20 @@ type SessionScope struct {
 	ThreadID    string
 }
 
+// adminEmails are granted the ADMIN role on sign-in/registration. The role
+// migration also promotes any matching row that already exists.
+var adminEmails = map[string]bool{
+	"dev@yuse.ahmetkok.dev": true,
+}
+
+// RoleForEmail returns the platform role for an email address.
+func RoleForEmail(email string) string {
+	if adminEmails[strings.ToLower(strings.TrimSpace(email))] {
+		return "ADMIN"
+	}
+	return "USER"
+}
+
 // ErrSessionInvalid is returned when a valid JWT refers to a user that no longer exists
 // and the request is not an explicit OAuth bootstrap.
 var ErrSessionInvalid = errors.New("session invalid")
@@ -88,10 +102,10 @@ func createUserFromClaims(ctx context.Context, tx pgx.Tx, claims auth.Claims, us
 	}
 
 	_, err = tx.Exec(ctx, `
-		INSERT INTO users (id, email, display_name, avatar_url, google_id, created_at, updated_at)
-		VALUES ($1, $2, $3, $4, NULLIF($5, ''), $6, $6)
+		INSERT INTO users (id, email, display_name, avatar_url, google_id, role, created_at, updated_at)
+		VALUES ($1, $2, $3, $4, NULLIF($5, ''), $6, $7, $7)
 	`, userID, strings.TrimSpace(claims.Email), strings.TrimSpace(claims.Name),
-		strings.TrimSpace(claims.Picture), googleID, now)
+		strings.TrimSpace(claims.Picture), googleID, RoleForEmail(claims.Email), now)
 	if err != nil {
 		return fmt.Errorf("create user: %w", err)
 	}
@@ -109,10 +123,11 @@ func syncUserFromClaims(ctx context.Context, tx pgx.Tx, claims auth.Claims, user
 				ELSE avatar_url
 			END,
 			google_id = COALESCE(NULLIF($5::text, ''), google_id),
+			role = CASE WHEN $7 = 'ADMIN' THEN 'ADMIN' ELSE role END,
 			updated_at = $6
 		WHERE id = $1
 	`, userID, strings.TrimSpace(claims.Email), strings.TrimSpace(claims.Name),
-		strings.TrimSpace(claims.Picture), googleID, now)
+		strings.TrimSpace(claims.Picture), googleID, now, RoleForEmail(claims.Email))
 	if err != nil {
 		return fmt.Errorf("sync user: %w", err)
 	}
@@ -190,9 +205,9 @@ func RegisterEmailUser(ctx context.Context, pool *pgxpool.Pool, email, password,
 	}
 
 	_, err = tx.Exec(ctx, `
-		INSERT INTO users (id, email, display_name, password_hash, created_at, updated_at)
-		VALUES ($1, $2, $3, $4, $5, $5)
-	`, userID, normalizedEmail, name, hash, now)
+		INSERT INTO users (id, email, display_name, password_hash, role, created_at, updated_at)
+		VALUES ($1, $2, $3, $4, $5, $6, $6)
+	`, userID, normalizedEmail, name, hash, RoleForEmail(normalizedEmail), now)
 	if err != nil {
 		return SessionScope{}, fmt.Errorf("create user: %w", err)
 	}
@@ -302,7 +317,7 @@ func personalWorkspaceName(displayName string) string {
 // UserByID loads a user row for the me query.
 func UserByID(ctx context.Context, pool *pgxpool.Pool, userID string) (*model.User, error) {
 	row := pool.QueryRow(ctx, `
-		SELECT id, email, display_name, avatar_url, created_at, updated_at
+		SELECT id, email, display_name, avatar_url, role, created_at, updated_at
 		FROM users WHERE id = $1
 	`, userID)
 	return scanUser(row)

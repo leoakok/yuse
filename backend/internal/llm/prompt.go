@@ -34,14 +34,14 @@ func buildAgentSystemPrompt(assistantContext model.AssistantContextInput, twinCo
 	case model.AssistantViewPortfolioDetail:
 		if assistantContext.PortfolioID != nil && *assistantContext.PortfolioID != "" {
 			b.WriteString(fmt.Sprintf(
-				"Open in editor: portfolio %q (UI context). Use this id only when they mean this/current portfolio without naming another. If they name a site or person → list_portfolios and match by title first. Profile header → update_portfolio_contact_profile; sections below → portfolio section tools.\n",
+				"Open in editor: portfolio %q (UI context). Use this id only when they mean this/current portfolio without naming another. If they name a site or person → list_portfolios and match by title first. Hero/contact → update_portfolio_contact_profile; tagline/about → update_portfolio; projects → add_portfolio_project / update_portfolio_project; skills → add_portfolio_skill.\n",
 				*assistantContext.PortfolioID,
 			))
 		} else {
 			b.WriteString("On a portfolio page without portfolioId — call list_portfolios if unclear which site.\n")
 		}
 	case model.AssistantViewPortfolios:
-		b.WriteString("On Portfolios list. Build or populate portfolio sites with create_portfolio and portfolio section tools. Showcase projects and experience — projects-first ordering. Never output section headings or a markdown draft in chat.\n")
+		b.WriteString("On Portfolios list. Build showcase sites with create_portfolio, add_portfolio_project (3–5 case studies with PAR), add_portfolio_skill, update_portfolio for tagline/about. Never output a markdown portfolio draft in chat.\n")
 	case model.AssistantViewResumeDetail:
 		if assistantContext.ResumeID != nil && *assistantContext.ResumeID != "" {
 			b.WriteString(fmt.Sprintf(
@@ -67,7 +67,7 @@ func buildAgentSystemPrompt(assistantContext model.AssistantContextInput, twinCo
 	case model.AssistantViewSections, model.AssistantViewItems:
 		b.WriteString("Browsing section library. Use list_sections / list_resumes to target a CV.\n")
 	default:
-		b.WriteString("Create/build requests → tools this turn. Never a chat-only CV draft.\n")
+		b.WriteString("When create/build intent is clear → tools this turn. If the message is short or unclear, ask one clarifying question first — never a chat-only CV draft.\n")
 	}
 	if twinContext != "" {
 		b.WriteString("\n")

@@ -4,7 +4,11 @@ import { buttonVariants } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
 import { Reveal } from "@/components/landing/reveal";
 
-export function LandingHero() {
+type LandingHeroProps = {
+  isSignedIn?: boolean;
+};
+
+export function LandingHero({ isSignedIn = false }: LandingHeroProps) {
   return (
     <section className="relative overflow-hidden">
       {/* Soft accent glow, reusing the app's primary tone. */}
@@ -40,13 +44,23 @@ export function LandingHero() {
 
         <Reveal delay={240}>
           <div className="mt-9 flex flex-col items-center gap-3 sm:flex-row">
-            <Link
-              href="/login"
-              className={cn(buttonVariants({ size: "lg" }), "px-5")}
-            >
-              Get started
-              <ArrowRight />
-            </Link>
+            {isSignedIn ? (
+              <Link
+                href="/home"
+                className={cn(buttonVariants({ size: "lg" }), "px-5")}
+              >
+                Go to app
+                <ArrowRight />
+              </Link>
+            ) : (
+              <Link
+                href="/login"
+                className={cn(buttonVariants({ size: "lg" }), "px-5")}
+              >
+                Get started
+                <ArrowRight />
+              </Link>
+            )}
             <Link
               href="#how"
               className={cn(
@@ -59,11 +73,13 @@ export function LandingHero() {
           </div>
         </Reveal>
 
-        <Reveal delay={320}>
-          <p className="mt-4 text-xs text-muted-foreground">
-            Free to start · Sign in with Google
-          </p>
-        </Reveal>
+        {!isSignedIn ? (
+          <Reveal delay={320}>
+            <p className="mt-4 text-xs text-muted-foreground">
+              Free to start · Sign in with Google
+            </p>
+          </Reveal>
+        ) : null}
       </div>
     </section>
   );

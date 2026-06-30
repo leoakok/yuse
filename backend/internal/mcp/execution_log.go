@@ -73,51 +73,45 @@ func SummarizeToolResult(tool string, result any, err string) string {
 		query, _ := m["query"].(string)
 		query = strings.TrimSpace(query)
 		if auth != "" && query == "" {
-			total := intFromAny(m["totalRepos"])
-			if total > 0 {
-				return fmt.Sprintf("Listed %d repos for %s (%d total)", count, auth, total)
+			if count > 0 {
+				return githubReposFoundLabel(count)
 			}
-			return fmt.Sprintf("Listed %d repos for %s", count, auth)
+			return "Got your GitHub repos"
 		}
 		if auth != "" {
-			total := intFromAny(m["totalRepos"])
 			matched := intFromAny(m["matchedCount"])
 			if matched == 0 {
 				matched = count
 			}
-			if total > 0 {
-				return fmt.Sprintf("Found %d matching repos for %s (%d of %d total)", matched, auth, matched, total)
-			}
-			return fmt.Sprintf("Found %d matching repos for %s", matched, auth)
+			return fmt.Sprintf("Found %d matching repos on your GitHub", matched)
 		}
 		return fmt.Sprintf("Found %d public repos", count)
 	case "crawl_github_profile", "explore_website":
 		if auth := AuthenticatedAsFromResult(result); auth != "" {
 			count := repoCountFromResult(m, "importRepos", "repos")
-			return fmt.Sprintf("Crawled GitHub as %s (%d repos)", auth, count)
+			if count > 0 {
+				return fmt.Sprintf("Got your GitHub profile with %d repos", count)
+			}
+			return "Got your GitHub profile"
 		}
 	case "web_search":
 		if m != nil {
-			if results, ok := m["results"].([]any); ok {
-				return fmt.Sprintf("%d web results", len(results))
+			if results, ok := m["results"].([]any); ok && len(results) > 0 {
+				return "Found some useful links"
 			}
 		}
 	case "fetch_url":
-		if m != nil {
-			if u, ok := m["url"].(string); ok && u != "" {
-				return fmt.Sprintf("Fetched %s", truncateLabel(u, 80))
-			}
-		}
+		return "Read that page"
 	case "create_twin_entry":
 		if m != nil {
 			if title, ok := m["title"].(string); ok && title != "" {
-				return fmt.Sprintf("Created twin entry %q", truncateLabel(title, 60))
+				return fmt.Sprintf("Saved %q to your Digital Twin", truncateLabel(title, 60))
 			}
 		}
 	case "add_section_item":
 		if m != nil {
 			if headline, ok := m["headline"].(string); ok && headline != "" {
-				return fmt.Sprintf("Added %q", truncateLabel(headline, 60))
+				return fmt.Sprintf("Added %q to your CV", truncateLabel(headline, 60))
 			}
 		}
 	}
@@ -141,6 +135,13 @@ func repoCountFromResult(m map[string]any, keys ...string) int {
 		}
 	}
 	return 0
+}
+
+func githubReposFoundLabel(count int) string {
+	if count == 1 {
+		return "Found 1 repo on your GitHub"
+	}
+	return fmt.Sprintf("Found %d repos on your GitHub", count)
 }
 
 func intFromAny(v any) int {

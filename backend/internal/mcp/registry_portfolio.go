@@ -2,7 +2,6 @@ package mcp
 
 import (
 	"context"
-	"fmt"
 
 	"github.com/leo/ai-weekend/backend/graph/model"
 )
@@ -70,11 +69,19 @@ func (r *Registry) executePortfolioTool(toolName string, args map[string]any, ex
 			return true
 		}
 		title, _ := optionalString(args, "title")
-		var titlePtr *string
+		tagline, _ := optionalString(args, "tagline")
+		about, _ := optionalString(args, "about")
+		var titlePtr, taglinePtr, aboutPtr *string
 		if title != "" {
 			titlePtr = &title
 		}
-		portfolio, err := r.exec.UpdatePortfolio(id, titlePtr, nil)
+		if tagline != "" {
+			taglinePtr = &tagline
+		}
+		if about != "" {
+			aboutPtr = &about
+		}
+		portfolio, err := r.exec.UpdatePortfolio(id, titlePtr, taglinePtr, aboutPtr, nil)
 		if err != nil {
 			exec.Error = err.Error()
 			return true
@@ -116,6 +123,8 @@ func (r *Registry) executePortfolioTool(toolName string, args map[string]any, ex
 		input.LinkedIn = optionalStringPtr(args, "linkedIn")
 		input.Github = optionalStringPtr(args, "github")
 		input.PhotoURL = optionalStringPtr(args, "photoUrl")
+		input.LinkedinPhotoURL = optionalStringPtr(args, "linkedinPhotoUrl")
+		input.GithubPhotoURL = optionalStringPtr(args, "githubPhotoUrl")
 		content, err := r.exec.UpdatePortfolioContactProfile(context.Background(), input)
 		if err != nil {
 			exec.Error = err.Error()
@@ -129,123 +138,153 @@ func (r *Registry) executePortfolioTool(toolName string, args map[string]any, ex
 		exec.AffectedPortfolioIDs = []string{portfolioID}
 		return true
 
-	case "add_portfolio_section_item":
+	case "add_portfolio_project":
 		portfolioID, err := requireString(args, "portfolioId")
 		if err != nil {
 			exec.Error = err.Error()
 			return true
 		}
-		sectionID, err := requireString(args, "sectionId")
+		title, err := requireString(args, "title")
 		if err != nil {
 			exec.Error = err.Error()
 			return true
 		}
-		section := findSection(r.exec, sectionID)
-		mergeFlatFieldsIntoMetadata(args)
-		if section != nil {
-			normalizeSectionItemArgs(section.Type, args)
-		}
-		headline, _ := optionalString(args, "headline")
-		body, _ := optionalString(args, "body")
-		metadata := optionalMetadata(args, "metadata")
-		if err := validateSectionItemInput(section, headline, body, metadata); err != nil {
-			exec.Error = err.Error()
-			return true
-		}
-		input := model.AddPortfolioSectionItemInput{
+		input := model.AddPortfolioProjectInput{
 			PortfolioID: portfolioID,
-			SectionID:   sectionID,
-			Headline:    optionalStringPtr(args, "headline"),
-			Body:        optionalStringPtr(args, "body"),
-			Metadata:    optionalMetadata(args, "metadata"),
+			Title:       title,
+			Tagline:     optionalStringPtr(args, "tagline"),
+			Problem:     optionalStringPtr(args, "problem"),
+			Approach:    optionalStringPtr(args, "approach"),
+			Outcome:     optionalStringPtr(args, "outcome"),
+			LiveURL:     optionalStringPtr(args, "liveUrl"),
+			RepoURL:     optionalStringPtr(args, "repoUrl"),
+			ImageURL:    optionalStringPtr(args, "imageUrl"),
+			Featured:    optionalBoolPtr(args, "featured"),
 		}
-		content, err := r.exec.AddPortfolioSectionItem(input)
+		if stack, ok := optionalStringSlice(args, "techStack"); ok {
+			input.TechStack = stack
+		}
+		content, err := r.exec.AddPortfolioProject(input)
 		if err != nil {
 			exec.Error = err.Error()
 			return true
 		}
-		exec.Result = wrapPortfolioSectionItemWriteResult(content, section, headline, body, metadata)
+		exec.Result = wrapPortfolioProjectWriteResult(content)
 		exec.AffectedPortfolioIDs = []string{portfolioID}
 		return true
 
-	case "update_portfolio_section_item":
+	case "update_portfolio_project":
 		portfolioID, err := requireString(args, "portfolioId")
 		if err != nil {
 			exec.Error = err.Error()
 			return true
 		}
-		sectionID, err := requireString(args, "sectionId")
+		projectID, err := requireString(args, "projectId")
 		if err != nil {
 			exec.Error = err.Error()
 			return true
 		}
-		sectionItemID, err := requireString(args, "sectionItemId")
+		input := model.UpdatePortfolioProjectInput{
+			PortfolioID: portfolioID,
+			ProjectID:   projectID,
+			Title:       optionalStringPtr(args, "title"),
+			Tagline:     optionalStringPtr(args, "tagline"),
+			Problem:     optionalStringPtr(args, "problem"),
+			Approach:    optionalStringPtr(args, "approach"),
+			Outcome:     optionalStringPtr(args, "outcome"),
+			LiveURL:     optionalStringPtr(args, "liveUrl"),
+			RepoURL:     optionalStringPtr(args, "repoUrl"),
+			ImageURL:    optionalStringPtr(args, "imageUrl"),
+			Featured:    optionalBoolPtr(args, "featured"),
+			ShowInPreview: optionalBoolPtr(args, "showInPreview"),
+		}
+		if stack, ok := optionalStringSlice(args, "techStack"); ok {
+			input.TechStack = stack
+		}
+		content, err := r.exec.UpdatePortfolioProject(input)
 		if err != nil {
 			exec.Error = err.Error()
 			return true
 		}
-		section := findSection(r.exec, sectionID)
-		mergeFlatFieldsIntoMetadata(args)
-		if section != nil {
-			normalizeSectionItemArgs(section.Type, args)
-		}
-		headline, _ := optionalString(args, "headline")
-		body, _ := optionalString(args, "body")
-		metadata := optionalMetadata(args, "metadata")
-		if err := validateSectionItemInput(section, headline, body, metadata); err != nil {
-			exec.Error = err.Error()
-			return true
-		}
-		input := model.UpdatePortfolioSectionItemInput{
-			PortfolioID:   portfolioID,
-			SectionID:     sectionID,
-			SectionItemID: sectionItemID,
-			Headline:      optionalStringPtr(args, "headline"),
-			Body:          optionalStringPtr(args, "body"),
-			Metadata:      optionalMetadata(args, "metadata"),
-		}
-		content, err := r.exec.UpdatePortfolioSectionItem(input)
-		if err != nil {
-			exec.Error = err.Error()
-			return true
-		}
-		exec.Result = wrapPortfolioSectionItemWriteResult(content, section, headline, body, metadata)
+		exec.Result = wrapPortfolioProjectWriteResult(content)
 		exec.AffectedPortfolioIDs = []string{portfolioID}
 		return true
 
-	case "set_portfolio_item_visibility":
+	case "add_portfolio_skill":
 		portfolioID, err := requireString(args, "portfolioId")
 		if err != nil {
 			exec.Error = err.Error()
 			return true
 		}
-		sectionID, err := requireString(args, "sectionId")
+		name, err := requireString(args, "name")
 		if err != nil {
 			exec.Error = err.Error()
 			return true
 		}
-		sectionItemID, err := requireString(args, "sectionItemId")
+		input := model.AddPortfolioSkillInput{
+			PortfolioID: portfolioID,
+			Name:        name,
+			Category:    optionalStringPtr(args, "category"),
+		}
+		content, err := r.exec.AddPortfolioSkill(input)
 		if err != nil {
 			exec.Error = err.Error()
 			return true
 		}
-		show, err := requireBool(args, "showInPreview")
+		exec.Result = portfolioContentSummary(content)
+		exec.AffectedPortfolioIDs = []string{portfolioID}
+		return true
+
+	case "update_portfolio_skill":
+		portfolioID, err := requireString(args, "portfolioId")
 		if err != nil {
 			exec.Error = err.Error()
 			return true
 		}
-		input := model.UpdatePortfolioSectionItemVisibilityInput{
+		skillID, err := requireString(args, "skillId")
+		if err != nil {
+			exec.Error = err.Error()
+			return true
+		}
+		input := model.UpdatePortfolioSkillInput{
 			PortfolioID:   portfolioID,
-			SectionID:     sectionID,
-			SectionItemID: sectionItemID,
-			ShowInPreview: show,
+			SkillID:       skillID,
+			Name:          optionalStringPtr(args, "name"),
+			Category:      optionalStringPtr(args, "category"),
+			ShowInPreview: optionalBoolPtr(args, "showInPreview"),
 		}
-		content, err := r.exec.UpdatePortfolioSectionItemVisibility(input)
+		content, err := r.exec.UpdatePortfolioSkill(input)
 		if err != nil {
 			exec.Error = err.Error()
 			return true
 		}
-		exec.Result = content
+		exec.Result = portfolioContentSummary(content)
+		exec.AffectedPortfolioIDs = []string{portfolioID}
+		return true
+
+	case "add_portfolio_testimonial":
+		portfolioID, err := requireString(args, "portfolioId")
+		if err != nil {
+			exec.Error = err.Error()
+			return true
+		}
+		quote, err := requireString(args, "quote")
+		if err != nil {
+			exec.Error = err.Error()
+			return true
+		}
+		input := model.AddPortfolioTestimonialInput{
+			PortfolioID: portfolioID,
+			Quote:       quote,
+			Author:      optionalStringPtr(args, "author"),
+			Role:        optionalStringPtr(args, "role"),
+		}
+		content, err := r.exec.AddPortfolioTestimonial(input)
+		if err != nil {
+			exec.Error = err.Error()
+			return true
+		}
+		exec.Result = portfolioContentSummary(content)
 		exec.AffectedPortfolioIDs = []string{portfolioID}
 		return true
 
@@ -256,17 +295,14 @@ func (r *Registry) executePortfolioTool(toolName string, args map[string]any, ex
 			return true
 		}
 		input := model.UpdatePortfolioSettingsInput{PortfolioID: portfolioID}
-		if v, ok := optionalEnum(args, "pageFormat"); ok {
-			pf := model.PageFormat(v)
-			if pf.IsValid() {
-				input.PageFormat = &pf
+		if v, ok := optionalEnum(args, "layout"); ok {
+			layout := model.PortfolioLayout(v)
+			if layout.IsValid() {
+				input.Layout = &layout
 			}
 		}
-		if v, ok := optionalEnum(args, "fontSize"); ok {
-			fs := model.FontSize(v)
-			if fs.IsValid() {
-				input.FontSize = &fs
-			}
+		if v, ok := optionalString(args, "accentColor"); ok && v != "" {
+			input.AccentColor = &v
 		}
 		if v, ok := optionalString(args, "themeId"); ok && v != "" {
 			input.ThemeID = &v
@@ -276,12 +312,6 @@ func (r *Registry) executePortfolioTool(toolName string, args map[string]any, ex
 		}
 		if v, ok := optionalString(args, "locale"); ok && v != "" {
 			input.Locale = &v
-		}
-		if v, ok := optionalFloat(args, "marginHorizontalMm"); ok {
-			input.MarginHorizontalMm = &v
-		}
-		if v, ok := optionalFloat(args, "marginVerticalMm"); ok {
-			input.MarginVerticalMm = &v
 		}
 		settings, err := r.exec.UpdatePortfolioSettings(input)
 		if err != nil {
@@ -299,53 +329,69 @@ func portfolioContentSummary(content *model.PortfolioWithContent) map[string]any
 	out := map[string]any{
 		"portfolioId":    content.Portfolio.ID,
 		"portfolioTitle": content.Portfolio.Title,
+		"tagline":        content.Portfolio.Tagline,
+		"about":          content.Portfolio.About,
 	}
 	if content.ContactProfile != nil {
 		cp := content.ContactProfile
 		out["contactProfile"] = map[string]any{
-			"fullName": cp.FullName,
-			"headline": cp.Headline,
-			"email":    cp.Email,
-			"phone":    cp.Phone,
-			"location": cp.Location,
-			"website":  cp.Website,
-			"linkedIn": cp.LinkedIn,
-			"github":   cp.Github,
-			"photoUrl": cp.PhotoURL,
+			"fullName":         cp.FullName,
+			"headline":         cp.Headline,
+			"email":            cp.Email,
+			"phone":            cp.Phone,
+			"location":         cp.Location,
+			"website":          cp.Website,
+			"linkedIn":         cp.LinkedIn,
+			"github":           cp.Github,
+			"photoUrl":         cp.PhotoURL,
+			"linkedinPhotoUrl": cp.LinkedinPhotoURL,
+			"githubPhotoUrl":   cp.GithubPhotoURL,
 		}
 	} else {
 		out["contactProfile"] = nil
-		out["contactProfileNote"] = "Profile header not set yet — use update_portfolio_contact_profile to create it."
+		out["contactProfileNote"] = "Profile header not set yet — use update_portfolio_contact_profile."
 	}
-	sections := make([]map[string]any, 0, len(content.Sections))
-	for _, swi := range content.Sections {
-		items := make([]map[string]any, 0, len(swi.Items))
-		for _, item := range swi.Items {
-			entry := map[string]any{
-				"id":            item.ID,
-				"headline":      item.Headline,
-				"body":          item.Body,
-				"showInPreview": item.ShowInPreview,
-			}
-			if len(item.Metadata) > 0 {
-				entry["metadata"] = item.Metadata
-				for _, key := range flatMetadataKeys {
-					if v, ok := item.Metadata[key]; ok && fmt.Sprint(v) != "" {
-						entry[key] = v
-					}
-				}
-			}
-			items = append(items, flattenItemMetadata(entry))
-		}
-		sections = append(sections, map[string]any{
-			"sectionId":  swi.Section.ID,
-			"type":       swi.Section.Type,
-			"title":      swi.Section.Title,
-			"fieldGuide": sectionItemFieldGuideObject(swi.Section.Type),
-			"items":      items,
+	projects := make([]map[string]any, 0, len(content.Projects))
+	for _, proj := range content.Projects {
+		projects = append(projects, map[string]any{
+			"id":            proj.ID,
+			"title":         proj.Title,
+			"tagline":       proj.Tagline,
+			"problem":       proj.Problem,
+			"approach":      proj.Approach,
+			"outcome":       proj.Outcome,
+			"techStack":     proj.TechStack,
+			"liveUrl":       proj.LiveURL,
+			"repoUrl":       proj.RepoURL,
+			"featured":      proj.Featured,
+			"showInPreview": proj.ShowInPreview,
 		})
 	}
-	out["sections"] = sections
+	skills := make([]map[string]any, 0, len(content.Skills))
+	for _, skill := range content.Skills {
+		skills = append(skills, map[string]any{
+			"id":            skill.ID,
+			"name":          skill.Name,
+			"category":      skill.Category,
+			"showInPreview": skill.ShowInPreview,
+		})
+	}
+	testimonials := make([]map[string]any, 0, len(content.Testimonials))
+	for _, t := range content.Testimonials {
+		testimonials = append(testimonials, map[string]any{
+			"id":            t.ID,
+			"quote":         t.Quote,
+			"author":        t.Author,
+			"role":          t.Role,
+			"showInPreview": t.ShowInPreview,
+		})
+	}
+	out["projects"] = projects
+	out["skills"] = skills
+	out["testimonials"] = testimonials
+	out["projectFieldGuide"] = portfolioProjectFieldGuide()
+	out["skillFieldGuide"] = portfolioSkillFieldGuide()
+	out["testimonialFieldGuide"] = portfolioTestimonialFieldGuide()
 	return out
 }
 
@@ -355,29 +401,53 @@ func contactProfileFromPortfolioContent(content *model.PortfolioWithContent) any
 	}
 	cp := content.ContactProfile
 	return map[string]any{
-		"fullName": cp.FullName,
-		"headline": cp.Headline,
-		"email":    cp.Email,
-		"phone":    cp.Phone,
-		"location": cp.Location,
-		"website":  cp.Website,
-		"linkedIn": cp.LinkedIn,
-		"github":   cp.Github,
-		"photoUrl": cp.PhotoURL,
+		"fullName":         cp.FullName,
+		"headline":         cp.Headline,
+		"email":            cp.Email,
+		"phone":            cp.Phone,
+		"location":         cp.Location,
+		"website":          cp.Website,
+		"linkedIn":         cp.LinkedIn,
+		"github":           cp.Github,
+		"photoUrl":         cp.PhotoURL,
+		"linkedinPhotoUrl": cp.LinkedinPhotoURL,
+		"githubPhotoUrl":   cp.GithubPhotoURL,
 	}
 }
 
-func wrapPortfolioSectionItemWriteResult(
-	content *model.PortfolioWithContent,
-	section *model.Section,
-	headline, body string,
-	metadata map[string]any,
-) map[string]any {
+func wrapPortfolioProjectWriteResult(content *model.PortfolioWithContent) map[string]any {
 	out := portfolioContentSummary(content)
-	if section != nil {
-		out["sectionType"] = section.Type
-		out["fieldHints"] = collectSectionItemFieldHints(section.Type, headline, body, metadata)
-		out["fieldGuide"] = sectionItemFieldGuideObject(section.Type)
+	if len(content.Projects) > 0 {
+		latest := content.Projects[len(content.Projects)-1]
+		out["fieldHints"] = collectPortfolioProjectFieldHints(latest)
 	}
 	return out
+}
+
+func optionalStringSlice(args map[string]any, key string) ([]string, bool) {
+	v, ok := args[key]
+	if !ok || v == nil {
+		return nil, false
+	}
+	switch arr := v.(type) {
+	case []string:
+		return arr, true
+	case []any:
+		out := make([]string, 0, len(arr))
+		for _, item := range arr {
+			if s, ok := item.(string); ok && s != "" {
+				out = append(out, s)
+			}
+		}
+		return out, true
+	default:
+		return nil, false
+	}
+}
+
+func optionalBoolPtr(args map[string]any, key string) *bool {
+	if v, ok := optionalBool(args, key); ok {
+		return &v
+	}
+	return nil
 }

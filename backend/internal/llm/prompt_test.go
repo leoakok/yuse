@@ -107,6 +107,24 @@ func TestSystemPromptGitHubConnectedMentionsAuthenticatedImport(t *testing.T) {
 	}
 }
 
+func TestSystemPromptContainsAmbiguityGuardrails(t *testing.T) {
+	prompt := buildAgentSystemPrompt(model.AssistantContextInput{
+		View: model.AssistantViewResumes,
+	}, "", false, "")
+
+	for _, phrase := range []string{
+		"Clarify before big actions",
+		"Ambiguous messages and scope",
+		"intent layer",
+		"fetch_linkedin_profile",
+		"linkedin.com/in/",
+	} {
+		if !strings.Contains(prompt, phrase) {
+			t.Fatalf("expected prompt to contain %q", phrase)
+		}
+	}
+}
+
 func TestSystemPromptJobTrackerMentionsGapCompare(t *testing.T) {
 	jobID := "job-dotnet"
 	prompt := buildAgentSystemPrompt(model.AssistantContextInput{

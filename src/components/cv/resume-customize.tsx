@@ -2,7 +2,8 @@
 
 import Link from "next/link";
 import { useState } from "react";
-import type { PageFormat, ResumeWithContent } from "@/lib/types/cv";
+import type { ItemTitleLayout, PageFormat, ResumeWithContent } from "@/lib/types/cv";
+import { DEFAULT_CV_TYPOGRAPHY_SETTINGS, type CvTypographySettings } from "@/lib/cv/typography";
 import { DEFAULT_PAGE_MARGIN_MM } from "@/lib/cv/page-format";
 import { resumePath } from "@/lib/cv/routes";
 import { ResumeDesignSettings } from "@/components/cv/resume-design-settings";
@@ -38,6 +39,30 @@ export function ResumeCustomize({ content }: ResumeCustomizeProps) {
   );
   const [showPhoto, setShowPhoto] = useState(content.settings.showPhoto);
   const [savedShowPhoto, setSavedShowPhoto] = useState(content.settings.showPhoto);
+  const [itemTitleLayout, setItemTitleLayout] = useState<ItemTitleLayout>(
+    content.settings.itemTitleLayout ?? "STACKED"
+  );
+  const [savedItemTitleLayout, setSavedItemTitleLayout] = useState<ItemTitleLayout>(
+    content.settings.itemTitleLayout ?? "STACKED"
+  );
+  const [typography, setTypography] = useState<CvTypographySettings>({
+    fontSize: content.settings.fontSize ?? DEFAULT_CV_TYPOGRAPHY_SETTINGS.fontSize,
+    contactNameFontSize:
+      content.settings.contactNameFontSize ?? DEFAULT_CV_TYPOGRAPHY_SETTINGS.contactNameFontSize,
+    contactHeadlineFontSize:
+      content.settings.contactHeadlineFontSize ??
+      DEFAULT_CV_TYPOGRAPHY_SETTINGS.contactHeadlineFontSize,
+    contactDetailsFontSize:
+      content.settings.contactDetailsFontSize ??
+      DEFAULT_CV_TYPOGRAPHY_SETTINGS.contactDetailsFontSize,
+    sectionTitleFontSize:
+      content.settings.sectionTitleFontSize ?? DEFAULT_CV_TYPOGRAPHY_SETTINGS.sectionTitleFontSize,
+    itemTitleFontSize:
+      content.settings.itemTitleFontSize ?? DEFAULT_CV_TYPOGRAPHY_SETTINGS.itemTitleFontSize,
+    itemMetaFontSize:
+      content.settings.itemMetaFontSize ?? DEFAULT_CV_TYPOGRAPHY_SETTINGS.itemMetaFontSize,
+  });
+  const [savedTypography, setSavedTypography] = useState<CvTypographySettings>(typography);
 
   const previewContent: ResumeWithContent = {
     ...content,
@@ -47,6 +72,8 @@ export function ResumeCustomize({ content }: ResumeCustomizeProps) {
       marginHorizontalMm,
       marginVerticalMm,
       showPhoto,
+      itemTitleLayout,
+      ...typography,
     },
   };
 
@@ -79,15 +106,30 @@ export function ResumeCustomize({ content }: ResumeCustomizeProps) {
           marginVerticalMm={marginVerticalMm}
           savedMarginHorizontalMm={savedMarginHorizontalMm}
           savedMarginVerticalMm={savedMarginVerticalMm}
+          itemTitleLayout={itemTitleLayout}
+          savedItemTitleLayout={savedItemTitleLayout}
+          typography={typography}
+          savedTypography={savedTypography}
           onPageFormatChange={setPageFormat}
           onShowPhotoChange={setShowPhoto}
+          onItemTitleLayoutChange={setItemTitleLayout}
+          onTypographyChange={setTypography}
           onMarginHorizontalChange={setMarginHorizontalMm}
           onMarginVerticalChange={setMarginVerticalMm}
-          onSaved={({ pageFormat: format, showPhoto: nextShowPhoto, marginHorizontalMm: h, marginVerticalMm: v }) => {
+          onSaved={({
+            pageFormat: format,
+            showPhoto: nextShowPhoto,
+            itemTitleLayout: nextItemTitleLayout,
+            marginHorizontalMm: h,
+            marginVerticalMm: v,
+            typography: nextTypography,
+          }) => {
             setSavedPageFormat(format);
             setSavedShowPhoto(nextShowPhoto);
+            setSavedItemTitleLayout(nextItemTitleLayout);
             setSavedMarginHorizontalMm(h);
             setSavedMarginVerticalMm(v);
+            setSavedTypography(nextTypography);
           }}
         />
 

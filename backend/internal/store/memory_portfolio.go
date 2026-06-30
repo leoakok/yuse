@@ -61,132 +61,301 @@ func (m *Memory) UpdatePortfolioSettings(portfolioID string, update func(*model.
 	return clonePortfolioSettings(settings), nil
 }
 
-func (m *Memory) UpdatePortfolioSectionItemVisibility(
-	portfolioID, sectionID, sectionItemID string,
-	showInPreview bool,
-) (*model.PortfolioWithContent, error) {
-	m.mu.Lock()
-	defer m.mu.Unlock()
-	if _, ok := m.portfolios[portfolioID]; !ok {
+func (m *Memory) PortfolioWithContent(portfolioID string) (*model.PortfolioWithContent, error) {
+	m.mu.RLock()
+	defer m.mu.RUnlock()
+	return m.portfolioWithContentLocked(portfolioID)
+}
+
+func (m *Memory) portfolioWithContentLocked(portfolioID string) (*model.PortfolioWithContent, error) {
+	portfolio, ok := m.portfolios[portfolioID]
+	if !ok {
 		return nil, ErrNotFound
 	}
-	found := false
-	for i, link := range m.portfolioVisibilityLinks {
-		if link.portfolioID == portfolioID && link.sectionID == sectionID && link.sectionItemID == sectionItemID {
-			m.portfolioVisibilityLinks[i].showInPreview = showInPreview
-			found = true
+	settings := m.portfolioSettings[portfolioID]
+	if settings == nil {
+		settings = defaultPortfolioSettings(portfolioID)
+	}
+	var contact *model.ContactProfile
+	if portfolio.ContactProfileID != nil {
+		contact = cloneContactProfile(m.contactProfiles[*portfolio.ContactProfileID])
+	}
+	var theme *model.CvTheme
+	for _, t := range m.themes {
+		if t.ID == settings.ThemeID {
+			theme = cloneTheme(t)
 			break
 		}
 	}
-	if !found {
-		m.portfolioVisibilityLinks = append(m.portfolioVisibilityLinks, portfolioItemVisibilityLink{
-			portfolioID: portfolioID, sectionID: sectionID, sectionItemID: sectionItemID, showInPreview: showInPreview,
-		})
+	if theme == nil && len(m.themes) > 1 {
+		theme = cloneTheme(m.themes[1])
 	}
+	return &model.PortfolioWithContent{
+		Portfolio:      clonePortfolio(portfolio),
+		ContactProfile: contact,
+		Settings:       clonePortfolioSettings(settings),
+		Theme:          theme,
+		Projects:       clonePortfolioProjects(filterPortfolioProjects(m.portfolioProjects, portfolioID)),
+		Skills:         clonePortfolioSkills(filterPortfolioSkills(m.portfolioSkills, portfolioID)),
+		Testimonials:   clonePortfolioTestimonials(filterPortfolioTestimonials(m.portfolioTestimonials, portfolioID)),
+	}, nil
+}
+
+func (m *Memory) AddPortfolioProject(input model.AddPortfolioProjectInput) (*model.PortfolioWithContent, error) {
+	m.mu.Lock()
+	defer m.mu.Unlock()
+	if _, ok := m.portfolios[input.PortfolioID]; !ok {
+		return nil, ErrNotFound
+	}
+	now := formatTime(time.Now().UTC())
+	id := uuid.NewString()
+	title := strings.TrimSpace(input.Title)
+	if title == "" {
+		title = "Untitled project"
+	}
+	tagline := ""
+	if input.Tagline != nil {
+		tagline = strings.TrimSpace(*input.Tagline)
+	}
+	techStack := input.TechStack
+	if techStack == nil {
+		techStack = []string{}
+	}
+	featured := false
+	if input.Featured != nil {
+		featured = *input.Featured
+	}
+	maxSort := maxPortfolioProjectSort(m.portfolioProjects, input.PortfolioID)
+	proj := &model.PortfolioProject{
+		ID:            id,
+		PortfolioID:   input.PortfolioID,
+		Title:         title,
+		Tagline:       tagline,
+		TechStack:     append([]string(nil), techStack...),
+		Featured:      featured,
+		ShowInPreview: true,
+		SortOrder:     maxSort + 1,
+		CreatedAt:     now,
+		UpdatedAt:     now,
+	}
+	if input.Problem != nil {
+		proj.Problem = strings.TrimSpace(*input.Problem)
+	}
+	if input.Approach != nil {
+		proj.Approach = strings.TrimSpace(*input.Approach)
+	}
+	if input.Outcome != nil {
+		proj.Outcome = strings.TrimSpace(*input.Outcome)
+	}
+	if input.LiveURL != nil {
+		proj.LiveURL = trimmedStringPtr(*input.LiveURL)
+	}
+	if input.RepoURL != nil {
+		proj.RepoURL = trimmedStringPtr(*input.RepoURL)
+	}
+	if input.ImageURL != nil {
+		proj.ImageURL = trimmedStringPtr(*input.ImageURL)
+	}
+	m.portfolioProjects[id] = proj
+	m.touchPortfolioLocked(input.PortfolioID)
+	return m.portfolioWithContentLocked(input.PortfolioID)
+}
+
+func (m *Memory) UpdatePortfolioProject(input model.UpdatePortfolioProjectInput) (*model.PortfolioWithContent, error) {
+	m.mu.Lock()
+	defer m.mu.Unlock()
+	proj, ok := m.portfolioProjects[input.ProjectID]
+	if !ok || proj.PortfolioID != input.PortfolioID {
+		return nil, ErrNotFound
+	}
+	if input.Title != nil {
+		proj.Title = strings.TrimSpace(*input.Title)
+	}
+	if input.Tagline != nil {
+		proj.Tagline = strings.TrimSpace(*input.Tagline)
+	}
+	if input.Problem != nil {
+		proj.Problem = strings.TrimSpace(*input.Problem)
+	}
+	if input.Approach != nil {
+		proj.Approach = strings.TrimSpace(*input.Approach)
+	}
+	if input.Outcome != nil {
+		proj.Outcome = strings.TrimSpace(*input.Outcome)
+	}
+	if input.TechStack != nil {
+		proj.TechStack = append([]string(nil), input.TechStack...)
+	}
+	if input.LiveURL != nil {
+		proj.LiveURL = trimmedStringPtr(*input.LiveURL)
+	}
+	if input.RepoURL != nil {
+		proj.RepoURL = trimmedStringPtr(*input.RepoURL)
+	}
+	if input.ImageURL != nil {
+		proj.ImageURL = trimmedStringPtr(*input.ImageURL)
+	}
+	if input.Featured != nil {
+		proj.Featured = *input.Featured
+	}
+	if input.ShowInPreview != nil {
+		proj.ShowInPreview = *input.ShowInPreview
+	}
+	proj.UpdatedAt = formatTime(time.Now().UTC())
+	m.touchPortfolioLocked(input.PortfolioID)
+	return m.portfolioWithContentLocked(input.PortfolioID)
+}
+
+func (m *Memory) DeletePortfolioProject(portfolioID, projectID string) (*model.PortfolioWithContent, error) {
+	m.mu.Lock()
+	defer m.mu.Unlock()
+	proj, ok := m.portfolioProjects[projectID]
+	if !ok || proj.PortfolioID != portfolioID {
+		return nil, ErrNotFound
+	}
+	delete(m.portfolioProjects, projectID)
+	m.touchPortfolioLocked(portfolioID)
 	return m.portfolioWithContentLocked(portfolioID)
 }
 
-func (m *Memory) AddPortfolioSectionItem(
-	portfolioID, sectionID, headline, body string,
-	metadata map[string]any,
-) (*model.PortfolioWithContent, error) {
+func (m *Memory) SetPortfolioProjectVisibility(portfolioID, projectID string, showInPreview bool) (*model.PortfolioWithContent, error) {
 	m.mu.Lock()
 	defer m.mu.Unlock()
-	if _, ok := m.portfolios[portfolioID]; !ok {
+	proj, ok := m.portfolioProjects[projectID]
+	if !ok || proj.PortfolioID != portfolioID {
 		return nil, ErrNotFound
 	}
-	section, ok := m.sections[sectionID]
-	if !ok {
-		return nil, ErrNotFound
-	}
-	trimmedHeadline := strings.TrimSpace(headline)
-	if trimmedHeadline == "" {
-		trimmedHeadline = defaultSectionItemHeadline(section.Type)
-	}
-	now := time.Now().UTC().Format(time.RFC3339)
-	itemID := uuid.NewString()
-	item := &model.SectionItem{
-		ID: itemID, WorkspaceID: DemoWorkspaceID, Type: section.Type,
-		Headline: trimmedHeadline, Body: strings.TrimSpace(body), Metadata: metadata,
-		CreatedBy: DemoUserID, CreatedAt: now, UpdatedAt: now,
-	}
-	m.sectionItems[itemID] = cloneSectionItem(item)
-	maxOrder := -1
-	for _, link := range m.sectionItemLinks {
-		if link.sectionID == sectionID && link.sortOrder > maxOrder {
-			maxOrder = link.sortOrder
-		}
-	}
-	m.sectionItemLinks = append(m.sectionItemLinks, sectionItemLink{sectionID: sectionID, sectionItemID: itemID, sortOrder: maxOrder + 1})
-	m.portfolioVisibilityLinks = appendPortfolioItemVisibility(m.portfolioVisibilityLinks, m.portfolioSections, portfolioID, sectionID, itemID)
+	proj.ShowInPreview = showInPreview
 	return m.portfolioWithContentLocked(portfolioID)
 }
 
-func appendPortfolioItemVisibility(
-	links []portfolioItemVisibilityLink,
-	portfolioSections []portfolioSectionLink,
-	originPortfolioID, sectionID, itemID string,
-) []portfolioItemVisibilityLink {
-	links = append(links, portfolioItemVisibilityLink{
-		portfolioID: originPortfolioID, sectionID: sectionID, sectionItemID: itemID, showInPreview: true,
-	})
-	seen := map[string]struct{}{originPortfolioID: {}}
-	for _, ps := range portfolioSections {
-		if ps.sectionID != sectionID {
-			continue
-		}
-		if _, ok := seen[ps.portfolioID]; ok {
-			continue
-		}
-		seen[ps.portfolioID] = struct{}{}
-		if ps.portfolioID == originPortfolioID {
-			continue
-		}
-		links = append(links, portfolioItemVisibilityLink{
-			portfolioID: ps.portfolioID, sectionID: sectionID, sectionItemID: itemID, showInPreview: false,
-		})
-	}
-	return links
-}
-
-func (m *Memory) UpdatePortfolioSectionItem(
-	portfolioID, sectionID, sectionItemID string,
-	headline, body *string,
-	metadata map[string]any,
-) (*model.PortfolioWithContent, error) {
+func (m *Memory) AddPortfolioSkill(input model.AddPortfolioSkillInput) (*model.PortfolioWithContent, error) {
 	m.mu.Lock()
 	defer m.mu.Unlock()
-	item, ok := m.sectionItems[sectionItemID]
-	if !ok {
+	if _, ok := m.portfolios[input.PortfolioID]; !ok {
 		return nil, ErrNotFound
 	}
-	if _, ok := m.portfolios[portfolioID]; !ok {
+	name := strings.TrimSpace(input.Name)
+	if name == "" {
 		return nil, ErrNotFound
 	}
-	if headline != nil {
-		item.Headline = strings.TrimSpace(*headline)
+	id := uuid.NewString()
+	maxSort := maxPortfolioSkillSort(m.portfolioSkills, input.PortfolioID)
+	skill := &model.PortfolioSkill{
+		ID:            id,
+		PortfolioID:   input.PortfolioID,
+		Name:          name,
+		ShowInPreview: true,
+		SortOrder:     maxSort + 1,
 	}
-	if body != nil {
-		item.Body = strings.TrimSpace(*body)
+	if input.Category != nil {
+		skill.Category = trimmedStringPtr(*input.Category)
 	}
-	if metadata != nil {
-		if item.Metadata == nil {
-			item.Metadata = map[string]any{}
-		}
-		for k, v := range metadata {
-			if v != nil {
-				item.Metadata[k] = v
-			}
-		}
+	m.portfolioSkills[id] = skill
+	m.touchPortfolioLocked(input.PortfolioID)
+	return m.portfolioWithContentLocked(input.PortfolioID)
+}
+
+func (m *Memory) UpdatePortfolioSkill(input model.UpdatePortfolioSkillInput) (*model.PortfolioWithContent, error) {
+	m.mu.Lock()
+	defer m.mu.Unlock()
+	skill, ok := m.portfolioSkills[input.SkillID]
+	if !ok || skill.PortfolioID != input.PortfolioID {
+		return nil, ErrNotFound
 	}
-	item.UpdatedAt = time.Now().UTC().Format(time.RFC3339)
-	m.sectionItems[sectionItemID] = cloneSectionItem(item)
+	if input.Name != nil {
+		skill.Name = strings.TrimSpace(*input.Name)
+	}
+	if input.Category != nil {
+		skill.Category = trimmedStringPtr(*input.Category)
+	}
+	if input.ShowInPreview != nil {
+		skill.ShowInPreview = *input.ShowInPreview
+	}
+	m.touchPortfolioLocked(input.PortfolioID)
+	return m.portfolioWithContentLocked(input.PortfolioID)
+}
+
+func (m *Memory) DeletePortfolioSkill(portfolioID, skillID string) (*model.PortfolioWithContent, error) {
+	m.mu.Lock()
+	defer m.mu.Unlock()
+	skill, ok := m.portfolioSkills[skillID]
+	if !ok || skill.PortfolioID != portfolioID {
+		return nil, ErrNotFound
+	}
+	delete(m.portfolioSkills, skillID)
+	m.touchPortfolioLocked(portfolioID)
+	return m.portfolioWithContentLocked(portfolioID)
+}
+
+func (m *Memory) AddPortfolioTestimonial(input model.AddPortfolioTestimonialInput) (*model.PortfolioWithContent, error) {
+	m.mu.Lock()
+	defer m.mu.Unlock()
+	if _, ok := m.portfolios[input.PortfolioID]; !ok {
+		return nil, ErrNotFound
+	}
+	quote := strings.TrimSpace(input.Quote)
+	if quote == "" {
+		return nil, ErrNotFound
+	}
+	id := uuid.NewString()
+	maxSort := maxPortfolioTestimonialSort(m.portfolioTestimonials, input.PortfolioID)
+	t := &model.PortfolioTestimonial{
+		ID:            id,
+		PortfolioID:   input.PortfolioID,
+		Quote:         quote,
+		ShowInPreview: true,
+		SortOrder:     maxSort + 1,
+	}
+	if input.Author != nil {
+		t.Author = strings.TrimSpace(*input.Author)
+	}
+	if input.Role != nil {
+		t.Role = strings.TrimSpace(*input.Role)
+	}
+	m.portfolioTestimonials[id] = t
+	m.touchPortfolioLocked(input.PortfolioID)
+	return m.portfolioWithContentLocked(input.PortfolioID)
+}
+
+func (m *Memory) UpdatePortfolioTestimonial(input model.UpdatePortfolioTestimonialInput) (*model.PortfolioWithContent, error) {
+	m.mu.Lock()
+	defer m.mu.Unlock()
+	t, ok := m.portfolioTestimonials[input.TestimonialID]
+	if !ok || t.PortfolioID != input.PortfolioID {
+		return nil, ErrNotFound
+	}
+	if input.Quote != nil {
+		t.Quote = strings.TrimSpace(*input.Quote)
+	}
+	if input.Author != nil {
+		t.Author = strings.TrimSpace(*input.Author)
+	}
+	if input.Role != nil {
+		t.Role = strings.TrimSpace(*input.Role)
+	}
+	if input.ShowInPreview != nil {
+		t.ShowInPreview = *input.ShowInPreview
+	}
+	m.touchPortfolioLocked(input.PortfolioID)
+	return m.portfolioWithContentLocked(input.PortfolioID)
+}
+
+func (m *Memory) DeletePortfolioTestimonial(portfolioID, testimonialID string) (*model.PortfolioWithContent, error) {
+	m.mu.Lock()
+	defer m.mu.Unlock()
+	t, ok := m.portfolioTestimonials[testimonialID]
+	if !ok || t.PortfolioID != portfolioID {
+		return nil, ErrNotFound
+	}
+	delete(m.portfolioTestimonials, testimonialID)
+	m.touchPortfolioLocked(portfolioID)
 	return m.portfolioWithContentLocked(portfolioID)
 }
 
 func (m *Memory) UpdatePortfolioContactProfile(
 	portfolioID string,
-	fullName, headline, email, phone, location, website, linkedIn, github, photoURL *string,
+	fullName, headline, email, phone, location, website, linkedIn, github, photoURL, linkedinPhotoURL, githubPhotoURL *string,
 ) (*model.PortfolioWithContent, error) {
 	m.mu.Lock()
 	defer m.mu.Unlock()
@@ -194,7 +363,7 @@ func (m *Memory) UpdatePortfolioContactProfile(
 	if !ok {
 		return nil, ErrNotFound
 	}
-	now := time.Now().UTC().Format(time.RFC3339)
+	now := formatTime(time.Now().UTC())
 	var profile *model.ContactProfile
 	if portfolio.ContactProfileID != nil {
 		profile = m.contactProfiles[*portfolio.ContactProfileID]
@@ -205,7 +374,13 @@ func (m *Memory) UpdatePortfolioContactProfile(
 			name = strings.TrimSpace(*fullName)
 		}
 		id := uuid.NewString()
-		profile = &model.ContactProfile{ID: id, WorkspaceID: DemoWorkspaceID, FullName: name, CreatedAt: now, UpdatedAt: now}
+		profile = &model.ContactProfile{
+			ID:          id,
+			WorkspaceID: portfolio.WorkspaceID,
+			FullName:    name,
+			CreatedAt:   now,
+			UpdatedAt:   now,
+		}
 		portfolio.ContactProfileID = &id
 	}
 	if fullName != nil && strings.TrimSpace(*fullName) != "" {
@@ -235,115 +410,17 @@ func (m *Memory) UpdatePortfolioContactProfile(
 	if photoURL != nil {
 		profile.PhotoURL = trimmedStringPtr(*photoURL)
 	}
+	if linkedinPhotoURL != nil {
+		profile.LinkedinPhotoURL = trimmedStringPtr(*linkedinPhotoURL)
+	}
+	if githubPhotoURL != nil {
+		profile.GithubPhotoURL = trimmedStringPtr(*githubPhotoURL)
+	}
 	profile.UpdatedAt = now
 	m.contactProfiles[profile.ID] = cloneContactProfile(profile)
 	portfolio.UpdatedAt = now
 	m.portfolios[portfolioID] = clonePortfolio(portfolio)
 	return m.portfolioWithContentLocked(portfolioID)
-}
-
-func (m *Memory) PortfolioWithContent(portfolioID string) (*model.PortfolioWithContent, error) {
-	m.mu.RLock()
-	defer m.mu.RUnlock()
-	return m.portfolioWithContentLocked(portfolioID)
-}
-
-func (m *Memory) portfolioWithContentLocked(portfolioID string) (*model.PortfolioWithContent, error) {
-	portfolio, ok := m.portfolios[portfolioID]
-	if !ok {
-		return nil, ErrNotFound
-	}
-	settings := m.portfolioSettings[portfolioID]
-	if settings == nil {
-		settings = defaultPortfolioSettings(portfolioID)
-	}
-	var theme *model.CvTheme
-	for _, t := range m.themes {
-		if t.ID == settings.ThemeID {
-			theme = cloneTheme(t)
-			break
-		}
-	}
-	var contact *model.ContactProfile
-	if portfolio.ContactProfileID != nil {
-		contact = cloneContactProfile(m.contactProfiles[*portfolio.ContactProfileID])
-	}
-	sectionLinks := filterPortfolioSections(m.portfolioSections, portfolioID)
-	sectionsWithItems := make([]*model.SectionWithItems, 0, len(sectionLinks))
-	for _, link := range sectionLinks {
-		section := m.sections[link.sectionID]
-		if section == nil {
-			continue
-		}
-		items := portfolioSectionItems(m, portfolioID, link.sectionID)
-		sectionsWithItems = append(sectionsWithItems, &model.SectionWithItems{
-			Section: cloneSection(section),
-			Items:   items,
-		})
-	}
-	return &model.PortfolioWithContent{
-		Portfolio:      clonePortfolio(portfolio),
-		ContactProfile: contact,
-		Settings:       clonePortfolioSettings(settings),
-		Theme:          theme,
-		Sections:       sectionsWithItems,
-	}, nil
-}
-
-func filterPortfolioSections(links []portfolioSectionLink, portfolioID string) []portfolioSectionLink {
-	out := make([]portfolioSectionLink, 0)
-	for _, l := range links {
-		if l.portfolioID == portfolioID {
-			out = append(out, l)
-		}
-	}
-	sort.Slice(out, func(i, j int) bool { return out[i].sortOrder < out[j].sortOrder })
-	return out
-}
-
-func portfolioSectionItems(m *Memory, portfolioID, sectionID string) []*model.SectionItem {
-	itemLinks := filterSectionItems(m.sectionItemLinks, sectionID)
-	out := make([]*model.SectionItem, 0, len(itemLinks))
-	for _, link := range itemLinks {
-		item := m.sectionItems[link.sectionItemID]
-		if item == nil {
-			continue
-		}
-		cloned := cloneSectionItem(item)
-		cloned.ShowInPreview = portfolioItemShowInPreview(m.portfolioVisibilityLinks, portfolioID, sectionID, link.sectionItemID)
-		out = append(out, withDefaultShowInPreview(cloned))
-	}
-	return out
-}
-
-func portfolioItemShowInPreview(links []portfolioItemVisibilityLink, portfolioID, sectionID, itemID string) bool {
-	for _, link := range links {
-		if link.portfolioID == portfolioID && link.sectionID == sectionID && link.sectionItemID == itemID {
-			return link.showInPreview
-		}
-	}
-	return false
-}
-
-func (m *Memory) PortfoliosForSection(sectionID string) ([]*model.Portfolio, error) {
-	m.mu.RLock()
-	defer m.mu.RUnlock()
-	if _, ok := m.sections[sectionID]; !ok {
-		return nil, ErrNotFound
-	}
-	ids := map[string]struct{}{}
-	for _, link := range m.portfolioSections {
-		if link.sectionID == sectionID {
-			ids[link.portfolioID] = struct{}{}
-		}
-	}
-	out := make([]*model.Portfolio, 0, len(ids))
-	for pid := range ids {
-		if pf := m.portfolios[pid]; pf != nil {
-			out = append(out, clonePortfolio(pf))
-		}
-	}
-	return out, nil
 }
 
 func (m *Memory) DuplicatePortfolio(sourceID string) (*model.Portfolio, error) {
@@ -353,15 +430,21 @@ func (m *Memory) DuplicatePortfolio(sourceID string) (*model.Portfolio, error) {
 	if !ok {
 		return nil, ErrNotFound
 	}
-	now := time.Now().UTC().Format(time.RFC3339)
+	now := formatTime(time.Now().UTC())
 	newID := uuid.NewString()
 	dup := &model.Portfolio{
-		ID: newID, WorkspaceID: source.WorkspaceID, Title: source.Title + " (copy)",
-		CreatedBy: source.CreatedBy, CreatedAt: now, UpdatedAt: now,
+		ID:          newID,
+		WorkspaceID: source.WorkspaceID,
+		Title:       source.Title + " (copy)",
+		Tagline:     source.Tagline,
+		About:       source.About,
+		CreatedBy:   source.CreatedBy,
+		CreatedAt:   now,
+		UpdatedAt:   now,
 	}
 	if source.ContactProfileID != nil {
-		id := *source.ContactProfileID
-		dup.ContactProfileID = &id
+		contactID := *source.ContactProfileID
+		dup.ContactProfileID = &contactID
 	}
 	m.portfolios[newID] = clonePortfolio(dup)
 	if settings := m.portfolioSettings[sourceID]; settings != nil {
@@ -371,23 +454,23 @@ func (m *Memory) DuplicatePortfolio(sourceID string) (*model.Portfolio, error) {
 	} else {
 		m.portfolioSettings[newID] = defaultPortfolioSettings(newID)
 	}
-	maxSort := 0
-	for _, link := range m.portfolioSections {
-		if link.portfolioID == sourceID {
-			m.portfolioSections = append(m.portfolioSections, portfolioSectionLink{
-				portfolioID: newID, sectionID: link.sectionID, sortOrder: link.sortOrder,
-			})
-		}
-		if link.portfolioID == newID && link.sortOrder >= maxSort {
-			maxSort = link.sortOrder + 1
-		}
+	for _, proj := range filterPortfolioProjects(m.portfolioProjects, sourceID) {
+		copyProj := clonePortfolioProject(proj)
+		copyProj.ID = uuid.NewString()
+		copyProj.PortfolioID = newID
+		m.portfolioProjects[copyProj.ID] = copyProj
 	}
-	for _, link := range m.portfolioVisibilityLinks {
-		if link.portfolioID == sourceID {
-			m.portfolioVisibilityLinks = append(m.portfolioVisibilityLinks, portfolioItemVisibilityLink{
-				portfolioID: newID, sectionID: link.sectionID, sectionItemID: link.sectionItemID, showInPreview: link.showInPreview,
-			})
-		}
+	for _, skill := range filterPortfolioSkills(m.portfolioSkills, sourceID) {
+		copySkill := clonePortfolioSkill(skill)
+		copySkill.ID = uuid.NewString()
+		copySkill.PortfolioID = newID
+		m.portfolioSkills[copySkill.ID] = copySkill
+	}
+	for _, t := range filterPortfolioTestimonials(m.portfolioTestimonials, sourceID) {
+		copyT := clonePortfolioTestimonial(t)
+		copyT.ID = uuid.NewString()
+		copyT.PortfolioID = newID
+		m.portfolioTestimonials[copyT.ID] = copyT
 	}
 	return clonePortfolio(dup), nil
 }
@@ -400,53 +483,132 @@ func (m *Memory) DeletePortfolio(id string) error {
 	}
 	delete(m.portfolios, id)
 	delete(m.portfolioSettings, id)
-	sections := make([]portfolioSectionLink, 0)
-	for _, link := range m.portfolioSections {
-		if link.portfolioID != id {
-			sections = append(sections, link)
+	for pid, proj := range m.portfolioProjects {
+		if proj.PortfolioID == id {
+			delete(m.portfolioProjects, pid)
 		}
 	}
-	m.portfolioSections = sections
-	visibility := make([]portfolioItemVisibilityLink, 0)
-	for _, link := range m.portfolioVisibilityLinks {
-		if link.portfolioID != id {
-			visibility = append(visibility, link)
+	for sid, skill := range m.portfolioSkills {
+		if skill.PortfolioID == id {
+			delete(m.portfolioSkills, sid)
 		}
 	}
-	m.portfolioVisibilityLinks = visibility
+	for tid, t := range m.portfolioTestimonials {
+		if t.PortfolioID == id {
+			delete(m.portfolioTestimonials, tid)
+		}
+	}
 	return nil
 }
 
 func (m *Memory) CreatePortfolio(title string) *model.Portfolio {
 	m.mu.Lock()
 	defer m.mu.Unlock()
-	now := time.Now().UTC().Format(time.RFC3339)
+	now := formatTime(time.Now().UTC())
 	id := uuid.NewString()
 	portfolio := &model.Portfolio{
-		ID: id, WorkspaceID: DemoWorkspaceID, Title: title,
-		CreatedBy: DemoUserID, CreatedAt: now, UpdatedAt: now,
+		ID:          id,
+		WorkspaceID: m.workspace.ID,
+		Title:       title,
+		CreatedBy:   m.user.ID,
+		CreatedAt:   now,
+		UpdatedAt:   now,
 	}
 	m.portfolios[id] = clonePortfolio(portfolio)
 	m.portfolioSettings[id] = defaultPortfolioSettings(id)
-	specs := portfolioDefaultSectionSpecs()
-	for i, spec := range specs {
-		for _, section := range m.sections {
-			if section.Type != spec.sectionType {
-				continue
-			}
-			m.portfolioSections = append(m.portfolioSections, portfolioSectionLink{
-				portfolioID: id, sectionID: section.ID, sortOrder: i,
-			})
-			for _, itemLink := range m.sectionItemLinks {
-				if itemLink.sectionID != section.ID {
-					continue
-				}
-				m.portfolioVisibilityLinks = append(m.portfolioVisibilityLinks, portfolioItemVisibilityLink{
-					portfolioID: id, sectionID: section.ID, sectionItemID: itemLink.sectionItemID, showInPreview: false,
-				})
-			}
-			break
+	return clonePortfolio(portfolio)
+}
+
+func (m *Memory) touchPortfolioLocked(portfolioID string) {
+	if pf := m.portfolios[portfolioID]; pf != nil {
+		pf.UpdatedAt = formatTime(time.Now().UTC())
+		m.portfolios[portfolioID] = clonePortfolio(pf)
+	}
+}
+
+func filterPortfolioProjects(projects map[string]*model.PortfolioProject, portfolioID string) []*model.PortfolioProject {
+	out := make([]*model.PortfolioProject, 0)
+	for _, p := range projects {
+		if p.PortfolioID == portfolioID {
+			out = append(out, p)
 		}
 	}
-	return clonePortfolio(portfolio)
+	sort.Slice(out, func(i, j int) bool { return out[i].SortOrder < out[j].SortOrder })
+	return out
+}
+
+func filterPortfolioSkills(skills map[string]*model.PortfolioSkill, portfolioID string) []*model.PortfolioSkill {
+	out := make([]*model.PortfolioSkill, 0)
+	for _, s := range skills {
+		if s.PortfolioID == portfolioID {
+			out = append(out, s)
+		}
+	}
+	sort.Slice(out, func(i, j int) bool { return out[i].SortOrder < out[j].SortOrder })
+	return out
+}
+
+func filterPortfolioTestimonials(testimonials map[string]*model.PortfolioTestimonial, portfolioID string) []*model.PortfolioTestimonial {
+	out := make([]*model.PortfolioTestimonial, 0)
+	for _, t := range testimonials {
+		if t.PortfolioID == portfolioID {
+			out = append(out, t)
+		}
+	}
+	sort.Slice(out, func(i, j int) bool { return out[i].SortOrder < out[j].SortOrder })
+	return out
+}
+
+func clonePortfolioProjects(items []*model.PortfolioProject) []*model.PortfolioProject {
+	out := make([]*model.PortfolioProject, 0, len(items))
+	for _, item := range items {
+		out = append(out, clonePortfolioProject(item))
+	}
+	return out
+}
+
+func clonePortfolioSkills(items []*model.PortfolioSkill) []*model.PortfolioSkill {
+	out := make([]*model.PortfolioSkill, 0, len(items))
+	for _, item := range items {
+		out = append(out, clonePortfolioSkill(item))
+	}
+	return out
+}
+
+func clonePortfolioTestimonials(items []*model.PortfolioTestimonial) []*model.PortfolioTestimonial {
+	out := make([]*model.PortfolioTestimonial, 0, len(items))
+	for _, item := range items {
+		out = append(out, clonePortfolioTestimonial(item))
+	}
+	return out
+}
+
+func maxPortfolioProjectSort(projects map[string]*model.PortfolioProject, portfolioID string) int {
+	max := -1
+	for _, p := range projects {
+		if p.PortfolioID == portfolioID && p.SortOrder > max {
+			max = p.SortOrder
+		}
+	}
+	return max
+}
+
+func maxPortfolioSkillSort(skills map[string]*model.PortfolioSkill, portfolioID string) int {
+	max := -1
+	for _, s := range skills {
+		if s.PortfolioID == portfolioID && s.SortOrder > max {
+			max = s.SortOrder
+		}
+	}
+	return max
+}
+
+func maxPortfolioTestimonialSort(testimonials map[string]*model.PortfolioTestimonial, portfolioID string) int {
+	max := -1
+	for _, t := range testimonials {
+		if t.PortfolioID == portfolioID && t.SortOrder > max {
+			max = t.SortOrder
+		}
+	}
+	return max
 }

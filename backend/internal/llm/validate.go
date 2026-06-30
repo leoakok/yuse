@@ -251,13 +251,17 @@ func briefWriteConfirmation(executions []mcp.Execution) string {
 }
 
 func userAskedJobTracker(text string, assistantContext model.AssistantContextInput) bool {
-	if assistantContext.View == model.AssistantViewJobTracker {
+	lower := strings.ToLower(strings.TrimSpace(text))
+	if strings.Contains(lower, "link them to this application") ||
+		strings.Contains(lower, "track this job") ||
+		strings.Contains(lower, "added this job") ||
+		strings.Contains(lower, "cover letter") {
 		return true
 	}
-	lower := strings.ToLower(text)
-	return strings.Contains(lower, "link them to this application") ||
-		strings.Contains(lower, "track this job") ||
-		strings.Contains(lower, "added this job")
+	if assistantContext.View == model.AssistantViewJobTracker && assistantContext.JobID != nil {
+		return userAskedCreateCV(text) || strings.Contains(lower, "http")
+	}
+	return false
 }
 
 func jobTrackerWriteComplete(userText string, assistantContext model.AssistantContextInput, executions []mcp.Execution) bool {

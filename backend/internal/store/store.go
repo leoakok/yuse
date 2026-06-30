@@ -27,7 +27,7 @@ type Store interface {
 	AddResumeSectionItem(resumeID, sectionID, headline, body string, metadata map[string]any) (*model.ResumeWithContent, error)
 	UpdateResumeSectionItem(resumeID, sectionID, sectionItemID string, headline, body *string, metadata map[string]any) (*model.ResumeWithContent, error)
 	DeleteSectionItem(sectionItemID string) error
-	UpdateContactProfile(resumeID string, fullName, headline, email, phone, location, website, linkedIn, github, photoURL *string) (*model.ResumeWithContent, error)
+	UpdateContactProfile(resumeID string, fullName, headline, email, phone, location, website, linkedIn, github, photoURL, linkedinPhotoURL, githubPhotoURL *string) (*model.ResumeWithContent, error)
 	ResumeWithContent(resumeID string) (*model.ResumeWithContent, error)
 	SectionItemUsage(itemID string) (*model.SectionItemUsage, error)
 	WorkspaceStats() *model.WorkspaceStats
@@ -48,12 +48,18 @@ type Store interface {
 	SavePortfolio(portfolio *model.Portfolio)
 	GetPortfolioSettings(portfolioID string) *model.PortfolioSettings
 	UpdatePortfolioSettings(portfolioID string, update func(*model.PortfolioSettings)) (*model.PortfolioSettings, error)
-	UpdatePortfolioSectionItemVisibility(portfolioID, sectionID, sectionItemID string, showInPreview bool) (*model.PortfolioWithContent, error)
-	AddPortfolioSectionItem(portfolioID, sectionID, headline, body string, metadata map[string]any) (*model.PortfolioWithContent, error)
-	UpdatePortfolioSectionItem(portfolioID, sectionID, sectionItemID string, headline, body *string, metadata map[string]any) (*model.PortfolioWithContent, error)
-	UpdatePortfolioContactProfile(portfolioID string, fullName, headline, email, phone, location, website, linkedIn, github, photoURL *string) (*model.PortfolioWithContent, error)
+	UpdatePortfolioContactProfile(portfolioID string, fullName, headline, email, phone, location, website, linkedIn, github, photoURL, linkedinPhotoURL, githubPhotoURL *string) (*model.PortfolioWithContent, error)
 	PortfolioWithContent(portfolioID string) (*model.PortfolioWithContent, error)
-	PortfoliosForSection(sectionID string) ([]*model.Portfolio, error)
+	AddPortfolioProject(input model.AddPortfolioProjectInput) (*model.PortfolioWithContent, error)
+	UpdatePortfolioProject(input model.UpdatePortfolioProjectInput) (*model.PortfolioWithContent, error)
+	DeletePortfolioProject(portfolioID, projectID string) (*model.PortfolioWithContent, error)
+	SetPortfolioProjectVisibility(portfolioID, projectID string, showInPreview bool) (*model.PortfolioWithContent, error)
+	AddPortfolioSkill(input model.AddPortfolioSkillInput) (*model.PortfolioWithContent, error)
+	UpdatePortfolioSkill(input model.UpdatePortfolioSkillInput) (*model.PortfolioWithContent, error)
+	DeletePortfolioSkill(portfolioID, skillID string) (*model.PortfolioWithContent, error)
+	AddPortfolioTestimonial(input model.AddPortfolioTestimonialInput) (*model.PortfolioWithContent, error)
+	UpdatePortfolioTestimonial(input model.UpdatePortfolioTestimonialInput) (*model.PortfolioWithContent, error)
+	DeletePortfolioTestimonial(portfolioID, testimonialID string) (*model.PortfolioWithContent, error)
 	DuplicatePortfolio(sourceID string) (*model.Portfolio, error)
 	DeletePortfolio(id string) error
 	CreatePortfolio(title string) *model.Portfolio
@@ -70,6 +76,11 @@ type Store interface {
 	GitHubAccessToken() string
 	ConnectionStatus(provider string) (*model.ConnectionStatus, error)
 	DisconnectConnection(provider string) (bool, error)
+	ListKnowledgeEntries(includeDisabled bool) []*model.KnowledgeEntry
+	GetKnowledgeEntry(id string) (*model.KnowledgeEntry, error)
+	CreateKnowledgeEntry(entry *model.KnowledgeEntry) (*model.KnowledgeEntry, error)
+	UpdateKnowledgeEntry(id string, update func(*model.KnowledgeEntry) error) (*model.KnowledgeEntry, error)
+	DeleteKnowledgeEntry(id string) error
 }
 
 var (

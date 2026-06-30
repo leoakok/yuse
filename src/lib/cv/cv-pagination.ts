@@ -38,12 +38,23 @@ export function measureCvBlocks(container: HTMLElement): CvBlockMetrics[] {
   const elements = container.querySelectorAll<HTMLElement>("[data-cv-block-index]");
   if (elements.length === 0) return [];
 
-  const containerTop = container.getBoundingClientRect().top;
+  // The live preview renders this measuring container inside a
+  // `transform: scale()` wrapper, so getBoundingClientRect() reports
+  // post-transform (scaled) sizes. The pagination math compares against an
+  // unscaled page height, so recover the ancestor scale from the container's
+  // rendered vs. layout width and divide it back out. Without this, scaled-down
+  // measurements make a 2-page resume look like it fits on one page.
+  const containerRect = container.getBoundingClientRect();
+  const layoutWidth = container.offsetWidth;
+  const scale = layoutWidth > 0 ? containerRect.width / layoutWidth : 1;
+  const safeScale = scale > 0 ? scale : 1;
+
+  const containerTop = containerRect.top;
   const positions = Array.from(elements).map((el) => {
     const rect = el.getBoundingClientRect();
     return {
-      top: rect.top - containerTop,
-      bottom: rect.bottom - containerTop,
+      top: (rect.top - containerTop) / safeScale,
+      bottom: (rect.bottom - containerTop) / safeScale,
     };
   });
 

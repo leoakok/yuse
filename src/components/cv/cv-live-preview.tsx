@@ -66,7 +66,7 @@ export function CvLivePreview({ content }: CvLivePreviewProps) {
       <ScrollArea className="min-h-0 flex-1">
         <div
           ref={containerRef}
-          className="flex justify-center bg-muted/40 p-4"
+          className="flex min-h-full justify-center bg-muted/40 p-4"
         >
           <div
             className="resume-print-scale"
