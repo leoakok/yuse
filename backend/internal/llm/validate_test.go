@@ -88,14 +88,118 @@ func TestShouldNudgeResumeWritesForTailorJobPrompt(t *testing.T) {
 	}
 }
 
-func TestShouldNotNudgeAfterCreateResume(t *testing.T) {
-	if shouldNudgeResumeWrites("create a CV", []mcp.Execution{{Tool: "create_resume"}}, "Created your resume.") {
-		t.Fatal("expected no nudge after successful create_resume")
+func TestShouldNotNudgeAfterCreateResumePopulated(t *testing.T) {
+	execs := []mcp.Execution{{Tool: "create_resume"}, {Tool: "add_section_item"}}
+	if shouldNudgeResumeWrites("create a CV", execs, "Created your resume.") {
+		t.Fatal("expected no nudge after create_resume with add_section_item")
+	}
+}
+
+func TestShouldNudgeAfterCreateResumeShellOnly(t *testing.T) {
+	if !shouldNudgeResumeWrites("create a CV", []mcp.Execution{{Tool: "create_resume"}}, "Created your resume.") {
+		t.Fatal("expected nudge after create_resume shell without section items")
+	}
+}
+
+func TestShouldNudgeRoleTailorPopulate(t *testing.T) {
+	prompt := "create a cv for a forward deployed engineer role"
+	base := []mcp.Execution{
+		{Tool: "web_search"},
+		{Tool: "web_search"},
+		{Tool: "list_twin_entries"},
+		{Tool: "list_resumes"},
+		{Tool: "get_resume_content"},
+		{Tool: "create_resume"},
+	}
+	if !shouldNudgeRoleTailorPopulate(prompt, base, "Created your tailored CV.") {
+		t.Fatal("expected role-tailor populate nudge after empty create")
+	}
+	if shouldNudgeRoleTailorPopulate(prompt, append(base, mcp.Execution{Tool: "add_section_item"}), "") {
+		t.Fatal("expected no role-tailor populate nudge after add_section_item")
+	}
+}
+
+func TestShouldNudgeRoleTailorResearch(t *testing.T) {
+	prompt := "create a cv for a forward deployed engineer role"
+	execs := []mcp.Execution{{Tool: "list_twin_entries"}, {Tool: "list_resumes"}}
+	if !shouldNudgeRoleTailorResearch(prompt, execs, "") {
+		t.Fatal("expected research nudge when web_search missing")
+	}
+	execs = append(execs, mcp.Execution{Tool: "web_search"}, mcp.Execution{Tool: "web_search"})
+	if shouldNudgeRoleTailorResearch(prompt, execs, "") {
+		t.Fatal("expected no research nudge after two web_search calls")
+	}
+}
+
+func TestRoleTailorComplete(t *testing.T) {
+	prompt := "create a cv for a forward deployed engineer role"
+	incomplete := []mcp.Execution{
+		{Tool: "web_search"},
+		{Tool: "list_twin_entries"},
+		{Tool: "list_resumes"},
+		{Tool: "create_resume"},
+		{Tool: "add_section_item"},
+	}
+	if roleTailorComplete(prompt, incomplete) {
+		t.Fatal("expected incomplete role tailor pipeline")
+	}
+	complete := []mcp.Execution{
+		{Tool: "web_search"},
+		{Tool: "web_search"},
+		{Tool: "list_twin_entries"},
+		{Tool: "list_resumes"},
+		{Tool: "get_resume_content"},
+		{Tool: "duplicate_resume"},
+		{Tool: "add_section_item"},
+		{Tool: "add_section_item"},
+		{Tool: "add_section_item"},
+		{Tool: "get_resume_content"},
+	}
+	if !roleTailorComplete(prompt, complete) {
+		t.Fatal("expected complete role tailor pipeline")
+	}
+}
+
+func TestLooksLikeThinRoleTailorReply(t *testing.T) {
+	if !looksLikeThinRoleTailorReply("Done.") {
+		t.Fatal("expected Done to be thin")
+	}
+	substantive := "Partial fit for forward deployed engineer: your customer-facing work maps well. I researched 3 postings and emphasized deployment and stakeholder skills. Remaining gap: limited on-prem experience."
+	if looksLikeThinRoleTailorReply(substantive) {
+		t.Fatal("expected substantive reply to pass thin check")
+	}
+}
+
+func TestLooksLikeDeferredTailorOffer(t *testing.T) {
+	reply := "Created the CV shell for a Forward Deployed Engineer and set the title and layout. If you want, I can now tailor it with your real experience and skills."
+	if !looksLikeDeferredTailorOffer(reply) {
+		t.Fatal("expected deferred tailor offer")
+	}
+}
+
+func TestRoleTailorNudgeExactFailureReply(t *testing.T) {
+	prompt := "create a cv for forward deployed engineer role"
+	execs := []mcp.Execution{{Tool: "create_resume"}}
+	reply := "Created the CV shell for a Forward Deployed Engineer and set the title and layout. If you want, I can now tailor it with your real experience and skills."
+	if !shouldNudgeRoleTailorResearch(prompt, execs, reply) {
+		t.Fatal("expected research nudge")
+	}
+	if !shouldForceRoleTailorContinuation(prompt, execs, reply) {
+		t.Fatal("expected force continuation safety net")
+	}
+}
+
+func TestUserAskedRoleTargetedCV(t *testing.T) {
+	if !userAskedRoleTargetedCV("create a cv for a forward deployed engineer role") {
+		t.Fatal("expected role-targeted CV intent")
+	}
+	if userAskedRoleTargetedCV("create a CV from https://example.com") {
+		t.Fatal("website import should not count as role-target only")
 	}
 }
 
 func TestShouldNotNudgeWhenAskingSkillGap(t *testing.T) {
-	reply := "This role wants .NET experience — do you have any I should highlight?"
+	reply := "This role wants .NET experience, do you have any I should highlight?"
 	execs := []mcp.Execution{{Tool: "fetch_url"}, {Tool: "get_resume_content"}, {Tool: "list_twin_entries"}}
 	prompt := "tailor my CV for this job posting https://example.com/jobs/dotnet-dev"
 	if shouldNudgeResumeWrites(prompt, execs, reply) {
@@ -104,7 +208,7 @@ func TestShouldNotNudgeWhenAskingSkillGap(t *testing.T) {
 }
 
 func TestShouldNotNudgeJobTrackerWhenAskingSkillGap(t *testing.T) {
-	reply := "The posting requires .NET — do you have experience with it?"
+	reply := "The posting requires .NET, do you have experience with it?"
 	execs := []mcp.Execution{{Tool: "web_search"}, {Tool: "list_twin_entries"}}
 	if shouldNudgeJobTracker("track this job", model.AssistantContextInput{View: model.AssistantViewJobTracker}, execs, reply) {
 		t.Fatal("expected no job tracker nudge when asking about skill gap")
@@ -112,7 +216,7 @@ func TestShouldNotNudgeJobTrackerWhenAskingSkillGap(t *testing.T) {
 }
 
 func TestSanitizeAgentReplyKeepsSkillGapQuestion(t *testing.T) {
-	reply := "This role needs .NET — do you have any experience I should add?"
+	reply := "This role needs .NET, do you have any experience I should add?"
 	got := SanitizeAgentReply(reply, []mcp.Execution{{Tool: "fetch_url"}})
 	if got != reply {
 		t.Fatalf("expected skill gap question to be kept, got %q", got)

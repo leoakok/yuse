@@ -7,7 +7,7 @@ import (
 	twinpkg "github.com/leo/ai-weekend/backend/internal/twin"
 )
 
-const twinContextIntro = `Digital Twin (full career knowledge — STAR/PAR structured; use when tailoring CVs; include only relevant items):`
+const twinContextIntro = `Digital Twin (full career knowledge, STAR/PAR structured; use when tailoring CVs; include only relevant items):`
 
 func FormatTwinContext(entries []*model.TwinEntry) string {
 	if len(entries) == 0 {

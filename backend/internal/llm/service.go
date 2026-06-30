@@ -1,6 +1,7 @@
 package llm
 
 import (
+	"context"
 	"fmt"
 
 	"github.com/leo/ai-weekend/backend/internal/config"
@@ -19,6 +20,15 @@ type Service struct {
 	visionModel   string
 	hasAPIKey     bool
 }
+
+// AgentLoopCompletionHook is set by llm tests to stub OpenAI chat completions.
+var AgentLoopCompletionHook func(
+	ctx context.Context,
+	modelName string,
+	messages []openai.ChatCompletionMessage,
+	tools []openai.Tool,
+	sink StreamSink,
+) (openai.ChatCompletionMessage, error)
 
 func NewService(cfg config.Config) *Service {
 	hasKey := cfg.HasOpenAIKey()

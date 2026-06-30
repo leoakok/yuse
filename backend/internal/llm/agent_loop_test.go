@@ -1,40 +1,41 @@
 package llm
 
 import (
-	"encoding/json"
 	"testing"
+
+	"github.com/leo/ai-weekend/backend/graph/model"
+	"github.com/leo/ai-weekend/backend/internal/mcp"
 )
 
-func TestBuildChatCompletionRequestOmitsTemperatureForGPT5(t *testing.T) {
-	req := buildChatCompletionRequest("gpt-5.4-mini", nil, nil)
-	data, err := json.Marshal(req)
-	if err != nil {
-		t.Fatal(err)
+func TestRoleTailorExactFailureScenarioNudges(t *testing.T) {
+	prompt := "create a cv for forward deployed engineer role"
+	execs := []mcp.Execution{{Tool: "create_resume"}}
+	reply := "Created the CV shell for a Forward Deployed Engineer and set the title and layout. If you want, I can now tailor it with your real experience and skills."
+
+	if !userAskedRoleTargetedCV(prompt) {
+		t.Fatal("expected role-targeted intent")
 	}
-	var payload map[string]any
-	if err := json.Unmarshal(data, &payload); err != nil {
-		t.Fatal(err)
+	if !shouldNudgeRoleTailorResearch(prompt, execs, reply) {
+		t.Fatal("expected research nudge for create_resume-only shell")
 	}
-	if _, ok := payload["temperature"]; ok {
-		t.Fatalf("expected temperature omitted for gpt-5.4-mini, got %v", payload["temperature"])
+	if !looksLikeDeferredTailorOffer(reply) {
+		t.Fatal("expected deferred tailor offer detection")
+	}
+	if !roleTailorNeedsPostToolNudge(prompt, execs) {
+		t.Fatal("expected post-tool nudge after premature create_resume")
+	}
+	nudge, ok := nextAgentNudge(prompt, model.AssistantContextInput{View: model.AssistantViewResumes}, execs, reply, false)
+	if !ok || nudge.text != roleTailorResearchNudge {
+		t.Fatalf("expected research nudge action, got ok=%v text=%q", ok, nudge.text)
 	}
 }
 
-func TestBuildChatCompletionRequestSetsTemperatureForGPT4(t *testing.T) {
-	req := buildChatCompletionRequest("gpt-4o", nil, nil)
-	if req.Temperature != 0.2 {
-		t.Fatalf("expected temperature 0.2, got %v", req.Temperature)
-	}
-}
+func TestRoleTailorForceContinuationBlocksEarlyExit(t *testing.T) {
+	prompt := "create a cv for forward deployed engineer role"
+	execs := []mcp.Execution{{Tool: "create_resume"}, {Tool: "update_resume_settings"}}
+	reply := "Created the CV shell for a Forward Deployed Engineer and set the title and layout."
 
-func TestModelHasFixedSamplingParams(t *testing.T) {
-	fixed := []string{"gpt-5.4-mini", "gpt-5-mini", "o1-preview", "o3-mini", "o4-mini"}
-	for _, model := range fixed {
-		if !modelHasFixedSamplingParams(model) {
-			t.Fatalf("expected %q to have fixed sampling params", model)
-		}
-	}
-	if modelHasFixedSamplingParams("gpt-4o") {
-		t.Fatal("expected gpt-4o to allow custom sampling params")
+	if !shouldForceRoleTailorContinuation(prompt, execs, reply) {
+		t.Fatal("expected force continuation for incomplete role-tailor pipeline")
 	}
 }

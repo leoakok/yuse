@@ -12,6 +12,7 @@ type contextKey struct{}
 type Value struct {
 	Session store.SessionScope
 	CV      *cv.Service
+	Postgres *store.Postgres
 }
 
 func With(ctx context.Context, value Value) context.Context {
@@ -26,6 +27,13 @@ func From(ctx context.Context) (Value, bool) {
 func CV(ctx context.Context) *cv.Service {
 	if v, ok := From(ctx); ok && v.CV != nil {
 		return v.CV
+	}
+	return nil
+}
+
+func Postgres(ctx context.Context) *store.Postgres {
+	if v, ok := From(ctx); ok && v.Postgres != nil {
+		return v.Postgres
 	}
 	return nil
 }

@@ -112,6 +112,60 @@ func userExplicitlyRequestedHighImpactAction(text string) bool {
 		userAskedDelete(text)
 }
 
+// isContextualFollowUp reports short replies that refer to the assistant's prior
+// turn ("rank them", "compare those") and should run the agent with history.
+func isContextualFollowUp(userText string, history []*model.AssistantMessage) bool {
+	if lastAssistantMessage(history) == "" {
+		return false
+	}
+	lower := strings.ToLower(strings.TrimSpace(userText))
+	if lower == "" {
+		return false
+	}
+	if ok, _ := detectObviouslyOutOfScope(lower); ok {
+		return false
+	}
+	if looksLikeNewQuestion(lower) {
+		return false
+	}
+	words := strings.Fields(lower)
+
+	followUpPhrases := []string{
+		"them", "they", "those", "these", "both", "each",
+		"rank", "compare", "sort", "order", "prioritize",
+		"which one", "which is", "which are", "which was",
+		"tell me more", "go on", "what about", "how about",
+		"the first", "the second", "the other",
+	}
+	for _, phrase := range followUpPhrases {
+		if strings.Contains(lower, phrase) {
+			return true
+		}
+	}
+
+	// Short imperative or reply after the assistant spoke (e.g. "rank them", "yes please").
+	if len(words) <= 4 {
+		return true
+	}
+	return false
+}
+
+// looksLikeNewQuestion reports standalone questions that should not inherit
+// prior chat context as a follow-up (e.g. "how can I build a car").
+func looksLikeNewQuestion(lower string) bool {
+	starters := []string{
+		"how ", "what ", "why ", "when ", "where ", "who ",
+		"can i ", "could i ", "should i ", "would you ",
+		"is there ", "are there ", "do you know ",
+	}
+	for _, s := range starters {
+		if strings.HasPrefix(lower, s) {
+			return true
+		}
+	}
+	return false
+}
+
 // isWorkflowContinuation reports whether a short reply ("yes", "go ahead") is
 // continuing a workflow the assistant proposed in its previous message.
 func isWorkflowContinuation(userText string, history []*model.AssistantMessage) bool {

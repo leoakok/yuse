@@ -144,12 +144,12 @@ func buildUserMessage(
 		} else if attachment.isPDF() {
 			fileLines = append(
 				fileLines,
-				"(PDF attached but text could not be extracted — it may be scanned or image-only.)",
+				"(PDF attached but text could not be extracted, it may be scanned or image-only.)",
 			)
 		} else {
 			fileLines = append(
 				fileLines,
-				"(File content could not be extracted — only filename and type are available.)",
+				"(File content could not be extracted, only filename and type are available.)",
 			)
 		}
 		parts = append(parts, openai.ChatMessagePart{

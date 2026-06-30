@@ -55,14 +55,21 @@ func (s *Service) RunAgentStream(
 	// Cheap pre-classification (one small structured-output call, not a second
 	// full agent). Attachments and workflow continuations are always actionable.
 	var class Classification
-	if len(attachments) > 0 || isWorkflowContinuation(userText, history) {
-		class = Classification{Category: model.AssistantCategoryUpdateCv, Confidence: 1, Source: "fast-path", Reason: "attachment or continuation"}
+	if len(attachments) > 0 || isWorkflowContinuation(userText, history) || isContextualFollowUp(userText, history) {
+		class = Classification{Category: model.AssistantCategoryUpdateCv, Confidence: 1, Source: "fast-path", Reason: "attachment, continuation, or contextual follow-up"}
 	} else {
 		class = s.Classify(ctx, userText, assistantContext, history)
 	}
 
-	// Scope handling — out of scope / unclear / chit-chat get a friendly canned
-	// reply with no tool calls and no main-agent cost.
+	// Belt-and-suspenders: block obvious out-of-scope even if classification missed it.
+	if !isScopeHandled(class.Category) {
+		if oosClass, ok := obviousOutOfScopeClassification(strings.ToLower(strings.TrimSpace(userText)), "heuristic-guard"); ok {
+			class = oosClass
+		}
+	}
+
+	// Scope handling: only out-of-scope and chit-chat get a canned reply with no
+	// tool calls. UNCLEAR and everything else run the main agent (with history).
 	if isScopeHandled(class.Category) {
 		reply := ScopeReply(class, userText)
 		sink.Delta(reply)
@@ -123,6 +130,8 @@ func (s *Service) agentLoop(
 	openaiTools := tools.OpenAITools()
 	var executions []mcp.Execution
 	var lastContent string
+	recruiterPasses := 0
+	recruiterDone := false
 
 	for range maxAgentIterations {
 		sink.Status("Give me a moment…")
@@ -153,12 +162,44 @@ func (s *Service) agentLoop(
 		lastContent = strings.TrimSpace(choice.Content)
 
 		if len(choice.ToolCalls) == 0 {
-			if shouldNudgeJobTracker(userText, assistantContext, executions, lastContent) {
-				sink.Status("Wrapping up your application…")
+			if nudge, ok := nextAgentNudge(userText, assistantContext, executions, lastContent, recruiterDone); ok {
+				sink.Status(nudge.status)
 				messages = append(messages, choice)
 				messages = append(messages, openai.ChatCompletionMessage{
 					Role:    openai.ChatMessageRoleUser,
-					Content: jobTrackerNudge,
+					Content: nudge.text,
+				})
+				lastContent = ""
+				continue
+			}
+			if roleTailorComplete(userText, executions) && !recruiterDone {
+				if recruiterPasses < maxRecruiterReviewPasses {
+					sink.Status("Running recruiter review…")
+					review, err := s.recruiterReview(
+						ctx,
+						extractRoleTitle(userText),
+						researchSummaryFromExecutions(executions),
+						resumeContentJSONFromExecutions(executions),
+					)
+					recruiterPasses++
+					if err == nil && !review.Passed && review.Score < roleTailorMinRecruiterScore && len(review.Fixes) > 0 && recruiterPasses < maxRecruiterReviewPasses {
+						messages = append(messages, choice)
+						messages = append(messages, openai.ChatCompletionMessage{
+							Role:    openai.ChatMessageRoleUser,
+							Content: recruiterReviewNudge(review),
+						})
+						lastContent = ""
+						continue
+					}
+				}
+				recruiterDone = true
+			}
+			if shouldNudgeRoleTailorFinalReply(userText, executions, lastContent, recruiterDone) {
+				sink.Status("Finishing your summary…")
+				messages = append(messages, choice)
+				messages = append(messages, openai.ChatCompletionMessage{
+					Role:    openai.ChatMessageRoleUser,
+					Content: roleTailorFinalReplyNudge,
 				})
 				lastContent = ""
 				continue
@@ -219,7 +260,7 @@ func (s *Service) agentLoop(
 				exec := mcp.Execution{
 					Tool:      fn.Name,
 					Arguments: args,
-					Error:     "blocked: message too short or unclear — ask one clarifying question instead",
+					Error:     "blocked: message too short or unclear, ask one clarifying question instead",
 				}
 				executions = append(executions, exec)
 				sink.ToolEnd(exec)
@@ -252,6 +293,17 @@ func (s *Service) agentLoop(
 				ToolCallID: call.ID,
 				Content:    exec.ResultJSON(),
 			})
+		}
+		if roleTailorNeedsPostToolNudge(userText, executions) {
+			if nudge, ok := nextAgentNudge(userText, assistantContext, executions, "", recruiterDone); ok {
+				sink.Status(nudge.status)
+				messages = append(messages, openai.ChatCompletionMessage{
+					Role:    openai.ChatMessageRoleUser,
+					Content: nudge.text,
+				})
+				lastContent = ""
+				continue
+			}
 		}
 	}
 
@@ -326,11 +378,14 @@ func (s *Service) streamCompletion(
 	tools []openai.Tool,
 	sink StreamSink,
 ) (openai.ChatCompletionMessage, error) {
+	if AgentLoopCompletionHook != nil {
+		return AgentLoopCompletionHook(ctx, modelName, messages, tools, sink)
+	}
 	var lastErr error
 	for attempt := 0; attempt < 5; attempt++ {
 		if attempt > 0 {
 			wait := time.Duration(attempt*3) * time.Second
-			sink.Status("Give me a moment — getting ready…")
+			sink.Status("Give me a moment. Getting ready…")
 			select {
 			case <-ctx.Done():
 				return openai.ChatCompletionMessage{}, ctx.Err()
