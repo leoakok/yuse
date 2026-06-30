@@ -37,7 +37,7 @@ func validateTwinEntryInput(entryType model.TwinEntryType, args map[string]any) 
 	switch format {
 	case twinpkg.StoryPAR:
 		if metaString(meta, twinpkg.MetaProblem) == "" && metaString(meta, twinpkg.MetaAction) == "" {
-			return nil // partial entries allowed — hints returned post-write
+			return nil // partial entries allowed, hints returned post-write
 		}
 	default:
 		if metaString(meta, twinpkg.MetaSituation) == "" && metaString(meta, twinpkg.MetaAction) == "" {

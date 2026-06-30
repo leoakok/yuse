@@ -82,7 +82,7 @@ func (e *GitHubRateLimitError) Error() string {
 	if e.Message != "" {
 		return e.Message
 	}
-	return "github api rate limit exceeded — set GITHUB_TOKEN for higher limits"
+	return "github api rate limit exceeded, set GITHUB_TOKEN for higher limits"
 }
 
 func isGitHubRateLimitError(err error) (*GitHubRateLimitError, bool) {
@@ -363,7 +363,7 @@ func newGitHubRateLimitError(status int, body []byte, headers http.Header) *GitH
 	if !isRateLimit {
 		return nil
 	}
-	msg := "github api rate limit exceeded — try again later or set GITHUB_TOKEN for 5000 req/hr"
+	msg := "github api rate limit exceeded, try again later or set GITHUB_TOKEN for 5000 req/hr"
 	if strings.TrimSpace(os.Getenv("GITHUB_TOKEN")) == "" {
 		msg += " (no GITHUB_TOKEN configured)"
 	}
@@ -771,7 +771,7 @@ func applyGitHubRateLimitPartial(result map[string]any, crawlErr error, tokenCon
 func buildAuthenticatedGitHubImportNote(importCount int, authLogin string) string {
 	base := buildGitHubImportNote(importCount, false, "")
 	return fmt.Sprintf(
-		"Authenticated as @%s — import ONLY repos in importRepos/importItems for this account (includes org repos you belong to). "+
+		"Authenticated as @%s, import ONLY repos in importRepos/importItems for this account (includes org repos you belong to). "+
 			"Do not import repos from web_search or other GitHub profiles. %s",
 		authLogin,
 		base,
@@ -792,7 +792,7 @@ func buildGitHubImportNote(importCount int, partial bool, limitMsg string) strin
 	}
 	note := fmt.Sprintf(
 		"PARTIAL GitHub import (%d repos retrieved). GitHub API rate limit was hit%s. "+
-			"Import every item in importRepos — do not give up. "+
+			"Import every item in importRepos, do not give up. "+
 			"Tell the user briefly in English what was imported and that some repos may be missing. "+
 			"%s",
 		importCount,
@@ -807,7 +807,7 @@ func buildGitHubImportNote(importCount int, partial bool, limitMsg string) strin
 
 func tokenHintSuffix() string {
 	if strings.TrimSpace(os.Getenv("GITHUB_TOKEN")) == "" {
-		return " (no GITHUB_TOKEN — set one for 5000 req/hr)"
+		return " (no GITHUB_TOKEN, set one for 5000 req/hr)"
 	}
 	return ""
 }

@@ -120,7 +120,7 @@ func (x *WebsiteExplorer) exploreGitHubRepo(rawURL string, progress ToolProgress
 				result["importItems"] = []map[string]any{}
 				result["itemsForImport"] = 0
 				result["importNote"] = fmt.Sprintf(
-					"Repo owner @%s is not the connected account %s — do not import. Use search_github with listUserRepos true for the user's own repos.",
+					"Repo owner @%s is not the connected account %s, do not import. Use search_github with listUserRepos true for the user's own repos.",
 					owner, authenticatedAsField(login),
 				)
 				result["ownerMismatch"] = true
@@ -175,7 +175,7 @@ func (x *WebsiteExplorer) exploreGenericSite(rawURL string, maxPages int, maxIte
 		"importNote":     buildImportNote(len(importItems), "website"),
 	}
 	if len(importItems) == 0 {
-		result["importNote"] = "No structured projects were auto-detected. Read pages text and extract projects, experience, and skills manually — then batch create_twin_entry and add_section_item for everything you find (not just one item)."
+		result["importNote"] = "No structured projects were auto-detected. Read pages text and extract projects, experience, and skills manually, then batch create_twin_entry and add_section_item for everything you find (not just one item)."
 	}
 	return result, nil
 }

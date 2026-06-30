@@ -34,7 +34,7 @@ func TestAddSectionItemPersists(t *testing.T) {
 	args, _ := json.Marshal(map[string]any{
 		"resumeId":  "resume-swe",
 		"sectionId": sectionID,
-		"headline":  "Staff Engineer — Example Co",
+		"headline":  "Staff Engineer, Example Co",
 		"body":      "- Built MCP integrations\n- Shipped CV assistant",
 	})
 	exec := registry.Execute("add_section_item", args)

@@ -78,19 +78,19 @@ func toolDefinitions() []toolDef {
 	}
 	legacyMeta := map[string]any{
 		"type":                 "object",
-		"description":          "Deprecated — use explicit fields (company, institution, location, startDate, endDate, url, level). Still accepted.",
+		"description":          "Deprecated, use explicit fields (company, institution, location, startDate, endDate, url, level). Still accepted.",
 		"additionalProperties": true,
 	}
 	sectionItemFields := map[string]any{
 		"headline": str(
-			"Item title — meaning depends on section type (see add_section_item description). EXPERIENCE=job title only; EDUCATION=degree only; SKILLS/LANGUAGES=one name; PROJECTS=project name. Never the section title. Never comma-list multiple skills/languages.",
+			"Item title, meaning depends on section type (see add_section_item description). EXPERIENCE=job title only; EDUCATION=degree only; SKILLS/LANGUAGES=one name; PROJECTS=project name. Never the section title. Never comma-list multiple skills/languages.",
 			"Senior Software Engineer",
 			"Bachelor of Science in Computer Science",
 			"TypeScript",
 			"English",
 		),
 		"body": str(
-			"Item content — meaning depends on section type. EXPERIENCE=achievement bullets ONLY (no company/dates/location). SUMMARY=paragraph. SKILLS/LANGUAGES=optional notes only. PROJECTS=description/impact. Do NOT dump metadata here.",
+			"Item content, meaning depends on section type. EXPERIENCE=achievement bullets ONLY (no company/dates/location). SUMMARY=paragraph. SKILLS/LANGUAGES=optional notes only. PROJECTS=description/impact. Do NOT dump metadata here.",
 			"- Led platform migration serving 2M users\n- Reduced API latency 40%",
 		),
 		"company": str(
@@ -109,9 +109,9 @@ func toolDefinitions() []toolDef {
 		"startDate": dateStr("Start date for EXPERIENCE, EDUCATION, PROJECTS, PUBLICATIONS, AWARDS, VOLUNTEER."),
 		"endDate": dateStr("End date. Use Present or endDatePresent=true for ongoing roles."),
 		"endDatePresent": boolProp("When true, sets endDate to Present for ongoing EXPERIENCE or PROJECTS."),
-		"url": urlStr("Link for PROJECTS, CERTIFICATIONS, PUBLICATIONS, ORGANIZATIONS — not in body."),
+		"url": urlStr("Link for PROJECTS, CERTIFICATIONS, PUBLICATIONS, ORGANIZATIONS, not in body."),
 		"level": enumProp(
-			"Proficiency — REQUIRED for SKILLS (BEGINNER|INTERMEDIATE|PROFICIENT|ADVANCED|EXPERT) and LANGUAGES (BEGINNER|INTERMEDIATE|PROFICIENT|FLUENT|NATIVE). One item per skill/language.",
+			"Proficiency, REQUIRED for SKILLS (BEGINNER|INTERMEDIATE|PROFICIENT|ADVANCED|EXPERT) and LANGUAGES (BEGINNER|INTERMEDIATE|PROFICIENT|FLUENT|NATIVE). One item per skill/language.",
 			sectionmeta.AllProficiencyLevels...,
 		),
 		"metadata": legacyMeta,
@@ -125,9 +125,9 @@ func toolDefinitions() []toolDef {
 		"website":  urlStr("Personal or portfolio site."),
 		"linkedIn": str("LinkedIn profile URL or handle.", "https://linkedin.com/in/janedoe"),
 		"github":   str("GitHub profile URL or handle.", "https://github.com/janedoe"),
-		"photoUrl": urlStr("Uploaded profile photo URL (HTTPS). Only set when the user uploads a file in the editor — do not use for GitHub/LinkedIn avatars."),
-		"linkedinPhotoUrl": urlStr("LinkedIn profile photo URL. Copy linkedinPhotoUrl from fetch_linkedin_profile (or explore_website on a LinkedIn /in/ URL) into update_contact_profile — do not upload to storage."),
-		"githubPhotoUrl": urlStr("GitHub avatar URL. Copy githubPhotoUrl from explore_website, crawl_github_profile, or search_github (connected account) into update_contact_profile — do not upload to storage."),
+		"photoUrl": urlStr("Uploaded profile photo URL (HTTPS). Only set when the user uploads a file in the editor, do not use for GitHub/LinkedIn avatars."),
+		"linkedinPhotoUrl": urlStr("LinkedIn profile photo URL. Copy linkedinPhotoUrl from fetch_linkedin_profile (or explore_website on a LinkedIn /in/ URL) into update_contact_profile, do not upload to storage."),
+		"githubPhotoUrl": urlStr("GitHub avatar URL. Copy githubPhotoUrl from explore_website, crawl_github_profile, or search_github (connected account) into update_contact_profile, do not upload to storage."),
 	}
 
 	return []toolDef{
@@ -143,12 +143,12 @@ func toolDefinitions() []toolDef {
 		},
 		{
 			Name:        "create_resume",
-			Description: "Create a new empty resume.",
-			Parameters:  object(map[string]any{"title": str("Resume title.", "Senior PM — Acme")}, "title"),
+			Description: "Create a new resume shell linked to workspace sections. Existing library items start hidden from preview. For role-target requests, run Role-targeted CV workflow first (Twin, research, fit), then populate with add_section_item before replying.",
+			Parameters:  object(map[string]any{"title": str("Resume title.", "Forward Deployed Engineer")}, "title"),
 		},
 		{
 			Name:        "duplicate_resume",
-			Description: "Clone a resume with all sections, items, and settings.",
+			Description: "Clone a resume with sections, item visibility, and settings. Prefer this as the base for role-target tailoring when a solid CV exists, then add_section_item for role-specific SUMMARY and new tailored experience/project items.",
 			Parameters:  object(map[string]any{"id": str("Source resume id.")}, "id"),
 		},
 		{
@@ -174,8 +174,8 @@ func toolDefinitions() []toolDef {
 			Description: `Update the Profile header block ONLY (name, title, contact, links, photo). NOT a section item.
 
 WHEN TO USE: Setting fullName, professional headline, email, phone, location, website, linkedIn, github, photoUrl, linkedinPhotoUrl, githubPhotoUrl.
-Profile picture from GitHub/LinkedIn: fetch avatar via explore_website (GitHub URL), crawl_github_profile, fetch_linkedin_profile, or search_github (connected account), then set githubPhotoUrl or linkedinPhotoUrl here — not photoUrl.
-WHEN NOT: Work history, education, skills — those use add_section_item on their sections.
+Profile picture from GitHub/LinkedIn: fetch avatar via explore_website (GitHub URL), crawl_github_profile, fetch_linkedin_profile, or search_github (connected account), then set githubPhotoUrl or linkedinPhotoUrl here, not photoUrl.
+WHEN NOT: Work history, education, skills, those use add_section_item on their sections.
 
 Returns fieldHints when key profile fields were omitted.`,
 			Parameters: mergeProps(object(map[string]any{
@@ -250,7 +250,7 @@ Returns fieldHints when key profile fields were omitted.`,
 		{
 			Name:        "create_portfolio",
 			Description: "Create a new empty portfolio site.",
-			Parameters:  object(map[string]any{"title": str("Portfolio title.", "Alex Morgan — Portfolio")}, "title"),
+			Parameters:  object(map[string]any{"title": str("Portfolio title.", "Alex Morgan, Portfolio")}, "title"),
 		},
 		{
 			Name:        "duplicate_portfolio",
@@ -351,14 +351,20 @@ Returns fieldHints when key profile fields were omitted.`,
 		},
 		{
 			Name:        "update_portfolio_settings",
-			Description: "Update portfolio site design: layout, accent color, theme, locale.",
+			Description: "Update portfolio site design: layout, accent color, grid, typography, hero, navigation.",
 			Parameters: object(map[string]any{
-				"portfolioId": str("Portfolio id."),
-				"layout":      portfolioLayoutEnum(),
-				"accentColor": str("CSS hex accent color.", "#2563eb"),
-				"themeId":     str("Theme id from list_cv_themes."),
-				"showPhoto":   boolProp("Show profile photo in hero."),
-				"locale":      str("BCP-47 locale.", "en-US"),
+				"portfolioId":        str("Portfolio id."),
+				"layout":             portfolioLayoutEnum(),
+				"accentColor":        str("CSS hex accent color.", "#2563eb"),
+				"themeId":            str("Theme id from list_cv_themes."),
+				"showPhoto":          boolProp("Show profile photo in hero."),
+				"locale":             str("BCP-47 locale.", "en-US"),
+				"projectGridColumns": enumProp("Project grid columns", model.AllPortfolioProjectGridColumns...),
+				"projectCardStyle":   enumProp("Project card style", model.AllPortfolioProjectCardStyle...),
+				"typographyScale":    enumProp("Site typography scale", model.AllPortfolioTypographyScale...),
+				"heroStyle":          enumProp("Hero style", model.AllPortfolioHeroStyle...),
+				"navigationStyle":    enumProp("Navigation style", model.AllPortfolioNavigationStyle...),
+				"animationLevel":     enumProp("Animation level", model.AllPortfolioAnimationLevel...),
 			}, "portfolioId"),
 		},
 		{
@@ -378,30 +384,30 @@ Returns fieldHints when key profile fields were omitted.`,
 		},
 		{
 			Name: "create_twin_entry",
-			Description: `Create a Digital Twin career knowledge entry — structured STAR/PAR, not tied to one resume.
+			Description: `Create a Digital Twin career knowledge entry, structured STAR/PAR, not tied to one resume.
 
 WHEN TO USE: Persisting career stories, skills, projects from conversation or imports.
 WHEN NOT: Direct CV edits (use add_section_item) unless also mirroring to Twin.
 
-STAR (EXPERIENCE, EDUCATION): situation, task, action, result — fill all you know.
+STAR (EXPERIENCE, EDUCATION): situation, task, action, result, fill all you know.
 PAR (PROJECT, SKILL_AREA): problem, action, result.
 Set storyFormat=STAR or PAR explicitly. Flat fields: company, institution, location, startDate, endDate, url, level.
 
 Returns fieldHints and missingSTARorPAR for incomplete entries.`,
 			Parameters: mergeProps(object(map[string]any{
 				"type":  twinEntryTypeEnum(),
-				"title": str("Short label: role, project, or skill area.", "Senior Engineer @ Acme — payments rewrite"),
+				"title": str("Short label: role, project, or skill area.", "Senior Engineer @ Acme, payments rewrite"),
 			}, "type", "title"), map[string]any{
 				"body": str(
-					"Optional resume-ready summary bullets — synthesize from STAR/PAR fields, not a substitute for them.",
+					"Optional resume-ready summary bullets, synthesize from STAR/PAR fields, not a substitute for them.",
 					"- Cut checkout latency 40% by rewriting the payments service in Go",
 				),
 				"storyFormat": enumProp("Story structure: STAR for jobs/education, PAR for projects/skills.", "STAR", "PAR"),
-				"situation":   str("STAR REQUIRED for EXPERIENCE — context: team, company, constraints.", "Payments team at a 50-person startup, legacy Ruby monolith"),
-				"task":        str("STAR REQUIRED for EXPERIENCE — your goal or responsibility.", "Own the checkout rewrite before holiday traffic"),
-				"problem":     str("PAR REQUIRED for PROJECT/SKILL — the problem you tackled.", "Checkout p95 was 8s and losing conversions"),
-				"action":      str("REQUIRED — what you specifically did: concrete steps, tech, decisions.", "Led design, migrated to Go microservices, rolled out behind feature flags"),
-				"result":      str("REQUIRED — measurable outcome or impact.", "p95 dropped to 1.2s; conversion up 12%"),
+				"situation":   str("STAR REQUIRED for EXPERIENCE, context: team, company, constraints.", "Payments team at a 50-person startup, legacy Ruby monolith"),
+				"task":        str("STAR REQUIRED for EXPERIENCE, your goal or responsibility.", "Own the checkout rewrite before holiday traffic"),
+				"problem":     str("PAR REQUIRED for PROJECT/SKILL, the problem you tackled.", "Checkout p95 was 8s and losing conversions"),
+				"action":      str("REQUIRED, what you specifically did: concrete steps, tech, decisions.", "Led design, migrated to Go microservices, rolled out behind feature flags"),
+				"result":      str("REQUIRED, measurable outcome or impact.", "p95 dropped to 1.2s; conversion up 12%"),
 				"company":     str("Employer (EXPERIENCE twin entries).", "Acme Corp"),
 				"institution": str("School (EDUCATION twin entries).", "Stanford University"),
 				"location":    str("Location for EXPERIENCE entries.", "Remote"),
@@ -418,7 +424,7 @@ Returns fieldHints and missingSTARorPAR for incomplete entries.`,
 		},
 		{
 			Name: "update_twin_entry",
-			Description: `Update a Digital Twin entry — merge new STAR/PAR fields incrementally. Same field rules as create_twin_entry.
+			Description: `Update a Digital Twin entry, merge new STAR/PAR fields incrementally. Same field rules as create_twin_entry.
 
 Call after each user answer to fill gaps. Returns fieldHints and missingSTARorPAR.`,
 			Parameters: mergeProps(object(map[string]any{
@@ -426,11 +432,11 @@ Call after each user answer to fill gaps. Returns fieldHints and missingSTARorPA
 			}, "id"), map[string]any{
 				"type":           twinEntryTypeEnum(),
 				"title":          str("New title."),
-				"body":           str("Updated summary — prefer updating STAR/PAR fields instead."),
+				"body":           str("Updated summary, prefer updating STAR/PAR fields instead."),
 				"storyFormat":    enumProp("Story structure.", "STAR", "PAR"),
-				"situation":      str("STAR — context."),
-				"task":           str("STAR — goal or responsibility."),
-				"problem":        str("PAR — problem."),
+				"situation":      str("STAR, context."),
+				"task":           str("STAR, goal or responsibility."),
+				"problem":        str("PAR, problem."),
 				"action":         str("What you did."),
 				"result":         str("Outcome or impact."),
 				"company":        str("Employer (EXPERIENCE)."),
@@ -467,7 +473,7 @@ Call after each user answer to fill gaps. Returns fieldHints and missingSTARorPA
 			Name: "update_tracked_job",
 			Description: `Update a tracked job application after tailoring a CV or writing a cover letter.
 
-WHEN TO USE: Finishing Job Tracker workflow — link tailored resumeId, save coverLetter, update status.
+WHEN TO USE: Finishing Job Tracker workflow, link tailored resumeId, save coverLetter, update status.
 REQUIRED for completion: resumeId + non-empty coverLetter when user asked to track/tailor.
 
 Set title, company, status (SAVED|APPLIED|INTERVIEW|OFFER|REJECTED|WITHDRAWN), location, source, salary, remote.`,
@@ -488,7 +494,7 @@ Set title, company, status (SAVED|APPLIED|INTERVIEW|OFFER|REJECTED|WITHDRAWN), l
 		},
 		{
 			Name:        "web_search",
-			Description: "Search the public web (DuckDuckGo). Use for company info, job postings, or public career facts. NOT for LinkedIn /in/ profiles (use fetch_linkedin_profile) or GitHub repos (use search_github/explore_website).",
+			Description: "Search the public web (DuckDuckGo). MANDATORY for role-target CV requests: search role requirements and find open job postings before creating a resume. Also use for company info, job postings, or public career facts. NOT for LinkedIn /in/ profiles (use fetch_linkedin_profile) or GitHub repos (use search_github/explore_website).",
 			Parameters: object(map[string]any{
 				"query": str("Search query.", "Acme Corp senior engineer job description"),
 			}, "query"),
@@ -511,7 +517,7 @@ Set title, company, status (SAVED|APPLIED|INTERVIEW|OFFER|REJECTED|WITHDRAWN), l
 		},
 		{
 			Name:        "crawl_site",
-			Description: "Lower-level multi-page crawl for portfolio sites. Prefer explore_website — it picks smarter strategies and returns structured importItems. Do NOT use for GitHub profiles.",
+			Description: "Lower-level multi-page crawl for portfolio sites. Prefer explore_website, it picks smarter strategies and returns structured importItems. Do NOT use for GitHub profiles.",
 			Parameters: object(map[string]any{
 				"url":      urlStr("Site base URL."),
 				"maxPages": intProp("Max pages to fetch (1–12, default 10).", 1, 12),
@@ -519,7 +525,7 @@ Set title, company, status (SAVED|APPLIED|INTERVIEW|OFFER|REJECTED|WITHDRAWN), l
 		},
 		{
 			Name:        "crawl_github_profile",
-			Description: "Lower-level GitHub profile crawl. Returns profile.avatar_url and top-level githubPhotoUrl for update_contact_profile. Prefer explore_website — same data plus unified importItems format.",
+			Description: "Lower-level GitHub profile crawl. Returns profile.avatar_url and top-level githubPhotoUrl for update_contact_profile. Prefer explore_website, same data plus unified importItems format.",
 			Parameters: object(map[string]any{
 				"url":      urlStr("GitHub profile URL (e.g. https://github.com/leoakok)."),
 				"maxRepos": intProp("Max individual repos to fetch in detail (1–10, default 5).", 1, 10),

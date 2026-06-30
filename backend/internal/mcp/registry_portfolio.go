@@ -313,6 +313,42 @@ func (r *Registry) executePortfolioTool(toolName string, args map[string]any, ex
 		if v, ok := optionalString(args, "locale"); ok && v != "" {
 			input.Locale = &v
 		}
+		if v, ok := optionalEnum(args, "projectGridColumns"); ok {
+			cols := model.PortfolioProjectGridColumns(v)
+			if cols.IsValid() {
+				input.ProjectGridColumns = &cols
+			}
+		}
+		if v, ok := optionalEnum(args, "projectCardStyle"); ok {
+			style := model.PortfolioProjectCardStyle(v)
+			if style.IsValid() {
+				input.ProjectCardStyle = &style
+			}
+		}
+		if v, ok := optionalEnum(args, "typographyScale"); ok {
+			scale := model.PortfolioTypographyScale(v)
+			if scale.IsValid() {
+				input.TypographyScale = &scale
+			}
+		}
+		if v, ok := optionalEnum(args, "heroStyle"); ok {
+			hero := model.PortfolioHeroStyle(v)
+			if hero.IsValid() {
+				input.HeroStyle = &hero
+			}
+		}
+		if v, ok := optionalEnum(args, "navigationStyle"); ok {
+			nav := model.PortfolioNavigationStyle(v)
+			if nav.IsValid() {
+				input.NavigationStyle = &nav
+			}
+		}
+		if v, ok := optionalEnum(args, "animationLevel"); ok {
+			anim := model.PortfolioAnimationLevel(v)
+			if anim.IsValid() {
+				input.AnimationLevel = &anim
+			}
+		}
 		settings, err := r.exec.UpdatePortfolioSettings(input)
 		if err != nil {
 			exec.Error = err.Error()
@@ -349,7 +385,7 @@ func portfolioContentSummary(content *model.PortfolioWithContent) map[string]any
 		}
 	} else {
 		out["contactProfile"] = nil
-		out["contactProfileNote"] = "Profile header not set yet — use update_portfolio_contact_profile."
+		out["contactProfileNote"] = "Profile header not set yet, use update_portfolio_contact_profile."
 	}
 	projects := make([]map[string]any, 0, len(content.Projects))
 	for _, proj := range content.Projects {

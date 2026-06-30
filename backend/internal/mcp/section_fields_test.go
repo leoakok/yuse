@@ -38,7 +38,7 @@ func TestAddEducationItemRejectsSectionTitleHeadline(t *testing.T) {
 		"resumeId":  "resume-swe",
 		"sectionId": educationSectionID(t, registry),
 		"headline":  "Education",
-		"body":      "- Bachelor of Science in Physics — University of Pennsylvania (1992-1997)",
+		"body":      "- Bachelor of Science in Physics, University of Pennsylvania (1992-1997)",
 	})
 	exec := registry.Execute("add_section_item", args)
 	if exec.Error == "" {

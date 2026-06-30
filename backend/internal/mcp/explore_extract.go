@@ -293,7 +293,7 @@ func normalizeGitHubImportItems(importRepos []map[string]any) []map[string]any {
 func buildImportNote(count int, siteKind string) string {
 	return fmt.Sprintf(
 		"Create one create_twin_entry per item in importItems (%d from %s). "+
-			"Batch all items this turn — do not stop after one. "+
+			"Batch all items this turn, do not stop after one. "+
 			"Use suggestedProblem/suggestedAction/suggestedResult for PAR fields when thin. "+
 			"Skip STAR follow-ups for imports. "+
 			"When building a CV, add_section_item on the suggested section for each item.",

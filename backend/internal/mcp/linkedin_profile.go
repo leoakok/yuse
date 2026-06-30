@@ -66,7 +66,7 @@ func validateLinkedInProfileURL(rawURL string) error {
 		return fmt.Errorf("URL must be a linkedin.com/in/ profile")
 	}
 	if isLinkedInJobURL(rawURL) {
-		return fmt.Errorf("LinkedIn job URLs are not supported by this tool — use fetch_url")
+		return fmt.Errorf("LinkedIn job URLs are not supported by this tool, use fetch_url")
 	}
 	if !linkedInProfilePathPattern.MatchString(parsed.Path) {
 		return fmt.Errorf("URL must be a linkedin.com/in/ profile path")

@@ -637,7 +637,7 @@ func (r *Registry) ExecuteWithProgress(toolName string, argsJSON []byte, progres
 			return exec
 		}
 		if isGitHubProfileURL(rawURL) {
-			exec.Error = "use explore_website for GitHub profiles — it uses the GitHub API and returns importItems"
+			exec.Error = "use explore_website for GitHub profiles, it uses the GitHub API and returns importItems"
 			return exec
 		}
 		maxPages := 0
@@ -930,7 +930,7 @@ func resumeContentSummary(content *model.ResumeWithContent) map[string]any {
 		}
 	} else {
 		out["contactProfile"] = nil
-		out["contactProfileNote"] = "Profile header not set yet — use update_contact_profile to create it."
+		out["contactProfileNote"] = "Profile header not set yet, use update_contact_profile to create it."
 	}
 	sections := make([]map[string]any, 0, len(content.Sections))
 	for _, swi := range content.Sections {
