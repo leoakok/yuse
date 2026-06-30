@@ -143,12 +143,12 @@ export function IntentPlayground() {
                     ))}
                   </div>
                 ) : (
-                  "—"
+                  "-"
                 )}
               </ResultField>
             </div>
 
-            <ResultField label="Reason">{result.reason || "—"}</ResultField>
+            <ResultField label="Reason">{result.reason || "-"}</ResultField>
 
             {result.cannedReply ? (
               <ResultField label="Canned reply">

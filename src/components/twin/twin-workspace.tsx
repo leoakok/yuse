@@ -105,7 +105,7 @@ export function TwinWorkspace({ addOpen = false, onAddOpenChange }: TwinWorkspac
           <div className="space-y-1">
             <p className="text-sm font-medium">Your complete career story</p>
             <p className="text-sm text-muted-foreground">
-              Yuse builds this as you chat — roles, projects, and skills stored in detail.
+              Yuse builds this as you chat, roles, projects, and skills stored in detail.
               When you need a CV, Yuse pulls only what fits the job. Talk to Yuse to add depth;
               you can review entries here anytime.
             </p>
@@ -126,7 +126,7 @@ export function TwinWorkspace({ addOpen = false, onAddOpenChange }: TwinWorkspac
         <div className="flex flex-col items-center justify-center rounded-lg border border-dashed px-6 py-16 text-center">
           <p className="text-sm font-medium">Nothing here yet</p>
           <p className="mt-1 max-w-md text-sm text-muted-foreground">
-            Tell Yuse about a job, project, or skill — it will ask follow-ups and save the
+            Tell Yuse about a job, project, or skill, it will ask follow-ups and save the
             details here automatically.
           </p>
           <Button className="mt-4 gap-1.5" onClick={() => setOpen(true)}>

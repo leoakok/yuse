@@ -9,7 +9,7 @@ require_env_value() {
   local key="$2"
   local label="$3"
   if [[ ! -f "$file" ]]; then
-    echo "Missing $file — copy from ${file}.example and set ${label}."
+    echo "Missing $file, copy from ${file}.example and set ${label}."
     exit 1
   fi
   local value
@@ -67,7 +67,7 @@ if ! command -v docker >/dev/null 2>&1; then
 fi
 
 echo "Starting Postgres and backend (waiting for health checks)..."
-# Load backend/.env only for Compose — do not export PORT into the frontend process.
+# Load backend/.env only for Compose, do not export PORT into the frontend process.
 (
   set -a
   # shellcheck disable=SC1091

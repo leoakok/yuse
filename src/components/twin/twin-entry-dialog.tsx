@@ -82,7 +82,7 @@ export function TwinEntryDialog({
           <DialogDescription>
             {isEditing
               ? "Update the details stored in your Digital Twin."
-              : "Capture a full story — roles, education, projects, or skills — with as much detail as you like."}
+              : "Capture a full story, roles, education, projects, or skills, with as much detail as you like."}
           </DialogDescription>
         </DialogHeader>
 
@@ -130,7 +130,7 @@ export function TwinEntryDialog({
               id="twin-entry-body"
               value={body}
               onChange={setBody}
-              placeholder="Write everything you remember — outcomes, technologies, team size, context. The more detail, the better tailored your future resumes can be."
+              placeholder="Write everything you remember, outcomes, technologies, team size, context. The more detail, the better tailored your future resumes can be."
               rows={10}
               className="min-h-[200px]"
             />

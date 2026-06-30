@@ -1,7 +1,7 @@
 "use client";
 
 import { useCallback, useEffect, useState } from "react";
-import { BookOpen, Pencil, Plus, Trash2 } from "lucide-react";
+import { BookOpen, Loader2, Pencil, Plus, Trash2 } from "lucide-react";
 import { toast } from "sonner";
 import {
   KnowledgeEntryDialog,
@@ -24,7 +24,6 @@ import {
   DialogHeader,
   DialogTitle,
 } from "@/components/ui/dialog";
-import { Skeleton } from "@/components/ui/skeleton";
 import {
   createKnowledgeEntry,
   deleteKnowledgeEntry,
@@ -148,10 +147,9 @@ export function KnowledgeDictionary() {
         </CardHeader>
         <CardContent>
           {loading ? (
-            <div className="space-y-3">
-              <Skeleton className="h-10 w-full" />
-              <Skeleton className="h-10 w-full" />
-              <Skeleton className="h-10 w-full" />
+            <div className="flex items-center justify-center py-12 text-sm text-muted-foreground">
+              <Loader2 className="mr-2 size-4 animate-spin" aria-hidden />
+              Loading entries…
             </div>
           ) : entries.length === 0 ? (
             <div className="rounded-xl border border-dashed px-6 py-16 text-center">
@@ -192,7 +190,7 @@ export function KnowledgeDictionary() {
                               ))}
                             </div>
                           ) : (
-                            "—"
+                            "-"
                           )}
                         </td>
                         <td className="px-4 py-3">

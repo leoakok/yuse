@@ -66,7 +66,7 @@ export default function LogoPreviewPage() {
         <Card className="p-5">
           <h2 className="text-lg font-semibold">Current default</h2>
           <p className="mt-1 text-sm text-muted-foreground">
-            Option C (mascot slingshot) — use{" "}
+            Option C (mascot slingshot), use{" "}
             <code className="rounded bg-muted px-1 py-0.5">{`<YuseLogo />`}</code> with no variant
             prop.
           </p>
