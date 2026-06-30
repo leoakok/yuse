@@ -1,5 +1,7 @@
 import type { NextAuthConfig } from "next-auth";
 
+import { isPublicPortfolioPath } from "@/lib/portfolio/slug";
+
 export const authConfig = {
   pages: {
     signIn: "/login",
@@ -79,6 +81,10 @@ export const authConfig = {
 
       if (isGraphqlProxy) {
         return !!auth?.user;
+      }
+
+      if (isPublicPortfolioPath(pathname)) {
+        return true;
       }
 
       return !!auth?.user;
