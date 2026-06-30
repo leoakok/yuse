@@ -19,12 +19,12 @@ var sectionFieldSpecs = map[model.SectionType]sectionFieldSpec{
 		Required:    []string{"headline", "company", "startDate"},
 		Recommended: []string{"location", "endDate", "body"},
 		Fields: map[string]string{
-			"headline":  "Job title only — not employer, not dates",
+			"headline":  "Job title only, not employer, not dates",
 			"company":   "Employer name",
 			"location":  "City, region, or Remote",
 			"startDate": "YYYY-MM or YYYY",
 			"endDate":   "YYYY-MM, YYYY, or Present (or set endDatePresent=true)",
-			"body":      "Achievement bullets ONLY — STAR outcomes, no company/dates/location",
+			"body":      "Achievement bullets ONLY, STAR outcomes, no company/dates/location",
 		},
 		GoodExample: map[string]string{
 			"headline":  "Senior Software Engineer",
@@ -39,15 +39,15 @@ var sectionFieldSpecs = map[model.SectionType]sectionFieldSpec{
 			"body":     "Acme Corp, San Francisco\n2020-2023\n- Built APIs",
 		},
 		Notes: []string{
-			"Never put employer, location, or dates in body — use company, location, startDate, endDate",
-			"One item per job — call add_section_item separately for each role",
+			"Never put employer, location, or dates in body, use company, location, startDate, endDate",
+			"One item per job, call add_section_item separately for each role",
 		},
 	},
 	model.SectionTypeEducation: {
 		Required:    []string{"headline", "institution"},
 		Recommended: []string{"startDate", "endDate", "body"},
 		Fields: map[string]string{
-			"headline":    "Degree or program only — not school name",
+			"headline":    "Degree or program only, not school name",
 			"institution": "School or university",
 			"startDate":   "Start year (YYYY)",
 			"endDate":     "Graduation year (YYYY)",
@@ -61,10 +61,10 @@ var sectionFieldSpecs = map[model.SectionType]sectionFieldSpec{
 		},
 		BadExample: map[string]string{
 			"headline": "Education",
-			"body":     "BS CS — MIT (2016-2020)",
+			"body":     "BS CS, MIT (2016-2020)",
 		},
 		Notes: []string{
-			"Split degree and school — headline=degree, institution=school",
+			"Split degree and school, headline=degree, institution=school",
 			"One item per degree",
 		},
 	},
@@ -74,7 +74,7 @@ var sectionFieldSpecs = map[model.SectionType]sectionFieldSpec{
 		Fields: map[string]string{
 			"headline": "One skill name only",
 			"level":    "BEGINNER|INTERMEDIATE|PROFICIENT|ADVANCED|EXPERT",
-			"body":     "Optional context — never a comma-separated skill list",
+			"body":     "Optional context, never a comma-separated skill list",
 		},
 		GoodExample: map[string]string{
 			"headline": "TypeScript",
@@ -86,7 +86,7 @@ var sectionFieldSpecs = map[model.SectionType]sectionFieldSpec{
 		},
 		Notes: []string{
 			"One add_section_item call per skill",
-			"Programming languages belong here — not LANGUAGES",
+			"Programming languages belong here, not LANGUAGES",
 		},
 	},
 	model.SectionTypeLanguages: {
@@ -95,7 +95,7 @@ var sectionFieldSpecs = map[model.SectionType]sectionFieldSpec{
 		Fields: map[string]string{
 			"headline": "One spoken language only",
 			"level":    "BEGINNER|INTERMEDIATE|PROFICIENT|FLUENT|NATIVE",
-			"body":     "Optional notes — never multiple languages",
+			"body":     "Optional notes, never multiple languages",
 		},
 		GoodExample: map[string]string{
 			"headline": "English",
@@ -115,7 +115,7 @@ var sectionFieldSpecs = map[model.SectionType]sectionFieldSpec{
 			"url":       "Repo or demo link",
 			"startDate": "YYYY-MM or YYYY",
 			"endDate":   "YYYY-MM, YYYY, or Present",
-			"body":      "Problem solved, tech stack, impact — not just a URL",
+			"body":      "Problem solved, tech stack, impact, not just a URL",
 		},
 		GoodExample: map[string]string{
 			"headline": "Payments microservice",
@@ -123,7 +123,7 @@ var sectionFieldSpecs = map[model.SectionType]sectionFieldSpec{
 			"body":     "Rewrote checkout in Go; cut p95 latency 40%",
 		},
 		BadExample: map[string]string{
-			"body": "https://github.com/user/payments — built in 2022 at Acme",
+			"body": "https://github.com/user/payments, built in 2022 at Acme",
 		},
 		Notes: []string{"Put links in url, dates in startDate/endDate"},
 	},
@@ -240,26 +240,26 @@ func sectionItemFieldGuideSummary(sectionType model.SectionType) string {
 }
 
 func addSectionItemToolDescription() string {
-	return `Add ONE item to a resume section. Call once per job, degree, skill, language, or project.
+	return `Add ONE item to a resume section. Call once per job, degree, skill, language, or project. New items are visible in preview (showInPreview true) on the target resume by default.
 
-WHEN TO USE: Populating or extending a section after get_resume_content / list_sections.
+WHEN TO USE: Populating or extending a section after get_resume_content / list_sections. Role tailoring: add NEW items with role-specific bullets when the same employer needs different wording per target role (do not only toggle visibility on existing items).
 WHEN NOT: Profile header (use update_contact_profile). Batch imports still need one call per item.
 
-Per-section rules (use flat fields — merged into metadata automatically):
-• EXPERIENCE — REQUIRED: headline=job title, company, startDate. RECOMMENDED: location, endDate, body=bullets ONLY.
+Per-section rules (use flat fields, merged into metadata automatically):
+• EXPERIENCE, REQUIRED: headline=job title, company, startDate. RECOMMENDED: location, endDate, body=bullets ONLY.
   GOOD: headline="Senior Engineer", company="Acme", location="Remote", startDate="2020-06", endDate="Present", body="- Led migration…"
   BAD: body="Acme Corp, 2020-2023, San Francisco\n- Built APIs" (put company/location/dates in their fields)
-• EDUCATION — REQUIRED: headline=degree, institution. RECOMMENDED: startDate, endDate.
-• SKILLS — REQUIRED: headline=one skill, level enum. One call per skill — never comma-list.
-• LANGUAGES — REQUIRED: headline=one language, level enum. Spoken languages only.
-• PROJECTS — REQUIRED: headline. RECOMMENDED: url, company, dates, body=description.
-• SUMMARY — REQUIRED: body paragraph.
+• EDUCATION, REQUIRED: headline=degree, institution. RECOMMENDED: startDate, endDate.
+• SKILLS, REQUIRED: headline=one skill, level enum. One call per skill, never comma-list.
+• LANGUAGES, REQUIRED: headline=one language, level enum. Spoken languages only.
+• PROJECTS, REQUIRED: headline. RECOMMENDED: url, company, dates, body=description.
+• SUMMARY, REQUIRED: body paragraph. Always add for role-target CVs.
 
 get_resume_content returns fieldGuide per section with goodExample/badExample.`
 }
 
 func updateSectionItemToolDescription() string {
-	return `Update an existing section item by id. Same field rules as add_section_item — use structured flat fields (company, institution, location, startDate, endDate, level, url), not a metadata dump in body.
+	return `Update an existing section item by id. Same field rules as add_section_item, use structured flat fields (company, institution, location, startDate, endDate, level, url), not a metadata dump in body.
 
 Only send fields you want to change. EXPERIENCE: keep achievement bullets in body; employer and dates in company/location/startDate/endDate.
 

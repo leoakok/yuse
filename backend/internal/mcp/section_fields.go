@@ -88,11 +88,11 @@ func sectionItemFieldGuide(sectionType model.SectionType) string {
 	case model.SectionTypeEducation:
 		return "headline=degree or program only (e.g. Bachelor of Science in Physics); metadata.institution=school; metadata.startDate, endDate=years; body=optional honors or coursework; one item per degree"
 	case model.SectionTypeSkills:
-		return "headline=one skill name only (e.g. TypeScript, Project management); metadata.level=BEGINNER|INTERMEDIATE|PROFICIENT|ADVANCED|EXPERT; body=optional context; call add_section_item once per skill — never comma-list many skills in one item"
+		return "headline=one skill name only (e.g. TypeScript, Project management); metadata.level=BEGINNER|INTERMEDIATE|PROFICIENT|ADVANCED|EXPERT; body=optional context; call add_section_item once per skill, never comma-list many skills in one item"
 	case model.SectionTypeProjects, model.SectionTypeCertifications:
 		return "headline=project or certification name; metadata.url=optional link; body=description"
 	case model.SectionTypeLanguages:
-		return "headline=one spoken language only (e.g. English, German); metadata.level=BEGINNER|INTERMEDIATE|PROFICIENT|FLUENT|NATIVE; body=optional notes; call add_section_item once per language — never combine languages in one item"
+		return "headline=one spoken language only (e.g. English, German); metadata.level=BEGINNER|INTERMEDIATE|PROFICIENT|FLUENT|NATIVE; body=optional notes; call add_section_item once per language, never combine languages in one item"
 	case model.SectionTypeOrganizations:
 		return "headline=organization name; metadata.url=optional link; body=role or involvement"
 	case model.SectionTypePublications:
@@ -272,7 +272,7 @@ func collectSectionItemFieldHints(
 		if hasStructuredField(field, headline, body, metadata) {
 			continue
 		}
-		hints = append(hints, fmt.Sprintf("missing required field %s — %s", field, spec.Fields[field]))
+		hints = append(hints, fmt.Sprintf("missing required field %s, %s", field, spec.Fields[field]))
 	}
 
 	switch sectionType {
@@ -285,7 +285,7 @@ func collectSectionItemFieldHints(
 		}
 		if strings.TrimSpace(body) != "" && !strings.Contains(body, "\n") && !strings.HasPrefix(strings.TrimSpace(body), "-") {
 			if metaString(metadata, "company") != "" || bodyContainsDateRange(body) {
-				hints = append(hints, "body should be achievement bullets only — use \"- \" prefix per bullet")
+				hints = append(hints, "body should be achievement bullets only, use \"- \" prefix per bullet")
 			}
 		}
 	case model.SectionTypeSkills, model.SectionTypeLanguages:
@@ -299,7 +299,7 @@ func collectSectionItemFieldHints(
 	}
 
 	if bodyLooksLikeMetadataDump(sectionType, body, metadata) {
-		hints = append(hints, "body contains metadata — use structured fields instead of dumping company/dates/location in body")
+		hints = append(hints, "body contains metadata, use structured fields instead of dumping company/dates/location in body")
 	}
 
 	return dedupeStrings(hints)
@@ -387,7 +387,7 @@ func contactProfileFieldHints(args map[string]any) []string {
 		hints = append(hints, "fullName is the display name in the Profile header")
 	}
 	if _, ok := args["headline"]; !ok {
-		hints = append(hints, "headline is the professional title under the name — not a section item")
+		hints = append(hints, "headline is the professional title under the name, not a section item")
 	}
 	return hints
 }
@@ -413,10 +413,10 @@ func wrapTrackedJobResult(job *model.TrackedJob) map[string]any {
 	}
 	var hints []string
 	if strings.TrimSpace(job.CoverLetter) == "" {
-		hints = append(hints, "coverLetter is empty — save the tailored cover letter text when finishing Job Tracker workflow")
+		hints = append(hints, "coverLetter is empty, save the tailored cover letter text when finishing Job Tracker workflow")
 	}
 	if job.ResumeID == nil || strings.TrimSpace(*job.ResumeID) == "" {
-		hints = append(hints, "resumeId not linked — set to the tailored resume id after create_resume/duplicate_resume")
+		hints = append(hints, "resumeId not linked, set to the tailored resume id after create_resume/duplicate_resume")
 	}
 	if len(hints) > 0 {
 		out["fieldHints"] = hints
@@ -440,7 +440,7 @@ func validateSectionItemInput(
 
 	if trimmedHeadline != "" && lowerHeadline == sectionTitle {
 		return fmt.Errorf(
-			"headline must not be the section title %q — use the %s",
+			"headline must not be the section title %q, use the %s",
 			section.Title,
 			sectionHeadlineHint(section.Type),
 		)
@@ -463,7 +463,7 @@ func validateSectionItemInput(
 		}
 		if countEducationDegreeLines(body) >= 2 {
 			return fmt.Errorf(
-				"add one education item per degree — do not put multiple degrees in body; call add_section_item separately for each",
+				"add one education item per degree, do not put multiple degrees in body; call add_section_item separately for each",
 			)
 		}
 	case model.SectionTypeExperience:
@@ -475,7 +475,7 @@ func validateSectionItemInput(
 		}
 		if metaString(metadata, "company") == "" && (headlineAtCompany.MatchString(trimmedHeadline) || headlineDashCompany.MatchString(trimmedHeadline)) {
 			return fmt.Errorf(
-				"split title and employer: headline=job title only, company=employer — do not combine in headline",
+				"split title and employer: headline=job title only, company=employer, do not combine in headline",
 			)
 		}
 		if bodyLooksLikeMetadataDump(section.Type, body, metadata) && strings.TrimSpace(body) != "" {
@@ -491,7 +491,7 @@ func validateSectionItemInput(
 			}
 			if nonBulletLines > 0 && metaString(metadata, "company") == "" {
 				return fmt.Errorf(
-					"EXPERIENCE body must be achievement bullets only — put employer in company, location in location, dates in startDate/endDate; do not dump job metadata in body",
+					"EXPERIENCE body must be achievement bullets only, put employer in company, location in location, dates in startDate/endDate; do not dump job metadata in body",
 				)
 			}
 		}
@@ -517,7 +517,7 @@ func validateStructuredLevelItem(
 ) error {
 	if strings.Contains(headline, ",") {
 		return fmt.Errorf(
-			"add one %s per item — headline must be a single %s name, not a comma-separated list; call add_section_item separately for each",
+			"add one %s per item, headline must be a single %s name, not a comma-separated list; call add_section_item separately for each",
 			itemKind, itemKind,
 		)
 	}
@@ -529,7 +529,7 @@ func validateStructuredLevelItem(
 	}
 	if countListLikeEntries(body) >= 2 {
 		return fmt.Errorf(
-			"add one %s per item — do not put multiple %ss in body; call add_section_item separately for each with metadata.level",
+			"add one %s per item, do not put multiple %ss in body; call add_section_item separately for each with metadata.level",
 			itemKind, itemKind,
 		)
 	}
@@ -622,7 +622,7 @@ func isGenericSectionLabel(headline string, labels ...string) bool {
 
 func looksLikeCombinedEducationLine(headline string) bool {
 	lower := strings.ToLower(headline)
-	return strings.Contains(headline, " — ") ||
+	return strings.Contains(headline, ", ") ||
 		strings.Contains(headline, " - ") ||
 		strings.Contains(lower, "university") ||
 		strings.Contains(lower, "college") ||

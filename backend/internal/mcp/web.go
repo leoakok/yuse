@@ -87,7 +87,7 @@ func (w *WebClient) Search(query string) (any, error) {
 				return m, nil
 			}
 		}
-		err = fmt.Errorf("duckduckgo returned no results for %q — try a shorter or more specific query", query)
+		err = fmt.Errorf("duckduckgo returned no results for %q, try a shorter or more specific query", query)
 	}
 	if w.tavilyKey != "" {
 		if tavily, tavilyErr := w.searchTavily(query); tavilyErr == nil {
@@ -602,7 +602,7 @@ func (w *WebClient) searchDuckDuckGo(query string) (any, error) {
 
 	if strings.Contains(strings.ToLower(string(body)), "anomaly-modal") ||
 		strings.Contains(strings.ToLower(string(body)), "bots use duckduckgo") {
-		return nil, fmt.Errorf("duckduckgo blocked the search request — try again in a moment or rephrase the query")
+		return nil, fmt.Errorf("duckduckgo blocked the search request, try again in a moment or rephrase the query")
 	}
 
 	results := parseDuckDuckGoResults(string(body), maxSearchHits)

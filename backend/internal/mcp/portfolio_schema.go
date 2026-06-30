@@ -7,7 +7,7 @@ func portfolioProjectFieldGuide() map[string]any {
 		"required":    []string{"title"},
 		"recommended": []string{"tagline", "problem", "approach", "outcome", "techStack", "liveUrl", "repoUrl"},
 		"fields": map[string]any{
-			"title":     "Project name — clear and specific.",
+			"title":     "Project name, clear and specific.",
 			"tagline":   "One-line hook (what it does).",
 			"problem":   "What problem or need did this address?",
 			"approach":  "What did you build and how?",
@@ -44,7 +44,7 @@ func portfolioSkillFieldGuide() map[string]any {
 			"name":     "Skill name (one per item).",
 			"category": "Optional group: Languages, Frameworks, Tools, etc.",
 		},
-		"notes": "Showcase skills relevant to the portfolio audience — group by category when helpful.",
+		"notes": "Showcase skills relevant to the portfolio audience, group by category when helpful.",
 	}
 }
 
@@ -57,7 +57,7 @@ func portfolioTestimonialFieldGuide() map[string]any {
 			"author": "Person's name.",
 			"role":   "Their title or relationship.",
 		},
-		"notes": "Only add real testimonials the user provided — never invent quotes.",
+		"notes": "Only add real testimonials the user provided, never invent quotes.",
 	}
 }
 
