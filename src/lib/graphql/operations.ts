@@ -1,3 +1,65 @@
+const RESUME_SETTINGS_FIELDS = `
+        resumeId
+        themeId
+        fontSize
+        contactNameFontSize
+        contactHeadlineFontSize
+        contactDetailsFontSize
+        sectionTitleFontSize
+        itemTitleFontSize
+        itemMetaFontSize
+        pageFormat
+        marginHorizontalMm
+        marginVerticalMm
+        showPhoto
+        itemTitleLayout
+        itemTitleSeparator
+        itemTitleOrder
+        fontFamily
+        accentColor
+        sectionDividerStyle
+        dateFormat
+        datePosition
+        skillsLayout
+        atsMode
+        columnLayout
+        sidebarPosition
+        sidebarWidth
+        designPresetId
+        photoPosition
+        photoSize
+        contactLayout
+        contactFields
+        sectionSpacing
+        itemSpacing
+        descriptionStyle
+        bulletChar
+        itemTitleEmphasis
+        highlightCurrentRole
+        locationDisplay
+        headingFontFamily
+        bodyFontFamily
+        nameFontWeight
+        sectionTitleFontWeight
+        lineHeight
+        headingLetterSpacing
+        sectionTitleSmallCaps
+        textPrimaryColor
+        textMutedColor
+        pageBackground
+        linkColor
+        skillsProficiency
+        languagesLayout
+        certificationsLayout
+        keepSectionsTogether
+        maxItemsBeforeBreak
+        footerStyle
+        exportFilenameTemplate
+        locale`;
+
+/** GraphQL selection set for ResumeSettings (shared across queries and mutations). */
+export const RESUME_SETTINGS_FRAGMENT = RESUME_SETTINGS_FIELDS;
+
 export const RESUMES_QUERY = `
   query Resumes {
     resumes {
@@ -43,21 +105,7 @@ export const RESUME_WITH_CONTENT_QUERY = `
         updatedAt
       }
       settings {
-        resumeId
-        themeId
-        fontSize
-        contactNameFontSize
-        contactHeadlineFontSize
-        contactDetailsFontSize
-        sectionTitleFontSize
-        itemTitleFontSize
-        itemMetaFontSize
-        pageFormat
-        marginHorizontalMm
-        marginVerticalMm
-        showPhoto
-        itemTitleLayout
-        locale
+${RESUME_SETTINGS_FIELDS}
       }
       theme {
         id
@@ -67,6 +115,8 @@ export const RESUME_WITH_CONTENT_QUERY = `
         config
       }
       sections {
+        showInPreview
+        displayTitle
         section {
           id
           workspaceId
@@ -233,6 +283,7 @@ export const ME_QUERY = `
       id
       email
       displayName
+      username
       avatarUrl
       role
       createdAt
@@ -247,6 +298,7 @@ export const WORKSPACE_BOOTSTRAP_QUERY = `
       id
       email
       displayName
+      username
       avatarUrl
       role
       createdAt
@@ -313,21 +365,175 @@ export const DELETE_RESUME_MUTATION = `
 export const UPDATE_RESUME_SETTINGS_MUTATION = `
   mutation UpdateResumeSettings($input: UpdateResumeSettingsInput!) {
     updateResumeSettings(input: $input) {
-      resumeId
-      themeId
-      fontSize
-      contactNameFontSize
-      contactHeadlineFontSize
-      contactDetailsFontSize
-      sectionTitleFontSize
-      itemTitleFontSize
-      itemMetaFontSize
-      pageFormat
-      marginHorizontalMm
-      marginVerticalMm
-      showPhoto
-      itemTitleLayout
-      locale
+${RESUME_SETTINGS_FIELDS}
+    }
+  }
+`;
+
+export const UPDATE_RESUME_SECTION_DISPLAY_TITLE_MUTATION = `
+  mutation UpdateResumeSectionDisplayTitle($input: UpdateResumeSectionDisplayTitleInput!) {
+    updateResumeSectionDisplayTitle(input: $input) {
+      resume {
+        id
+        title
+      }
+      settings {
+${RESUME_SETTINGS_FIELDS}
+      }
+      sections {
+        showInPreview
+        displayTitle
+        section {
+          id
+          type
+          title
+        }
+        items {
+          id
+          headline
+          showInPreview
+        }
+      }
+    }
+  }
+`;
+
+export const REORDER_RESUME_SECTIONS_MUTATION = `
+  mutation ReorderResumeSections($input: ReorderResumeSectionsInput!) {
+    reorderResumeSections(input: $input) {
+      resume {
+        id
+        workspaceId
+        title
+        contactProfileId
+        createdBy
+        createdAt
+        updatedAt
+      }
+      contactProfile {
+        id
+        workspaceId
+        fullName
+        headline
+        email
+        phone
+        location
+        website
+        linkedIn
+        github
+        photoUrl
+        linkedinPhotoUrl
+        githubPhotoUrl
+        effectivePhotoUrl
+        createdAt
+        updatedAt
+      }
+      settings {
+${RESUME_SETTINGS_FIELDS}
+      }
+      theme {
+        id
+        name
+        slug
+        isSystem
+        config
+      }
+      sections {
+        showInPreview
+        displayTitle
+        section {
+          id
+          workspaceId
+          type
+          title
+          description
+          createdBy
+          createdAt
+          updatedAt
+        }
+        items {
+          id
+          workspaceId
+          type
+          headline
+          body
+          metadata
+          showInPreview
+          createdBy
+          createdAt
+          updatedAt
+        }
+      }
+    }
+  }
+`;
+
+export const UPDATE_RESUME_SECTION_VISIBILITY_MUTATION = `
+  mutation UpdateResumeSectionVisibility($input: UpdateResumeSectionVisibilityInput!) {
+    updateResumeSectionVisibility(input: $input) {
+      resume {
+        id
+        workspaceId
+        title
+        contactProfileId
+        createdBy
+        createdAt
+        updatedAt
+      }
+      contactProfile {
+        id
+        workspaceId
+        fullName
+        headline
+        email
+        phone
+        location
+        website
+        linkedIn
+        github
+        photoUrl
+        linkedinPhotoUrl
+        githubPhotoUrl
+        effectivePhotoUrl
+        createdAt
+        updatedAt
+      }
+      settings {
+${RESUME_SETTINGS_FIELDS}
+      }
+      theme {
+        id
+        name
+        slug
+        isSystem
+        config
+      }
+      sections {
+        showInPreview
+        displayTitle
+        section {
+          id
+          workspaceId
+          type
+          title
+          description
+          createdBy
+          createdAt
+          updatedAt
+        }
+        items {
+          id
+          workspaceId
+          type
+          headline
+          body
+          metadata
+          showInPreview
+          createdBy
+          createdAt
+          updatedAt
+        }
+      }
     }
   }
 `;
@@ -363,21 +569,7 @@ export const UPDATE_RESUME_SECTION_ITEM_VISIBILITY_MUTATION = `
         updatedAt
       }
       settings {
-        resumeId
-        themeId
-        fontSize
-        contactNameFontSize
-        contactHeadlineFontSize
-        contactDetailsFontSize
-        sectionTitleFontSize
-        itemTitleFontSize
-        itemMetaFontSize
-        pageFormat
-        marginHorizontalMm
-        marginVerticalMm
-        showPhoto
-        itemTitleLayout
-        locale
+${RESUME_SETTINGS_FIELDS}
       }
       theme {
         id
@@ -387,6 +579,8 @@ export const UPDATE_RESUME_SECTION_ITEM_VISIBILITY_MUTATION = `
         config
       }
       sections {
+        showInPreview
+        displayTitle
         section {
           id
           workspaceId
@@ -445,21 +639,7 @@ export const UPDATE_RESUME_SECTION_ITEM_MUTATION = `
         updatedAt
       }
       settings {
-        resumeId
-        themeId
-        fontSize
-        contactNameFontSize
-        contactHeadlineFontSize
-        contactDetailsFontSize
-        sectionTitleFontSize
-        itemTitleFontSize
-        itemMetaFontSize
-        pageFormat
-        marginHorizontalMm
-        marginVerticalMm
-        showPhoto
-        itemTitleLayout
-        locale
+${RESUME_SETTINGS_FIELDS}
       }
       theme {
         id
@@ -469,6 +649,8 @@ export const UPDATE_RESUME_SECTION_ITEM_MUTATION = `
         config
       }
       sections {
+        showInPreview
+        displayTitle
         section {
           id
           workspaceId
@@ -527,21 +709,7 @@ export const ADD_RESUME_SECTION_ITEM_MUTATION = `
         updatedAt
       }
       settings {
-        resumeId
-        themeId
-        fontSize
-        contactNameFontSize
-        contactHeadlineFontSize
-        contactDetailsFontSize
-        sectionTitleFontSize
-        itemTitleFontSize
-        itemMetaFontSize
-        pageFormat
-        marginHorizontalMm
-        marginVerticalMm
-        showPhoto
-        itemTitleLayout
-        locale
+${RESUME_SETTINGS_FIELDS}
       }
       theme {
         id
@@ -551,6 +719,8 @@ export const ADD_RESUME_SECTION_ITEM_MUTATION = `
         config
       }
       sections {
+        showInPreview
+        displayTitle
         section {
           id
           workspaceId
@@ -609,21 +779,7 @@ export const DELETE_SECTION_ITEM_MUTATION = `
         updatedAt
       }
       settings {
-        resumeId
-        themeId
-        fontSize
-        contactNameFontSize
-        contactHeadlineFontSize
-        contactDetailsFontSize
-        sectionTitleFontSize
-        itemTitleFontSize
-        itemMetaFontSize
-        pageFormat
-        marginHorizontalMm
-        marginVerticalMm
-        showPhoto
-        itemTitleLayout
-        locale
+${RESUME_SETTINGS_FIELDS}
       }
       theme {
         id
@@ -633,6 +789,8 @@ export const DELETE_SECTION_ITEM_MUTATION = `
         config
       }
       sections {
+        showInPreview
+        displayTitle
         section {
           id
           workspaceId
@@ -691,21 +849,7 @@ export const UPDATE_CONTACT_PROFILE_MUTATION = `
         updatedAt
       }
       settings {
-        resumeId
-        themeId
-        fontSize
-        contactNameFontSize
-        contactHeadlineFontSize
-        contactDetailsFontSize
-        sectionTitleFontSize
-        itemTitleFontSize
-        itemMetaFontSize
-        pageFormat
-        marginHorizontalMm
-        marginVerticalMm
-        showPhoto
-        itemTitleLayout
-        locale
+${RESUME_SETTINGS_FIELDS}
       }
       theme {
         id
@@ -715,6 +859,8 @@ export const UPDATE_CONTACT_PROFILE_MUTATION = `
         config
       }
       sections {
+        showInPreview
+        displayTitle
         section {
           id
           workspaceId
@@ -801,6 +947,7 @@ const PORTFOLIO_WITH_CONTENT_FIELDS = `
     id
     workspaceId
     title
+    slug
     tagline
     about
     contactProfileId
@@ -823,6 +970,8 @@ const PORTFOLIO_WITH_CONTENT_FIELDS = `
     linkedinPhotoUrl
     githubPhotoUrl
     effectivePhotoUrl
+    ogImageUrl
+    faviconUrl
     createdAt
     updatedAt
   }
@@ -833,6 +982,12 @@ const PORTFOLIO_WITH_CONTENT_FIELDS = `
     accentColor
     showPhoto
     locale
+    projectGridColumns
+    projectCardStyle
+    typographyScale
+    heroStyle
+    navigationStyle
+    animationLevel
   }
   theme {
     id
@@ -953,7 +1108,9 @@ export const SEND_ASSISTANT_MESSAGE_MUTATION = `
           marginVerticalMm
           showPhoto
           itemTitleLayout
-          locale
+        itemTitleSeparator
+        itemTitleOrder
+        locale
         }
         theme {
           id
@@ -1141,6 +1298,7 @@ export const PORTFOLIOS_QUERY = `
       id
       workspaceId
       title
+      slug
       contactProfileId
       createdBy
       createdAt
@@ -1194,6 +1352,12 @@ export const UPDATE_PORTFOLIO_SETTINGS_MUTATION = `
       accentColor
       showPhoto
       locale
+      projectGridColumns
+      projectCardStyle
+      typographyScale
+      heroStyle
+      navigationStyle
+      animationLevel
     }
   }
 `;
@@ -1278,6 +1442,26 @@ export const UPDATE_PORTFOLIO_CONTACT_PROFILE_MUTATION = `
   mutation UpdatePortfolioContactProfile($input: UpdatePortfolioContactProfileInput!) {
     updatePortfolioContactProfile(input: $input) {
       ${PORTFOLIO_WITH_CONTENT_FIELDS}
+    }
+  }
+`;
+
+export const SET_USERNAME_MUTATION = `
+  mutation SetUsername($username: String!) {
+    setUsername(username: $username) {
+      id
+      username
+      updatedAt
+    }
+  }
+`;
+
+export const SET_PORTFOLIO_SLUG_MUTATION = `
+  mutation SetPortfolioSlug($portfolioId: ID!, $slug: String!) {
+    setPortfolioSlug(portfolioId: $portfolioId, slug: $slug) {
+      id
+      slug
+      updatedAt
     }
   }
 `;

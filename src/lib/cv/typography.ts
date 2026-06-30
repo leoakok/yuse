@@ -12,12 +12,63 @@ export interface CvTypography {
   itemMetaPx: number;
 }
 
-const BODY_SCALE: Record<CvFontSize, number> = { XS: 9, S: 11, M: 13, L: 15, XL: 17 };
-const NAME_SCALE: Record<CvFontSize, number> = { XS: 18, S: 20, M: 24, L: 28, XL: 32 };
-const SMALL_SCALE: Record<CvFontSize, number> = { XS: 8, S: 10, M: 12, L: 14, XL: 16 };
+/** CSS px at 96 dpi from print points (standard for Word/PDF sizing). */
+export function ptToPx(pt: number): number {
+  return Math.round((pt * 96) / 72);
+}
+
+/**
+ * Professional resume font tiers (XS–XL) mapped to print points.
+ * Ranges follow common ATS-friendly guidance:
+ * - Body & bullets: 10–12pt (never below 10pt)
+ * - Name: 18–24pt
+ * - Section headings: 12–16pt
+ * - Job titles: 11–14pt
+ * - Contact & meta (dates, companies): 10–11pt
+ */
+const BODY_SCALE: Record<CvFontSize, number> = {
+  XS: ptToPx(10),
+  S: ptToPx(10.5),
+  M: ptToPx(11),
+  L: ptToPx(11.5),
+  XL: ptToPx(12),
+};
+
+const NAME_SCALE: Record<CvFontSize, number> = {
+  XS: ptToPx(18),
+  S: ptToPx(19.5),
+  M: ptToPx(21),
+  L: ptToPx(22.5),
+  XL: ptToPx(24),
+};
+
+const CONTACT_SCALE: Record<CvFontSize, number> = {
+  XS: ptToPx(10),
+  S: ptToPx(10.25),
+  M: ptToPx(10.5),
+  L: ptToPx(10.75),
+  XL: ptToPx(11),
+};
+
+const SECTION_SCALE: Record<CvFontSize, number> = {
+  XS: ptToPx(12),
+  S: ptToPx(13),
+  M: ptToPx(14),
+  L: ptToPx(15),
+  XL: ptToPx(16),
+};
+
+const ITEM_TITLE_SCALE: Record<CvFontSize, number> = {
+  XS: ptToPx(11),
+  S: ptToPx(11.75),
+  M: ptToPx(12.5),
+  L: ptToPx(13.25),
+  XL: ptToPx(14),
+};
 
 function scale(size: CvFontSize | undefined, map: Record<CvFontSize, number>): number {
-  return map[size ?? "M"];
+  const key = normalizeFontSize(size);
+  return map[key];
 }
 
 export type CvTypographySettings = Pick<
@@ -36,15 +87,15 @@ export function resolveCvTypography(settings: CvTypographySettings): CvTypograph
     bodyPx: scale(settings.fontSize, BODY_SCALE),
     contactNamePx: scale(settings.contactNameFontSize, NAME_SCALE),
     contactHeadlinePx: scale(settings.contactHeadlineFontSize, BODY_SCALE),
-    contactDetailsPx: scale(settings.contactDetailsFontSize, SMALL_SCALE),
-    sectionTitlePx: scale(settings.sectionTitleFontSize, SMALL_SCALE),
-    itemTitlePx: scale(settings.itemTitleFontSize, BODY_SCALE),
-    itemMetaPx: scale(settings.itemMetaFontSize, SMALL_SCALE),
+    contactDetailsPx: scale(settings.contactDetailsFontSize, CONTACT_SCALE),
+    sectionTitlePx: scale(settings.sectionTitleFontSize, SECTION_SCALE),
+    itemTitlePx: scale(settings.itemTitleFontSize, ITEM_TITLE_SCALE),
+    itemMetaPx: scale(settings.itemMetaFontSize, CONTACT_SCALE),
   };
 }
 
 export function typographyToPt(typography: CvTypography) {
-  const pxToPt = (px: number) => px * 0.75;
+  const pxToPt = (px: number) => (px * 72) / 96;
   return {
     bodyPt: pxToPt(typography.bodyPx),
     namePt: pxToPt(typography.contactNamePx),
@@ -68,23 +119,37 @@ export const DEFAULT_CV_TYPOGRAPHY_SETTINGS: CvTypographySettings = {
 };
 
 export const FONT_SIZE_OPTIONS: { id: CvFontSize; label: string }[] = [
-  { id: "XS", label: "Extra small" },
-  { id: "S", label: "Small" },
-  { id: "M", label: "Medium" },
-  { id: "L", label: "Large" },
-  { id: "XL", label: "Extra large" },
+  { id: "XS", label: "Extra compact" },
+  { id: "S", label: "Compact" },
+  { id: "M", label: "Standard" },
+  { id: "L", label: "Spacious" },
+  { id: "XL", label: "Extra spacious" },
 ];
 
 export const FONT_SIZE_ORDER: CvFontSize[] = ["XS", "S", "M", "L", "XL"];
 
+/** Maps unknown strings to a valid tier; preserves XS–XL. */
+export function normalizeFontSize(size: CvFontSize | string | undefined): CvFontSize {
+  switch (size) {
+    case "XS":
+    case "S":
+    case "M":
+    case "L":
+    case "XL":
+      return size;
+    default:
+      return "M";
+  }
+}
+
 export function stepFontSize(current: CvFontSize, delta: -1 | 1): CvFontSize {
-  const index = FONT_SIZE_ORDER.indexOf(current);
+  const index = FONT_SIZE_ORDER.indexOf(normalizeFontSize(current));
   const next = index + delta;
   return FONT_SIZE_ORDER[Math.max(0, Math.min(FONT_SIZE_ORDER.length - 1, next))];
 }
 
 function formatPtValue(pt: number): string {
-  return Number(pt.toFixed(2)).toString();
+  return Number(pt.toFixed(1)).toString();
 }
 
 export function typographyPxForKey(
@@ -104,16 +169,17 @@ export function typographyPxForKey(
   return map[key];
 }
 
-/** Preview label: absolute pt for body, relative offset for other roles. */
+/** Preview label: absolute pt for body/name, relative offset for other roles. */
 export function formatTypographySettingLabel(
   key: keyof CvTypographySettings,
   settings: CvTypographySettings
 ): string {
-  const pt = typographyPxForKey(key, settings) * 0.75;
-  if (key === "fontSize") {
+  const px = typographyPxForKey(key, settings);
+  const pt = (px * 72) / 96;
+  if (key === "fontSize" || key === "contactNameFontSize") {
     return `${formatPtValue(pt)}pt`;
   }
-  const bodyPt = resolveCvTypography(settings).bodyPx * 0.75;
+  const bodyPt = (resolveCvTypography(settings).bodyPx * 72) / 96;
   const delta = pt - bodyPt;
   const sign = delta >= 0 ? "+" : "";
   return `${sign}${formatPtValue(delta)}pt`;

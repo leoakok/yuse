@@ -90,6 +90,32 @@ describe("paginateCvBlocks", () => {
     const pages = paginateCvBlocks(metrics, 78);
     assert.deepEqual(pages, [[0, 1], [2]]);
   });
+
+  it("header-only metrics drop sections from the rendered page", () => {
+    const skillSection = section("sec-skill", "Skills");
+    const blocks: CvBlock[] = [
+      {
+        kind: "header",
+        contactProfile: {
+          id: "contact-1",
+          workspaceId: "ws",
+          fullName: "Test User",
+          createdAt: "",
+          updatedAt: "",
+        },
+      },
+      { kind: "section-title", section: skillSection },
+      { kind: "item", section: skillSection, item: item("s1") },
+    ];
+
+    const headerOnlyMetrics = [{ blockIndex: 0, height: 100, gapAfter: 0 }];
+    const pages = paginateCvBlocks(headerOnlyMetrics, 1000);
+    assert.deepEqual(pages, [[0]]);
+
+    const pageBlocks = resolvePageBlocks(pages[0] ?? [], blocks, null);
+    assert.equal(pageBlocks.filter((b) => b.kind === "section-title").length, 0);
+    assert.equal(pageBlocks.filter((b) => b.kind === "item").length, 0);
+  });
 });
 
 describe("buildCvBlocks", () => {
@@ -106,5 +132,49 @@ describe("buildCvBlocks", () => {
       blocks.map((b) => b.kind),
       ["section-title", "item"]
     );
+  });
+
+  it("includes only items explicitly marked show on the resume", () => {
+    const skillSection = section("sec-skill", "Skills");
+    const blocks = buildCvBlocks(undefined, [
+      {
+        section: skillSection,
+        showInPreview: true,
+        items: [
+          { ...item("shown"), showInPreview: true },
+          { ...item("hidden"), showInPreview: false },
+          {
+            id: "unset",
+            workspaceId: "ws",
+            type: "SKILLS",
+            headline: "unset",
+            body: "",
+            metadata: {},
+            showInPreview: undefined as unknown as boolean,
+            createdBy: "user",
+            createdAt: "",
+            updatedAt: "",
+          },
+        ],
+      },
+    ]);
+
+    assert.deepEqual(
+      blocks.map((b) => (b.kind === "item" ? b.item.id : b.kind)),
+      ["section-title", "shown"]
+    );
+  });
+
+  it("skips sections explicitly hidden on the resume", () => {
+    const skillSection = section("sec-skill", "Skills");
+    const blocks = buildCvBlocks(undefined, [
+      {
+        section: skillSection,
+        showInPreview: false,
+        items: [{ ...item("shown"), showInPreview: true }],
+      },
+    ]);
+
+    assert.equal(blocks.length, 0);
   });
 });

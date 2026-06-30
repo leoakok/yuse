@@ -12,14 +12,14 @@ export const PAGE_FORMATS: PageFormatSpec[] = [
   {
     id: "A4",
     label: "A4",
-    description: "210 × 297 mm — common in Europe and internationally",
+    description: "210 × 297 mm, common in Europe and internationally",
     width: "210mm",
     minHeight: "297mm",
   },
   {
     id: "LETTER",
     label: "US Letter",
-    description: "8.5 × 11 in — standard in the United States",
+    description: "8.5 × 11 in, standard in the United States",
     width: "8.5in",
     minHeight: "11in",
   },
@@ -32,10 +32,10 @@ export function getPageFormatSpec(format: PageFormat): PageFormatSpec {
 const PX_PER_IN = 96;
 const MM_PER_IN = 25.4;
 
-export const MARGIN_MIN_MM = 6;
-export const MARGIN_MAX_MM = 30;
+export const MARGIN_MIN_MM = 12;
+export const MARGIN_MAX_MM = 25;
 
-/** Every 1 mm from 6–30 for fine margin control. */
+/** Every 1 mm from 12–25, typical resume margin range (~0.5–1 in). */
 export function marginPresetValues(): number[] {
   return Array.from({ length: MARGIN_MAX_MM - MARGIN_MIN_MM + 1 }, (_, i) => i + MARGIN_MIN_MM);
 }
@@ -75,7 +75,7 @@ function inToMm(inches: number): number {
   return inches * MM_PER_IN;
 }
 
-/** Page size in CSS pixels at 96dpi — matches article `width` / `height` styles. */
+/** Page size in CSS pixels at 96dpi, matches article `width` / `height` styles. */
 export function getPageSizePx(format: PageFormat): { width: number; height: number } {
   if (format === "LETTER") {
     return { width: inToPx(8.5), height: inToPx(11) };
@@ -91,7 +91,7 @@ export function getPageSizeMm(format: PageFormat): { width: number; height: numb
   return { width: 210, height: 297 };
 }
 
-/** @deprecated Use getPageMargins — kept for legacy callers. */
+/** @deprecated Use getPageMargins, kept for legacy callers. */
 export const PAGE_PADDING_MM = DEFAULT_PAGE_MARGIN_MM;
 
 /** Content area height inside page margins, in CSS pixels. */

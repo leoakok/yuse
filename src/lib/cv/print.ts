@@ -16,7 +16,7 @@ export function storePrintContent(resumeId: string, content: ResumeWithContent):
   try {
     sessionStorage.setItem(`${STORAGE_PREFIX}${resumeId}`, JSON.stringify(content));
   } catch {
-    // Quota exceeded or private browsing — print page will fetch from server.
+    // Quota exceeded or private browsing, print page will fetch from server.
   }
 }
 
