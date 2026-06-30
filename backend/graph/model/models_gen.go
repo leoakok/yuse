@@ -137,6 +137,8 @@ type ContactProfile struct {
 	LinkedinPhotoURL  *string `json:"linkedinPhotoUrl,omitempty"`
 	GithubPhotoURL    *string `json:"githubPhotoUrl,omitempty"`
 	EffectivePhotoURL *string `json:"effectivePhotoUrl,omitempty"`
+	OgImageURL        *string `json:"ogImageUrl,omitempty"`
+	FaviconURL        *string `json:"faviconUrl,omitempty"`
 	CreatedAt         string  `json:"createdAt"`
 	UpdatedAt         string  `json:"updatedAt"`
 }
@@ -182,9 +184,11 @@ type Mutation struct {
 }
 
 type Portfolio struct {
-	ID               string  `json:"id"`
-	WorkspaceID      string  `json:"workspaceId"`
-	Title            string  `json:"title"`
+	ID          string `json:"id"`
+	WorkspaceID string `json:"workspaceId"`
+	Title       string `json:"title"`
+	// Per-portfolio URL segment under the owner's username
+	Slug             *string `json:"slug,omitempty"`
 	Tagline          string  `json:"tagline"`
 	About            string  `json:"about"`
 	ContactProfileID *string `json:"contactProfileId,omitempty"`
@@ -213,12 +217,18 @@ type PortfolioProject struct {
 }
 
 type PortfolioSettings struct {
-	PortfolioID string          `json:"portfolioId"`
-	ThemeID     string          `json:"themeId"`
-	Layout      PortfolioLayout `json:"layout"`
-	AccentColor string          `json:"accentColor"`
-	ShowPhoto   bool            `json:"showPhoto"`
-	Locale      string          `json:"locale"`
+	PortfolioID        string                      `json:"portfolioId"`
+	ThemeID            string                      `json:"themeId"`
+	Layout             PortfolioLayout             `json:"layout"`
+	AccentColor        string                      `json:"accentColor"`
+	ShowPhoto          bool                        `json:"showPhoto"`
+	Locale             string                      `json:"locale"`
+	ProjectGridColumns PortfolioProjectGridColumns `json:"projectGridColumns"`
+	ProjectCardStyle   PortfolioProjectCardStyle   `json:"projectCardStyle"`
+	TypographyScale    PortfolioTypographyScale    `json:"typographyScale"`
+	HeroStyle          PortfolioHeroStyle          `json:"heroStyle"`
+	NavigationStyle    PortfolioNavigationStyle    `json:"navigationStyle"`
+	AnimationLevel     PortfolioAnimationLevel     `json:"animationLevel"`
 }
 
 type PortfolioSkill struct {
@@ -260,6 +270,11 @@ type ProfilePhotoUpload struct {
 type Query struct {
 }
 
+type ReorderResumeSectionsInput struct {
+	ResumeID   string   `json:"resumeId"`
+	SectionIds []string `json:"sectionIds"`
+}
+
 type Resume struct {
 	ID               string  `json:"id"`
 	WorkspaceID      string  `json:"workspaceId"`
@@ -271,21 +286,63 @@ type Resume struct {
 }
 
 type ResumeSettings struct {
-	ResumeID                string          `json:"resumeId"`
-	ThemeID                 string          `json:"themeId"`
-	FontSize                FontSize        `json:"fontSize"`
-	ContactNameFontSize     FontSize        `json:"contactNameFontSize"`
-	ContactHeadlineFontSize FontSize        `json:"contactHeadlineFontSize"`
-	ContactDetailsFontSize  FontSize        `json:"contactDetailsFontSize"`
-	SectionTitleFontSize    FontSize        `json:"sectionTitleFontSize"`
-	ItemTitleFontSize       FontSize        `json:"itemTitleFontSize"`
-	ItemMetaFontSize        FontSize        `json:"itemMetaFontSize"`
-	PageFormat              PageFormat      `json:"pageFormat"`
-	MarginHorizontalMm      float64         `json:"marginHorizontalMm"`
-	MarginVerticalMm        float64         `json:"marginVerticalMm"`
-	ShowPhoto               bool            `json:"showPhoto"`
-	ItemTitleLayout         ItemTitleLayout `json:"itemTitleLayout"`
-	Locale                  string          `json:"locale"`
+	ResumeID                string               `json:"resumeId"`
+	ThemeID                 string               `json:"themeId"`
+	FontSize                FontSize             `json:"fontSize"`
+	ContactNameFontSize     FontSize             `json:"contactNameFontSize"`
+	ContactHeadlineFontSize FontSize             `json:"contactHeadlineFontSize"`
+	ContactDetailsFontSize  FontSize             `json:"contactDetailsFontSize"`
+	SectionTitleFontSize    FontSize             `json:"sectionTitleFontSize"`
+	ItemTitleFontSize       FontSize             `json:"itemTitleFontSize"`
+	ItemMetaFontSize        FontSize             `json:"itemMetaFontSize"`
+	PageFormat              PageFormat           `json:"pageFormat"`
+	MarginHorizontalMm      float64              `json:"marginHorizontalMm"`
+	MarginVerticalMm        float64              `json:"marginVerticalMm"`
+	ShowPhoto               bool                 `json:"showPhoto"`
+	ItemTitleLayout         ItemTitleLayout      `json:"itemTitleLayout"`
+	ItemTitleSeparator      ItemTitleSeparator   `json:"itemTitleSeparator"`
+	ItemTitleOrder          ItemTitleOrder       `json:"itemTitleOrder"`
+	FontFamily              FontFamily           `json:"fontFamily"`
+	AccentColor             string               `json:"accentColor"`
+	SectionDividerStyle     SectionDividerStyle  `json:"sectionDividerStyle"`
+	DateFormat              DateFormat           `json:"dateFormat"`
+	DatePosition            DatePosition         `json:"datePosition"`
+	SkillsLayout            SkillsLayout         `json:"skillsLayout"`
+	AtsMode                 bool                 `json:"atsMode"`
+	ColumnLayout            ColumnLayout         `json:"columnLayout"`
+	SidebarPosition         SidebarPosition      `json:"sidebarPosition"`
+	SidebarWidth            SidebarWidth         `json:"sidebarWidth"`
+	DesignPresetID          DesignPresetID       `json:"designPresetId"`
+	PhotoPosition           PhotoPosition        `json:"photoPosition"`
+	PhotoSize               PhotoSize            `json:"photoSize"`
+	ContactLayout           ContactLayout        `json:"contactLayout"`
+	ContactFields           []ContactField       `json:"contactFields"`
+	SectionSpacing          SpacingDensity       `json:"sectionSpacing"`
+	ItemSpacing             SpacingDensity       `json:"itemSpacing"`
+	DescriptionStyle        DescriptionStyle     `json:"descriptionStyle"`
+	BulletChar              BulletChar           `json:"bulletChar"`
+	ItemTitleEmphasis       ItemTitleEmphasis    `json:"itemTitleEmphasis"`
+	HighlightCurrentRole    bool                 `json:"highlightCurrentRole"`
+	LocationDisplay         LocationDisplay      `json:"locationDisplay"`
+	HeadingFontFamily       FontFamily           `json:"headingFontFamily"`
+	BodyFontFamily          FontFamily           `json:"bodyFontFamily"`
+	NameFontWeight          FontWeightRole       `json:"nameFontWeight"`
+	SectionTitleFontWeight  FontWeightRole       `json:"sectionTitleFontWeight"`
+	LineHeight              LineHeightDensity    `json:"lineHeight"`
+	HeadingLetterSpacing    LetterSpacingDensity `json:"headingLetterSpacing"`
+	SectionTitleSmallCaps   bool                 `json:"sectionTitleSmallCaps"`
+	TextPrimaryColor        string               `json:"textPrimaryColor"`
+	TextMutedColor          string               `json:"textMutedColor"`
+	PageBackground          PageBackground       `json:"pageBackground"`
+	LinkColor               string               `json:"linkColor"`
+	SkillsProficiency       SkillsProficiency    `json:"skillsProficiency"`
+	LanguagesLayout         LanguagesLayout      `json:"languagesLayout"`
+	CertificationsLayout    CertificationsLayout `json:"certificationsLayout"`
+	KeepSectionsTogether    bool                 `json:"keepSectionsTogether"`
+	MaxItemsBeforeBreak     *int                 `json:"maxItemsBeforeBreak,omitempty"`
+	FooterStyle             FooterStyle          `json:"footerStyle"`
+	ExportFilenameTemplate  string               `json:"exportFilenameTemplate"`
+	Locale                  string               `json:"locale"`
 }
 
 type ResumeWithContent struct {
@@ -328,8 +385,11 @@ type SectionItemUsage struct {
 }
 
 type SectionWithItems struct {
-	Section *Section       `json:"section"`
-	Items   []*SectionItem `json:"items"`
+	Section *Section `json:"section"`
+	// Per-resume section heading override; falls back to section.title when unset.
+	DisplayTitle  *string        `json:"displayTitle,omitempty"`
+	Items         []*SectionItem `json:"items"`
+	ShowInPreview bool           `json:"showInPreview"`
 }
 
 type SetPortfolioProjectVisibilityInput struct {
@@ -405,6 +465,8 @@ type UpdatePortfolioContactProfileInput struct {
 	PhotoURL         *string `json:"photoUrl,omitempty"`
 	LinkedinPhotoURL *string `json:"linkedinPhotoUrl,omitempty"`
 	GithubPhotoURL   *string `json:"githubPhotoUrl,omitempty"`
+	OgImageURL       *string `json:"ogImageUrl,omitempty"`
+	FaviconURL       *string `json:"faviconUrl,omitempty"`
 }
 
 type UpdatePortfolioProjectInput struct {
@@ -424,12 +486,18 @@ type UpdatePortfolioProjectInput struct {
 }
 
 type UpdatePortfolioSettingsInput struct {
-	PortfolioID string           `json:"portfolioId"`
-	Layout      *PortfolioLayout `json:"layout,omitempty"`
-	AccentColor *string          `json:"accentColor,omitempty"`
-	ThemeID     *string          `json:"themeId,omitempty"`
-	ShowPhoto   *bool            `json:"showPhoto,omitempty"`
-	Locale      *string          `json:"locale,omitempty"`
+	PortfolioID        string                       `json:"portfolioId"`
+	Layout             *PortfolioLayout             `json:"layout,omitempty"`
+	AccentColor        *string                      `json:"accentColor,omitempty"`
+	ThemeID            *string                      `json:"themeId,omitempty"`
+	ShowPhoto          *bool                        `json:"showPhoto,omitempty"`
+	Locale             *string                      `json:"locale,omitempty"`
+	ProjectGridColumns *PortfolioProjectGridColumns `json:"projectGridColumns,omitempty"`
+	ProjectCardStyle   *PortfolioProjectCardStyle   `json:"projectCardStyle,omitempty"`
+	TypographyScale    *PortfolioTypographyScale    `json:"typographyScale,omitempty"`
+	HeroStyle          *PortfolioHeroStyle          `json:"heroStyle,omitempty"`
+	NavigationStyle    *PortfolioNavigationStyle    `json:"navigationStyle,omitempty"`
+	AnimationLevel     *PortfolioAnimationLevel     `json:"animationLevel,omitempty"`
 }
 
 type UpdatePortfolioSkillInput struct {
@@ -449,6 +517,13 @@ type UpdatePortfolioTestimonialInput struct {
 	ShowInPreview *bool   `json:"showInPreview,omitempty"`
 }
 
+type UpdateResumeSectionDisplayTitleInput struct {
+	ResumeID  string `json:"resumeId"`
+	SectionID string `json:"sectionId"`
+	// Empty string clears the per-resume override.
+	DisplayTitle *string `json:"displayTitle,omitempty"`
+}
+
 type UpdateResumeSectionItemInput struct {
 	ResumeID      string         `json:"resumeId"`
 	SectionID     string         `json:"sectionId"`
@@ -465,22 +540,70 @@ type UpdateResumeSectionItemVisibilityInput struct {
 	ShowInPreview bool   `json:"showInPreview"`
 }
 
+type UpdateResumeSectionVisibilityInput struct {
+	ResumeID      string `json:"resumeId"`
+	SectionID     string `json:"sectionId"`
+	ShowInPreview bool   `json:"showInPreview"`
+}
+
 type UpdateResumeSettingsInput struct {
-	ResumeID                string           `json:"resumeId"`
-	PageFormat              *PageFormat      `json:"pageFormat,omitempty"`
-	FontSize                *FontSize        `json:"fontSize,omitempty"`
-	ContactNameFontSize     *FontSize        `json:"contactNameFontSize,omitempty"`
-	ContactHeadlineFontSize *FontSize        `json:"contactHeadlineFontSize,omitempty"`
-	ContactDetailsFontSize  *FontSize        `json:"contactDetailsFontSize,omitempty"`
-	SectionTitleFontSize    *FontSize        `json:"sectionTitleFontSize,omitempty"`
-	ItemTitleFontSize       *FontSize        `json:"itemTitleFontSize,omitempty"`
-	ItemMetaFontSize        *FontSize        `json:"itemMetaFontSize,omitempty"`
-	MarginHorizontalMm      *float64         `json:"marginHorizontalMm,omitempty"`
-	MarginVerticalMm        *float64         `json:"marginVerticalMm,omitempty"`
-	ThemeID                 *string          `json:"themeId,omitempty"`
-	ShowPhoto               *bool            `json:"showPhoto,omitempty"`
-	ItemTitleLayout         *ItemTitleLayout `json:"itemTitleLayout,omitempty"`
-	Locale                  *string          `json:"locale,omitempty"`
+	ResumeID                string                `json:"resumeId"`
+	PageFormat              *PageFormat           `json:"pageFormat,omitempty"`
+	FontSize                *FontSize             `json:"fontSize,omitempty"`
+	ContactNameFontSize     *FontSize             `json:"contactNameFontSize,omitempty"`
+	ContactHeadlineFontSize *FontSize             `json:"contactHeadlineFontSize,omitempty"`
+	ContactDetailsFontSize  *FontSize             `json:"contactDetailsFontSize,omitempty"`
+	SectionTitleFontSize    *FontSize             `json:"sectionTitleFontSize,omitempty"`
+	ItemTitleFontSize       *FontSize             `json:"itemTitleFontSize,omitempty"`
+	ItemMetaFontSize        *FontSize             `json:"itemMetaFontSize,omitempty"`
+	MarginHorizontalMm      *float64              `json:"marginHorizontalMm,omitempty"`
+	MarginVerticalMm        *float64              `json:"marginVerticalMm,omitempty"`
+	ThemeID                 *string               `json:"themeId,omitempty"`
+	ShowPhoto               *bool                 `json:"showPhoto,omitempty"`
+	ItemTitleLayout         *ItemTitleLayout      `json:"itemTitleLayout,omitempty"`
+	ItemTitleSeparator      *ItemTitleSeparator   `json:"itemTitleSeparator,omitempty"`
+	ItemTitleOrder          *ItemTitleOrder       `json:"itemTitleOrder,omitempty"`
+	FontFamily              *FontFamily           `json:"fontFamily,omitempty"`
+	AccentColor             *string               `json:"accentColor,omitempty"`
+	SectionDividerStyle     *SectionDividerStyle  `json:"sectionDividerStyle,omitempty"`
+	DateFormat              *DateFormat           `json:"dateFormat,omitempty"`
+	DatePosition            *DatePosition         `json:"datePosition,omitempty"`
+	SkillsLayout            *SkillsLayout         `json:"skillsLayout,omitempty"`
+	AtsMode                 *bool                 `json:"atsMode,omitempty"`
+	ColumnLayout            *ColumnLayout         `json:"columnLayout,omitempty"`
+	SidebarPosition         *SidebarPosition      `json:"sidebarPosition,omitempty"`
+	SidebarWidth            *SidebarWidth         `json:"sidebarWidth,omitempty"`
+	DesignPresetID          *DesignPresetID       `json:"designPresetId,omitempty"`
+	PhotoPosition           *PhotoPosition        `json:"photoPosition,omitempty"`
+	PhotoSize               *PhotoSize            `json:"photoSize,omitempty"`
+	ContactLayout           *ContactLayout        `json:"contactLayout,omitempty"`
+	ContactFields           []ContactField        `json:"contactFields,omitempty"`
+	SectionSpacing          *SpacingDensity       `json:"sectionSpacing,omitempty"`
+	ItemSpacing             *SpacingDensity       `json:"itemSpacing,omitempty"`
+	DescriptionStyle        *DescriptionStyle     `json:"descriptionStyle,omitempty"`
+	BulletChar              *BulletChar           `json:"bulletChar,omitempty"`
+	ItemTitleEmphasis       *ItemTitleEmphasis    `json:"itemTitleEmphasis,omitempty"`
+	HighlightCurrentRole    *bool                 `json:"highlightCurrentRole,omitempty"`
+	LocationDisplay         *LocationDisplay      `json:"locationDisplay,omitempty"`
+	HeadingFontFamily       *FontFamily           `json:"headingFontFamily,omitempty"`
+	BodyFontFamily          *FontFamily           `json:"bodyFontFamily,omitempty"`
+	NameFontWeight          *FontWeightRole       `json:"nameFontWeight,omitempty"`
+	SectionTitleFontWeight  *FontWeightRole       `json:"sectionTitleFontWeight,omitempty"`
+	LineHeight              *LineHeightDensity    `json:"lineHeight,omitempty"`
+	HeadingLetterSpacing    *LetterSpacingDensity `json:"headingLetterSpacing,omitempty"`
+	SectionTitleSmallCaps   *bool                 `json:"sectionTitleSmallCaps,omitempty"`
+	TextPrimaryColor        *string               `json:"textPrimaryColor,omitempty"`
+	TextMutedColor          *string               `json:"textMutedColor,omitempty"`
+	PageBackground          *PageBackground       `json:"pageBackground,omitempty"`
+	LinkColor               *string               `json:"linkColor,omitempty"`
+	SkillsProficiency       *SkillsProficiency    `json:"skillsProficiency,omitempty"`
+	LanguagesLayout         *LanguagesLayout      `json:"languagesLayout,omitempty"`
+	CertificationsLayout    *CertificationsLayout `json:"certificationsLayout,omitempty"`
+	KeepSectionsTogether    *bool                 `json:"keepSectionsTogether,omitempty"`
+	MaxItemsBeforeBreak     *int                  `json:"maxItemsBeforeBreak,omitempty"`
+	FooterStyle             *FooterStyle          `json:"footerStyle,omitempty"`
+	ExportFilenameTemplate  *string               `json:"exportFilenameTemplate,omitempty"`
+	Locale                  *string               `json:"locale,omitempty"`
 }
 
 type UpdateTrackedJobInput struct {
@@ -504,13 +627,15 @@ type UpdateTwinEntryInput struct {
 }
 
 type User struct {
-	ID          string   `json:"id"`
-	Email       string   `json:"email"`
-	DisplayName string   `json:"displayName"`
-	AvatarURL   *string  `json:"avatarUrl,omitempty"`
-	Role        UserRole `json:"role"`
-	CreatedAt   string   `json:"createdAt"`
-	UpdatedAt   string   `json:"updatedAt"`
+	ID          string `json:"id"`
+	Email       string `json:"email"`
+	DisplayName string `json:"displayName"`
+	// Public portfolio URL handle, e.g. yuse.one/{username}
+	Username  *string  `json:"username,omitempty"`
+	AvatarURL *string  `json:"avatarUrl,omitempty"`
+	Role      UserRole `json:"role"`
+	CreatedAt string   `json:"createdAt"`
+	UpdatedAt string   `json:"updatedAt"`
 }
 
 type Workspace struct {
@@ -722,6 +847,175 @@ func (e AssistantView) MarshalJSON() ([]byte, error) {
 	return buf.Bytes(), nil
 }
 
+type BulletChar string
+
+const (
+	BulletCharDot   BulletChar = "DOT"
+	BulletCharDash  BulletChar = "DASH"
+	BulletCharCheck BulletChar = "CHECK"
+)
+
+var AllBulletChar = []BulletChar{
+	BulletCharDot,
+	BulletCharDash,
+	BulletCharCheck,
+}
+
+func (e BulletChar) IsValid() bool {
+	switch e {
+	case BulletCharDot, BulletCharDash, BulletCharCheck:
+		return true
+	}
+	return false
+}
+
+func (e BulletChar) String() string {
+	return string(e)
+}
+
+func (e *BulletChar) UnmarshalGQL(v any) error {
+	str, ok := v.(string)
+	if !ok {
+		return fmt.Errorf("enums must be strings")
+	}
+
+	*e = BulletChar(str)
+	if !e.IsValid() {
+		return fmt.Errorf("%s is not a valid BulletChar", str)
+	}
+	return nil
+}
+
+func (e BulletChar) MarshalGQL(w io.Writer) {
+	fmt.Fprint(w, strconv.Quote(e.String()))
+}
+
+func (e *BulletChar) UnmarshalJSON(b []byte) error {
+	s, err := strconv.Unquote(string(b))
+	if err != nil {
+		return err
+	}
+	return e.UnmarshalGQL(s)
+}
+
+func (e BulletChar) MarshalJSON() ([]byte, error) {
+	var buf bytes.Buffer
+	e.MarshalGQL(&buf)
+	return buf.Bytes(), nil
+}
+
+type CertificationsLayout string
+
+const (
+	CertificationsLayoutList     CertificationsLayout = "LIST"
+	CertificationsLayoutCompact  CertificationsLayout = "COMPACT"
+	CertificationsLayoutDetailed CertificationsLayout = "DETAILED"
+)
+
+var AllCertificationsLayout = []CertificationsLayout{
+	CertificationsLayoutList,
+	CertificationsLayoutCompact,
+	CertificationsLayoutDetailed,
+}
+
+func (e CertificationsLayout) IsValid() bool {
+	switch e {
+	case CertificationsLayoutList, CertificationsLayoutCompact, CertificationsLayoutDetailed:
+		return true
+	}
+	return false
+}
+
+func (e CertificationsLayout) String() string {
+	return string(e)
+}
+
+func (e *CertificationsLayout) UnmarshalGQL(v any) error {
+	str, ok := v.(string)
+	if !ok {
+		return fmt.Errorf("enums must be strings")
+	}
+
+	*e = CertificationsLayout(str)
+	if !e.IsValid() {
+		return fmt.Errorf("%s is not a valid CertificationsLayout", str)
+	}
+	return nil
+}
+
+func (e CertificationsLayout) MarshalGQL(w io.Writer) {
+	fmt.Fprint(w, strconv.Quote(e.String()))
+}
+
+func (e *CertificationsLayout) UnmarshalJSON(b []byte) error {
+	s, err := strconv.Unquote(string(b))
+	if err != nil {
+		return err
+	}
+	return e.UnmarshalGQL(s)
+}
+
+func (e CertificationsLayout) MarshalJSON() ([]byte, error) {
+	var buf bytes.Buffer
+	e.MarshalGQL(&buf)
+	return buf.Bytes(), nil
+}
+
+type ColumnLayout string
+
+const (
+	ColumnLayoutSingle    ColumnLayout = "SINGLE"
+	ColumnLayoutTwoColumn ColumnLayout = "TWO_COLUMN"
+)
+
+var AllColumnLayout = []ColumnLayout{
+	ColumnLayoutSingle,
+	ColumnLayoutTwoColumn,
+}
+
+func (e ColumnLayout) IsValid() bool {
+	switch e {
+	case ColumnLayoutSingle, ColumnLayoutTwoColumn:
+		return true
+	}
+	return false
+}
+
+func (e ColumnLayout) String() string {
+	return string(e)
+}
+
+func (e *ColumnLayout) UnmarshalGQL(v any) error {
+	str, ok := v.(string)
+	if !ok {
+		return fmt.Errorf("enums must be strings")
+	}
+
+	*e = ColumnLayout(str)
+	if !e.IsValid() {
+		return fmt.Errorf("%s is not a valid ColumnLayout", str)
+	}
+	return nil
+}
+
+func (e ColumnLayout) MarshalGQL(w io.Writer) {
+	fmt.Fprint(w, strconv.Quote(e.String()))
+}
+
+func (e *ColumnLayout) UnmarshalJSON(b []byte) error {
+	s, err := strconv.Unquote(string(b))
+	if err != nil {
+		return err
+	}
+	return e.UnmarshalGQL(s)
+}
+
+func (e ColumnLayout) MarshalJSON() ([]byte, error) {
+	var buf bytes.Buffer
+	e.MarshalGQL(&buf)
+	return buf.Bytes(), nil
+}
+
 type ConnectionProvider string
 
 const (
@@ -770,6 +1064,426 @@ func (e *ConnectionProvider) UnmarshalJSON(b []byte) error {
 }
 
 func (e ConnectionProvider) MarshalJSON() ([]byte, error) {
+	var buf bytes.Buffer
+	e.MarshalGQL(&buf)
+	return buf.Bytes(), nil
+}
+
+type ContactField string
+
+const (
+	ContactFieldEmail    ContactField = "EMAIL"
+	ContactFieldPhone    ContactField = "PHONE"
+	ContactFieldLocation ContactField = "LOCATION"
+	ContactFieldWebsite  ContactField = "WEBSITE"
+	ContactFieldLinkedin ContactField = "LINKEDIN"
+	ContactFieldGithub   ContactField = "GITHUB"
+)
+
+var AllContactField = []ContactField{
+	ContactFieldEmail,
+	ContactFieldPhone,
+	ContactFieldLocation,
+	ContactFieldWebsite,
+	ContactFieldLinkedin,
+	ContactFieldGithub,
+}
+
+func (e ContactField) IsValid() bool {
+	switch e {
+	case ContactFieldEmail, ContactFieldPhone, ContactFieldLocation, ContactFieldWebsite, ContactFieldLinkedin, ContactFieldGithub:
+		return true
+	}
+	return false
+}
+
+func (e ContactField) String() string {
+	return string(e)
+}
+
+func (e *ContactField) UnmarshalGQL(v any) error {
+	str, ok := v.(string)
+	if !ok {
+		return fmt.Errorf("enums must be strings")
+	}
+
+	*e = ContactField(str)
+	if !e.IsValid() {
+		return fmt.Errorf("%s is not a valid ContactField", str)
+	}
+	return nil
+}
+
+func (e ContactField) MarshalGQL(w io.Writer) {
+	fmt.Fprint(w, strconv.Quote(e.String()))
+}
+
+func (e *ContactField) UnmarshalJSON(b []byte) error {
+	s, err := strconv.Unquote(string(b))
+	if err != nil {
+		return err
+	}
+	return e.UnmarshalGQL(s)
+}
+
+func (e ContactField) MarshalJSON() ([]byte, error) {
+	var buf bytes.Buffer
+	e.MarshalGQL(&buf)
+	return buf.Bytes(), nil
+}
+
+type ContactLayout string
+
+const (
+	ContactLayoutInline    ContactLayout = "INLINE"
+	ContactLayoutStacked   ContactLayout = "STACKED"
+	ContactLayoutIconLabel ContactLayout = "ICON_LABEL"
+)
+
+var AllContactLayout = []ContactLayout{
+	ContactLayoutInline,
+	ContactLayoutStacked,
+	ContactLayoutIconLabel,
+}
+
+func (e ContactLayout) IsValid() bool {
+	switch e {
+	case ContactLayoutInline, ContactLayoutStacked, ContactLayoutIconLabel:
+		return true
+	}
+	return false
+}
+
+func (e ContactLayout) String() string {
+	return string(e)
+}
+
+func (e *ContactLayout) UnmarshalGQL(v any) error {
+	str, ok := v.(string)
+	if !ok {
+		return fmt.Errorf("enums must be strings")
+	}
+
+	*e = ContactLayout(str)
+	if !e.IsValid() {
+		return fmt.Errorf("%s is not a valid ContactLayout", str)
+	}
+	return nil
+}
+
+func (e ContactLayout) MarshalGQL(w io.Writer) {
+	fmt.Fprint(w, strconv.Quote(e.String()))
+}
+
+func (e *ContactLayout) UnmarshalJSON(b []byte) error {
+	s, err := strconv.Unquote(string(b))
+	if err != nil {
+		return err
+	}
+	return e.UnmarshalGQL(s)
+}
+
+func (e ContactLayout) MarshalJSON() ([]byte, error) {
+	var buf bytes.Buffer
+	e.MarshalGQL(&buf)
+	return buf.Bytes(), nil
+}
+
+type DateFormat string
+
+const (
+	DateFormatMonYyyy DateFormat = "MON_YYYY"
+	DateFormatMmYyyy  DateFormat = "MM_YYYY"
+	DateFormatYyyy    DateFormat = "YYYY"
+	DateFormatIso     DateFormat = "ISO"
+)
+
+var AllDateFormat = []DateFormat{
+	DateFormatMonYyyy,
+	DateFormatMmYyyy,
+	DateFormatYyyy,
+	DateFormatIso,
+}
+
+func (e DateFormat) IsValid() bool {
+	switch e {
+	case DateFormatMonYyyy, DateFormatMmYyyy, DateFormatYyyy, DateFormatIso:
+		return true
+	}
+	return false
+}
+
+func (e DateFormat) String() string {
+	return string(e)
+}
+
+func (e *DateFormat) UnmarshalGQL(v any) error {
+	str, ok := v.(string)
+	if !ok {
+		return fmt.Errorf("enums must be strings")
+	}
+
+	*e = DateFormat(str)
+	if !e.IsValid() {
+		return fmt.Errorf("%s is not a valid DateFormat", str)
+	}
+	return nil
+}
+
+func (e DateFormat) MarshalGQL(w io.Writer) {
+	fmt.Fprint(w, strconv.Quote(e.String()))
+}
+
+func (e *DateFormat) UnmarshalJSON(b []byte) error {
+	s, err := strconv.Unquote(string(b))
+	if err != nil {
+		return err
+	}
+	return e.UnmarshalGQL(s)
+}
+
+func (e DateFormat) MarshalJSON() ([]byte, error) {
+	var buf bytes.Buffer
+	e.MarshalGQL(&buf)
+	return buf.Bytes(), nil
+}
+
+type DatePosition string
+
+const (
+	DatePositionRight  DatePosition = "RIGHT"
+	DatePositionBelow  DatePosition = "BELOW"
+	DatePositionInline DatePosition = "INLINE"
+)
+
+var AllDatePosition = []DatePosition{
+	DatePositionRight,
+	DatePositionBelow,
+	DatePositionInline,
+}
+
+func (e DatePosition) IsValid() bool {
+	switch e {
+	case DatePositionRight, DatePositionBelow, DatePositionInline:
+		return true
+	}
+	return false
+}
+
+func (e DatePosition) String() string {
+	return string(e)
+}
+
+func (e *DatePosition) UnmarshalGQL(v any) error {
+	str, ok := v.(string)
+	if !ok {
+		return fmt.Errorf("enums must be strings")
+	}
+
+	*e = DatePosition(str)
+	if !e.IsValid() {
+		return fmt.Errorf("%s is not a valid DatePosition", str)
+	}
+	return nil
+}
+
+func (e DatePosition) MarshalGQL(w io.Writer) {
+	fmt.Fprint(w, strconv.Quote(e.String()))
+}
+
+func (e *DatePosition) UnmarshalJSON(b []byte) error {
+	s, err := strconv.Unquote(string(b))
+	if err != nil {
+		return err
+	}
+	return e.UnmarshalGQL(s)
+}
+
+func (e DatePosition) MarshalJSON() ([]byte, error) {
+	var buf bytes.Buffer
+	e.MarshalGQL(&buf)
+	return buf.Bytes(), nil
+}
+
+type DescriptionStyle string
+
+const (
+	DescriptionStyleBullets   DescriptionStyle = "BULLETS"
+	DescriptionStyleParagraph DescriptionStyle = "PARAGRAPH"
+)
+
+var AllDescriptionStyle = []DescriptionStyle{
+	DescriptionStyleBullets,
+	DescriptionStyleParagraph,
+}
+
+func (e DescriptionStyle) IsValid() bool {
+	switch e {
+	case DescriptionStyleBullets, DescriptionStyleParagraph:
+		return true
+	}
+	return false
+}
+
+func (e DescriptionStyle) String() string {
+	return string(e)
+}
+
+func (e *DescriptionStyle) UnmarshalGQL(v any) error {
+	str, ok := v.(string)
+	if !ok {
+		return fmt.Errorf("enums must be strings")
+	}
+
+	*e = DescriptionStyle(str)
+	if !e.IsValid() {
+		return fmt.Errorf("%s is not a valid DescriptionStyle", str)
+	}
+	return nil
+}
+
+func (e DescriptionStyle) MarshalGQL(w io.Writer) {
+	fmt.Fprint(w, strconv.Quote(e.String()))
+}
+
+func (e *DescriptionStyle) UnmarshalJSON(b []byte) error {
+	s, err := strconv.Unquote(string(b))
+	if err != nil {
+		return err
+	}
+	return e.UnmarshalGQL(s)
+}
+
+func (e DescriptionStyle) MarshalJSON() ([]byte, error) {
+	var buf bytes.Buffer
+	e.MarshalGQL(&buf)
+	return buf.Bytes(), nil
+}
+
+type DesignPresetID string
+
+const (
+	DesignPresetIDClassic      DesignPresetID = "CLASSIC"
+	DesignPresetIDModern       DesignPresetID = "MODERN"
+	DesignPresetIDExecutive    DesignPresetID = "EXECUTIVE"
+	DesignPresetIDCreative     DesignPresetID = "CREATIVE"
+	DesignPresetIDMinimal      DesignPresetID = "MINIMAL"
+	DesignPresetIDProfessional DesignPresetID = "PROFESSIONAL"
+	DesignPresetIDTechnical    DesignPresetID = "TECHNICAL"
+	DesignPresetIDAcademic     DesignPresetID = "ACADEMIC"
+	DesignPresetIDElegant      DesignPresetID = "ELEGANT"
+	DesignPresetIDBold         DesignPresetID = "BOLD"
+)
+
+var AllDesignPresetID = []DesignPresetID{
+	DesignPresetIDClassic,
+	DesignPresetIDModern,
+	DesignPresetIDExecutive,
+	DesignPresetIDCreative,
+	DesignPresetIDMinimal,
+	DesignPresetIDProfessional,
+	DesignPresetIDTechnical,
+	DesignPresetIDAcademic,
+	DesignPresetIDElegant,
+	DesignPresetIDBold,
+}
+
+func (e DesignPresetID) IsValid() bool {
+	switch e {
+	case DesignPresetIDClassic, DesignPresetIDModern, DesignPresetIDExecutive, DesignPresetIDCreative, DesignPresetIDMinimal, DesignPresetIDProfessional, DesignPresetIDTechnical, DesignPresetIDAcademic, DesignPresetIDElegant, DesignPresetIDBold:
+		return true
+	}
+	return false
+}
+
+func (e DesignPresetID) String() string {
+	return string(e)
+}
+
+func (e *DesignPresetID) UnmarshalGQL(v any) error {
+	str, ok := v.(string)
+	if !ok {
+		return fmt.Errorf("enums must be strings")
+	}
+
+	*e = DesignPresetID(str)
+	if !e.IsValid() {
+		return fmt.Errorf("%s is not a valid DesignPresetId", str)
+	}
+	return nil
+}
+
+func (e DesignPresetID) MarshalGQL(w io.Writer) {
+	fmt.Fprint(w, strconv.Quote(e.String()))
+}
+
+func (e *DesignPresetID) UnmarshalJSON(b []byte) error {
+	s, err := strconv.Unquote(string(b))
+	if err != nil {
+		return err
+	}
+	return e.UnmarshalGQL(s)
+}
+
+func (e DesignPresetID) MarshalJSON() ([]byte, error) {
+	var buf bytes.Buffer
+	e.MarshalGQL(&buf)
+	return buf.Bytes(), nil
+}
+
+// Resume body font preset.
+type FontFamily string
+
+const (
+	FontFamilySans  FontFamily = "SANS"
+	FontFamilySerif FontFamily = "SERIF"
+	FontFamilyMono  FontFamily = "MONO"
+)
+
+var AllFontFamily = []FontFamily{
+	FontFamilySans,
+	FontFamilySerif,
+	FontFamilyMono,
+}
+
+func (e FontFamily) IsValid() bool {
+	switch e {
+	case FontFamilySans, FontFamilySerif, FontFamilyMono:
+		return true
+	}
+	return false
+}
+
+func (e FontFamily) String() string {
+	return string(e)
+}
+
+func (e *FontFamily) UnmarshalGQL(v any) error {
+	str, ok := v.(string)
+	if !ok {
+		return fmt.Errorf("enums must be strings")
+	}
+
+	*e = FontFamily(str)
+	if !e.IsValid() {
+		return fmt.Errorf("%s is not a valid FontFamily", str)
+	}
+	return nil
+}
+
+func (e FontFamily) MarshalGQL(w io.Writer) {
+	fmt.Fprint(w, strconv.Quote(e.String()))
+}
+
+func (e *FontFamily) UnmarshalJSON(b []byte) error {
+	s, err := strconv.Unquote(string(b))
+	if err != nil {
+		return err
+	}
+	return e.UnmarshalGQL(s)
+}
+
+func (e FontFamily) MarshalJSON() ([]byte, error) {
 	var buf bytes.Buffer
 	e.MarshalGQL(&buf)
 	return buf.Bytes(), nil
@@ -836,6 +1550,177 @@ func (e FontSize) MarshalJSON() ([]byte, error) {
 	return buf.Bytes(), nil
 }
 
+type FontWeightRole string
+
+const (
+	FontWeightRoleLight    FontWeightRole = "LIGHT"
+	FontWeightRoleRegular  FontWeightRole = "REGULAR"
+	FontWeightRoleMedium   FontWeightRole = "MEDIUM"
+	FontWeightRoleSemibold FontWeightRole = "SEMIBOLD"
+)
+
+var AllFontWeightRole = []FontWeightRole{
+	FontWeightRoleLight,
+	FontWeightRoleRegular,
+	FontWeightRoleMedium,
+	FontWeightRoleSemibold,
+}
+
+func (e FontWeightRole) IsValid() bool {
+	switch e {
+	case FontWeightRoleLight, FontWeightRoleRegular, FontWeightRoleMedium, FontWeightRoleSemibold:
+		return true
+	}
+	return false
+}
+
+func (e FontWeightRole) String() string {
+	return string(e)
+}
+
+func (e *FontWeightRole) UnmarshalGQL(v any) error {
+	str, ok := v.(string)
+	if !ok {
+		return fmt.Errorf("enums must be strings")
+	}
+
+	*e = FontWeightRole(str)
+	if !e.IsValid() {
+		return fmt.Errorf("%s is not a valid FontWeightRole", str)
+	}
+	return nil
+}
+
+func (e FontWeightRole) MarshalGQL(w io.Writer) {
+	fmt.Fprint(w, strconv.Quote(e.String()))
+}
+
+func (e *FontWeightRole) UnmarshalJSON(b []byte) error {
+	s, err := strconv.Unquote(string(b))
+	if err != nil {
+		return err
+	}
+	return e.UnmarshalGQL(s)
+}
+
+func (e FontWeightRole) MarshalJSON() ([]byte, error) {
+	var buf bytes.Buffer
+	e.MarshalGQL(&buf)
+	return buf.Bytes(), nil
+}
+
+type FooterStyle string
+
+const (
+	FooterStyleNone        FooterStyle = "NONE"
+	FooterStylePageNumber  FooterStyle = "PAGE_NUMBER"
+	FooterStyleNameAndPage FooterStyle = "NAME_AND_PAGE"
+)
+
+var AllFooterStyle = []FooterStyle{
+	FooterStyleNone,
+	FooterStylePageNumber,
+	FooterStyleNameAndPage,
+}
+
+func (e FooterStyle) IsValid() bool {
+	switch e {
+	case FooterStyleNone, FooterStylePageNumber, FooterStyleNameAndPage:
+		return true
+	}
+	return false
+}
+
+func (e FooterStyle) String() string {
+	return string(e)
+}
+
+func (e *FooterStyle) UnmarshalGQL(v any) error {
+	str, ok := v.(string)
+	if !ok {
+		return fmt.Errorf("enums must be strings")
+	}
+
+	*e = FooterStyle(str)
+	if !e.IsValid() {
+		return fmt.Errorf("%s is not a valid FooterStyle", str)
+	}
+	return nil
+}
+
+func (e FooterStyle) MarshalGQL(w io.Writer) {
+	fmt.Fprint(w, strconv.Quote(e.String()))
+}
+
+func (e *FooterStyle) UnmarshalJSON(b []byte) error {
+	s, err := strconv.Unquote(string(b))
+	if err != nil {
+		return err
+	}
+	return e.UnmarshalGQL(s)
+}
+
+func (e FooterStyle) MarshalJSON() ([]byte, error) {
+	var buf bytes.Buffer
+	e.MarshalGQL(&buf)
+	return buf.Bytes(), nil
+}
+
+type ItemTitleEmphasis string
+
+const (
+	ItemTitleEmphasisTitle   ItemTitleEmphasis = "TITLE"
+	ItemTitleEmphasisCompany ItemTitleEmphasis = "COMPANY"
+)
+
+var AllItemTitleEmphasis = []ItemTitleEmphasis{
+	ItemTitleEmphasisTitle,
+	ItemTitleEmphasisCompany,
+}
+
+func (e ItemTitleEmphasis) IsValid() bool {
+	switch e {
+	case ItemTitleEmphasisTitle, ItemTitleEmphasisCompany:
+		return true
+	}
+	return false
+}
+
+func (e ItemTitleEmphasis) String() string {
+	return string(e)
+}
+
+func (e *ItemTitleEmphasis) UnmarshalGQL(v any) error {
+	str, ok := v.(string)
+	if !ok {
+		return fmt.Errorf("enums must be strings")
+	}
+
+	*e = ItemTitleEmphasis(str)
+	if !e.IsValid() {
+		return fmt.Errorf("%s is not a valid ItemTitleEmphasis", str)
+	}
+	return nil
+}
+
+func (e ItemTitleEmphasis) MarshalGQL(w io.Writer) {
+	fmt.Fprint(w, strconv.Quote(e.String()))
+}
+
+func (e *ItemTitleEmphasis) UnmarshalJSON(b []byte) error {
+	s, err := strconv.Unquote(string(b))
+	if err != nil {
+		return err
+	}
+	return e.UnmarshalGQL(s)
+}
+
+func (e ItemTitleEmphasis) MarshalJSON() ([]byte, error) {
+	var buf bytes.Buffer
+	e.MarshalGQL(&buf)
+	return buf.Bytes(), nil
+}
+
 // How section item title and subtitle (role/company, degree/school, etc.) are laid out.
 type ItemTitleLayout string
 
@@ -887,6 +1772,120 @@ func (e *ItemTitleLayout) UnmarshalJSON(b []byte) error {
 }
 
 func (e ItemTitleLayout) MarshalJSON() ([]byte, error) {
+	var buf bytes.Buffer
+	e.MarshalGQL(&buf)
+	return buf.Bytes(), nil
+}
+
+// Which field appears first in inline section item titles (title vs company/school).
+type ItemTitleOrder string
+
+const (
+	ItemTitleOrderTitleFirst   ItemTitleOrder = "TITLE_FIRST"
+	ItemTitleOrderCompanyFirst ItemTitleOrder = "COMPANY_FIRST"
+)
+
+var AllItemTitleOrder = []ItemTitleOrder{
+	ItemTitleOrderTitleFirst,
+	ItemTitleOrderCompanyFirst,
+}
+
+func (e ItemTitleOrder) IsValid() bool {
+	switch e {
+	case ItemTitleOrderTitleFirst, ItemTitleOrderCompanyFirst:
+		return true
+	}
+	return false
+}
+
+func (e ItemTitleOrder) String() string {
+	return string(e)
+}
+
+func (e *ItemTitleOrder) UnmarshalGQL(v any) error {
+	str, ok := v.(string)
+	if !ok {
+		return fmt.Errorf("enums must be strings")
+	}
+
+	*e = ItemTitleOrder(str)
+	if !e.IsValid() {
+		return fmt.Errorf("%s is not a valid ItemTitleOrder", str)
+	}
+	return nil
+}
+
+func (e ItemTitleOrder) MarshalGQL(w io.Writer) {
+	fmt.Fprint(w, strconv.Quote(e.String()))
+}
+
+func (e *ItemTitleOrder) UnmarshalJSON(b []byte) error {
+	s, err := strconv.Unquote(string(b))
+	if err != nil {
+		return err
+	}
+	return e.UnmarshalGQL(s)
+}
+
+func (e ItemTitleOrder) MarshalJSON() ([]byte, error) {
+	var buf bytes.Buffer
+	e.MarshalGQL(&buf)
+	return buf.Bytes(), nil
+}
+
+// Separator between inline section item title and subtitle (role/company, degree/school, etc.).
+type ItemTitleSeparator string
+
+const (
+	ItemTitleSeparatorDot   ItemTitleSeparator = "DOT"
+	ItemTitleSeparatorPipe  ItemTitleSeparator = "PIPE"
+	ItemTitleSeparatorComma ItemTitleSeparator = "COMMA"
+)
+
+var AllItemTitleSeparator = []ItemTitleSeparator{
+	ItemTitleSeparatorDot,
+	ItemTitleSeparatorPipe,
+	ItemTitleSeparatorComma,
+}
+
+func (e ItemTitleSeparator) IsValid() bool {
+	switch e {
+	case ItemTitleSeparatorDot, ItemTitleSeparatorPipe, ItemTitleSeparatorComma:
+		return true
+	}
+	return false
+}
+
+func (e ItemTitleSeparator) String() string {
+	return string(e)
+}
+
+func (e *ItemTitleSeparator) UnmarshalGQL(v any) error {
+	str, ok := v.(string)
+	if !ok {
+		return fmt.Errorf("enums must be strings")
+	}
+
+	*e = ItemTitleSeparator(str)
+	if !e.IsValid() {
+		return fmt.Errorf("%s is not a valid ItemTitleSeparator", str)
+	}
+	return nil
+}
+
+func (e ItemTitleSeparator) MarshalGQL(w io.Writer) {
+	fmt.Fprint(w, strconv.Quote(e.String()))
+}
+
+func (e *ItemTitleSeparator) UnmarshalJSON(b []byte) error {
+	s, err := strconv.Unquote(string(b))
+	if err != nil {
+		return err
+	}
+	return e.UnmarshalGQL(s)
+}
+
+func (e ItemTitleSeparator) MarshalJSON() ([]byte, error) {
 	var buf bytes.Buffer
 	e.MarshalGQL(&buf)
 	return buf.Bytes(), nil
@@ -953,7 +1952,7 @@ func (e JobStatus) MarshalJSON() ([]byte, error) {
 	return buf.Bytes(), nil
 }
 
-// Spoken language proficiency — stored in section item metadata.level (LANGUAGES).
+// Spoken language proficiency, stored in section item metadata.level (LANGUAGES).
 type LanguageLevel string
 
 const (
@@ -1015,6 +2014,289 @@ func (e LanguageLevel) MarshalJSON() ([]byte, error) {
 	return buf.Bytes(), nil
 }
 
+type LanguagesLayout string
+
+const (
+	LanguagesLayoutList    LanguagesLayout = "LIST"
+	LanguagesLayoutInline  LanguagesLayout = "INLINE"
+	LanguagesLayoutColumns LanguagesLayout = "COLUMNS"
+)
+
+var AllLanguagesLayout = []LanguagesLayout{
+	LanguagesLayoutList,
+	LanguagesLayoutInline,
+	LanguagesLayoutColumns,
+}
+
+func (e LanguagesLayout) IsValid() bool {
+	switch e {
+	case LanguagesLayoutList, LanguagesLayoutInline, LanguagesLayoutColumns:
+		return true
+	}
+	return false
+}
+
+func (e LanguagesLayout) String() string {
+	return string(e)
+}
+
+func (e *LanguagesLayout) UnmarshalGQL(v any) error {
+	str, ok := v.(string)
+	if !ok {
+		return fmt.Errorf("enums must be strings")
+	}
+
+	*e = LanguagesLayout(str)
+	if !e.IsValid() {
+		return fmt.Errorf("%s is not a valid LanguagesLayout", str)
+	}
+	return nil
+}
+
+func (e LanguagesLayout) MarshalGQL(w io.Writer) {
+	fmt.Fprint(w, strconv.Quote(e.String()))
+}
+
+func (e *LanguagesLayout) UnmarshalJSON(b []byte) error {
+	s, err := strconv.Unquote(string(b))
+	if err != nil {
+		return err
+	}
+	return e.UnmarshalGQL(s)
+}
+
+func (e LanguagesLayout) MarshalJSON() ([]byte, error) {
+	var buf bytes.Buffer
+	e.MarshalGQL(&buf)
+	return buf.Bytes(), nil
+}
+
+type LetterSpacingDensity string
+
+const (
+	LetterSpacingDensityTight  LetterSpacingDensity = "TIGHT"
+	LetterSpacingDensityNormal LetterSpacingDensity = "NORMAL"
+)
+
+var AllLetterSpacingDensity = []LetterSpacingDensity{
+	LetterSpacingDensityTight,
+	LetterSpacingDensityNormal,
+}
+
+func (e LetterSpacingDensity) IsValid() bool {
+	switch e {
+	case LetterSpacingDensityTight, LetterSpacingDensityNormal:
+		return true
+	}
+	return false
+}
+
+func (e LetterSpacingDensity) String() string {
+	return string(e)
+}
+
+func (e *LetterSpacingDensity) UnmarshalGQL(v any) error {
+	str, ok := v.(string)
+	if !ok {
+		return fmt.Errorf("enums must be strings")
+	}
+
+	*e = LetterSpacingDensity(str)
+	if !e.IsValid() {
+		return fmt.Errorf("%s is not a valid LetterSpacingDensity", str)
+	}
+	return nil
+}
+
+func (e LetterSpacingDensity) MarshalGQL(w io.Writer) {
+	fmt.Fprint(w, strconv.Quote(e.String()))
+}
+
+func (e *LetterSpacingDensity) UnmarshalJSON(b []byte) error {
+	s, err := strconv.Unquote(string(b))
+	if err != nil {
+		return err
+	}
+	return e.UnmarshalGQL(s)
+}
+
+func (e LetterSpacingDensity) MarshalJSON() ([]byte, error) {
+	var buf bytes.Buffer
+	e.MarshalGQL(&buf)
+	return buf.Bytes(), nil
+}
+
+type LineHeightDensity string
+
+const (
+	LineHeightDensityTight   LineHeightDensity = "TIGHT"
+	LineHeightDensityNormal  LineHeightDensity = "NORMAL"
+	LineHeightDensityRelaxed LineHeightDensity = "RELAXED"
+)
+
+var AllLineHeightDensity = []LineHeightDensity{
+	LineHeightDensityTight,
+	LineHeightDensityNormal,
+	LineHeightDensityRelaxed,
+}
+
+func (e LineHeightDensity) IsValid() bool {
+	switch e {
+	case LineHeightDensityTight, LineHeightDensityNormal, LineHeightDensityRelaxed:
+		return true
+	}
+	return false
+}
+
+func (e LineHeightDensity) String() string {
+	return string(e)
+}
+
+func (e *LineHeightDensity) UnmarshalGQL(v any) error {
+	str, ok := v.(string)
+	if !ok {
+		return fmt.Errorf("enums must be strings")
+	}
+
+	*e = LineHeightDensity(str)
+	if !e.IsValid() {
+		return fmt.Errorf("%s is not a valid LineHeightDensity", str)
+	}
+	return nil
+}
+
+func (e LineHeightDensity) MarshalGQL(w io.Writer) {
+	fmt.Fprint(w, strconv.Quote(e.String()))
+}
+
+func (e *LineHeightDensity) UnmarshalJSON(b []byte) error {
+	s, err := strconv.Unquote(string(b))
+	if err != nil {
+		return err
+	}
+	return e.UnmarshalGQL(s)
+}
+
+func (e LineHeightDensity) MarshalJSON() ([]byte, error) {
+	var buf bytes.Buffer
+	e.MarshalGQL(&buf)
+	return buf.Bytes(), nil
+}
+
+type LocationDisplay string
+
+const (
+	LocationDisplayHidden            LocationDisplay = "HIDDEN"
+	LocationDisplayOwnLine           LocationDisplay = "OWN_LINE"
+	LocationDisplayInlineWithCompany LocationDisplay = "INLINE_WITH_COMPANY"
+)
+
+var AllLocationDisplay = []LocationDisplay{
+	LocationDisplayHidden,
+	LocationDisplayOwnLine,
+	LocationDisplayInlineWithCompany,
+}
+
+func (e LocationDisplay) IsValid() bool {
+	switch e {
+	case LocationDisplayHidden, LocationDisplayOwnLine, LocationDisplayInlineWithCompany:
+		return true
+	}
+	return false
+}
+
+func (e LocationDisplay) String() string {
+	return string(e)
+}
+
+func (e *LocationDisplay) UnmarshalGQL(v any) error {
+	str, ok := v.(string)
+	if !ok {
+		return fmt.Errorf("enums must be strings")
+	}
+
+	*e = LocationDisplay(str)
+	if !e.IsValid() {
+		return fmt.Errorf("%s is not a valid LocationDisplay", str)
+	}
+	return nil
+}
+
+func (e LocationDisplay) MarshalGQL(w io.Writer) {
+	fmt.Fprint(w, strconv.Quote(e.String()))
+}
+
+func (e *LocationDisplay) UnmarshalJSON(b []byte) error {
+	s, err := strconv.Unquote(string(b))
+	if err != nil {
+		return err
+	}
+	return e.UnmarshalGQL(s)
+}
+
+func (e LocationDisplay) MarshalJSON() ([]byte, error) {
+	var buf bytes.Buffer
+	e.MarshalGQL(&buf)
+	return buf.Bytes(), nil
+}
+
+type PageBackground string
+
+const (
+	PageBackgroundWhite     PageBackground = "WHITE"
+	PageBackgroundOffWhite  PageBackground = "OFF_WHITE"
+	PageBackgroundLightGray PageBackground = "LIGHT_GRAY"
+)
+
+var AllPageBackground = []PageBackground{
+	PageBackgroundWhite,
+	PageBackgroundOffWhite,
+	PageBackgroundLightGray,
+}
+
+func (e PageBackground) IsValid() bool {
+	switch e {
+	case PageBackgroundWhite, PageBackgroundOffWhite, PageBackgroundLightGray:
+		return true
+	}
+	return false
+}
+
+func (e PageBackground) String() string {
+	return string(e)
+}
+
+func (e *PageBackground) UnmarshalGQL(v any) error {
+	str, ok := v.(string)
+	if !ok {
+		return fmt.Errorf("enums must be strings")
+	}
+
+	*e = PageBackground(str)
+	if !e.IsValid() {
+		return fmt.Errorf("%s is not a valid PageBackground", str)
+	}
+	return nil
+}
+
+func (e PageBackground) MarshalGQL(w io.Writer) {
+	fmt.Fprint(w, strconv.Quote(e.String()))
+}
+
+func (e *PageBackground) UnmarshalJSON(b []byte) error {
+	s, err := strconv.Unquote(string(b))
+	if err != nil {
+		return err
+	}
+	return e.UnmarshalGQL(s)
+}
+
+func (e PageBackground) MarshalJSON() ([]byte, error) {
+	var buf bytes.Buffer
+	e.MarshalGQL(&buf)
+	return buf.Bytes(), nil
+}
+
 type PageFormat string
 
 const (
@@ -1070,6 +2352,240 @@ func (e PageFormat) MarshalJSON() ([]byte, error) {
 	return buf.Bytes(), nil
 }
 
+type PhotoPosition string
+
+const (
+	PhotoPositionHeaderLeft  PhotoPosition = "HEADER_LEFT"
+	PhotoPositionHeaderRight PhotoPosition = "HEADER_RIGHT"
+	PhotoPositionSidebar     PhotoPosition = "SIDEBAR"
+	PhotoPositionNone        PhotoPosition = "NONE"
+)
+
+var AllPhotoPosition = []PhotoPosition{
+	PhotoPositionHeaderLeft,
+	PhotoPositionHeaderRight,
+	PhotoPositionSidebar,
+	PhotoPositionNone,
+}
+
+func (e PhotoPosition) IsValid() bool {
+	switch e {
+	case PhotoPositionHeaderLeft, PhotoPositionHeaderRight, PhotoPositionSidebar, PhotoPositionNone:
+		return true
+	}
+	return false
+}
+
+func (e PhotoPosition) String() string {
+	return string(e)
+}
+
+func (e *PhotoPosition) UnmarshalGQL(v any) error {
+	str, ok := v.(string)
+	if !ok {
+		return fmt.Errorf("enums must be strings")
+	}
+
+	*e = PhotoPosition(str)
+	if !e.IsValid() {
+		return fmt.Errorf("%s is not a valid PhotoPosition", str)
+	}
+	return nil
+}
+
+func (e PhotoPosition) MarshalGQL(w io.Writer) {
+	fmt.Fprint(w, strconv.Quote(e.String()))
+}
+
+func (e *PhotoPosition) UnmarshalJSON(b []byte) error {
+	s, err := strconv.Unquote(string(b))
+	if err != nil {
+		return err
+	}
+	return e.UnmarshalGQL(s)
+}
+
+func (e PhotoPosition) MarshalJSON() ([]byte, error) {
+	var buf bytes.Buffer
+	e.MarshalGQL(&buf)
+	return buf.Bytes(), nil
+}
+
+type PhotoSize string
+
+const (
+	PhotoSizeXs PhotoSize = "XS"
+	PhotoSizeS  PhotoSize = "S"
+	PhotoSizeM  PhotoSize = "M"
+	PhotoSizeL  PhotoSize = "L"
+	PhotoSizeXl PhotoSize = "XL"
+)
+
+var AllPhotoSize = []PhotoSize{
+	PhotoSizeXs,
+	PhotoSizeS,
+	PhotoSizeM,
+	PhotoSizeL,
+	PhotoSizeXl,
+}
+
+func (e PhotoSize) IsValid() bool {
+	switch e {
+	case PhotoSizeXs, PhotoSizeS, PhotoSizeM, PhotoSizeL, PhotoSizeXl:
+		return true
+	}
+	return false
+}
+
+func (e PhotoSize) String() string {
+	return string(e)
+}
+
+func (e *PhotoSize) UnmarshalGQL(v any) error {
+	str, ok := v.(string)
+	if !ok {
+		return fmt.Errorf("enums must be strings")
+	}
+
+	*e = PhotoSize(str)
+	if !e.IsValid() {
+		return fmt.Errorf("%s is not a valid PhotoSize", str)
+	}
+	return nil
+}
+
+func (e PhotoSize) MarshalGQL(w io.Writer) {
+	fmt.Fprint(w, strconv.Quote(e.String()))
+}
+
+func (e *PhotoSize) UnmarshalJSON(b []byte) error {
+	s, err := strconv.Unquote(string(b))
+	if err != nil {
+		return err
+	}
+	return e.UnmarshalGQL(s)
+}
+
+func (e PhotoSize) MarshalJSON() ([]byte, error) {
+	var buf bytes.Buffer
+	e.MarshalGQL(&buf)
+	return buf.Bytes(), nil
+}
+
+type PortfolioAnimationLevel string
+
+const (
+	PortfolioAnimationLevelNone   PortfolioAnimationLevel = "NONE"
+	PortfolioAnimationLevelSubtle PortfolioAnimationLevel = "SUBTLE"
+	PortfolioAnimationLevelFull   PortfolioAnimationLevel = "FULL"
+)
+
+var AllPortfolioAnimationLevel = []PortfolioAnimationLevel{
+	PortfolioAnimationLevelNone,
+	PortfolioAnimationLevelSubtle,
+	PortfolioAnimationLevelFull,
+}
+
+func (e PortfolioAnimationLevel) IsValid() bool {
+	switch e {
+	case PortfolioAnimationLevelNone, PortfolioAnimationLevelSubtle, PortfolioAnimationLevelFull:
+		return true
+	}
+	return false
+}
+
+func (e PortfolioAnimationLevel) String() string {
+	return string(e)
+}
+
+func (e *PortfolioAnimationLevel) UnmarshalGQL(v any) error {
+	str, ok := v.(string)
+	if !ok {
+		return fmt.Errorf("enums must be strings")
+	}
+
+	*e = PortfolioAnimationLevel(str)
+	if !e.IsValid() {
+		return fmt.Errorf("%s is not a valid PortfolioAnimationLevel", str)
+	}
+	return nil
+}
+
+func (e PortfolioAnimationLevel) MarshalGQL(w io.Writer) {
+	fmt.Fprint(w, strconv.Quote(e.String()))
+}
+
+func (e *PortfolioAnimationLevel) UnmarshalJSON(b []byte) error {
+	s, err := strconv.Unquote(string(b))
+	if err != nil {
+		return err
+	}
+	return e.UnmarshalGQL(s)
+}
+
+func (e PortfolioAnimationLevel) MarshalJSON() ([]byte, error) {
+	var buf bytes.Buffer
+	e.MarshalGQL(&buf)
+	return buf.Bytes(), nil
+}
+
+type PortfolioHeroStyle string
+
+const (
+	PortfolioHeroStyleGradient PortfolioHeroStyle = "GRADIENT"
+	PortfolioHeroStyleMinimal  PortfolioHeroStyle = "MINIMAL"
+	PortfolioHeroStyleCentered PortfolioHeroStyle = "CENTERED"
+)
+
+var AllPortfolioHeroStyle = []PortfolioHeroStyle{
+	PortfolioHeroStyleGradient,
+	PortfolioHeroStyleMinimal,
+	PortfolioHeroStyleCentered,
+}
+
+func (e PortfolioHeroStyle) IsValid() bool {
+	switch e {
+	case PortfolioHeroStyleGradient, PortfolioHeroStyleMinimal, PortfolioHeroStyleCentered:
+		return true
+	}
+	return false
+}
+
+func (e PortfolioHeroStyle) String() string {
+	return string(e)
+}
+
+func (e *PortfolioHeroStyle) UnmarshalGQL(v any) error {
+	str, ok := v.(string)
+	if !ok {
+		return fmt.Errorf("enums must be strings")
+	}
+
+	*e = PortfolioHeroStyle(str)
+	if !e.IsValid() {
+		return fmt.Errorf("%s is not a valid PortfolioHeroStyle", str)
+	}
+	return nil
+}
+
+func (e PortfolioHeroStyle) MarshalGQL(w io.Writer) {
+	fmt.Fprint(w, strconv.Quote(e.String()))
+}
+
+func (e *PortfolioHeroStyle) UnmarshalJSON(b []byte) error {
+	s, err := strconv.Unquote(string(b))
+	if err != nil {
+		return err
+	}
+	return e.UnmarshalGQL(s)
+}
+
+func (e PortfolioHeroStyle) MarshalJSON() ([]byte, error) {
+	var buf bytes.Buffer
+	e.MarshalGQL(&buf)
+	return buf.Bytes(), nil
+}
+
 type PortfolioLayout string
 
 const (
@@ -1120,6 +2636,291 @@ func (e *PortfolioLayout) UnmarshalJSON(b []byte) error {
 }
 
 func (e PortfolioLayout) MarshalJSON() ([]byte, error) {
+	var buf bytes.Buffer
+	e.MarshalGQL(&buf)
+	return buf.Bytes(), nil
+}
+
+type PortfolioNavigationStyle string
+
+const (
+	PortfolioNavigationStyleNone   PortfolioNavigationStyle = "NONE"
+	PortfolioNavigationStyleTop    PortfolioNavigationStyle = "TOP"
+	PortfolioNavigationStyleSticky PortfolioNavigationStyle = "STICKY"
+)
+
+var AllPortfolioNavigationStyle = []PortfolioNavigationStyle{
+	PortfolioNavigationStyleNone,
+	PortfolioNavigationStyleTop,
+	PortfolioNavigationStyleSticky,
+}
+
+func (e PortfolioNavigationStyle) IsValid() bool {
+	switch e {
+	case PortfolioNavigationStyleNone, PortfolioNavigationStyleTop, PortfolioNavigationStyleSticky:
+		return true
+	}
+	return false
+}
+
+func (e PortfolioNavigationStyle) String() string {
+	return string(e)
+}
+
+func (e *PortfolioNavigationStyle) UnmarshalGQL(v any) error {
+	str, ok := v.(string)
+	if !ok {
+		return fmt.Errorf("enums must be strings")
+	}
+
+	*e = PortfolioNavigationStyle(str)
+	if !e.IsValid() {
+		return fmt.Errorf("%s is not a valid PortfolioNavigationStyle", str)
+	}
+	return nil
+}
+
+func (e PortfolioNavigationStyle) MarshalGQL(w io.Writer) {
+	fmt.Fprint(w, strconv.Quote(e.String()))
+}
+
+func (e *PortfolioNavigationStyle) UnmarshalJSON(b []byte) error {
+	s, err := strconv.Unquote(string(b))
+	if err != nil {
+		return err
+	}
+	return e.UnmarshalGQL(s)
+}
+
+func (e PortfolioNavigationStyle) MarshalJSON() ([]byte, error) {
+	var buf bytes.Buffer
+	e.MarshalGQL(&buf)
+	return buf.Bytes(), nil
+}
+
+type PortfolioProjectCardStyle string
+
+const (
+	PortfolioProjectCardStyleStandard PortfolioProjectCardStyle = "STANDARD"
+	PortfolioProjectCardStyleMinimal  PortfolioProjectCardStyle = "MINIMAL"
+	PortfolioProjectCardStyleImage    PortfolioProjectCardStyle = "IMAGE"
+)
+
+var AllPortfolioProjectCardStyle = []PortfolioProjectCardStyle{
+	PortfolioProjectCardStyleStandard,
+	PortfolioProjectCardStyleMinimal,
+	PortfolioProjectCardStyleImage,
+}
+
+func (e PortfolioProjectCardStyle) IsValid() bool {
+	switch e {
+	case PortfolioProjectCardStyleStandard, PortfolioProjectCardStyleMinimal, PortfolioProjectCardStyleImage:
+		return true
+	}
+	return false
+}
+
+func (e PortfolioProjectCardStyle) String() string {
+	return string(e)
+}
+
+func (e *PortfolioProjectCardStyle) UnmarshalGQL(v any) error {
+	str, ok := v.(string)
+	if !ok {
+		return fmt.Errorf("enums must be strings")
+	}
+
+	*e = PortfolioProjectCardStyle(str)
+	if !e.IsValid() {
+		return fmt.Errorf("%s is not a valid PortfolioProjectCardStyle", str)
+	}
+	return nil
+}
+
+func (e PortfolioProjectCardStyle) MarshalGQL(w io.Writer) {
+	fmt.Fprint(w, strconv.Quote(e.String()))
+}
+
+func (e *PortfolioProjectCardStyle) UnmarshalJSON(b []byte) error {
+	s, err := strconv.Unquote(string(b))
+	if err != nil {
+		return err
+	}
+	return e.UnmarshalGQL(s)
+}
+
+func (e PortfolioProjectCardStyle) MarshalJSON() ([]byte, error) {
+	var buf bytes.Buffer
+	e.MarshalGQL(&buf)
+	return buf.Bytes(), nil
+}
+
+type PortfolioProjectGridColumns string
+
+const (
+	PortfolioProjectGridColumnsOne   PortfolioProjectGridColumns = "ONE"
+	PortfolioProjectGridColumnsTwo   PortfolioProjectGridColumns = "TWO"
+	PortfolioProjectGridColumnsThree PortfolioProjectGridColumns = "THREE"
+)
+
+var AllPortfolioProjectGridColumns = []PortfolioProjectGridColumns{
+	PortfolioProjectGridColumnsOne,
+	PortfolioProjectGridColumnsTwo,
+	PortfolioProjectGridColumnsThree,
+}
+
+func (e PortfolioProjectGridColumns) IsValid() bool {
+	switch e {
+	case PortfolioProjectGridColumnsOne, PortfolioProjectGridColumnsTwo, PortfolioProjectGridColumnsThree:
+		return true
+	}
+	return false
+}
+
+func (e PortfolioProjectGridColumns) String() string {
+	return string(e)
+}
+
+func (e *PortfolioProjectGridColumns) UnmarshalGQL(v any) error {
+	str, ok := v.(string)
+	if !ok {
+		return fmt.Errorf("enums must be strings")
+	}
+
+	*e = PortfolioProjectGridColumns(str)
+	if !e.IsValid() {
+		return fmt.Errorf("%s is not a valid PortfolioProjectGridColumns", str)
+	}
+	return nil
+}
+
+func (e PortfolioProjectGridColumns) MarshalGQL(w io.Writer) {
+	fmt.Fprint(w, strconv.Quote(e.String()))
+}
+
+func (e *PortfolioProjectGridColumns) UnmarshalJSON(b []byte) error {
+	s, err := strconv.Unquote(string(b))
+	if err != nil {
+		return err
+	}
+	return e.UnmarshalGQL(s)
+}
+
+func (e PortfolioProjectGridColumns) MarshalJSON() ([]byte, error) {
+	var buf bytes.Buffer
+	e.MarshalGQL(&buf)
+	return buf.Bytes(), nil
+}
+
+type PortfolioTypographyScale string
+
+const (
+	PortfolioTypographyScaleCompact  PortfolioTypographyScale = "COMPACT"
+	PortfolioTypographyScaleNormal   PortfolioTypographyScale = "NORMAL"
+	PortfolioTypographyScaleSpacious PortfolioTypographyScale = "SPACIOUS"
+)
+
+var AllPortfolioTypographyScale = []PortfolioTypographyScale{
+	PortfolioTypographyScaleCompact,
+	PortfolioTypographyScaleNormal,
+	PortfolioTypographyScaleSpacious,
+}
+
+func (e PortfolioTypographyScale) IsValid() bool {
+	switch e {
+	case PortfolioTypographyScaleCompact, PortfolioTypographyScaleNormal, PortfolioTypographyScaleSpacious:
+		return true
+	}
+	return false
+}
+
+func (e PortfolioTypographyScale) String() string {
+	return string(e)
+}
+
+func (e *PortfolioTypographyScale) UnmarshalGQL(v any) error {
+	str, ok := v.(string)
+	if !ok {
+		return fmt.Errorf("enums must be strings")
+	}
+
+	*e = PortfolioTypographyScale(str)
+	if !e.IsValid() {
+		return fmt.Errorf("%s is not a valid PortfolioTypographyScale", str)
+	}
+	return nil
+}
+
+func (e PortfolioTypographyScale) MarshalGQL(w io.Writer) {
+	fmt.Fprint(w, strconv.Quote(e.String()))
+}
+
+func (e *PortfolioTypographyScale) UnmarshalJSON(b []byte) error {
+	s, err := strconv.Unquote(string(b))
+	if err != nil {
+		return err
+	}
+	return e.UnmarshalGQL(s)
+}
+
+func (e PortfolioTypographyScale) MarshalJSON() ([]byte, error) {
+	var buf bytes.Buffer
+	e.MarshalGQL(&buf)
+	return buf.Bytes(), nil
+}
+
+type SectionDividerStyle string
+
+const (
+	SectionDividerStyleNone      SectionDividerStyle = "NONE"
+	SectionDividerStyleFull      SectionDividerStyle = "FULL"
+	SectionDividerStyleTextWidth SectionDividerStyle = "TEXT_WIDTH"
+)
+
+var AllSectionDividerStyle = []SectionDividerStyle{
+	SectionDividerStyleNone,
+	SectionDividerStyleFull,
+	SectionDividerStyleTextWidth,
+}
+
+func (e SectionDividerStyle) IsValid() bool {
+	switch e {
+	case SectionDividerStyleNone, SectionDividerStyleFull, SectionDividerStyleTextWidth:
+		return true
+	}
+	return false
+}
+
+func (e SectionDividerStyle) String() string {
+	return string(e)
+}
+
+func (e *SectionDividerStyle) UnmarshalGQL(v any) error {
+	str, ok := v.(string)
+	if !ok {
+		return fmt.Errorf("enums must be strings")
+	}
+
+	*e = SectionDividerStyle(str)
+	if !e.IsValid() {
+		return fmt.Errorf("%s is not a valid SectionDividerStyle", str)
+	}
+	return nil
+}
+
+func (e SectionDividerStyle) MarshalGQL(w io.Writer) {
+	fmt.Fprint(w, strconv.Quote(e.String()))
+}
+
+func (e *SectionDividerStyle) UnmarshalJSON(b []byte) error {
+	s, err := strconv.Unquote(string(b))
+	if err != nil {
+		return err
+	}
+	return e.UnmarshalGQL(s)
+}
+
+func (e SectionDividerStyle) MarshalJSON() ([]byte, error) {
 	var buf bytes.Buffer
 	e.MarshalGQL(&buf)
 	return buf.Bytes(), nil
@@ -1200,7 +3001,119 @@ func (e SectionType) MarshalJSON() ([]byte, error) {
 	return buf.Bytes(), nil
 }
 
-// Technical/professional skill proficiency — stored in section item metadata.level (SKILLS) and Twin SKILL_AREA.
+type SidebarPosition string
+
+const (
+	SidebarPositionLeft  SidebarPosition = "LEFT"
+	SidebarPositionRight SidebarPosition = "RIGHT"
+)
+
+var AllSidebarPosition = []SidebarPosition{
+	SidebarPositionLeft,
+	SidebarPositionRight,
+}
+
+func (e SidebarPosition) IsValid() bool {
+	switch e {
+	case SidebarPositionLeft, SidebarPositionRight:
+		return true
+	}
+	return false
+}
+
+func (e SidebarPosition) String() string {
+	return string(e)
+}
+
+func (e *SidebarPosition) UnmarshalGQL(v any) error {
+	str, ok := v.(string)
+	if !ok {
+		return fmt.Errorf("enums must be strings")
+	}
+
+	*e = SidebarPosition(str)
+	if !e.IsValid() {
+		return fmt.Errorf("%s is not a valid SidebarPosition", str)
+	}
+	return nil
+}
+
+func (e SidebarPosition) MarshalGQL(w io.Writer) {
+	fmt.Fprint(w, strconv.Quote(e.String()))
+}
+
+func (e *SidebarPosition) UnmarshalJSON(b []byte) error {
+	s, err := strconv.Unquote(string(b))
+	if err != nil {
+		return err
+	}
+	return e.UnmarshalGQL(s)
+}
+
+func (e SidebarPosition) MarshalJSON() ([]byte, error) {
+	var buf bytes.Buffer
+	e.MarshalGQL(&buf)
+	return buf.Bytes(), nil
+}
+
+type SidebarWidth string
+
+const (
+	SidebarWidthNarrow SidebarWidth = "NARROW"
+	SidebarWidthMedium SidebarWidth = "MEDIUM"
+	SidebarWidthWide   SidebarWidth = "WIDE"
+)
+
+var AllSidebarWidth = []SidebarWidth{
+	SidebarWidthNarrow,
+	SidebarWidthMedium,
+	SidebarWidthWide,
+}
+
+func (e SidebarWidth) IsValid() bool {
+	switch e {
+	case SidebarWidthNarrow, SidebarWidthMedium, SidebarWidthWide:
+		return true
+	}
+	return false
+}
+
+func (e SidebarWidth) String() string {
+	return string(e)
+}
+
+func (e *SidebarWidth) UnmarshalGQL(v any) error {
+	str, ok := v.(string)
+	if !ok {
+		return fmt.Errorf("enums must be strings")
+	}
+
+	*e = SidebarWidth(str)
+	if !e.IsValid() {
+		return fmt.Errorf("%s is not a valid SidebarWidth", str)
+	}
+	return nil
+}
+
+func (e SidebarWidth) MarshalGQL(w io.Writer) {
+	fmt.Fprint(w, strconv.Quote(e.String()))
+}
+
+func (e *SidebarWidth) UnmarshalJSON(b []byte) error {
+	s, err := strconv.Unquote(string(b))
+	if err != nil {
+		return err
+	}
+	return e.UnmarshalGQL(s)
+}
+
+func (e SidebarWidth) MarshalJSON() ([]byte, error) {
+	var buf bytes.Buffer
+	e.MarshalGQL(&buf)
+	return buf.Bytes(), nil
+}
+
+// Technical/professional skill proficiency, stored in section item metadata.level (SKILLS) and Twin SKILL_AREA.
 type SkillLevel string
 
 const (
@@ -1257,6 +3170,179 @@ func (e *SkillLevel) UnmarshalJSON(b []byte) error {
 }
 
 func (e SkillLevel) MarshalJSON() ([]byte, error) {
+	var buf bytes.Buffer
+	e.MarshalGQL(&buf)
+	return buf.Bytes(), nil
+}
+
+type SkillsLayout string
+
+const (
+	SkillsLayoutList    SkillsLayout = "LIST"
+	SkillsLayoutTags    SkillsLayout = "TAGS"
+	SkillsLayoutColumns SkillsLayout = "COLUMNS"
+)
+
+var AllSkillsLayout = []SkillsLayout{
+	SkillsLayoutList,
+	SkillsLayoutTags,
+	SkillsLayoutColumns,
+}
+
+func (e SkillsLayout) IsValid() bool {
+	switch e {
+	case SkillsLayoutList, SkillsLayoutTags, SkillsLayoutColumns:
+		return true
+	}
+	return false
+}
+
+func (e SkillsLayout) String() string {
+	return string(e)
+}
+
+func (e *SkillsLayout) UnmarshalGQL(v any) error {
+	str, ok := v.(string)
+	if !ok {
+		return fmt.Errorf("enums must be strings")
+	}
+
+	*e = SkillsLayout(str)
+	if !e.IsValid() {
+		return fmt.Errorf("%s is not a valid SkillsLayout", str)
+	}
+	return nil
+}
+
+func (e SkillsLayout) MarshalGQL(w io.Writer) {
+	fmt.Fprint(w, strconv.Quote(e.String()))
+}
+
+func (e *SkillsLayout) UnmarshalJSON(b []byte) error {
+	s, err := strconv.Unquote(string(b))
+	if err != nil {
+		return err
+	}
+	return e.UnmarshalGQL(s)
+}
+
+func (e SkillsLayout) MarshalJSON() ([]byte, error) {
+	var buf bytes.Buffer
+	e.MarshalGQL(&buf)
+	return buf.Bytes(), nil
+}
+
+type SkillsProficiency string
+
+const (
+	SkillsProficiencyNone SkillsProficiency = "NONE"
+	SkillsProficiencyDots SkillsProficiency = "DOTS"
+	SkillsProficiencyBars SkillsProficiency = "BARS"
+	SkillsProficiencyText SkillsProficiency = "TEXT"
+)
+
+var AllSkillsProficiency = []SkillsProficiency{
+	SkillsProficiencyNone,
+	SkillsProficiencyDots,
+	SkillsProficiencyBars,
+	SkillsProficiencyText,
+}
+
+func (e SkillsProficiency) IsValid() bool {
+	switch e {
+	case SkillsProficiencyNone, SkillsProficiencyDots, SkillsProficiencyBars, SkillsProficiencyText:
+		return true
+	}
+	return false
+}
+
+func (e SkillsProficiency) String() string {
+	return string(e)
+}
+
+func (e *SkillsProficiency) UnmarshalGQL(v any) error {
+	str, ok := v.(string)
+	if !ok {
+		return fmt.Errorf("enums must be strings")
+	}
+
+	*e = SkillsProficiency(str)
+	if !e.IsValid() {
+		return fmt.Errorf("%s is not a valid SkillsProficiency", str)
+	}
+	return nil
+}
+
+func (e SkillsProficiency) MarshalGQL(w io.Writer) {
+	fmt.Fprint(w, strconv.Quote(e.String()))
+}
+
+func (e *SkillsProficiency) UnmarshalJSON(b []byte) error {
+	s, err := strconv.Unquote(string(b))
+	if err != nil {
+		return err
+	}
+	return e.UnmarshalGQL(s)
+}
+
+func (e SkillsProficiency) MarshalJSON() ([]byte, error) {
+	var buf bytes.Buffer
+	e.MarshalGQL(&buf)
+	return buf.Bytes(), nil
+}
+
+type SpacingDensity string
+
+const (
+	SpacingDensityCompact SpacingDensity = "COMPACT"
+	SpacingDensityNormal  SpacingDensity = "NORMAL"
+	SpacingDensityAiry    SpacingDensity = "AIRY"
+)
+
+var AllSpacingDensity = []SpacingDensity{
+	SpacingDensityCompact,
+	SpacingDensityNormal,
+	SpacingDensityAiry,
+}
+
+func (e SpacingDensity) IsValid() bool {
+	switch e {
+	case SpacingDensityCompact, SpacingDensityNormal, SpacingDensityAiry:
+		return true
+	}
+	return false
+}
+
+func (e SpacingDensity) String() string {
+	return string(e)
+}
+
+func (e *SpacingDensity) UnmarshalGQL(v any) error {
+	str, ok := v.(string)
+	if !ok {
+		return fmt.Errorf("enums must be strings")
+	}
+
+	*e = SpacingDensity(str)
+	if !e.IsValid() {
+		return fmt.Errorf("%s is not a valid SpacingDensity", str)
+	}
+	return nil
+}
+
+func (e SpacingDensity) MarshalGQL(w io.Writer) {
+	fmt.Fprint(w, strconv.Quote(e.String()))
+}
+
+func (e *SpacingDensity) UnmarshalJSON(b []byte) error {
+	s, err := strconv.Unquote(string(b))
+	if err != nil {
+		return err
+	}
+	return e.UnmarshalGQL(s)
+}
+
+func (e SpacingDensity) MarshalJSON() ([]byte, error) {
 	var buf bytes.Buffer
 	e.MarshalGQL(&buf)
 	return buf.Bytes(), nil

@@ -6,6 +6,7 @@ package graph
 
 import (
 	"context"
+	"fmt"
 
 	"github.com/leo/ai-weekend/backend/graph/model"
 	"github.com/leo/ai-weekend/backend/internal/cv"
@@ -40,6 +41,21 @@ func (r *mutationResolver) UpdateResume(ctx context.Context, id string, title *s
 // UpdateResumeSettings is the resolver for the updateResumeSettings field.
 func (r *mutationResolver) UpdateResumeSettings(ctx context.Context, input model.UpdateResumeSettingsInput) (*model.ResumeSettings, error) {
 	return scope.CV(ctx).UpdateResumeSettings(input)
+}
+
+// UpdateResumeSectionDisplayTitle is the resolver for the updateResumeSectionDisplayTitle field.
+func (r *mutationResolver) UpdateResumeSectionDisplayTitle(ctx context.Context, input model.UpdateResumeSectionDisplayTitleInput) (*model.ResumeWithContent, error) {
+	return scope.CV(ctx).UpdateResumeSectionDisplayTitle(input)
+}
+
+// ReorderResumeSections is the resolver for the reorderResumeSections field.
+func (r *mutationResolver) ReorderResumeSections(ctx context.Context, input model.ReorderResumeSectionsInput) (*model.ResumeWithContent, error) {
+	return scope.CV(ctx).ReorderResumeSections(input)
+}
+
+// UpdateResumeSectionVisibility is the resolver for the updateResumeSectionVisibility field.
+func (r *mutationResolver) UpdateResumeSectionVisibility(ctx context.Context, input model.UpdateResumeSectionVisibilityInput) (*model.ResumeWithContent, error) {
+	return scope.CV(ctx).UpdateResumeSectionVisibility(input)
 }
 
 // UpdateResumeSectionItemVisibility is the resolver for the updateResumeSectionItemVisibility field.
@@ -85,6 +101,24 @@ func (r *mutationResolver) DeletePortfolio(ctx context.Context, id string) (bool
 // UpdatePortfolio is the resolver for the updatePortfolio field.
 func (r *mutationResolver) UpdatePortfolio(ctx context.Context, id string, title *string, tagline *string, about *string, contactProfileID *string) (*model.Portfolio, error) {
 	return scope.CV(ctx).UpdatePortfolio(id, title, tagline, about, contactProfileID)
+}
+
+// SetUsername is the resolver for the setUsername field.
+func (r *mutationResolver) SetUsername(ctx context.Context, username string) (*model.User, error) {
+	svc, err := requireCV(ctx)
+	if err != nil {
+		return nil, err
+	}
+	return svc.SetUsername(username)
+}
+
+// SetPortfolioSlug is the resolver for the setPortfolioSlug field.
+func (r *mutationResolver) SetPortfolioSlug(ctx context.Context, portfolioID string, slug string) (*model.Portfolio, error) {
+	svc, err := requireCV(ctx)
+	if err != nil {
+		return nil, err
+	}
+	return svc.SetPortfolioSlug(portfolioID, slug)
 }
 
 // UpdatePortfolioSettings is the resolver for the updatePortfolioSettings field.
@@ -314,6 +348,19 @@ func (r *queryResolver) PortfolioWithContent(ctx context.Context, id string) (*m
 		return nil, nil
 	}
 	return content, err
+}
+
+// PublicPortfolioWithContent is the resolver for the publicPortfolioWithContent field.
+func (r *queryResolver) PublicPortfolioWithContent(ctx context.Context, username string, slug *string) (*model.PortfolioWithContent, error) {
+	pg := scope.Postgres(ctx)
+	if pg == nil {
+		return nil, fmt.Errorf("not available")
+	}
+	content, err := pg.PublicPortfolioWithContent(username, slug)
+	if err != nil {
+		return nil, err
+	}
+	return content, nil
 }
 
 // SectionItemUsage is the resolver for the sectionItemUsage field.

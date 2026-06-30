@@ -68,7 +68,188 @@ enum ItemTitleLayout {
   INLINE
 }
 
-"""Spoken language proficiency — stored in section item metadata.level (LANGUAGES)."""
+"""Separator between inline section item title and subtitle (role/company, degree/school, etc.)."""
+enum ItemTitleSeparator {
+  DOT
+  PIPE
+  COMMA
+}
+
+"""Resume body font preset."""
+enum FontFamily {
+  SANS
+  SERIF
+  MONO
+}
+
+"""Which field appears first in inline section item titles (title vs company/school)."""
+enum ItemTitleOrder {
+  TITLE_FIRST
+  COMPANY_FIRST
+}
+
+enum SectionDividerStyle {
+  NONE
+  FULL
+  TEXT_WIDTH
+}
+
+enum SpacingDensity {
+  COMPACT
+  NORMAL
+  AIRY
+}
+
+enum DescriptionStyle {
+  BULLETS
+  PARAGRAPH
+}
+
+enum BulletChar {
+  DOT
+  DASH
+  CHECK
+}
+
+enum ItemTitleEmphasis {
+  TITLE
+  COMPANY
+}
+
+enum LocationDisplay {
+  HIDDEN
+  OWN_LINE
+  INLINE_WITH_COMPANY
+}
+
+enum FontWeightRole {
+  LIGHT
+  REGULAR
+  MEDIUM
+  SEMIBOLD
+}
+
+enum LineHeightDensity {
+  TIGHT
+  NORMAL
+  RELAXED
+}
+
+enum LetterSpacingDensity {
+  TIGHT
+  NORMAL
+}
+
+enum PageBackground {
+  WHITE
+  OFF_WHITE
+  LIGHT_GRAY
+}
+
+enum SkillsProficiency {
+  NONE
+  DOTS
+  BARS
+  TEXT
+}
+
+enum LanguagesLayout {
+  LIST
+  INLINE
+  COLUMNS
+}
+
+enum CertificationsLayout {
+  LIST
+  COMPACT
+  DETAILED
+}
+
+enum FooterStyle {
+  NONE
+  PAGE_NUMBER
+  NAME_AND_PAGE
+}
+
+enum ColumnLayout {
+  SINGLE
+  TWO_COLUMN
+}
+
+enum SidebarPosition {
+  LEFT
+  RIGHT
+}
+
+enum SidebarWidth {
+  NARROW
+  MEDIUM
+  WIDE
+}
+
+enum DesignPresetId {
+  CLASSIC
+  MODERN
+  EXECUTIVE
+  CREATIVE
+  MINIMAL
+  PROFESSIONAL
+  TECHNICAL
+  ACADEMIC
+  ELEGANT
+  BOLD
+}
+
+enum PhotoPosition {
+  HEADER_LEFT
+  HEADER_RIGHT
+  SIDEBAR
+  NONE
+}
+
+enum PhotoSize {
+  XS
+  S
+  M
+  L
+  XL
+}
+
+enum ContactLayout {
+  INLINE
+  STACKED
+  ICON_LABEL
+}
+
+enum ContactField {
+  EMAIL
+  PHONE
+  LOCATION
+  WEBSITE
+  LINKEDIN
+  GITHUB
+}
+
+enum DateFormat {
+  MON_YYYY
+  MM_YYYY
+  YYYY
+  ISO
+}
+
+enum DatePosition {
+  RIGHT
+  BELOW
+  INLINE
+}
+
+enum SkillsLayout {
+  LIST
+  TAGS
+  COLUMNS
+}
+
+"""Spoken language proficiency, stored in section item metadata.level (LANGUAGES)."""
 enum LanguageLevel {
   BEGINNER
   INTERMEDIATE
@@ -77,7 +258,7 @@ enum LanguageLevel {
   NATIVE
 }
 
-"""Technical/professional skill proficiency — stored in section item metadata.level (SKILLS) and Twin SKILL_AREA."""
+"""Technical/professional skill proficiency, stored in section item metadata.level (SKILLS) and Twin SKILL_AREA."""
 enum SkillLevel {
   BEGINNER
   INTERMEDIATE
@@ -120,6 +301,8 @@ type User {
   id: ID!
   email: String!
   displayName: String!
+  """Public portfolio URL handle, e.g. yuse.one/{username}"""
+  username: String
   avatarUrl: String
   role: UserRole!
   createdAt: DateTime!
@@ -189,6 +372,8 @@ type ContactProfile {
   linkedinPhotoUrl: String
   githubPhotoUrl: String
   effectivePhotoUrl: String
+  ogImageUrl: String
+  faviconUrl: String
   createdAt: DateTime!
   updatedAt: DateTime!
 }
@@ -242,6 +427,48 @@ type ResumeSettings {
   marginVerticalMm: Float!
   showPhoto: Boolean!
   itemTitleLayout: ItemTitleLayout!
+  itemTitleSeparator: ItemTitleSeparator!
+  itemTitleOrder: ItemTitleOrder!
+  fontFamily: FontFamily!
+  accentColor: String!
+  sectionDividerStyle: SectionDividerStyle!
+  dateFormat: DateFormat!
+  datePosition: DatePosition!
+  skillsLayout: SkillsLayout!
+  atsMode: Boolean!
+  columnLayout: ColumnLayout!
+  sidebarPosition: SidebarPosition!
+  sidebarWidth: SidebarWidth!
+  designPresetId: DesignPresetId!
+  photoPosition: PhotoPosition!
+  photoSize: PhotoSize!
+  contactLayout: ContactLayout!
+  contactFields: [ContactField!]!
+  sectionSpacing: SpacingDensity!
+  itemSpacing: SpacingDensity!
+  descriptionStyle: DescriptionStyle!
+  bulletChar: BulletChar!
+  itemTitleEmphasis: ItemTitleEmphasis!
+  highlightCurrentRole: Boolean!
+  locationDisplay: LocationDisplay!
+  headingFontFamily: FontFamily!
+  bodyFontFamily: FontFamily!
+  nameFontWeight: FontWeightRole!
+  sectionTitleFontWeight: FontWeightRole!
+  lineHeight: LineHeightDensity!
+  headingLetterSpacing: LetterSpacingDensity!
+  sectionTitleSmallCaps: Boolean!
+  textPrimaryColor: String!
+  textMutedColor: String!
+  pageBackground: PageBackground!
+  linkColor: String!
+  skillsProficiency: SkillsProficiency!
+  languagesLayout: LanguagesLayout!
+  certificationsLayout: CertificationsLayout!
+  keepSectionsTogether: Boolean!
+  maxItemsBeforeBreak: Int
+  footerStyle: FooterStyle!
+  exportFilenameTemplate: String!
   locale: String!
 }
 
@@ -255,7 +482,10 @@ type CvTheme {
 
 type SectionWithItems {
   section: Section!
+  """Per-resume section heading override; falls back to section.title when unset."""
+  displayTitle: String
   items: [SectionItem!]!
+  showInPreview: Boolean!
 }
 
 type ResumeWithContent {
@@ -271,10 +501,48 @@ enum PortfolioLayout {
   SPLIT
 }
 
+enum PortfolioProjectGridColumns {
+  ONE
+  TWO
+  THREE
+}
+
+enum PortfolioProjectCardStyle {
+  STANDARD
+  MINIMAL
+  IMAGE
+}
+
+enum PortfolioTypographyScale {
+  COMPACT
+  NORMAL
+  SPACIOUS
+}
+
+enum PortfolioHeroStyle {
+  GRADIENT
+  MINIMAL
+  CENTERED
+}
+
+enum PortfolioNavigationStyle {
+  NONE
+  TOP
+  STICKY
+}
+
+enum PortfolioAnimationLevel {
+  NONE
+  SUBTLE
+  FULL
+}
+
 type Portfolio {
   id: ID!
   workspaceId: ID!
   title: String!
+  """Per-portfolio URL segment under the owner's username"""
+  slug: String
   tagline: String!
   about: String!
   contactProfileId: ID
@@ -290,6 +558,12 @@ type PortfolioSettings {
   accentColor: String!
   showPhoto: Boolean!
   locale: String!
+  projectGridColumns: PortfolioProjectGridColumns!
+  projectCardStyle: PortfolioProjectCardStyle!
+  typographyScale: PortfolioTypographyScale!
+  heroStyle: PortfolioHeroStyle!
+  navigationStyle: PortfolioNavigationStyle!
+  animationLevel: PortfolioAnimationLevel!
 }
 
 type PortfolioProject {
@@ -444,6 +718,8 @@ type Query {
   portfolios: [Portfolio!]!
   portfolio(id: ID!): Portfolio
   portfolioWithContent(id: ID!): PortfolioWithContent
+  """Public portfolio page, no auth required."""
+  publicPortfolioWithContent(username: String!, slug: String): PortfolioWithContent
   sectionItemUsage(id: ID!): SectionItemUsage
   sectionItemsForSection(sectionId: ID!): [SectionItem!]!
   resumesForSection(sectionId: ID!): [Resume!]!
@@ -494,7 +770,67 @@ input UpdateResumeSettingsInput {
   themeId: ID
   showPhoto: Boolean
   itemTitleLayout: ItemTitleLayout
+  itemTitleSeparator: ItemTitleSeparator
+  itemTitleOrder: ItemTitleOrder
+  fontFamily: FontFamily
+  accentColor: String
+  sectionDividerStyle: SectionDividerStyle
+  dateFormat: DateFormat
+  datePosition: DatePosition
+  skillsLayout: SkillsLayout
+  atsMode: Boolean
+  columnLayout: ColumnLayout
+  sidebarPosition: SidebarPosition
+  sidebarWidth: SidebarWidth
+  designPresetId: DesignPresetId
+  photoPosition: PhotoPosition
+  photoSize: PhotoSize
+  contactLayout: ContactLayout
+  contactFields: [ContactField!]
+  sectionSpacing: SpacingDensity
+  itemSpacing: SpacingDensity
+  descriptionStyle: DescriptionStyle
+  bulletChar: BulletChar
+  itemTitleEmphasis: ItemTitleEmphasis
+  highlightCurrentRole: Boolean
+  locationDisplay: LocationDisplay
+  headingFontFamily: FontFamily
+  bodyFontFamily: FontFamily
+  nameFontWeight: FontWeightRole
+  sectionTitleFontWeight: FontWeightRole
+  lineHeight: LineHeightDensity
+  headingLetterSpacing: LetterSpacingDensity
+  sectionTitleSmallCaps: Boolean
+  textPrimaryColor: String
+  textMutedColor: String
+  pageBackground: PageBackground
+  linkColor: String
+  skillsProficiency: SkillsProficiency
+  languagesLayout: LanguagesLayout
+  certificationsLayout: CertificationsLayout
+  keepSectionsTogether: Boolean
+  maxItemsBeforeBreak: Int
+  footerStyle: FooterStyle
+  exportFilenameTemplate: String
   locale: String
+}
+
+input UpdateResumeSectionDisplayTitleInput {
+  resumeId: ID!
+  sectionId: ID!
+  """Empty string clears the per-resume override."""
+  displayTitle: String
+}
+
+input ReorderResumeSectionsInput {
+  resumeId: ID!
+  sectionIds: [ID!]!
+}
+
+input UpdateResumeSectionVisibilityInput {
+  resumeId: ID!
+  sectionId: ID!
+  showInPreview: Boolean!
 }
 
 input UpdateResumeSectionItemVisibilityInput {
@@ -576,6 +912,8 @@ input UpdatePortfolioContactProfileInput {
   photoUrl: String
   linkedinPhotoUrl: String
   githubPhotoUrl: String
+  ogImageUrl: String
+  faviconUrl: String
 }
 
 input UpdatePortfolioSettingsInput {
@@ -585,6 +923,12 @@ input UpdatePortfolioSettingsInput {
   themeId: ID
   showPhoto: Boolean
   locale: String
+  projectGridColumns: PortfolioProjectGridColumns
+  projectCardStyle: PortfolioProjectCardStyle
+  typographyScale: PortfolioTypographyScale
+  heroStyle: PortfolioHeroStyle
+  navigationStyle: PortfolioNavigationStyle
+  animationLevel: PortfolioAnimationLevel
 }
 
 input AddPortfolioProjectInput {
@@ -666,6 +1010,9 @@ type Mutation {
   deleteResume(id: ID!): Boolean!
   updateResume(id: ID!, title: String, contactProfileId: ID): Resume!
   updateResumeSettings(input: UpdateResumeSettingsInput!): ResumeSettings!
+  updateResumeSectionDisplayTitle(input: UpdateResumeSectionDisplayTitleInput!): ResumeWithContent!
+  reorderResumeSections(input: ReorderResumeSectionsInput!): ResumeWithContent!
+  updateResumeSectionVisibility(input: UpdateResumeSectionVisibilityInput!): ResumeWithContent!
   updateResumeSectionItemVisibility(input: UpdateResumeSectionItemVisibilityInput!): ResumeWithContent!
   updateResumeSectionItem(input: UpdateResumeSectionItemInput!): ResumeWithContent!
   addResumeSectionItem(input: AddResumeSectionItemInput!): ResumeWithContent!
@@ -675,6 +1022,8 @@ type Mutation {
   duplicatePortfolio(id: ID!): Portfolio!
   deletePortfolio(id: ID!): Boolean!
   updatePortfolio(id: ID!, title: String, tagline: String, about: String, contactProfileId: ID): Portfolio!
+  setUsername(username: String!): User!
+  setPortfolioSlug(portfolioId: ID!, slug: String!): Portfolio!
   updatePortfolioSettings(input: UpdatePortfolioSettingsInput!): PortfolioSettings!
   updatePortfolioContactProfile(input: UpdatePortfolioContactProfileInput!): PortfolioWithContent!
   addPortfolioProject(input: AddPortfolioProjectInput!): PortfolioWithContent!
