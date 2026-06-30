@@ -384,7 +384,7 @@ func (s *Service) testAddExperience(tools *mcp.Registry, resumeID, userText stri
 		role := strings.TrimSpace(m[1])
 		company := strings.TrimSpace(m[2])
 		if role != "" && company != "" {
-			headline = role + " — " + company
+			headline = role + ", " + company
 			body = userText
 			metadata["company"] = company
 		}

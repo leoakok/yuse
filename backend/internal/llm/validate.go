@@ -53,6 +53,21 @@ func userAskedCreateCV(text string) bool {
 		"create a resume",
 		"create cv",
 		"create resume",
+		"cv for ",
+		"resume for ",
+		"create a cv for",
+		"create a resume for",
+		"make a cv for",
+		"make a resume for",
+		"build a cv for",
+		"build a resume for",
+		"generate a cv for",
+		"generate a resume for",
+		"for this role",
+		"for the role",
+		"target role",
+		"targeting a ",
+		"targeting the ",
 		"build a cv",
 		"build a resume",
 		"make a cv",
@@ -93,6 +108,66 @@ func userAskedCreateCV(text string) bool {
 	return false
 }
 
+// userAskedRoleTargetedCV reports create/tailor requests aimed at a role title or
+// type rather than a generic blank CV or import URL.
+func userAskedRoleTargetedCV(text string) bool {
+	lower := strings.ToLower(strings.TrimSpace(text))
+	if userAskedWebsiteImport(text) || userAskedLinkedInImport(text) {
+		return false
+	}
+	if strings.Contains(lower, "http://") || strings.Contains(lower, "https://") {
+		return false
+	}
+	rolePhrases := []string{
+		"cv for ",
+		"resume for ",
+		"create a cv for",
+		"create a resume for",
+		"make a cv for",
+		"make a resume for",
+		"build a cv for",
+		"build a resume for",
+		"generate a cv for",
+		"generate a resume for",
+		"for this role",
+		"for the role",
+		"target role",
+		"targeting a ",
+		"targeting the ",
+	}
+	for _, phrase := range rolePhrases {
+		if strings.Contains(lower, phrase) {
+			return true
+		}
+	}
+	if strings.Contains(lower, " role") || strings.Contains(lower, " position") {
+		createVerbs := []string{"create", "make", "build", "generate", "tailor", "cv", "resume"}
+		for _, verb := range createVerbs {
+			if strings.Contains(lower, verb) {
+				return true
+			}
+		}
+	}
+	return false
+}
+
+func resumeShellWithoutSectionWrites(executions []mcp.Execution) bool {
+	hasShell := false
+	hasSectionWrite := false
+	for _, exec := range executions {
+		if exec.Error != "" {
+			continue
+		}
+		switch exec.Tool {
+		case "create_resume", "duplicate_resume":
+			hasShell = true
+		case "add_section_item", "update_section_item":
+			hasSectionWrite = true
+		}
+	}
+	return hasShell && !hasSectionWrite
+}
+
 func looksLikePersistenceClaim(reply string) bool {
 	lower := strings.ToLower(reply)
 	phrases := []string{
@@ -114,6 +189,11 @@ func looksLikePersistenceClaim(reply string) bool {
 		"created a cv",
 		"created a resume",
 		"created your",
+		"created the cv shell",
+		"created a cv shell",
+		"created the resume shell",
+		"cv shell for",
+		"resume shell for",
 		"resume is ready",
 		"cv is ready",
 	}
@@ -133,6 +213,35 @@ func looksLikeDeferredCreateOffer(reply string) bool {
 		strings.Contains(lower, "i will create") ||
 		strings.Contains(lower, "i'll create") ||
 		strings.Contains(lower, "let me create")
+}
+
+func looksLikeDeferredTailorOffer(reply string) bool {
+	lower := strings.ToLower(strings.TrimSpace(reply))
+	if lower == "" {
+		return false
+	}
+	if strings.Contains(lower, "if you want") && strings.Contains(lower, "tailor") {
+		return true
+	}
+	phrases := []string{
+		"i can now tailor",
+		"i can tailor it",
+		"want me to tailor",
+		"would you like me to tailor",
+		"shall i tailor",
+		"created the cv shell",
+		"created a cv shell",
+		"created the resume shell",
+		"cv shell for",
+		"resume shell for",
+		"set the title and layout",
+	}
+	for _, phrase := range phrases {
+		if strings.Contains(lower, phrase) {
+			return true
+		}
+	}
+	return false
 }
 
 func looksLikeSectionListingOffer(reply string) bool {
@@ -239,15 +348,15 @@ func briefWriteConfirmation(executions []mcp.Execution) string {
 			continue
 		}
 		if resume, ok := exec.Result.(*model.Resume); ok && resume != nil && resume.Title != "" {
-			return fmt.Sprintf("Created %q — open it from Resumes.", resume.Title)
+			return fmt.Sprintf("Created %q, open it from Resumes.", resume.Title)
 		}
 		if m, ok := exec.Result.(map[string]any); ok {
 			if title, ok := m["title"].(string); ok && title != "" {
-				return fmt.Sprintf("Created %q — open it from Resumes.", title)
+				return fmt.Sprintf("Created %q, open it from Resumes.", title)
 			}
 		}
 	}
-	return "Created your tailored resume — open it from Resumes."
+	return "Created your tailored resume, open it from Resumes."
 }
 
 func userAskedJobTracker(text string, assistantContext model.AssistantContextInput) bool {
@@ -286,12 +395,133 @@ func jobTrackerWriteComplete(userText string, assistantContext model.AssistantCo
 	return hasResume && hasCoverLetter
 }
 
+const (
+	roleTailorMinSectionWrites = 3
+	roleTailorMinWebSearches   = 1
+	roleTailorMinResearchCalls = 2
+)
+
+func successfulToolCount(executions []mcp.Execution, tool string) int {
+	n := 0
+	for _, exec := range executions {
+		if exec.Error == "" && exec.Tool == tool {
+			n++
+		}
+	}
+	return n
+}
+
+func roleTailorResearchDone(executions []mcp.Execution) bool {
+	webSearches := successfulToolCount(executions, "web_search")
+	if webSearches < roleTailorMinWebSearches {
+		return false
+	}
+	researchCalls := webSearches + successfulToolCount(executions, "fetch_url")
+	return researchCalls >= roleTailorMinResearchCalls
+}
+
+func roleTailorUserContextRead(executions []mcp.Execution) bool {
+	hasTwin := successfulToolCount(executions, "list_twin_entries") > 0
+	hasResumeRead := successfulToolCount(executions, "get_resume_content") > 0 ||
+		successfulToolCount(executions, "list_resumes") > 0
+	return hasTwin && hasResumeRead
+}
+
+func roleTailorSectionWriteCount(executions []mcp.Execution) int {
+	return successfulToolCount(executions, "add_section_item") +
+		successfulToolCount(executions, "update_section_item")
+}
+
+func roleTailorResumePopulated(executions []mcp.Execution) bool {
+	hasResume := false
+	for _, exec := range executions {
+		if exec.Error != "" {
+			continue
+		}
+		if exec.Tool == "create_resume" || exec.Tool == "duplicate_resume" {
+			hasResume = true
+			break
+		}
+	}
+	return hasResume && roleTailorSectionWriteCount(executions) >= roleTailorMinSectionWrites
+}
+
+func roleTailorVerified(executions []mcp.Execution) bool {
+	hasWrites := roleTailorSectionWriteCount(executions) > 0
+	if !hasWrites {
+		return false
+	}
+	for i := len(executions) - 1; i >= 0; i-- {
+		exec := executions[i]
+		if exec.Error != "" {
+			continue
+		}
+		if exec.Tool == "get_resume_content" {
+			for j := i - 1; j >= 0; j-- {
+				prev := executions[j]
+				if prev.Error != "" {
+					continue
+				}
+				if prev.Tool == "add_section_item" || prev.Tool == "update_section_item" {
+					return true
+				}
+				if prev.Tool == "create_resume" || prev.Tool == "duplicate_resume" {
+					break
+				}
+			}
+		}
+	}
+	return false
+}
+
+func roleTailorComplete(userText string, executions []mcp.Execution) bool {
+	if !userAskedRoleTargetedCV(userText) {
+		return true
+	}
+	return roleTailorResearchDone(executions) &&
+		roleTailorUserContextRead(executions) &&
+		roleTailorResumePopulated(executions) &&
+		roleTailorVerified(executions)
+}
+
+func looksLikeThinRoleTailorReply(reply string) bool {
+	trimmed := strings.TrimSpace(reply)
+	if trimmed == "" {
+		return true
+	}
+	lower := strings.ToLower(trimmed)
+	if strings.HasPrefix(lower, "done") && len(trimmed) < 40 {
+		return true
+	}
+	if len(trimmed) < 100 {
+		return true
+	}
+	hasFit := strings.Contains(lower, "fit") ||
+		strings.Contains(lower, "gap") ||
+		strings.Contains(lower, "partial") ||
+		strings.Contains(lower, "strong")
+	hasResearch := strings.Contains(lower, "research") ||
+		strings.Contains(lower, "posting") ||
+		strings.Contains(lower, "employer") ||
+		strings.Contains(lower, "requirement")
+	hasTailor := strings.Contains(lower, "tailor") ||
+		strings.Contains(lower, "highlight") ||
+		strings.Contains(lower, "emphasiz") ||
+		strings.Contains(lower, "added") ||
+		strings.Contains(lower, "updated")
+	return !hasFit || !hasResearch || !hasTailor
+}
+
 func tailorWriteComplete(userText string, executions []mcp.Execution) bool {
+	roleTarget := userAskedRoleTargetedCV(userText)
+	if roleTarget {
+		return roleTailorComplete(userText, executions)
+	}
 	if !userAskedCreateCV(userText) {
 		return successfulWriteTool(executions)
 	}
 	hasResume := false
-	hasContent := false
+	hasSectionContent := false
 	for _, exec := range executions {
 		if exec.Error != "" {
 			continue
@@ -299,11 +529,11 @@ func tailorWriteComplete(userText string, executions []mcp.Execution) bool {
 		switch exec.Tool {
 		case "create_resume", "duplicate_resume":
 			hasResume = true
-		case "add_section_item", "update_section_item", "update_contact_profile":
-			hasContent = true
+		case "add_section_item", "update_section_item":
+			hasSectionContent = true
 		}
 	}
-	return hasResume && hasContent
+	return hasResume && hasSectionContent
 }
 
 const jobTrackerNudge = "Job Tracker workflow incomplete. Finish tailoring: create or duplicate a resume, populate it, write a cover letter, then call update_tracked_job with resumeId and coverLetter for the job id in context. Do not reply until update_tracked_job succeeds."
@@ -388,13 +618,19 @@ func isInteractiveClarification(reply string) bool {
 }
 
 func shouldNudgeResumeWrites(userText string, executions []mcp.Execution, reply string) bool {
+	if isInteractiveClarification(reply) {
+		return false
+	}
+	if userAskedCreateCV(userText) && resumeShellWithoutSectionWrites(executions) {
+		if userAskedRoleTargetedCV(userText) {
+			return false
+		}
+		return true
+	}
 	if successfulWriteTool(executions) {
 		return false
 	}
 	if !userAskedCreateCV(userText) {
-		return false
-	}
-	if isInteractiveClarification(reply) {
 		return false
 	}
 	if onlyResearchTools(executions) {
@@ -406,11 +642,190 @@ func shouldNudgeResumeWrites(userText string, executions []mcp.Execution, reply 
 		looksLikeTextOnlyCVDraft(reply)
 }
 
-const resumeWriteNudge = "You researched but did not save a resume. Do not reply with CV text. Use attachment content and job research, then call create_resume, update_contact_profile, add_section_item (include SUMMARY), and set_item_visibility if tailoring. Only send a brief confirmation after write tools succeed."
+func shouldNudgeRoleTailorResearch(userText string, executions []mcp.Execution, reply string) bool {
+	if !userAskedRoleTargetedCV(userText) {
+		return false
+	}
+	if isInteractiveClarification(reply) {
+		return false
+	}
+	return !roleTailorResearchDone(executions)
+}
 
-const resumePopulateNudge = "Resume shell may already exist — do not call create_resume again. Use the attached CV text and job research to update_contact_profile and add_section_item (SUMMARY plus experience/education/skills). Then reply briefly."
+func shouldNudgeRoleTailorUserContext(userText string, executions []mcp.Execution, reply string) bool {
+	if !userAskedRoleTargetedCV(userText) {
+		return false
+	}
+	if isInteractiveClarification(reply) {
+		return false
+	}
+	if !roleTailorResearchDone(executions) {
+		return false
+	}
+	return !roleTailorUserContextRead(executions)
+}
 
-const thinStructuredFieldsNudge = "Recent section writes returned fieldHints — structured fields were missing or metadata was dumped in body. Re-read get_resume_content fieldGuide for each section type. For EXPERIENCE: headline=title, company, location, startDate, endDate; body=achievement bullets ONLY. Fix items with update_section_item before replying."
+func shouldNudgeRoleTailorCreate(userText string, executions []mcp.Execution, reply string) bool {
+	if !userAskedRoleTargetedCV(userText) {
+		return false
+	}
+	if isInteractiveClarification(reply) {
+		return false
+	}
+	if !roleTailorResearchDone(executions) || !roleTailorUserContextRead(executions) {
+		return false
+	}
+	for _, exec := range executions {
+		if exec.Error == "" && (exec.Tool == "create_resume" || exec.Tool == "duplicate_resume") {
+			return false
+		}
+	}
+	return true
+}
+
+func shouldNudgeRoleTailorPopulate(userText string, executions []mcp.Execution, reply string) bool {
+	if !userAskedRoleTargetedCV(userText) {
+		return false
+	}
+	if isInteractiveClarification(reply) {
+		return false
+	}
+	if !roleTailorResearchDone(executions) || !roleTailorUserContextRead(executions) {
+		return false
+	}
+	if onlyResearchTools(executions) {
+		return false
+	}
+	if resumeShellWithoutSectionWrites(executions) {
+		return true
+	}
+	return looksLikeDeferredTailorOffer(reply)
+}
+
+func shouldNudgeRoleTailorIncomplete(userText string, executions []mcp.Execution, reply string) bool {
+	if !userAskedRoleTargetedCV(userText) {
+		return false
+	}
+	if isInteractiveClarification(reply) {
+		return false
+	}
+	if resumeShellWithoutSectionWrites(executions) {
+		return false
+	}
+	if roleTailorComplete(userText, executions) {
+		return false
+	}
+	hasResume := false
+	for _, exec := range executions {
+		if exec.Error == "" && (exec.Tool == "create_resume" || exec.Tool == "duplicate_resume") {
+			hasResume = true
+			break
+		}
+	}
+	return hasResume || roleTailorSectionWriteCount(executions) > 0 || onlyResearchTools(executions)
+}
+
+func shouldNudgeRoleTailorFinalReply(userText string, executions []mcp.Execution, reply string, recruiterDone bool) bool {
+	if !userAskedRoleTargetedCV(userText) || !roleTailorComplete(userText, executions) {
+		return false
+	}
+	if isInteractiveClarification(reply) {
+		return false
+	}
+	if !recruiterDone {
+		return false
+	}
+	return looksLikeThinRoleTailorReply(reply)
+}
+
+const roleTailorResearchNudge = "Role-target CV requires mandatory web research before create or reply. Call web_search for \"[role] requirements skills responsibilities\" and at least one more web_search or fetch_url to read 2-3 real open job postings. Synthesize what employers want, then read Twin and existing CVs if you have not yet."
+
+const roleTailorUserContextNudge = "Before tailoring, read the user's background: list_twin_entries, list_resumes, and get_resume_content on the best base CV. If GitHub is connected, search_github for repos matching role keywords."
+
+const roleTailorCreateNudge = "You researched the role and read the user's background. Now duplicate_resume (preferred) or create_resume, then populate with tailored add_section_item calls before replying."
+
+const roleTailorIncompleteNudge = "Role-target CV is not complete enough. Add at least 3 section writes: role-specific SUMMARY, multiple tailored EXPERIENCE or PROJECT items with achievement bullets, and SKILLS. Call get_resume_content and confirm visible content before replying. Your final reply must include fit assessment, what you researched, what you tailored, and any remaining gaps. Do not reply with only \"Done\"."
+
+const roleTailorPopulateNudge = "Role-target CV is still empty or untailored. Do not reply yet. Add add_section_item for a role-specific SUMMARY and tailored EXPERIENCE/PROJECT/SKILLS items (add new items with different bullets when the same job needs role-specific wording; do not only use set_item_visibility). New add_section_item entries are visible in preview by default. You need at least 3 section writes. Call get_resume_content and confirm visible SUMMARY plus multiple experience or project bullets before confirming."
+
+const roleTailorFinalReplyNudge = "Your final reply is too thin for a role-tailored CV. Include: (1) fit assessment (strong/partial/weak with reasons), (2) brief note on what you researched, (3) what you tailored and why, (4) any remaining gaps. Keep it concise but substantive."
+
+// roleTailorNeedsPostToolNudge reports whether the agent should inject a pipeline
+// nudge immediately after tool execution instead of waiting for a text-only reply.
+func roleTailorNeedsPostToolNudge(userText string, executions []mcp.Execution) bool {
+	if !userAskedRoleTargetedCV(userText) || roleTailorComplete(userText, executions) {
+		return false
+	}
+	hasResumeShell := false
+	for _, exec := range executions {
+		if exec.Error == "" && (exec.Tool == "create_resume" || exec.Tool == "duplicate_resume") {
+			hasResumeShell = true
+			break
+		}
+	}
+	if hasResumeShell && !roleTailorResearchDone(executions) {
+		return true
+	}
+	if hasResumeShell && resumeShellWithoutSectionWrites(executions) {
+		return true
+	}
+	if roleTailorSectionWriteCount(executions) > 0 && !roleTailorVerified(executions) {
+		return true
+	}
+	return false
+}
+
+// shouldForceRoleTailorContinuation blocks early exit when the role-tailor pipeline
+// is still incomplete and the model offered to continue later or replied too soon.
+func shouldForceRoleTailorContinuation(userText string, executions []mcp.Execution, reply string) bool {
+	if !userAskedRoleTargetedCV(userText) || roleTailorComplete(userText, executions) {
+		return false
+	}
+	if isInteractiveClarification(reply) {
+		return false
+	}
+	return true
+}
+
+type agentNudge struct {
+	status string
+	text   string
+}
+
+func nextAgentNudge(
+	userText string,
+	assistantContext model.AssistantContextInput,
+	executions []mcp.Execution,
+	reply string,
+	recruiterDone bool,
+) (agentNudge, bool) {
+	switch {
+	case shouldNudgeJobTracker(userText, assistantContext, executions, reply):
+		return agentNudge{status: "Wrapping up your application…", text: jobTrackerNudge}, true
+	case shouldNudgeRoleTailorResearch(userText, executions, reply):
+		return agentNudge{status: "Researching the role…", text: roleTailorResearchNudge}, true
+	case shouldNudgeRoleTailorUserContext(userText, executions, reply):
+		return agentNudge{status: "Reviewing your background…", text: roleTailorUserContextNudge}, true
+	case shouldNudgeRoleTailorCreate(userText, executions, reply):
+		return agentNudge{status: "Creating your tailored resume…", text: roleTailorCreateNudge}, true
+	case shouldNudgeRoleTailorPopulate(userText, executions, reply):
+		return agentNudge{status: "Building your tailored resume…", text: roleTailorPopulateNudge}, true
+	case shouldNudgeRoleTailorIncomplete(userText, executions, reply):
+		return agentNudge{status: "Filling in tailored sections…", text: roleTailorIncompleteNudge}, true
+	case shouldNudgeRoleTailorFinalReply(userText, executions, reply, recruiterDone):
+		return agentNudge{status: "Finishing your summary…", text: roleTailorFinalReplyNudge}, true
+	case shouldForceRoleTailorContinuation(userText, executions, reply):
+		return agentNudge{status: "Finishing your tailored resume…", text: roleTailorIncompleteNudge}, true
+	default:
+		return agentNudge{}, false
+	}
+}
+
+const resumeWriteNudge = "You researched but did not save a resume. Do not reply with CV text. Use attachment content and job research, then call create_resume, update_contact_profile, add_section_item (include SUMMARY), and set_item_visibility if trimming. Only send a brief confirmation after write tools succeed."
+
+const resumePopulateNudge = "Resume shell may already exist, do not call create_resume again. Use the attached CV text and job research to update_contact_profile and add_section_item (SUMMARY plus experience/education/skills). Then reply briefly."
+
+const thinStructuredFieldsNudge = "Recent section writes returned fieldHints, structured fields were missing or metadata was dumped in body. Re-read get_resume_content fieldGuide for each section type. For EXPERIENCE: headline=title, company, location, startDate, endDate; body=achievement bullets ONLY. Fix items with update_section_item before replying."
 
 func fieldHintsFromResult(result any) []string {
 	m, ok := result.(map[string]any)

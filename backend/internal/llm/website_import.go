@@ -139,6 +139,6 @@ func shouldNudgeGitHubImport(userText string, executions []mcp.Execution, reply 
 	return shouldNudgeWebsiteImport(userText, executions, reply)
 }
 
-const websiteImportNudge = "Website exploration returned multiple items in importItems. Batch-create create_twin_entry (type PROJECT or matching twinType) for EVERY item in importItems this turn — do not stop after one. Use suggestedProblem/suggestedAction/suggestedResult for PAR fields. Skip STAR follow-ups for imports. If building a CV, add_section_item on each suggested section for every item."
+const websiteImportNudge = "Website exploration returned multiple items in importItems. Batch-create create_twin_entry (type PROJECT or matching twinType) for EVERY item in importItems this turn, do not stop after one. Use suggestedProblem/suggestedAction/suggestedResult for PAR fields. Skip STAR follow-ups for imports. If building a CV, add_section_item on each suggested section for every item."
 
 const githubImportNudge = websiteImportNudge

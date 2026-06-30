@@ -11,8 +11,36 @@ import (
 // classifyOffline exercises the deterministic fast-path + heuristic layers
 // (no API key) used in tests and offline.
 func classifyOffline(text string, ctx model.AssistantContextInput) Classification {
+	return classifyOfflineWithHistory(text, ctx, nil)
+}
+
+func classifyOfflineWithHistory(text string, ctx model.AssistantContextInput, history []*model.AssistantMessage) Classification {
 	s := &Service{}
-	return s.Classify(context.Background(), text, ctx, nil)
+	return s.Classify(context.Background(), text, ctx, history)
+}
+
+func TestClassifyOutOfScopeBuildCar(t *testing.T) {
+	ctx := model.AssistantContextInput{View: model.AssistantViewResumes}
+	class := classifyOffline("how can I build a car", ctx)
+	if class.Category != model.AssistantCategoryOutOfScope {
+		t.Fatalf("expected OUT_OF_SCOPE for 'how can I build a car', got %s", class.Category)
+	}
+	if !IsScopeHandled(class.Category) {
+		t.Fatal("OUT_OF_SCOPE should be scope-handled")
+	}
+}
+
+func TestClassifyBuildPortfolioNotOutOfScope(t *testing.T) {
+	ctx := model.AssistantContextInput{View: model.AssistantViewPortfolios}
+	for _, text := range []string{
+		"how can I build a portfolio",
+		"build my portfolio",
+	} {
+		class := classifyOffline(text, ctx)
+		if class.Category == model.AssistantCategoryOutOfScope {
+			t.Fatalf("%q should not be out of scope, got %s", text, class.Category)
+		}
+	}
 }
 
 func TestClassifyOutOfScopeBuy(t *testing.T) {
@@ -34,9 +62,31 @@ func TestClassifyUnclearShortToken(t *testing.T) {
 	if class.Category != model.AssistantCategoryUnclear {
 		t.Fatalf("expected UNCLEAR for 'ad', got %s", class.Category)
 	}
-	reply := ScopeReply(class, "ad")
-	if !strings.Contains(reply, `"ad"`) {
-		t.Fatalf("expected quoted message in clarification, got %q", reply)
+	if IsScopeHandled(class.Category) {
+		t.Fatal("UNCLEAR should run the agent, not return a canned reply")
+	}
+}
+
+func TestClassifyContextualFollowUpRankThem(t *testing.T) {
+	history := []*model.AssistantMessage{
+		{Role: model.AssistantMessageRoleAssistant, Content: "You have 2 CVs."},
+	}
+	class := classifyOfflineWithHistory("rank them", model.AssistantContextInput{View: model.AssistantViewResumes}, history)
+	if IsScopeHandled(class.Category) {
+		t.Fatalf("rank them after listing CVs should run the agent, got scope-handled %s", class.Category)
+	}
+	if class.Category != model.AssistantCategoryAdvice {
+		t.Fatalf("expected ADVICE for contextual follow-up, got %s", class.Category)
+	}
+}
+
+func TestClassifyUnclearWithoutHistoryStillRunsAgent(t *testing.T) {
+	class := classifyOffline("hm", model.AssistantContextInput{View: model.AssistantViewResumes})
+	if class.Category != model.AssistantCategoryUnclear {
+		t.Fatalf("expected UNCLEAR for 'hm', got %s", class.Category)
+	}
+	if IsScopeHandled(class.Category) {
+		t.Fatal("UNCLEAR without history should still run the agent")
 	}
 }
 
@@ -54,6 +104,23 @@ func TestClassifyCreateCV(t *testing.T) {
 	}
 	if IsScopeHandled(class.Category) {
 		t.Fatal("CREATE_CV should run the agent, not be scope-handled")
+	}
+}
+
+func TestClassifyRoleTargetedCreateCV(t *testing.T) {
+	class := classifyOffline("create a cv for a forward deployed engineer role", model.AssistantContextInput{View: model.AssistantViewResumes})
+	if class.Category != model.AssistantCategoryJobApplication {
+		t.Fatalf("expected JOB_APPLICATION for role-target create, got %s", class.Category)
+	}
+	foundRoleTailor := false
+	for _, tag := range class.Tags {
+		if tag == "role-tailor" {
+			foundRoleTailor = true
+			break
+		}
+	}
+	if !foundRoleTailor {
+		t.Fatalf("expected role-tailor tag, got %v", class.Tags)
 	}
 }
 
@@ -135,6 +202,30 @@ func TestWorkflowContinuation(t *testing.T) {
 	}
 	if isWorkflowContinuation("ad", history) {
 		t.Fatal("'ad' is not a continuation")
+	}
+}
+
+func TestContextualFollowUp(t *testing.T) {
+	history := []*model.AssistantMessage{
+		{Role: model.AssistantMessageRoleAssistant, Content: "You have 2 CVs."},
+	}
+	if !isContextualFollowUp("rank them", history) {
+		t.Fatal("expected rank them to be a contextual follow-up")
+	}
+	if isContextualFollowUp("rank them", nil) {
+		t.Fatal("rank them without history is not a contextual follow-up")
+	}
+	if isContextualFollowUp("how can I build a car", history) {
+		t.Fatal("long out-of-scope ask should not be treated as contextual follow-up")
+	}
+}
+
+func TestContextualFollowUpBuyWithHistoryNotFollowUp(t *testing.T) {
+	history := []*model.AssistantMessage{
+		{Role: model.AssistantMessageRoleAssistant, Content: "You have 2 CVs."},
+	}
+	if isContextualFollowUp("buy a car", history) {
+		t.Fatal("buy a car with history should not be treated as contextual follow-up")
 	}
 }
 
