@@ -33,7 +33,7 @@ func resumeContext(resumeID string) model.AssistantContextInput {
 func TestRunAgentRequiresAPIKey(t *testing.T) {
 	llmSvc, cvSvc := setupRuleAgent(t)
 
-	_, err := llmSvc.RunAgent(context.Background(), "add experience", resumeContext("resume-swe"), nil, nil, "", false, "", mcp.NewRegistry(cvSvc))
+	_, err := llmSvc.RunAgent(context.Background(), "add experience", resumeContext("resume-swe"), nil, nil, "", false, "", mcp.NewRegistry(cvSvc), nil)
 	if !errors.Is(err, llm.ErrMissingAPIKey) {
 		t.Fatalf("expected ErrMissingAPIKey, got %v", err)
 	}

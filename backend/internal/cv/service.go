@@ -161,6 +161,24 @@ func (s *Service) UpdateResumeSettings(input model.UpdateResumeSettingsInput) (*
 		if input.FontSize != nil {
 			settings.FontSize = *input.FontSize
 		}
+		if input.ContactNameFontSize != nil {
+			settings.ContactNameFontSize = *input.ContactNameFontSize
+		}
+		if input.ContactHeadlineFontSize != nil {
+			settings.ContactHeadlineFontSize = *input.ContactHeadlineFontSize
+		}
+		if input.ContactDetailsFontSize != nil {
+			settings.ContactDetailsFontSize = *input.ContactDetailsFontSize
+		}
+		if input.SectionTitleFontSize != nil {
+			settings.SectionTitleFontSize = *input.SectionTitleFontSize
+		}
+		if input.ItemTitleFontSize != nil {
+			settings.ItemTitleFontSize = *input.ItemTitleFontSize
+		}
+		if input.ItemMetaFontSize != nil {
+			settings.ItemMetaFontSize = *input.ItemMetaFontSize
+		}
 		if input.MarginHorizontalMm != nil {
 			settings.MarginHorizontalMm = *input.MarginHorizontalMm
 		}
@@ -172,6 +190,9 @@ func (s *Service) UpdateResumeSettings(input model.UpdateResumeSettingsInput) (*
 		}
 		if input.ShowPhoto != nil {
 			settings.ShowPhoto = *input.ShowPhoto
+		}
+		if input.ItemTitleLayout != nil {
+			settings.ItemTitleLayout = *input.ItemTitleLayout
 		}
 		if input.Locale != nil {
 			settings.Locale = *input.Locale
@@ -258,6 +279,8 @@ func (s *Service) UpdateContactProfile(
 		input.LinkedIn,
 		input.Github,
 		input.PhotoURL,
+		input.LinkedinPhotoURL,
+		input.GithubPhotoURL,
 	)
 }
 
@@ -485,12 +508,13 @@ func (s *Service) sendAssistantMessage(
 			githubLogin = strings.TrimSpace(*status.Username)
 		}
 	}
+	knowledge := s.store.ListKnowledgeEntries(false)
 	var turn *llm.AgentTurn
 	if sink != nil {
 		sink = wrapResumePatchSink(s, sink)
-		turn, err = s.llm.RunAgentStream(ctx, trimmed, assistantContext, s.store.ListAssistantMessages(thread.ID, 20), attachments, llm.FormatTwinContext(s.store.ListTwinEntries()), githubConnected, githubLogin, tools, sink)
+		turn, err = s.llm.RunAgentStream(ctx, trimmed, assistantContext, s.store.ListAssistantMessages(thread.ID, 20), attachments, llm.FormatTwinContext(s.store.ListTwinEntries()), githubConnected, githubLogin, tools, knowledge, sink)
 	} else {
-		turn, err = s.llm.RunAgent(ctx, trimmed, assistantContext, s.store.ListAssistantMessages(thread.ID, 20), attachments, llm.FormatTwinContext(s.store.ListTwinEntries()), githubConnected, githubLogin, tools)
+		turn, err = s.llm.RunAgent(ctx, trimmed, assistantContext, s.store.ListAssistantMessages(thread.ID, 20), attachments, llm.FormatTwinContext(s.store.ListTwinEntries()), githubConnected, githubLogin, tools, knowledge)
 	}
 	if err != nil {
 		if errors.Is(err, llm.ErrMissingAPIKey) {

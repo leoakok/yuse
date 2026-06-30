@@ -31,6 +31,14 @@ func fontSizeEnum() map[string]any {
 	return enumProp("Body text size", model.AllFontSize...)
 }
 
+func itemTitleLayoutEnum() map[string]any {
+	return enumProp("Section item title layout: STACKED = title above subtitle, INLINE = same line", model.AllItemTitleLayout...)
+}
+
+func portfolioLayoutEnum() map[string]any {
+	return enumProp("Portfolio page layout", model.AllPortfolioLayout...)
+}
+
 func toolDefinitions() []toolDef {
 	object := func(props map[string]any, required ...string) map[string]any {
 		schema := map[string]any{
@@ -117,7 +125,9 @@ func toolDefinitions() []toolDef {
 		"website":  urlStr("Personal or portfolio site."),
 		"linkedIn": str("LinkedIn profile URL or handle.", "https://linkedin.com/in/janedoe"),
 		"github":   str("GitHub profile URL or handle.", "https://github.com/janedoe"),
-		"photoUrl": urlStr("Profile photo URL (HTTPS). Set via upload in the editor or a hosted image URL the user provides."),
+		"photoUrl": urlStr("Uploaded profile photo URL (HTTPS). Only set when the user uploads a file in the editor — do not use for GitHub/LinkedIn avatars."),
+		"linkedinPhotoUrl": urlStr("LinkedIn profile photo URL. Copy linkedinPhotoUrl from fetch_linkedin_profile (or explore_website on a LinkedIn /in/ URL) into update_contact_profile — do not upload to storage."),
+		"githubPhotoUrl": urlStr("GitHub avatar URL. Copy githubPhotoUrl from explore_website, crawl_github_profile, or search_github (connected account) into update_contact_profile — do not upload to storage."),
 	}
 
 	return []toolDef{
@@ -163,7 +173,8 @@ func toolDefinitions() []toolDef {
 			Name: "update_contact_profile",
 			Description: `Update the Profile header block ONLY (name, title, contact, links, photo). NOT a section item.
 
-WHEN TO USE: Setting fullName, professional headline, email, phone, location, website, linkedIn, github, photoUrl.
+WHEN TO USE: Setting fullName, professional headline, email, phone, location, website, linkedIn, github, photoUrl, linkedinPhotoUrl, githubPhotoUrl.
+Profile picture from GitHub/LinkedIn: fetch avatar via explore_website (GitHub URL), crawl_github_profile, fetch_linkedin_profile, or search_github (connected account), then set githubPhotoUrl or linkedinPhotoUrl here — not photoUrl.
 WHEN NOT: Work history, education, skills — those use add_section_item on their sections.
 
 Returns fieldHints when key profile fields were omitted.`,
@@ -207,15 +218,22 @@ Returns fieldHints when key profile fields were omitted.`,
 		},
 		{
 			Name:        "update_resume_settings",
-			Description: "Update resume design: page format, margins, font, theme, locale.",
+			Description: "Update resume design: page format, margins, font, theme, locale, item title layout.",
 			Parameters: object(map[string]any{
 				"resumeId":           str("Resume id."),
 				"pageFormat":         pageFormatEnum(),
-				"fontSize":           fontSizeEnum(),
+				"fontSize":                fontSizeEnum(),
+				"contactNameFontSize":     fontSizeEnum(),
+				"contactHeadlineFontSize": fontSizeEnum(),
+				"contactDetailsFontSize":  fontSizeEnum(),
+				"sectionTitleFontSize":    fontSizeEnum(),
+				"itemTitleFontSize":       fontSizeEnum(),
+				"itemMetaFontSize":        fontSizeEnum(),
 				"marginHorizontalMm": map[string]any{"type": "number", "description": "Horizontal page margin in millimeters."},
 				"marginVerticalMm":   map[string]any{"type": "number", "description": "Vertical page margin in millimeters."},
 				"themeId":            str("Theme id from list_cv_themes."),
-				"showPhoto":          boolProp("Whether to show the profile photo in the CV preview (requires photoUrl on the contact profile)."),
+				"showPhoto":          boolProp("Whether to show the profile photo in the CV preview (uses uploaded photo, then LinkedIn, then GitHub fallback)."),
+				"itemTitleLayout":    itemTitleLayoutEnum(),
 				"locale":             str("BCP-47 locale.", "en-US"),
 			}, "resumeId"),
 		},
@@ -236,7 +254,7 @@ Returns fieldHints when key profile fields were omitted.`,
 		},
 		{
 			Name:        "duplicate_portfolio",
-			Description: "Clone a portfolio with all sections, items, and settings.",
+			Description: "Clone a portfolio with all projects, skills, testimonials, and settings.",
 			Parameters:  object(map[string]any{"id": str("Source portfolio id.")}, "id"),
 		},
 		{
@@ -246,63 +264,101 @@ Returns fieldHints when key profile fields were omitted.`,
 		},
 		{
 			Name:        "update_portfolio",
-			Description: "Rename a portfolio.",
+			Description: "Update portfolio title, tagline, or about blurb.",
 			Parameters: object(map[string]any{
-				"id":    str("Portfolio id."),
-				"title": str("New title.", "Product Designer Portfolio"),
+				"id":      str("Portfolio id."),
+				"title":   str("Site title.", "Product Designer Portfolio"),
+				"tagline": str("One-line value proposition.", "Full-stack engineer building delightful web apps"),
+				"about":   str("Short about section (2–4 sentences)."),
 			}, "id"),
 		},
 		{
 			Name:        "get_portfolio_content",
-			Description: "Get portfolio for editing: contactProfile, sections with ids/types/items, and fieldGuide per section. Call before add_portfolio_section_item or update_portfolio_section_item.",
+			Description: "Get portfolio for editing: contactProfile, tagline, about, projects (case studies), skills, testimonials, and fieldGuides. Call before add_portfolio_project or update_portfolio_project.",
 			Parameters:  object(map[string]any{"id": str("Portfolio id.")}, "id"),
 		},
 		{
 			Name: "update_portfolio_contact_profile",
-			Description: `Update the Profile header block ONLY for a portfolio (name, title, contact, links, photo). NOT a section item.`,
+			Description: `Update the hero/profile block for a portfolio (name, title, contact, links, photo).`,
 			Parameters: mergeProps(object(map[string]any{
 				"portfolioId": str("Portfolio id."),
 			}, "portfolioId"), contactProfileFields),
 		},
 		{
-			Name:        "add_portfolio_section_item",
-			Description: addSectionItemToolDescription(),
-			Parameters: mergeProps(object(map[string]any{
+			Name:        "add_portfolio_project",
+			Description: "Add a project case study. Use PAR: problem, approach, outcome. Curate 3–5 strong projects.",
+			Parameters: object(map[string]any{
 				"portfolioId": str("Portfolio id."),
-				"sectionId":   str("Section id from list_sections or get_portfolio_content."),
-			}, "portfolioId", "sectionId"), sectionItemFields),
+				"title":       str("Project name.", "Stylette"),
+				"tagline":     str("One-line description.", "AI wardrobe assistant"),
+				"problem":     str("What need or pain point did this address?"),
+				"approach":    str("What you built and how."),
+				"outcome":     str("Measurable result or impact."),
+				"techStack":   map[string]any{"type": "array", "items": map[string]any{"type": "string"}, "description": "Technologies used."},
+				"liveUrl":     urlStr("Live demo URL."),
+				"repoUrl":     urlStr("Source code URL."),
+				"imageUrl":    urlStr("Screenshot or cover image URL."),
+				"featured":    boolProp("Mark as hero/featured project."),
+			}, "portfolioId", "title"),
 		},
 		{
-			Name:        "update_portfolio_section_item",
-			Description: updateSectionItemToolDescription(),
-			Parameters: mergeProps(object(map[string]any{
-				"portfolioId":   str("Portfolio id."),
-				"sectionId":     str("Section id."),
-				"sectionItemId": str("Section item id."),
-			}, "portfolioId", "sectionId", "sectionItemId"), sectionItemFields),
-		},
-		{
-			Name:        "set_portfolio_item_visibility",
-			Description: "Show or hide a section item in the portfolio preview.",
+			Name:        "update_portfolio_project",
+			Description: "Update a project case study by projectId from get_portfolio_content.",
 			Parameters: object(map[string]any{
 				"portfolioId":   str("Portfolio id."),
-				"sectionId":     str("Section id."),
-				"sectionItemId": str("Section item id."),
-				"showInPreview": boolProp("true = visible in preview, false = hidden."),
-			}, "portfolioId", "sectionId", "sectionItemId", "showInPreview"),
+				"projectId":     str("Project id."),
+				"title":         str("Project name."),
+				"tagline":       str("One-line description."),
+				"problem":       str("Problem statement."),
+				"approach":      str("Your approach."),
+				"outcome":       str("Result or impact."),
+				"techStack":     map[string]any{"type": "array", "items": map[string]any{"type": "string"}},
+				"liveUrl":       urlStr("Live demo URL."),
+				"repoUrl":       urlStr("Repo URL."),
+				"showInPreview": boolProp("Show on the public portfolio preview."),
+				"featured":      boolProp("Hero project."),
+			}, "portfolioId", "projectId"),
+		},
+		{
+			Name:        "add_portfolio_skill",
+			Description: "Add a skill to the portfolio showcase (one skill per call).",
+			Parameters: object(map[string]any{
+				"portfolioId": str("Portfolio id."),
+				"name":        str("Skill name.", "TypeScript"),
+				"category":    str("Optional group.", "Languages"),
+			}, "portfolioId", "name"),
+		},
+		{
+			Name:        "update_portfolio_skill",
+			Description: "Update a portfolio skill by skillId.",
+			Parameters: object(map[string]any{
+				"portfolioId":   str("Portfolio id."),
+				"skillId":       str("Skill id."),
+				"name":          str("Skill name."),
+				"category":      str("Category."),
+				"showInPreview": boolProp("Show on preview."),
+			}, "portfolioId", "skillId"),
+		},
+		{
+			Name:        "add_portfolio_testimonial",
+			Description: "Add a testimonial quote (only real quotes the user provided).",
+			Parameters: object(map[string]any{
+				"portfolioId": str("Portfolio id."),
+				"quote":       str("The testimonial text."),
+				"author":      str("Person's name."),
+				"role":        str("Their title or relationship."),
+			}, "portfolioId", "quote"),
 		},
 		{
 			Name:        "update_portfolio_settings",
-			Description: "Update portfolio design: page format, margins, font, theme, locale.",
+			Description: "Update portfolio site design: layout, accent color, theme, locale.",
 			Parameters: object(map[string]any{
-				"portfolioId":        str("Portfolio id."),
-				"pageFormat":         pageFormatEnum(),
-				"fontSize":           fontSizeEnum(),
-				"marginHorizontalMm": map[string]any{"type": "number", "description": "Horizontal page margin in millimeters."},
-				"marginVerticalMm":   map[string]any{"type": "number", "description": "Vertical page margin in millimeters."},
-				"themeId":            str("Theme id from list_cv_themes."),
-				"showPhoto":          boolProp("Whether to show the profile photo in the portfolio preview."),
-				"locale":             str("BCP-47 locale.", "en-US"),
+				"portfolioId": str("Portfolio id."),
+				"layout":      portfolioLayoutEnum(),
+				"accentColor": str("CSS hex accent color.", "#2563eb"),
+				"themeId":     str("Theme id from list_cv_themes."),
+				"showPhoto":   boolProp("Show profile photo in hero."),
+				"locale":      str("BCP-47 locale.", "en-US"),
 			}, "portfolioId"),
 		},
 		{
@@ -463,7 +519,7 @@ Set title, company, status (SAVED|APPLIED|INTERVIEW|OFFER|REJECTED|WITHDRAWN), l
 		},
 		{
 			Name:        "crawl_github_profile",
-			Description: "Lower-level GitHub profile crawl. Prefer explore_website — same data plus unified importItems format.",
+			Description: "Lower-level GitHub profile crawl. Returns profile.avatar_url and top-level githubPhotoUrl for update_contact_profile. Prefer explore_website — same data plus unified importItems format.",
 			Parameters: object(map[string]any{
 				"url":      urlStr("GitHub profile URL (e.g. https://github.com/leoakok)."),
 				"maxRepos": intProp("Max individual repos to fetch in detail (1–10, default 5).", 1, 10),
@@ -471,7 +527,7 @@ Set title, company, status (SAVED|APPLIED|INTERVIEW|OFFER|REJECTED|WITHDRAWN), l
 		},
 		{
 			Name: "search_github",
-			Description: "Search or list GitHub repositories. When GitHub is connected, set listUserRepos=true to search ALL of the signed-in user's repos (paginated, includes private). Use query to filter by name, description, or topics (case-insensitive, partial/fuzzy match). Omit query to list top repos. Without listUserRepos, searches public GitHub globally. Prefer this over web_search for the user's own GitHub projects.",
+			Description: "Search or list GitHub repositories. When GitHub is connected, set listUserRepos=true to search ALL of the signed-in user's repos (paginated, includes private); result includes githubPhotoUrl for the connected account. Use query to filter by name, description, or topics (case-insensitive, partial/fuzzy match). Omit query to list top repos. Without listUserRepos, searches public GitHub globally. Prefer this over web_search for the user's own GitHub projects.",
 			Parameters: object(map[string]any{
 				"query":         str("Filter terms matched against repo name, full_name, description, and topics (partial, case-insensitive). Omit or \"\" with listUserRepos true to list top repos.", "stylette", "typescript portfolio"),
 				"listUserRepos": boolProp("When true and GitHub is connected, fetch all user repos then filter client-side (includes private repos). Defaults to true when GitHub is connected."),
@@ -480,7 +536,7 @@ Set title, company, status (SAVED|APPLIED|INTERVIEW|OFFER|REJECTED|WITHDRAWN), l
 		},
 		{
 			Name:        "fetch_linkedin_profile",
-			Description: "PRIMARY LinkedIn import tool. Fetch a full LinkedIn profile from a public /in/ URL. Use BEFORE fetch_url or web_search when user shares LinkedIn. Returns structured profile text and importItems for Twin/CV batch import.",
+			Description: "PRIMARY LinkedIn import tool. Fetch a full LinkedIn profile from a public /in/ URL. Use BEFORE fetch_url or web_search when user shares LinkedIn. Returns linkedinPhotoUrl (for update_contact_profile), structured profile text, and importItems for Twin/CV batch import.",
 			Parameters: object(map[string]any{
 				"profileUrl": str("LinkedIn profile URL (linkedin.com/in/…).", "https://www.linkedin.com/in/janedoe"),
 				"email":      str("Email for the profile lookup; defaults to the signed-in user's email when omitted."),

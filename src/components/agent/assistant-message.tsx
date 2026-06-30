@@ -1,7 +1,7 @@
 "use client";
 
 import Link from "next/link";
-import type { AssistantMessage, AssistantActionLog } from "@/lib/types/assistant";
+import type { AgentActivity, AssistantMessage } from "@/lib/types/assistant";
 import {
   AgentActivityFeed,
   isThinkingLabel,
@@ -11,24 +11,15 @@ import {
 import { AssistantAttachmentChips } from "@/components/agent/assistant-attachment-chips";
 import { AssistantMessageContent } from "@/lib/assistant/markdown";
 import { stripAttachmentSection } from "@/lib/assistant/attachments";
-import { describeToolActivity } from "@/lib/assistant/tool-activity";
 import { resumePath } from "@/lib/cv/routes";
-import type { AgentActivity } from "@/lib/types/assistant";
 import { Button } from "@/components/ui/button";
 import { Copy, Pencil } from "lucide-react";
 import { YuseLogo } from "@/components/brand/yuse-logo";
 import { toast } from "sonner";
 import { cn } from "@/lib/utils";
 
-export interface ToolActivityDisplay {
-  id: string;
-  label: string;
-}
-
 interface AssistantMessageBubbleProps {
   message: AssistantMessage;
-  toolActivities?: ToolActivityDisplay[];
-  failedToolActivities?: ToolActivityDisplay[];
   liveActivities?: AgentActivity[];
   liveStatusLabel?: string;
   createdResumeId?: string;
@@ -44,8 +35,6 @@ export function userMessageEditableText(content: string): string {
 
 export function AssistantMessageBubble({
   message,
-  toolActivities = [],
-  failedToolActivities = [],
   liveActivities = [],
   liveStatusLabel,
   createdResumeId,
@@ -191,52 +180,6 @@ export function AssistantMessageBubble({
           </Button>
         </div>
       ) : null}
-
-      {!isStreaming && toolActivities.length > 0 ? (
-        <ul className="mt-2 space-y-1 text-xs text-muted-foreground">
-          {toolActivities.map((activity) => (
-            <li key={activity.id} className="flex items-center gap-1.5">
-              <span className="size-1 rounded-full bg-primary/60" aria-hidden />
-              {activity.label}
-            </li>
-          ))}
-        </ul>
-      ) : null}
-      {!isStreaming && failedToolActivities.length > 0 ? (
-        <ul className="mt-2 space-y-1 text-xs text-destructive">
-          {failedToolActivities.map((activity) => (
-            <li key={activity.id} className="flex items-center gap-1.5">
-              <span className="size-1 rounded-full bg-destructive/70" aria-hidden />
-              {activity.label}
-            </li>
-          ))}
-        </ul>
-      ) : null}
     </div>
   );
-}
-
-export function toolActivitiesFromLogs(logs: AssistantActionLog[]): ToolActivityDisplay[] {
-  return logs
-    .filter((log) => log.success && !log.op.startsWith("get_") && !log.op.startsWith("list_"))
-    .map((log) => ({ id: log.id, label: describeToolActivity(log) }));
-}
-
-export function failedToolActivitiesFromLogs(logs: AssistantActionLog[]): ToolActivityDisplay[] {
-  return logs
-    .filter((log) => !log.success && !log.op.startsWith("get_") && !log.op.startsWith("list_"))
-    .map((log) => {
-      const payload = log.payload ?? {};
-      const summary =
-        typeof payload.resultSummary === "string" ? payload.resultSummary.trim() : "";
-      const label = summary || describeToolActivity(log);
-      const durationMs =
-        typeof payload.durationMs === "number" ? payload.durationMs : undefined;
-      const durationSuffix =
-        durationMs !== undefined ? ` (${durationMs}ms)` : "";
-      return {
-        id: log.id,
-        label: log.error ? `${label}: ${log.error}${durationSuffix}` : `${label}${durationSuffix}`,
-      };
-    });
 }

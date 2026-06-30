@@ -21,10 +21,6 @@ func (s *Service) GetPortfolioWithContent(id string) (*model.PortfolioWithConten
 	return s.store.PortfolioWithContent(id)
 }
 
-func (s *Service) PortfoliosForSection(sectionID string) ([]*model.Portfolio, error) {
-	return s.store.PortfoliosForSection(sectionID)
-}
-
 func (s *Service) CreatePortfolio(title string) *model.Portfolio {
 	trimmed := strings.TrimSpace(title)
 	if trimmed == "" {
@@ -46,7 +42,7 @@ func (s *Service) DeletePortfolio(id string) (bool, error) {
 
 func (s *Service) UpdatePortfolio(
 	id string,
-	title *string,
+	title, tagline, about *string,
 	contactProfileID *string,
 ) (*model.Portfolio, error) {
 	portfolio, err := s.store.GetPortfolio(id)
@@ -55,6 +51,12 @@ func (s *Service) UpdatePortfolio(
 	}
 	if title != nil {
 		portfolio.Title = strings.TrimSpace(*title)
+	}
+	if tagline != nil {
+		portfolio.Tagline = strings.TrimSpace(*tagline)
+	}
+	if about != nil {
+		portfolio.About = strings.TrimSpace(*about)
 	}
 	if contactProfileID != nil {
 		portfolio.ContactProfileID = contactProfileID
@@ -66,17 +68,11 @@ func (s *Service) UpdatePortfolio(
 
 func (s *Service) UpdatePortfolioSettings(input model.UpdatePortfolioSettingsInput) (*model.PortfolioSettings, error) {
 	return s.store.UpdatePortfolioSettings(input.PortfolioID, func(settings *model.PortfolioSettings) {
-		if input.PageFormat != nil {
-			settings.PageFormat = *input.PageFormat
+		if input.Layout != nil {
+			settings.Layout = *input.Layout
 		}
-		if input.FontSize != nil {
-			settings.FontSize = *input.FontSize
-		}
-		if input.MarginHorizontalMm != nil {
-			settings.MarginHorizontalMm = *input.MarginHorizontalMm
-		}
-		if input.MarginVerticalMm != nil {
-			settings.MarginVerticalMm = *input.MarginVerticalMm
+		if input.AccentColor != nil {
+			settings.AccentColor = strings.TrimSpace(*input.AccentColor)
 		}
 		if input.ThemeID != nil {
 			settings.ThemeID = *input.ThemeID
@@ -90,55 +86,44 @@ func (s *Service) UpdatePortfolioSettings(input model.UpdatePortfolioSettingsInp
 	})
 }
 
-func (s *Service) UpdatePortfolioSectionItemVisibility(
-	input model.UpdatePortfolioSectionItemVisibilityInput,
-) (*model.PortfolioWithContent, error) {
-	return s.store.UpdatePortfolioSectionItemVisibility(
-		input.PortfolioID,
-		input.SectionID,
-		input.SectionItemID,
-		input.ShowInPreview,
-	)
+func (s *Service) AddPortfolioProject(input model.AddPortfolioProjectInput) (*model.PortfolioWithContent, error) {
+	return s.store.AddPortfolioProject(input)
 }
 
-func (s *Service) UpdatePortfolioSectionItem(
-	input model.UpdatePortfolioSectionItemInput,
-) (*model.PortfolioWithContent, error) {
-	return s.store.UpdatePortfolioSectionItem(
-		input.PortfolioID,
-		input.SectionID,
-		input.SectionItemID,
-		input.Headline,
-		input.Body,
-		input.Metadata,
-	)
+func (s *Service) UpdatePortfolioProject(input model.UpdatePortfolioProjectInput) (*model.PortfolioWithContent, error) {
+	return s.store.UpdatePortfolioProject(input)
 }
 
-func (s *Service) AddPortfolioSectionItem(
-	input model.AddPortfolioSectionItemInput,
-) (*model.PortfolioWithContent, error) {
-	headline := ""
-	if input.Headline != nil {
-		headline = *input.Headline
-	}
-	body := ""
-	if input.Body != nil {
-		body = *input.Body
-	}
-	return s.store.AddPortfolioSectionItem(
-		input.PortfolioID,
-		input.SectionID,
-		headline,
-		body,
-		input.Metadata,
-	)
+func (s *Service) DeletePortfolioProject(portfolioID, projectID string) (*model.PortfolioWithContent, error) {
+	return s.store.DeletePortfolioProject(portfolioID, projectID)
 }
 
-func (s *Service) DeletePortfolioSectionItem(portfolioID, sectionItemID string) (*model.PortfolioWithContent, error) {
-	if err := s.store.DeleteSectionItem(sectionItemID); err != nil {
-		return nil, err
-	}
-	return s.store.PortfolioWithContent(portfolioID)
+func (s *Service) SetPortfolioProjectVisibility(input model.SetPortfolioProjectVisibilityInput) (*model.PortfolioWithContent, error) {
+	return s.store.SetPortfolioProjectVisibility(input.PortfolioID, input.ProjectID, input.ShowInPreview)
+}
+
+func (s *Service) AddPortfolioSkill(input model.AddPortfolioSkillInput) (*model.PortfolioWithContent, error) {
+	return s.store.AddPortfolioSkill(input)
+}
+
+func (s *Service) UpdatePortfolioSkill(input model.UpdatePortfolioSkillInput) (*model.PortfolioWithContent, error) {
+	return s.store.UpdatePortfolioSkill(input)
+}
+
+func (s *Service) DeletePortfolioSkill(portfolioID, skillID string) (*model.PortfolioWithContent, error) {
+	return s.store.DeletePortfolioSkill(portfolioID, skillID)
+}
+
+func (s *Service) AddPortfolioTestimonial(input model.AddPortfolioTestimonialInput) (*model.PortfolioWithContent, error) {
+	return s.store.AddPortfolioTestimonial(input)
+}
+
+func (s *Service) UpdatePortfolioTestimonial(input model.UpdatePortfolioTestimonialInput) (*model.PortfolioWithContent, error) {
+	return s.store.UpdatePortfolioTestimonial(input)
+}
+
+func (s *Service) DeletePortfolioTestimonial(portfolioID, testimonialID string) (*model.PortfolioWithContent, error) {
+	return s.store.DeletePortfolioTestimonial(portfolioID, testimonialID)
 }
 
 func (s *Service) UpdatePortfolioContactProfile(
@@ -169,5 +154,7 @@ func (s *Service) UpdatePortfolioContactProfile(
 		input.LinkedIn,
 		input.Github,
 		input.PhotoURL,
+		input.LinkedinPhotoURL,
+		input.GithubPhotoURL,
 	)
 }

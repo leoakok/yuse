@@ -11,6 +11,8 @@ export function getSectionItemSubtitle(item: SectionItem): string | null {
       return metadata.institution?.trim() || null;
     case "VOLUNTEER":
       return metadata.institution?.trim() || null;
+    case "PROJECTS":
+      return metadata.company?.trim() || null;
     default:
       return null;
   }

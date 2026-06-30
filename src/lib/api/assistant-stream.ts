@@ -16,7 +16,11 @@ import {
   nextActivityId,
 } from "@/lib/assistant/state";
 import { normalizeUserMessage } from "@/lib/assistant/attachments";
-import { describeToolStart } from "@/lib/assistant/tool-activity";
+import { describeToolEnd, describeToolError, describeToolStart } from "@/lib/assistant/tool-activity";
+import {
+  humanizeAssistantError,
+  humanizeStatusLabel,
+} from "@/lib/assistant/status-labels";
 
 const STREAM_URL = "/api/assistant/stream";
 
@@ -184,8 +188,8 @@ export async function streamAssistantMessage(
       const event = JSON.parse(line) as StreamEvent;
 
       if (event.type === "status" && event.label) {
-        statusLabel = event.label;
-        handlers.onStatus?.(event.label);
+        statusLabel = humanizeStatusLabel(event.label) ?? event.label;
+        handlers.onStatus?.(statusLabel);
         emitState("thinking");
       }
 
@@ -198,7 +202,8 @@ export async function streamAssistantMessage(
           label: event.label ?? describeToolStart(toolName, args),
           status: "active",
         });
-        statusLabel = event.label ?? describeToolStart(toolName, args);
+        statusLabel = humanizeStatusLabel(event.label ?? describeToolStart(toolName, args)) ??
+          describeToolStart(toolName, args);
         emitState("thinking");
       }
 
@@ -207,12 +212,12 @@ export async function streamAssistantMessage(
         event.tool?.name
       ) {
         const toolName = event.tool.name;
-        const endLabel =
-          event.tool.resultSummary ??
-          event.label ??
-          (event.tool.error
-            ? `${describeToolStart(toolName)} failed`
-            : describeToolStart(toolName));
+        const endLabel = event.tool.error
+          ? describeToolError(toolName, event.tool.error, event.tool.arguments ?? {})
+          : (event.label ??
+            describeToolEnd(toolName, event.tool.arguments ?? {}, {
+              resultSummary: event.tool.resultSummary,
+            }));
         activities = completeActivity(
           activities,
           toolName,
@@ -248,7 +253,7 @@ export async function streamAssistantMessage(
           steps: buildAgentSteps(null, completedBeforeThink, includePrepare),
           activities,
         });
-        throw new Error(event.error ?? "Assistant stream failed");
+        throw new Error(humanizeAssistantError(event.error ?? "Assistant stream failed"));
       }
 
       if (event.type === "done" && event.result) {

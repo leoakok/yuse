@@ -6,73 +6,14 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Badge } from "@/components/ui/badge";
 import { GitHubMark, LinkedInMark } from "@/components/landing/brand-icons";
+import {
+  TAILOR_DEMO_EXAMPLES,
+  type TailorDemoExample,
+  type TailorDemoSource,
+} from "@/lib/landing/tailor-demo-content";
 import { cn } from "@/lib/utils";
 
-type Source = "github" | "linkedin" | "twin";
-
-type TailoredBullet = {
-  text: string;
-  source: Source;
-};
-
-type Role = {
-  id: string;
-  label: string;
-  url: string;
-  company: string;
-  headline: string;
-  summary: string;
-  skills: string[];
-  bullets: TailoredBullet[];
-};
-
-const ROLES: Role[] = [
-  {
-    id: "frontend",
-    label: "Senior Frontend Engineer",
-    url: "linear.app/careers/senior-frontend-engineer",
-    company: "Linear",
-    headline: "Senior Frontend Engineer",
-    summary:
-      "Product-minded frontend engineer who turns design systems into fast, accessible interfaces people love to use.",
-    skills: ["React", "TypeScript", "Design systems", "Accessibility", "Web performance"],
-    bullets: [
-      { text: "Built a component library adopted across 7 product teams, cutting UI build time in half.", source: "github" },
-      { text: "Led the accessibility pass that took the app to WCAG AA across every core flow.", source: "twin" },
-      { text: "Shipped a rendering refactor that dropped largest-contentful-paint from 3.1s to 0.9s.", source: "github" },
-    ],
-  },
-  {
-    id: "ml",
-    label: "Machine Learning Engineer",
-    url: "openai.com/careers/machine-learning-engineer",
-    company: "a research lab",
-    headline: "Machine Learning Engineer",
-    summary:
-      "ML engineer who ships models to production and cares as much about evaluation as accuracy.",
-    skills: ["Python", "PyTorch", "Evaluation", "Data pipelines", "MLOps"],
-    bullets: [
-      { text: "Trained and deployed a ranking model that lifted conversion 12% in an A/B test.", source: "github" },
-      { text: "Built the offline evaluation harness the whole team now trusts before every release.", source: "twin" },
-      { text: "Owned the feature pipeline processing 40M events a day with sub-minute freshness.", source: "linkedin" },
-    ],
-  },
-  {
-    id: "founding",
-    label: "Founding Engineer",
-    url: "yc.com/jobs/founding-engineer-seed-startup",
-    company: "an early-stage startup",
-    headline: "Founding Engineer",
-    summary:
-      "Generalist who goes from blank repo to shipped product, comfortable owning the whole stack and the customer.",
-    skills: ["Full-stack", "Product sense", "Postgres", "Shipping fast", "Customer discovery"],
-    bullets: [
-      { text: "Took the first version of the product from idea to paying customers in 9 weeks, solo.", source: "twin" },
-      { text: "Designed and ran the backend and infra that served the first 10k users.", source: "github" },
-      { text: "Ran 30+ customer interviews and turned them directly into the roadmap.", source: "linkedin" },
-    ],
-  },
-];
+const EXAMPLES = TAILOR_DEMO_EXAMPLES;
 
 const BUILD_STEPS = [
   "Reading the role",
@@ -84,14 +25,14 @@ const BUILD_STEPS = [
 
 type Phase = "idle" | "building" | "done";
 
-const SOURCE_META: Record<Source, { label: string; icon: React.ReactNode }> = {
+const SOURCE_META: Record<TailorDemoSource, { label: string; icon: React.ReactNode }> = {
   github: { label: "GitHub", icon: <GitHubMark className="size-3" /> },
   linkedin: { label: "LinkedIn", icon: <LinkedInMark className="size-3" /> },
   twin: { label: "Digital Twin", icon: <Sparkles className="size-3" /> },
 };
 
 export function TailorDemo() {
-  const [activeRole, setActiveRole] = useState<Role>(ROLES[0]);
+  const [activeExample, setActiveExample] = useState<TailorDemoExample>(EXAMPLES[0]);
   const [phase, setPhase] = useState<Phase>("idle");
   const [stepIndex, setStepIndex] = useState(0);
   const timers = useRef<ReturnType<typeof setTimeout>[]>([]);
@@ -103,9 +44,9 @@ export function TailorDemo() {
 
   useEffect(() => clearTimers, []);
 
-  function runTailoring(role: Role) {
+  function runTailoring(example: TailorDemoExample) {
     clearTimers();
-    setActiveRole(role);
+    setActiveExample(example);
 
     const reduced =
       typeof window !== "undefined" &&
@@ -136,7 +77,7 @@ export function TailorDemo() {
 
   return (
     <div className="mx-auto w-full max-w-5xl">
-      <div className="grid gap-4 rounded-2xl border border-border bg-card p-4 shadow-sm sm:p-6 lg:grid-cols-[minmax(0,1fr)_minmax(0,1.1fr)] lg:gap-6">
+      <div className="grid gap-6 rounded-2xl border border-border bg-card p-5 shadow-sm lg:grid-cols-[minmax(0,1fr)_minmax(0,1.1fr)] lg:gap-8">
         {/* Left: the job link input */}
         <div className="flex flex-col gap-5">
           <div className="flex flex-col gap-2">
@@ -151,13 +92,13 @@ export function TailorDemo() {
           <div className="flex flex-col gap-2 sm:flex-row">
             <Input
               readOnly
-              value={activeRole.url}
+              value={activeExample.url}
               aria-label="Job posting link"
               className="h-9 font-mono text-xs sm:text-sm"
             />
             <Button
               size="lg"
-              onClick={() => runTailoring(activeRole)}
+              onClick={() => runTailoring(activeExample)}
               disabled={phase === "building"}
               className="shrink-0"
             >
@@ -171,20 +112,20 @@ export function TailorDemo() {
               Or pick an example role:
             </span>
             <div className="flex flex-wrap gap-2">
-              {ROLES.map((role) => (
+              {EXAMPLES.map((example) => (
                 <button
-                  key={role.id}
+                  key={example.id}
                   type="button"
-                  onClick={() => runTailoring(role)}
-                  aria-pressed={activeRole.id === role.id}
+                  onClick={() => runTailoring(example)}
+                  aria-pressed={activeExample.id === example.id}
                   className={cn(
                     "rounded-full border px-3 py-1.5 text-xs font-medium transition-colors",
-                    activeRole.id === role.id
+                    activeExample.id === example.id
                       ? "border-primary bg-primary/10 text-primary"
                       : "border-border text-muted-foreground hover:bg-muted hover:text-foreground",
                   )}
                 >
-                  {role.label}
+                  {example.label}
                 </button>
               ))}
             </div>
@@ -224,9 +165,9 @@ export function TailorDemo() {
         </div>
 
         {/* Right: the tailored CV preview */}
-        <div className="relative min-h-80 overflow-hidden rounded-xl border border-border bg-background p-5 sm:p-6">
+        <div className="relative min-h-80 overflow-hidden rounded-lg bg-muted/35 p-4 sm:p-5">
           {phase === "idle" ? (
-            <div className="flex h-full min-h-72 flex-col items-center justify-center gap-3 text-center">
+            <div className="flex h-full min-h-72 flex-col items-center justify-center gap-3 px-2 text-center">
               <Sparkles className="size-6 text-primary" />
               <p className="max-w-xs text-sm text-muted-foreground">
                 Your tailored CV appears here — pulled from your real work, shaped
@@ -235,40 +176,40 @@ export function TailorDemo() {
             </div>
           ) : (
             <div
-              key={activeRole.id + phase}
+              key={activeExample.id + phase}
               className={cn(
-                "flex flex-col gap-4",
+                "flex flex-col gap-5",
                 phase === "done"
                   ? "animate-in fade-in slide-in-from-bottom-2 duration-500"
                   : "opacity-60",
               )}
             >
-              <header className="flex flex-col gap-1 border-b border-border pb-3">
+              <header className="flex flex-col gap-1">
                 <span className="text-xs font-medium uppercase tracking-wider text-primary">
-                  Tailored for {activeRole.company}
+                  Tailored for {activeExample.company}
                 </span>
                 <h3 className="text-xl font-semibold tracking-tight">
-                  {activeRole.headline}
+                  {activeExample.headline}
                 </h3>
-                <p className="text-sm text-muted-foreground">
-                  {activeRole.summary}
+                <p className="text-sm leading-relaxed text-muted-foreground">
+                  {activeExample.summary}
                 </p>
               </header>
 
               <div className="flex flex-wrap gap-1.5">
-                {activeRole.skills.map((skill) => (
+                {activeExample.skills.map((skill) => (
                   <Badge key={skill} variant="secondary">
                     {skill}
                   </Badge>
                 ))}
               </div>
 
-              <ul className="flex flex-col gap-2.5">
-                {activeRole.bullets.map((bullet, i) => (
+              <ul className="flex flex-col gap-4">
+                {activeExample.bullets.map((bullet, i) => (
                   <li
                     key={bullet.text}
                     className={cn(
-                      "flex flex-col gap-1 rounded-lg border border-border/60 bg-card p-3 text-sm",
+                      "flex flex-col gap-1 border-l-2 border-primary/60 pl-3 text-sm",
                       phase === "done" &&
                         "animate-in fade-in slide-in-from-bottom-1",
                     )}

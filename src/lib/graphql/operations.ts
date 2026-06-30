@@ -36,6 +36,9 @@ export const RESUME_WITH_CONTENT_QUERY = `
         linkedIn
         github
         photoUrl
+        linkedinPhotoUrl
+        githubPhotoUrl
+        effectivePhotoUrl
         createdAt
         updatedAt
       }
@@ -43,10 +46,17 @@ export const RESUME_WITH_CONTENT_QUERY = `
         resumeId
         themeId
         fontSize
+        contactNameFontSize
+        contactHeadlineFontSize
+        contactDetailsFontSize
+        sectionTitleFontSize
+        itemTitleFontSize
+        itemMetaFontSize
         pageFormat
         marginHorizontalMm
         marginVerticalMm
         showPhoto
+        itemTitleLayout
         locale
       }
       theme {
@@ -224,6 +234,7 @@ export const ME_QUERY = `
       email
       displayName
       avatarUrl
+      role
       createdAt
       updatedAt
     }
@@ -237,6 +248,7 @@ export const WORKSPACE_BOOTSTRAP_QUERY = `
       email
       displayName
       avatarUrl
+      role
       createdAt
       updatedAt
     }
@@ -304,10 +316,17 @@ export const UPDATE_RESUME_SETTINGS_MUTATION = `
       resumeId
       themeId
       fontSize
+      contactNameFontSize
+      contactHeadlineFontSize
+      contactDetailsFontSize
+      sectionTitleFontSize
+      itemTitleFontSize
+      itemMetaFontSize
       pageFormat
       marginHorizontalMm
       marginVerticalMm
       showPhoto
+      itemTitleLayout
       locale
     }
   }
@@ -337,6 +356,9 @@ export const UPDATE_RESUME_SECTION_ITEM_VISIBILITY_MUTATION = `
         linkedIn
         github
         photoUrl
+        linkedinPhotoUrl
+        githubPhotoUrl
+        effectivePhotoUrl
         createdAt
         updatedAt
       }
@@ -344,10 +366,17 @@ export const UPDATE_RESUME_SECTION_ITEM_VISIBILITY_MUTATION = `
         resumeId
         themeId
         fontSize
+        contactNameFontSize
+        contactHeadlineFontSize
+        contactDetailsFontSize
+        sectionTitleFontSize
+        itemTitleFontSize
+        itemMetaFontSize
         pageFormat
         marginHorizontalMm
         marginVerticalMm
         showPhoto
+        itemTitleLayout
         locale
       }
       theme {
@@ -409,6 +438,9 @@ export const UPDATE_RESUME_SECTION_ITEM_MUTATION = `
         linkedIn
         github
         photoUrl
+        linkedinPhotoUrl
+        githubPhotoUrl
+        effectivePhotoUrl
         createdAt
         updatedAt
       }
@@ -416,10 +448,17 @@ export const UPDATE_RESUME_SECTION_ITEM_MUTATION = `
         resumeId
         themeId
         fontSize
+        contactNameFontSize
+        contactHeadlineFontSize
+        contactDetailsFontSize
+        sectionTitleFontSize
+        itemTitleFontSize
+        itemMetaFontSize
         pageFormat
         marginHorizontalMm
         marginVerticalMm
         showPhoto
+        itemTitleLayout
         locale
       }
       theme {
@@ -481,6 +520,9 @@ export const ADD_RESUME_SECTION_ITEM_MUTATION = `
         linkedIn
         github
         photoUrl
+        linkedinPhotoUrl
+        githubPhotoUrl
+        effectivePhotoUrl
         createdAt
         updatedAt
       }
@@ -488,10 +530,17 @@ export const ADD_RESUME_SECTION_ITEM_MUTATION = `
         resumeId
         themeId
         fontSize
+        contactNameFontSize
+        contactHeadlineFontSize
+        contactDetailsFontSize
+        sectionTitleFontSize
+        itemTitleFontSize
+        itemMetaFontSize
         pageFormat
         marginHorizontalMm
         marginVerticalMm
         showPhoto
+        itemTitleLayout
         locale
       }
       theme {
@@ -553,6 +602,9 @@ export const DELETE_SECTION_ITEM_MUTATION = `
         linkedIn
         github
         photoUrl
+        linkedinPhotoUrl
+        githubPhotoUrl
+        effectivePhotoUrl
         createdAt
         updatedAt
       }
@@ -560,10 +612,17 @@ export const DELETE_SECTION_ITEM_MUTATION = `
         resumeId
         themeId
         fontSize
+        contactNameFontSize
+        contactHeadlineFontSize
+        contactDetailsFontSize
+        sectionTitleFontSize
+        itemTitleFontSize
+        itemMetaFontSize
         pageFormat
         marginHorizontalMm
         marginVerticalMm
         showPhoto
+        itemTitleLayout
         locale
       }
       theme {
@@ -625,6 +684,9 @@ export const UPDATE_CONTACT_PROFILE_MUTATION = `
         linkedIn
         github
         photoUrl
+        linkedinPhotoUrl
+        githubPhotoUrl
+        effectivePhotoUrl
         createdAt
         updatedAt
       }
@@ -632,10 +694,17 @@ export const UPDATE_CONTACT_PROFILE_MUTATION = `
         resumeId
         themeId
         fontSize
+        contactNameFontSize
+        contactHeadlineFontSize
+        contactDetailsFontSize
+        sectionTitleFontSize
+        itemTitleFontSize
+        itemMetaFontSize
         pageFormat
         marginHorizontalMm
         marginVerticalMm
         showPhoto
+        itemTitleLayout
         locale
       }
       theme {
@@ -732,6 +801,8 @@ const PORTFOLIO_WITH_CONTENT_FIELDS = `
     id
     workspaceId
     title
+    tagline
+    about
     contactProfileId
     createdBy
     createdAt
@@ -749,16 +820,17 @@ const PORTFOLIO_WITH_CONTENT_FIELDS = `
     linkedIn
     github
     photoUrl
+    linkedinPhotoUrl
+    githubPhotoUrl
+    effectivePhotoUrl
     createdAt
     updatedAt
   }
   settings {
     portfolioId
     themeId
-    fontSize
-    pageFormat
-    marginHorizontalMm
-    marginVerticalMm
+    layout
+    accentColor
     showPhoto
     locale
   }
@@ -769,29 +841,40 @@ const PORTFOLIO_WITH_CONTENT_FIELDS = `
     isSystem
     config
   }
-  sections {
-    section {
-      id
-      workspaceId
-      type
-      title
-      description
-      createdBy
-      createdAt
-      updatedAt
-    }
-    items {
-      id
-      workspaceId
-      type
-      headline
-      body
-      metadata
-      showInPreview
-      createdBy
-      createdAt
-      updatedAt
-    }
+  projects {
+    id
+    portfolioId
+    title
+    tagline
+    problem
+    approach
+    outcome
+    techStack
+    liveUrl
+    repoUrl
+    imageUrl
+    featured
+    showInPreview
+    sortOrder
+    createdAt
+    updatedAt
+  }
+  skills {
+    id
+    portfolioId
+    name
+    category
+    showInPreview
+    sortOrder
+  }
+  testimonials {
+    id
+    portfolioId
+    quote
+    author
+    role
+    showInPreview
+    sortOrder
   }
 `;
 
@@ -849,6 +932,9 @@ export const SEND_ASSISTANT_MESSAGE_MUTATION = `
           linkedIn
           github
           photoUrl
+          linkedinPhotoUrl
+          githubPhotoUrl
+          effectivePhotoUrl
           createdAt
           updatedAt
         }
@@ -856,10 +942,17 @@ export const SEND_ASSISTANT_MESSAGE_MUTATION = `
           resumeId
           themeId
           fontSize
+          contactNameFontSize
+          contactHeadlineFontSize
+          contactDetailsFontSize
+          sectionTitleFontSize
+          itemTitleFontSize
+          itemMetaFontSize
           pageFormat
           marginHorizontalMm
           marginVerticalMm
           showPhoto
+          itemTitleLayout
           locale
         }
         theme {
@@ -900,6 +993,8 @@ export const SEND_ASSISTANT_MESSAGE_MUTATION = `
     }
   }
 `;
+
+export const TWIN_ENTRIES_QUERY = `
   query TwinEntries {
     twinEntries {
       id
@@ -1095,43 +1190,85 @@ export const UPDATE_PORTFOLIO_SETTINGS_MUTATION = `
     updatePortfolioSettings(input: $input) {
       portfolioId
       themeId
-      fontSize
-      pageFormat
-      marginHorizontalMm
-      marginVerticalMm
+      layout
+      accentColor
       showPhoto
       locale
     }
   }
 `;
 
-export const UPDATE_PORTFOLIO_SECTION_ITEM_VISIBILITY_MUTATION = `
-  mutation UpdatePortfolioSectionItemVisibility($input: UpdatePortfolioSectionItemVisibilityInput!) {
-    updatePortfolioSectionItemVisibility(input: $input) {
+export const UPDATE_PORTFOLIO_MUTATION = `
+  mutation UpdatePortfolio($id: ID!, $title: String, $tagline: String, $about: String) {
+    updatePortfolio(id: $id, title: $title, tagline: $tagline, about: $about) {
+      id
+      title
+      tagline
+      about
+      updatedAt
+    }
+  }
+`;
+
+export const ADD_PORTFOLIO_PROJECT_MUTATION = `
+  mutation AddPortfolioProject($input: AddPortfolioProjectInput!) {
+    addPortfolioProject(input: $input) {
       ${PORTFOLIO_WITH_CONTENT_FIELDS}
     }
   }
 `;
 
-export const UPDATE_PORTFOLIO_SECTION_ITEM_MUTATION = `
-  mutation UpdatePortfolioSectionItem($input: UpdatePortfolioSectionItemInput!) {
-    updatePortfolioSectionItem(input: $input) {
+export const UPDATE_PORTFOLIO_PROJECT_MUTATION = `
+  mutation UpdatePortfolioProject($input: UpdatePortfolioProjectInput!) {
+    updatePortfolioProject(input: $input) {
       ${PORTFOLIO_WITH_CONTENT_FIELDS}
     }
   }
 `;
 
-export const ADD_PORTFOLIO_SECTION_ITEM_MUTATION = `
-  mutation AddPortfolioSectionItem($input: AddPortfolioSectionItemInput!) {
-    addPortfolioSectionItem(input: $input) {
+export const DELETE_PORTFOLIO_PROJECT_MUTATION = `
+  mutation DeletePortfolioProject($portfolioId: ID!, $projectId: ID!) {
+    deletePortfolioProject(portfolioId: $portfolioId, projectId: $projectId) {
       ${PORTFOLIO_WITH_CONTENT_FIELDS}
     }
   }
 `;
 
-export const DELETE_PORTFOLIO_SECTION_ITEM_MUTATION = `
-  mutation DeletePortfolioSectionItem($portfolioId: ID!, $sectionItemId: ID!) {
-    deletePortfolioSectionItem(portfolioId: $portfolioId, sectionItemId: $sectionItemId) {
+export const SET_PORTFOLIO_PROJECT_VISIBILITY_MUTATION = `
+  mutation SetPortfolioProjectVisibility($input: SetPortfolioProjectVisibilityInput!) {
+    setPortfolioProjectVisibility(input: $input) {
+      ${PORTFOLIO_WITH_CONTENT_FIELDS}
+    }
+  }
+`;
+
+export const ADD_PORTFOLIO_SKILL_MUTATION = `
+  mutation AddPortfolioSkill($input: AddPortfolioSkillInput!) {
+    addPortfolioSkill(input: $input) {
+      ${PORTFOLIO_WITH_CONTENT_FIELDS}
+    }
+  }
+`;
+
+export const UPDATE_PORTFOLIO_SKILL_MUTATION = `
+  mutation UpdatePortfolioSkill($input: UpdatePortfolioSkillInput!) {
+    updatePortfolioSkill(input: $input) {
+      ${PORTFOLIO_WITH_CONTENT_FIELDS}
+    }
+  }
+`;
+
+export const DELETE_PORTFOLIO_SKILL_MUTATION = `
+  mutation DeletePortfolioSkill($portfolioId: ID!, $skillId: ID!) {
+    deletePortfolioSkill(portfolioId: $portfolioId, skillId: $skillId) {
+      ${PORTFOLIO_WITH_CONTENT_FIELDS}
+    }
+  }
+`;
+
+export const ADD_PORTFOLIO_TESTIMONIAL_MUTATION = `
+  mutation AddPortfolioTestimonial($input: AddPortfolioTestimonialInput!) {
+    addPortfolioTestimonial(input: $input) {
       ${PORTFOLIO_WITH_CONTENT_FIELDS}
     }
   }
@@ -1142,5 +1279,65 @@ export const UPDATE_PORTFOLIO_CONTACT_PROFILE_MUTATION = `
     updatePortfolioContactProfile(input: $input) {
       ${PORTFOLIO_WITH_CONTENT_FIELDS}
     }
+  }
+`;
+
+const KNOWLEDGE_ENTRY_FIELDS = `
+  id
+  slug
+  title
+  category
+  tags
+  body
+  enabled
+  createdAt
+  updatedAt
+`;
+
+export const KNOWLEDGE_ENTRIES_QUERY = `
+  query KnowledgeEntries($includeDisabled: Boolean) {
+    knowledgeEntries(includeDisabled: $includeDisabled) {
+      ${KNOWLEDGE_ENTRY_FIELDS}
+    }
+  }
+`;
+
+export const CLASSIFY_ASSISTANT_MESSAGE_QUERY = `
+  query ClassifyAssistantMessage($text: String!, $context: AssistantContextInput!) {
+    classifyAssistantMessage(text: $text, context: $context) {
+      category
+      confidence
+      tags
+      reason
+      source
+      scopeHandled
+      cannedReply
+      guidance
+      selectedEntries {
+        ${KNOWLEDGE_ENTRY_FIELDS}
+      }
+    }
+  }
+`;
+
+export const CREATE_KNOWLEDGE_ENTRY_MUTATION = `
+  mutation CreateKnowledgeEntry($input: CreateKnowledgeEntryInput!) {
+    createKnowledgeEntry(input: $input) {
+      ${KNOWLEDGE_ENTRY_FIELDS}
+    }
+  }
+`;
+
+export const UPDATE_KNOWLEDGE_ENTRY_MUTATION = `
+  mutation UpdateKnowledgeEntry($input: UpdateKnowledgeEntryInput!) {
+    updateKnowledgeEntry(input: $input) {
+      ${KNOWLEDGE_ENTRY_FIELDS}
+    }
+  }
+`;
+
+export const DELETE_KNOWLEDGE_ENTRY_MUTATION = `
+  mutation DeleteKnowledgeEntry($id: ID!) {
+    deleteKnowledgeEntry(id: $id)
   }
 `;

@@ -13,7 +13,6 @@ import { usePathname, useRouter } from "next/navigation";
 import type {
   AssistantContext,
   AssistantMessage,
-  AssistantActionLog,
   AssistantThread,
   AgentState,
   ComposerAttachment,
@@ -71,7 +70,6 @@ interface CvAssistantContextValue {
   deleteThread: (threadId: string) => Promise<boolean>;
   context: AssistantContext;
   refreshKey: number;
-  lastActionLogs: AssistantActionLog[];
   resumeContentPatch: ResumeWithContent | null;
   portfolioContentPatch: PortfolioWithContent | null;
   streamingMessageId: string | null;
@@ -117,7 +115,6 @@ export function CvAssistantProvider({ children }: { children: ReactNode }) {
   const [isThreadsLoading, setIsThreadsLoading] = useState(true);
   const [isOpen, setOpen] = useState(false);
   const [refreshKey, setRefreshKey] = useState(0);
-  const [lastActionLogs, setLastActionLogs] = useState<AssistantActionLog[]>([]);
   const [resumeContentPatch, setResumeContentPatch] = useState<ResumeWithContent | null>(null);
   const [portfolioContentPatch, setPortfolioContentPatch] = useState<PortfolioWithContent | null>(
     null
@@ -136,7 +133,6 @@ export function CvAssistantProvider({ children }: { children: ReactNode }) {
   const loadMessagesForThread = useCallback(async (threadId: string) => {
     const nextMessages = await getAssistantMessages(threadId);
     setMessages(nextMessages.map(normalizeUserMessage));
-    setLastActionLogs([]);
     setLastAffectedResumeIds([]);
   }, []);
 
@@ -201,7 +197,6 @@ export function CvAssistantProvider({ children }: { children: ReactNode }) {
     const thread = await createAssistantThread();
     setThreads((current) => [thread, ...current]);
     setMessages([]);
-    setLastActionLogs([]);
     setLastAffectedResumeIds([]);
     setActiveThreadIdState(thread.id);
     setActiveAssistantThreadId(user.id, thread.id);
@@ -228,7 +223,6 @@ export function CvAssistantProvider({ children }: { children: ReactNode }) {
       setThreads(remaining);
 
       if (threadId === activeThreadId) {
-        setLastActionLogs([]);
         setLastAffectedResumeIds([]);
         if (remaining.length > 0) {
           await activateThread(remaining[0].id);
@@ -348,7 +342,6 @@ export function CvAssistantProvider({ children }: { children: ReactNode }) {
         } else {
           setMessages(normalizedTurn);
         }
-        setLastActionLogs(result.actionLogs);
         setLastAffectedResumeIds(result.affectedResumeIds);
         setLastAffectedPortfolioIds(result.affectedPortfolioIds);
         if (result.resumeWithContent) {
@@ -441,7 +434,6 @@ export function CvAssistantProvider({ children }: { children: ReactNode }) {
       deleteThread,
       context,
       refreshKey,
-      lastActionLogs,
       resumeContentPatch,
       portfolioContentPatch,
       streamingMessageId,
@@ -463,7 +455,6 @@ export function CvAssistantProvider({ children }: { children: ReactNode }) {
       deleteThread,
       context,
       refreshKey,
-      lastActionLogs,
       resumeContentPatch,
       portfolioContentPatch,
       streamingMessageId,

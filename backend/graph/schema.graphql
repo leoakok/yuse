@@ -50,14 +50,22 @@ enum TwinEntryType {
 }
 
 enum FontSize {
+  XS
   S
   M
   L
+  XL
 }
 
 enum PageFormat {
   A4
   LETTER
+}
+
+"""How section item title and subtitle (role/company, degree/school, etc.) are laid out."""
+enum ItemTitleLayout {
+  STACKED
+  INLINE
 }
 
 """Spoken language proficiency — stored in section item metadata.level (LANGUAGES)."""
@@ -82,6 +90,24 @@ enum ConnectionProvider {
   GITHUB
 }
 
+"""Platform role. ADMIN can manage the knowledge dictionary and view the agent experiment page."""
+enum UserRole {
+  USER
+  ADMIN
+}
+
+"""Detected request category from the cheap intent layer that runs before the main agent."""
+enum AssistantCategory {
+  UPDATE_CV
+  CREATE_CV
+  PORTFOLIO
+  JOB_APPLICATION
+  ADVICE
+  OUT_OF_SCOPE
+  CHITCHAT
+  UNCLEAR
+}
+
 type ConnectionStatus {
   provider: ConnectionProvider!
   connected: Boolean!
@@ -95,8 +121,40 @@ type User {
   email: String!
   displayName: String!
   avatarUrl: String
+  role: UserRole!
   createdAt: DateTime!
   updatedAt: DateTime!
+}
+
+"""A curated, tag-keyed guidance entry the agent injects into context based on the detected category."""
+type KnowledgeEntry {
+  id: ID!
+  slug: String!
+  title: String!
+  category: AssistantCategory!
+  tags: [String!]!
+  body: String!
+  enabled: Boolean!
+  createdAt: DateTime!
+  updatedAt: DateTime!
+}
+
+"""Result of the cheap pre-classification layer, exposed for the admin experiment page."""
+type AssistantClassification {
+  category: AssistantCategory!
+  confidence: Float!
+  tags: [String!]!
+  reason: String!
+  """Where the decision came from: fast-path, classifier, or fallback."""
+  source: String!
+  """True when the request is handled before the main agent (out of scope, unclear, greeting)."""
+  scopeHandled: Boolean!
+  """The canned reply used when scopeHandled is true (out of scope / unclear / greeting)."""
+  cannedReply: String
+  """Dictionary entries selected for this category/tags."""
+  selectedEntries: [KnowledgeEntry!]!
+  """The guidance block that would be injected into the main agent prompt."""
+  guidance: String!
 }
 
 type Workspace {
@@ -128,6 +186,9 @@ type ContactProfile {
   linkedIn: String
   github: String
   photoUrl: String
+  linkedinPhotoUrl: String
+  githubPhotoUrl: String
+  effectivePhotoUrl: String
   createdAt: DateTime!
   updatedAt: DateTime!
 }
@@ -170,10 +231,17 @@ type ResumeSettings {
   resumeId: ID!
   themeId: ID!
   fontSize: FontSize!
+  contactNameFontSize: FontSize!
+  contactHeadlineFontSize: FontSize!
+  contactDetailsFontSize: FontSize!
+  sectionTitleFontSize: FontSize!
+  itemTitleFontSize: FontSize!
+  itemMetaFontSize: FontSize!
   pageFormat: PageFormat!
   marginHorizontalMm: Float!
   marginVerticalMm: Float!
   showPhoto: Boolean!
+  itemTitleLayout: ItemTitleLayout!
   locale: String!
 }
 
@@ -198,10 +266,17 @@ type ResumeWithContent {
   sections: [SectionWithItems!]!
 }
 
+enum PortfolioLayout {
+  SINGLE
+  SPLIT
+}
+
 type Portfolio {
   id: ID!
   workspaceId: ID!
   title: String!
+  tagline: String!
+  about: String!
   contactProfileId: ID
   createdBy: ID!
   createdAt: DateTime!
@@ -211,12 +286,48 @@ type Portfolio {
 type PortfolioSettings {
   portfolioId: ID!
   themeId: ID!
-  fontSize: FontSize!
-  pageFormat: PageFormat!
-  marginHorizontalMm: Float!
-  marginVerticalMm: Float!
+  layout: PortfolioLayout!
+  accentColor: String!
   showPhoto: Boolean!
   locale: String!
+}
+
+type PortfolioProject {
+  id: ID!
+  portfolioId: ID!
+  title: String!
+  tagline: String!
+  problem: String!
+  approach: String!
+  outcome: String!
+  techStack: [String!]!
+  liveUrl: String
+  repoUrl: String
+  imageUrl: String
+  featured: Boolean!
+  showInPreview: Boolean!
+  sortOrder: Int!
+  createdAt: DateTime!
+  updatedAt: DateTime!
+}
+
+type PortfolioSkill {
+  id: ID!
+  portfolioId: ID!
+  name: String!
+  category: String
+  showInPreview: Boolean!
+  sortOrder: Int!
+}
+
+type PortfolioTestimonial {
+  id: ID!
+  portfolioId: ID!
+  quote: String!
+  author: String!
+  role: String!
+  showInPreview: Boolean!
+  sortOrder: Int!
 }
 
 type PortfolioWithContent {
@@ -224,7 +335,9 @@ type PortfolioWithContent {
   contactProfile: ContactProfile
   settings: PortfolioSettings!
   theme: CvTheme!
-  sections: [SectionWithItems!]!
+  projects: [PortfolioProject!]!
+  skills: [PortfolioSkill!]!
+  testimonials: [PortfolioTestimonial!]!
 }
 
 type SectionItemUsage {
@@ -331,7 +444,6 @@ type Query {
   portfolios: [Portfolio!]!
   portfolio(id: ID!): Portfolio
   portfolioWithContent(id: ID!): PortfolioWithContent
-  portfoliosForSection(sectionId: ID!): [Portfolio!]!
   sectionItemUsage(id: ID!): SectionItemUsage
   sectionItemsForSection(sectionId: ID!): [SectionItem!]!
   resumesForSection(sectionId: ID!): [Resume!]!
@@ -342,16 +454,46 @@ type Query {
   trackedJobs: [TrackedJob!]!
   trackedJob(id: ID!): TrackedJob
   connectionStatus(provider: ConnectionProvider!): ConnectionStatus!
+  """Admin only. Lists the knowledge dictionary entries."""
+  knowledgeEntries(includeDisabled: Boolean = true): [KnowledgeEntry!]!
+  """Admin only. Runs the cheap intent layer for a test message and returns the breakdown."""
+  classifyAssistantMessage(text: String!, context: AssistantContextInput!): AssistantClassification!
+}
+
+input CreateKnowledgeEntryInput {
+  slug: String!
+  title: String!
+  category: AssistantCategory!
+  tags: [String!]
+  body: String!
+  enabled: Boolean
+}
+
+input UpdateKnowledgeEntryInput {
+  id: ID!
+  slug: String
+  title: String
+  category: AssistantCategory
+  tags: [String!]
+  body: String
+  enabled: Boolean
 }
 
 input UpdateResumeSettingsInput {
   resumeId: ID!
   pageFormat: PageFormat
   fontSize: FontSize
+  contactNameFontSize: FontSize
+  contactHeadlineFontSize: FontSize
+  contactDetailsFontSize: FontSize
+  sectionTitleFontSize: FontSize
+  itemTitleFontSize: FontSize
+  itemMetaFontSize: FontSize
   marginHorizontalMm: Float
   marginVerticalMm: Float
   themeId: ID
   showPhoto: Boolean
+  itemTitleLayout: ItemTitleLayout
   locale: String
 }
 
@@ -417,6 +559,8 @@ input UpdateContactProfileInput {
   linkedIn: String
   github: String
   photoUrl: String
+  linkedinPhotoUrl: String
+  githubPhotoUrl: String
 }
 
 input UpdatePortfolioContactProfileInput {
@@ -430,41 +574,83 @@ input UpdatePortfolioContactProfileInput {
   linkedIn: String
   github: String
   photoUrl: String
+  linkedinPhotoUrl: String
+  githubPhotoUrl: String
 }
 
 input UpdatePortfolioSettingsInput {
   portfolioId: ID!
-  pageFormat: PageFormat
-  fontSize: FontSize
-  marginHorizontalMm: Float
-  marginVerticalMm: Float
+  layout: PortfolioLayout
+  accentColor: String
   themeId: ID
   showPhoto: Boolean
   locale: String
 }
 
-input UpdatePortfolioSectionItemVisibilityInput {
+input AddPortfolioProjectInput {
   portfolioId: ID!
-  sectionId: ID!
-  sectionItemId: ID!
+  title: String!
+  tagline: String
+  problem: String
+  approach: String
+  outcome: String
+  techStack: [String!]
+  liveUrl: String
+  repoUrl: String
+  imageUrl: String
+  featured: Boolean
+}
+
+input UpdatePortfolioProjectInput {
+  portfolioId: ID!
+  projectId: ID!
+  title: String
+  tagline: String
+  problem: String
+  approach: String
+  outcome: String
+  techStack: [String!]
+  liveUrl: String
+  repoUrl: String
+  imageUrl: String
+  featured: Boolean
+  showInPreview: Boolean
+}
+
+input SetPortfolioProjectVisibilityInput {
+  portfolioId: ID!
+  projectId: ID!
   showInPreview: Boolean!
 }
 
-input AddPortfolioSectionItemInput {
+input AddPortfolioSkillInput {
   portfolioId: ID!
-  sectionId: ID!
-  headline: String
-  body: String
-  metadata: JSON
+  name: String!
+  category: String
 }
 
-input UpdatePortfolioSectionItemInput {
+input UpdatePortfolioSkillInput {
   portfolioId: ID!
-  sectionId: ID!
-  sectionItemId: ID!
-  headline: String
-  body: String
-  metadata: JSON
+  skillId: ID!
+  name: String
+  category: String
+  showInPreview: Boolean
+}
+
+input AddPortfolioTestimonialInput {
+  portfolioId: ID!
+  quote: String!
+  author: String
+  role: String
+}
+
+input UpdatePortfolioTestimonialInput {
+  portfolioId: ID!
+  testimonialId: ID!
+  quote: String
+  author: String
+  role: String
+  showInPreview: Boolean
 }
 
 type ProfilePhotoUpload {
@@ -488,13 +674,19 @@ type Mutation {
   createPortfolio(title: String!): Portfolio!
   duplicatePortfolio(id: ID!): Portfolio!
   deletePortfolio(id: ID!): Boolean!
-  updatePortfolio(id: ID!, title: String, contactProfileId: ID): Portfolio!
+  updatePortfolio(id: ID!, title: String, tagline: String, about: String, contactProfileId: ID): Portfolio!
   updatePortfolioSettings(input: UpdatePortfolioSettingsInput!): PortfolioSettings!
-  updatePortfolioSectionItemVisibility(input: UpdatePortfolioSectionItemVisibilityInput!): PortfolioWithContent!
-  updatePortfolioSectionItem(input: UpdatePortfolioSectionItemInput!): PortfolioWithContent!
-  addPortfolioSectionItem(input: AddPortfolioSectionItemInput!): PortfolioWithContent!
-  deletePortfolioSectionItem(portfolioId: ID!, sectionItemId: ID!): PortfolioWithContent!
   updatePortfolioContactProfile(input: UpdatePortfolioContactProfileInput!): PortfolioWithContent!
+  addPortfolioProject(input: AddPortfolioProjectInput!): PortfolioWithContent!
+  updatePortfolioProject(input: UpdatePortfolioProjectInput!): PortfolioWithContent!
+  deletePortfolioProject(portfolioId: ID!, projectId: ID!): PortfolioWithContent!
+  setPortfolioProjectVisibility(input: SetPortfolioProjectVisibilityInput!): PortfolioWithContent!
+  addPortfolioSkill(input: AddPortfolioSkillInput!): PortfolioWithContent!
+  updatePortfolioSkill(input: UpdatePortfolioSkillInput!): PortfolioWithContent!
+  deletePortfolioSkill(portfolioId: ID!, skillId: ID!): PortfolioWithContent!
+  addPortfolioTestimonial(input: AddPortfolioTestimonialInput!): PortfolioWithContent!
+  updatePortfolioTestimonial(input: UpdatePortfolioTestimonialInput!): PortfolioWithContent!
+  deletePortfolioTestimonial(portfolioId: ID!, testimonialId: ID!): PortfolioWithContent!
   requestProfilePhotoUpload(contentType: String!, fileName: String!): ProfilePhotoUpload!
   createTwinEntry(input: CreateTwinEntryInput!): TwinEntry!
   updateTwinEntry(input: UpdateTwinEntryInput!): TwinEntry!
@@ -511,4 +703,7 @@ type Mutation {
     attachments: [AssistantAttachmentInput!] = []
   ): AssistantTurnResult!
   disconnectConnection(provider: ConnectionProvider!): Boolean!
+  createKnowledgeEntry(input: CreateKnowledgeEntryInput!): KnowledgeEntry!
+  updateKnowledgeEntry(input: UpdateKnowledgeEntryInput!): KnowledgeEntry!
+  deleteKnowledgeEntry(id: ID!): Boolean!
 }

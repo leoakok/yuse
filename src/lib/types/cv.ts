@@ -82,20 +82,34 @@ export interface ContactProfile {
   linkedIn?: string;
   github?: string;
   photoUrl?: string;
+  linkedinPhotoUrl?: string;
+  githubPhotoUrl?: string;
+  effectivePhotoUrl?: string;
   createdAt: string;
   updatedAt: string;
 }
 
 export type PageFormat = "A4" | "LETTER";
 
+export type ItemTitleLayout = "STACKED" | "INLINE";
+
+export type CvFontSize = "XS" | "S" | "M" | "L" | "XL";
+
 export interface ResumeSettings {
   resumeId: string;
   themeId: string;
-  fontSize: "S" | "M" | "L";
+  fontSize: CvFontSize;
+  contactNameFontSize: CvFontSize;
+  contactHeadlineFontSize: CvFontSize;
+  contactDetailsFontSize: CvFontSize;
+  sectionTitleFontSize: CvFontSize;
+  itemTitleFontSize: CvFontSize;
+  itemMetaFontSize: CvFontSize;
   pageFormat: PageFormat;
   marginHorizontalMm: number;
   marginVerticalMm: number;
   showPhoto: boolean;
+  itemTitleLayout: ItemTitleLayout;
   locale: string;
 }
 

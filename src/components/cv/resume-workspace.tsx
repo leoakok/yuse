@@ -13,7 +13,8 @@ import {
   Trash2,
 } from "lucide-react";
 import { toast } from "sonner";
-import type { PageFormat, ResumeWithContent, SectionItem, SectionItemUsage } from "@/lib/types/cv";
+import type { ItemTitleLayout, PageFormat, ResumeWithContent, SectionItem, SectionItemUsage } from "@/lib/types/cv";
+import { DEFAULT_CV_TYPOGRAPHY_SETTINGS, type CvTypographySettings } from "@/lib/cv/typography";
 import { ResumeDesignSettings } from "@/components/cv/resume-design-settings";
 import { ResumeProfileSection } from "@/components/cv/resume-profile-section";
 import { ResumeSectionItemRow } from "@/components/cv/resume-section-item-row";
@@ -53,6 +54,24 @@ function initialMargin(value: number | undefined): number {
   return value ?? DEFAULT_PAGE_MARGIN_MM;
 }
 
+function pickTypography(settings: ResumeWithContent["settings"]): CvTypographySettings {
+  return {
+    fontSize: settings.fontSize ?? DEFAULT_CV_TYPOGRAPHY_SETTINGS.fontSize,
+    contactNameFontSize:
+      settings.contactNameFontSize ?? DEFAULT_CV_TYPOGRAPHY_SETTINGS.contactNameFontSize,
+    contactHeadlineFontSize:
+      settings.contactHeadlineFontSize ?? DEFAULT_CV_TYPOGRAPHY_SETTINGS.contactHeadlineFontSize,
+    contactDetailsFontSize:
+      settings.contactDetailsFontSize ?? DEFAULT_CV_TYPOGRAPHY_SETTINGS.contactDetailsFontSize,
+    sectionTitleFontSize:
+      settings.sectionTitleFontSize ?? DEFAULT_CV_TYPOGRAPHY_SETTINGS.sectionTitleFontSize,
+    itemTitleFontSize:
+      settings.itemTitleFontSize ?? DEFAULT_CV_TYPOGRAPHY_SETTINGS.itemTitleFontSize,
+    itemMetaFontSize:
+      settings.itemMetaFontSize ?? DEFAULT_CV_TYPOGRAPHY_SETTINGS.itemMetaFontSize,
+  };
+}
+
 type WorkspaceMode = "sections" | "design";
 
 const MAX_LISTED_RESUMES = 5;
@@ -62,6 +81,8 @@ interface ResumeWorkspaceProps {
   onContentChange: (content: ResumeWithContent) => void;
   onPageFormatPreviewChange?: (format: PageFormat) => void;
   onShowPhotoPreviewChange?: (showPhoto: boolean) => void;
+  onItemTitleLayoutPreviewChange?: (layout: ItemTitleLayout) => void;
+  onTypographyPreviewChange?: (typography: CvTypographySettings) => void;
   onMarginHorizontalPreviewChange?: (value: number) => void;
   onMarginVerticalPreviewChange?: (value: number) => void;
   onDownload?: () => void | Promise<void>;
@@ -75,6 +96,8 @@ export function ResumeWorkspace({
   onContentChange,
   onPageFormatPreviewChange,
   onShowPhotoPreviewChange,
+  onItemTitleLayoutPreviewChange,
+  onTypographyPreviewChange,
   onMarginHorizontalPreviewChange,
   onMarginVerticalPreviewChange,
   onDownload,
@@ -104,6 +127,18 @@ export function ResumeWorkspace({
   );
   const [showPhoto, setShowPhoto] = useState(content.settings.showPhoto);
   const [savedShowPhoto, setSavedShowPhoto] = useState(content.settings.showPhoto);
+  const [itemTitleLayout, setItemTitleLayout] = useState<ItemTitleLayout>(
+    content.settings.itemTitleLayout ?? "STACKED"
+  );
+  const [savedItemTitleLayout, setSavedItemTitleLayout] = useState<ItemTitleLayout>(
+    content.settings.itemTitleLayout ?? "STACKED"
+  );
+  const [typography, setTypography] = useState<CvTypographySettings>(() =>
+    pickTypography(content.settings)
+  );
+  const [savedTypography, setSavedTypography] = useState<CvTypographySettings>(() =>
+    pickTypography(content.settings)
+  );
   const [itemDialog, setItemDialog] = useState<SectionItemDialogState | null>(null);
   const [deleteOpen, setDeleteOpen] = useState(false);
   const [isDeleting, setIsDeleting] = useState(false);
@@ -148,33 +183,52 @@ export function ResumeWorkspace({
     onShowPhotoPreviewChange?.(nextShowPhoto);
   }
 
+  function handleItemTitleLayoutChange(nextLayout: ItemTitleLayout) {
+    setItemTitleLayout(nextLayout);
+    onItemTitleLayoutPreviewChange?.(nextLayout);
+  }
+
+  function handleTypographyChange(nextTypography: CvTypographySettings) {
+    setTypography(nextTypography);
+    onTypographyPreviewChange?.(nextTypography);
+  }
+
   function handleDesignSaved({
     pageFormat: format,
     showPhoto: nextShowPhoto,
+    itemTitleLayout: nextItemTitleLayout,
     marginHorizontalMm: horizontal,
     marginVerticalMm: vertical,
+    typography: nextTypography,
   }: {
     pageFormat: PageFormat;
     showPhoto: boolean;
+    itemTitleLayout: ItemTitleLayout;
     marginHorizontalMm: number;
     marginVerticalMm: number;
+    typography: CvTypographySettings;
   }) {
     setSavedPageFormat(format);
     setSavedShowPhoto(nextShowPhoto);
+    setSavedItemTitleLayout(nextItemTitleLayout);
     setSavedMarginHorizontalMm(horizontal);
     setSavedMarginVerticalMm(vertical);
+    setSavedTypography(nextTypography);
     onContentChange({
       ...content,
       settings: {
         ...content.settings,
         pageFormat: format,
         showPhoto: nextShowPhoto,
+        itemTitleLayout: nextItemTitleLayout,
         marginHorizontalMm: horizontal,
         marginVerticalMm: vertical,
+        ...nextTypography,
       },
     });
     onPageFormatPreviewChange?.(format);
     onShowPhotoPreviewChange?.(nextShowPhoto);
+    onItemTitleLayoutPreviewChange?.(nextItemTitleLayout);
     onMarginHorizontalPreviewChange?.(horizontal);
     onMarginVerticalPreviewChange?.(vertical);
   }
@@ -377,8 +431,14 @@ export function ResumeWorkspace({
               marginVerticalMm={marginVerticalMm}
               savedMarginHorizontalMm={savedMarginHorizontalMm}
               savedMarginVerticalMm={savedMarginVerticalMm}
+              itemTitleLayout={itemTitleLayout}
+              savedItemTitleLayout={savedItemTitleLayout}
+              typography={typography}
+              savedTypography={savedTypography}
               onPageFormatChange={handlePageFormatChange}
               onShowPhotoChange={handleShowPhotoChange}
+              onItemTitleLayoutChange={handleItemTitleLayoutChange}
+              onTypographyChange={handleTypographyChange}
               onMarginHorizontalChange={handleMarginHorizontalChange}
               onMarginVerticalChange={handleMarginVerticalChange}
               onSaved={handleDesignSaved}

@@ -73,7 +73,7 @@ func jsonBytes(m map[string]any) []byte {
 
 func (p *Postgres) User() *model.User {
 	row := p.pool.QueryRow(p.ctx(), `
-		SELECT id, email, display_name, avatar_url, created_at, updated_at
+		SELECT id, email, display_name, avatar_url, role, created_at, updated_at
 		FROM users WHERE id = $1
 	`, p.activeUserID())
 	u, err := scanUser(row)
@@ -358,7 +358,7 @@ func (p *Postgres) SaveSectionItem(item *model.SectionItem) {
 
 func (p *Postgres) ListContactProfiles() []*model.ContactProfile {
 	rows, err := p.pool.Query(p.ctx(), `
-		SELECT id, workspace_id, full_name, headline, email, phone, location, website, linked_in, github, photo_url, created_at, updated_at
+		SELECT id, workspace_id, full_name, headline, email, phone, location, website, linked_in, github, photo_url, linkedin_photo_url, github_photo_url, created_at, updated_at
 		FROM contact_profiles WHERE workspace_id = $1
 	`, p.activeWorkspaceID())
 	if err != nil {
@@ -370,7 +370,7 @@ func (p *Postgres) ListContactProfiles() []*model.ContactProfile {
 
 func (p *Postgres) GetContactProfile(id string) (*model.ContactProfile, error) {
 	row := p.pool.QueryRow(p.ctx(), `
-		SELECT id, workspace_id, full_name, headline, email, phone, location, website, linked_in, github, photo_url, created_at, updated_at
+		SELECT id, workspace_id, full_name, headline, email, phone, location, website, linked_in, github, photo_url, linkedin_photo_url, github_photo_url, created_at, updated_at
 		FROM contact_profiles WHERE id = $1 AND workspace_id = $2
 	`, id, p.activeWorkspaceID())
 	cp, err := scanContactProfile(row)
@@ -382,7 +382,7 @@ func (p *Postgres) GetContactProfile(id string) (*model.ContactProfile, error) {
 
 func (p *Postgres) UpdateContactProfile(
 	resumeID string,
-	fullName, headline, email, phone, location, website, linkedIn, github, photoURL *string,
+	fullName, headline, email, phone, location, website, linkedIn, github, photoURL, linkedinPhotoURL, githubPhotoURL *string,
 ) (*model.ResumeWithContent, error) {
 	ctx := p.ctx()
 	resume, err := p.GetResume(resumeID)
@@ -448,6 +448,12 @@ func (p *Postgres) UpdateContactProfile(
 			profile.PhotoURL = &trimmed
 		}
 	}
+	if linkedinPhotoURL != nil {
+		profile.LinkedinPhotoURL = trimmedStringPtr(*linkedinPhotoURL)
+	}
+	if githubPhotoURL != nil {
+		profile.GithubPhotoURL = trimmedStringPtr(*githubPhotoURL)
+	}
 	profile.UpdatedAt = formatTime(now)
 
 	createdAt := now
@@ -464,8 +470,8 @@ func (p *Postgres) UpdateContactProfile(
 	defer func() { _ = tx.Rollback(ctx) }()
 
 	_, err = tx.Exec(ctx, `
-		INSERT INTO contact_profiles (id, workspace_id, full_name, headline, email, phone, location, website, linked_in, github, photo_url, created_at, updated_at)
-		VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13)
+		INSERT INTO contact_profiles (id, workspace_id, full_name, headline, email, phone, location, website, linked_in, github, photo_url, linkedin_photo_url, github_photo_url, created_at, updated_at)
+		VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14, $15)
 		ON CONFLICT (id) DO UPDATE SET
 			full_name = EXCLUDED.full_name,
 			headline = EXCLUDED.headline,
@@ -476,9 +482,12 @@ func (p *Postgres) UpdateContactProfile(
 			linked_in = EXCLUDED.linked_in,
 			github = EXCLUDED.github,
 			photo_url = EXCLUDED.photo_url,
+			linkedin_photo_url = EXCLUDED.linkedin_photo_url,
+			github_photo_url = EXCLUDED.github_photo_url,
 			updated_at = EXCLUDED.updated_at
 	`, profile.ID, profile.WorkspaceID, profile.FullName, profile.Headline, profile.Email,
 		profile.Phone, profile.Location, profile.Website, profile.LinkedIn, profile.Github, profile.PhotoURL,
+		profile.LinkedinPhotoURL, profile.GithubPhotoURL,
 		createdAt, now)
 	if err != nil {
 		return nil, fmt.Errorf("save contact profile: %w", err)
@@ -500,7 +509,9 @@ func (p *Postgres) UpdateContactProfile(
 
 func (p *Postgres) GetResumeSettings(resumeID string) *model.ResumeSettings {
 	row := p.pool.QueryRow(p.ctx(), `
-		SELECT resume_id, theme_id, font_size, page_format, margin_horizontal_mm, margin_vertical_mm, show_photo, locale
+		SELECT resume_id, theme_id, font_size, contact_name_font_size, contact_headline_font_size,
+			contact_details_font_size, section_title_font_size, item_title_font_size, item_meta_font_size,
+			page_format, margin_horizontal_mm, margin_vertical_mm, show_photo, item_title_layout, locale
 		FROM resume_settings WHERE resume_id = $1
 	`, resumeID)
 	s, err := scanResumeSettings(row)
@@ -523,18 +534,33 @@ func (p *Postgres) UpdateResumeSettings(resumeID string, update func(*model.Resu
 	update(settings)
 
 	_, err := p.pool.Exec(p.ctx(), `
-		INSERT INTO resume_settings (resume_id, theme_id, font_size, page_format, margin_horizontal_mm, margin_vertical_mm, show_photo, locale)
-		VALUES ($1, $2, $3, $4, $5, $6, $7, $8)
+		INSERT INTO resume_settings (
+			resume_id, theme_id, font_size, contact_name_font_size, contact_headline_font_size,
+			contact_details_font_size, section_title_font_size, item_title_font_size, item_meta_font_size,
+			page_format, margin_horizontal_mm, margin_vertical_mm, show_photo, item_title_layout, locale
+		)
+		VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14, $15)
 		ON CONFLICT (resume_id) DO UPDATE SET
 			theme_id = EXCLUDED.theme_id,
 			font_size = EXCLUDED.font_size,
+			contact_name_font_size = EXCLUDED.contact_name_font_size,
+			contact_headline_font_size = EXCLUDED.contact_headline_font_size,
+			contact_details_font_size = EXCLUDED.contact_details_font_size,
+			section_title_font_size = EXCLUDED.section_title_font_size,
+			item_title_font_size = EXCLUDED.item_title_font_size,
+			item_meta_font_size = EXCLUDED.item_meta_font_size,
 			page_format = EXCLUDED.page_format,
 			margin_horizontal_mm = EXCLUDED.margin_horizontal_mm,
 			margin_vertical_mm = EXCLUDED.margin_vertical_mm,
 			show_photo = EXCLUDED.show_photo,
+			item_title_layout = EXCLUDED.item_title_layout,
 			locale = EXCLUDED.locale
-	`, settings.ResumeID, settings.ThemeID, string(settings.FontSize), string(settings.PageFormat),
-		settings.MarginHorizontalMm, settings.MarginVerticalMm, settings.ShowPhoto, settings.Locale)
+	`, settings.ResumeID, settings.ThemeID, string(settings.FontSize),
+		string(settings.ContactNameFontSize), string(settings.ContactHeadlineFontSize),
+		string(settings.ContactDetailsFontSize), string(settings.SectionTitleFontSize),
+		string(settings.ItemTitleFontSize), string(settings.ItemMetaFontSize),
+		string(settings.PageFormat),
+		settings.MarginHorizontalMm, settings.MarginVerticalMm, settings.ShowPhoto, string(settings.ItemTitleLayout), settings.Locale)
 	if err != nil {
 		return nil, fmt.Errorf("update resume settings: %w", err)
 	}
@@ -929,24 +955,11 @@ func (p *Postgres) SectionItemUsage(itemID string) (*model.SectionItemUsage, err
 	defer resumeRows.Close()
 	resumes := scanResumes(resumeRows)
 
-	portfolioRows, err := p.pool.Query(p.ctx(), `
-		SELECT DISTINCT pf.id, pf.workspace_id, pf.title, pf.contact_profile_id, pf.created_by, pf.created_at, pf.updated_at
-		FROM section_item_links sil
-		JOIN portfolio_sections ps ON ps.section_id = sil.section_id
-		JOIN portfolios pf ON pf.id = ps.portfolio_id
-		WHERE sil.section_item_id = $1
-	`, itemID)
-	if err != nil {
-		return nil, err
-	}
-	defer portfolioRows.Close()
-	portfolios := scanPortfolios(portfolioRows)
-
 	return &model.SectionItemUsage{
 		SectionItem: item,
 		Sections:    sections,
 		Resumes:     resumes,
-		Portfolios:  portfolios,
+		Portfolios:  []*model.Portfolio{},
 	}, nil
 }
 
@@ -1080,10 +1093,18 @@ func (p *Postgres) DuplicateResume(sourceID string) (*model.Resume, error) {
 
 	settings := p.GetResumeSettings(sourceID)
 	_, err = tx.Exec(ctx, `
-		INSERT INTO resume_settings (resume_id, theme_id, font_size, page_format, margin_horizontal_mm, margin_vertical_mm, show_photo, locale)
-		VALUES ($1, $2, $3, $4, $5, $6, $7, $8)
-	`, newID, settings.ThemeID, string(settings.FontSize), string(settings.PageFormat),
-		settings.MarginHorizontalMm, settings.MarginVerticalMm, settings.ShowPhoto, settings.Locale)
+		INSERT INTO resume_settings (
+			resume_id, theme_id, font_size, contact_name_font_size, contact_headline_font_size,
+			contact_details_font_size, section_title_font_size, item_title_font_size, item_meta_font_size,
+			page_format, margin_horizontal_mm, margin_vertical_mm, show_photo, item_title_layout, locale
+		)
+		VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14, $15)
+	`, newID, settings.ThemeID, string(settings.FontSize),
+		string(settings.ContactNameFontSize), string(settings.ContactHeadlineFontSize),
+		string(settings.ContactDetailsFontSize), string(settings.SectionTitleFontSize),
+		string(settings.ItemTitleFontSize), string(settings.ItemMetaFontSize),
+		string(settings.PageFormat),
+		settings.MarginHorizontalMm, settings.MarginVerticalMm, settings.ShowPhoto, string(settings.ItemTitleLayout), settings.Locale)
 	if err != nil {
 		return nil, err
 	}
@@ -1150,10 +1171,18 @@ func (p *Postgres) CreateResume(title string) *model.Resume {
 		return resume
 	}
 	_, err = tx.Exec(ctx, `
-		INSERT INTO resume_settings (resume_id, theme_id, font_size, page_format, margin_horizontal_mm, margin_vertical_mm, show_photo, locale)
-		VALUES ($1, $2, $3, $4, $5, $6, $7, $8)
-	`, settings.ResumeID, settings.ThemeID, string(settings.FontSize), string(settings.PageFormat),
-		settings.MarginHorizontalMm, settings.MarginVerticalMm, settings.ShowPhoto, settings.Locale)
+		INSERT INTO resume_settings (
+			resume_id, theme_id, font_size, contact_name_font_size, contact_headline_font_size,
+			contact_details_font_size, section_title_font_size, item_title_font_size, item_meta_font_size,
+			page_format, margin_horizontal_mm, margin_vertical_mm, show_photo, item_title_layout, locale
+		)
+		VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14, $15)
+	`, settings.ResumeID, settings.ThemeID, string(settings.FontSize),
+		string(settings.ContactNameFontSize), string(settings.ContactHeadlineFontSize),
+		string(settings.ContactDetailsFontSize), string(settings.SectionTitleFontSize),
+		string(settings.ItemTitleFontSize), string(settings.ItemMetaFontSize),
+		string(settings.PageFormat),
+		settings.MarginHorizontalMm, settings.MarginVerticalMm, settings.ShowPhoto, string(settings.ItemTitleLayout), settings.Locale)
 	if err != nil {
 		return resume
 	}
@@ -1277,14 +1306,23 @@ type scannable interface {
 func scanUser(row scannable) (*model.User, error) {
 	var u model.User
 	var avatarURL *string
+	var role string
 	var createdAt, updatedAt time.Time
-	if err := row.Scan(&u.ID, &u.Email, &u.DisplayName, &avatarURL, &createdAt, &updatedAt); err != nil {
+	if err := row.Scan(&u.ID, &u.Email, &u.DisplayName, &avatarURL, &role, &createdAt, &updatedAt); err != nil {
 		return nil, err
 	}
 	u.AvatarURL = avatarURL
+	u.Role = normalizeUserRole(role)
 	u.CreatedAt = formatTime(createdAt)
 	u.UpdatedAt = formatTime(updatedAt)
 	return cloneUser(&u), nil
+}
+
+func normalizeUserRole(role string) model.UserRole {
+	if model.UserRole(strings.ToUpper(strings.TrimSpace(role))) == model.UserRoleAdmin {
+		return model.UserRoleAdmin
+	}
+	return model.UserRoleUser
 }
 
 func scanWorkspace(row scannable) (*model.Workspace, error) {
@@ -1453,7 +1491,7 @@ func scanSectionItems(rows pgx.Rows) []*model.SectionItem {
 func scanContactProfile(row scannable) (*model.ContactProfile, error) {
 	var cp model.ContactProfile
 	var createdAt, updatedAt time.Time
-	if err := row.Scan(&cp.ID, &cp.WorkspaceID, &cp.FullName, &cp.Headline, &cp.Email, &cp.Phone, &cp.Location, &cp.Website, &cp.LinkedIn, &cp.Github, &cp.PhotoURL, &createdAt, &updatedAt); err != nil {
+	if err := row.Scan(&cp.ID, &cp.WorkspaceID, &cp.FullName, &cp.Headline, &cp.Email, &cp.Phone, &cp.Location, &cp.Website, &cp.LinkedIn, &cp.Github, &cp.PhotoURL, &cp.LinkedinPhotoURL, &cp.GithubPhotoURL, &createdAt, &updatedAt); err != nil {
 		return nil, err
 	}
 	cp.CreatedAt = formatTime(createdAt)
@@ -1466,7 +1504,7 @@ func scanContactProfiles(rows pgx.Rows) []*model.ContactProfile {
 	for rows.Next() {
 		var cp model.ContactProfile
 		var createdAt, updatedAt time.Time
-		if err := rows.Scan(&cp.ID, &cp.WorkspaceID, &cp.FullName, &cp.Headline, &cp.Email, &cp.Phone, &cp.Location, &cp.Website, &cp.LinkedIn, &cp.Github, &cp.PhotoURL, &createdAt, &updatedAt); err != nil {
+		if err := rows.Scan(&cp.ID, &cp.WorkspaceID, &cp.FullName, &cp.Headline, &cp.Email, &cp.Phone, &cp.Location, &cp.Website, &cp.LinkedIn, &cp.Github, &cp.PhotoURL, &cp.LinkedinPhotoURL, &cp.GithubPhotoURL, &createdAt, &updatedAt); err != nil {
 			continue
 		}
 		cp.CreatedAt = formatTime(createdAt)
@@ -1478,12 +1516,48 @@ func scanContactProfiles(rows pgx.Rows) []*model.ContactProfile {
 
 func scanResumeSettings(row scannable) (*model.ResumeSettings, error) {
 	var s model.ResumeSettings
-	var fontSize, pageFormat string
-	if err := row.Scan(&s.ResumeID, &s.ThemeID, &fontSize, &pageFormat, &s.MarginHorizontalMm, &s.MarginVerticalMm, &s.ShowPhoto, &s.Locale); err != nil {
+	var fontSize, contactNameFontSize, contactHeadlineFontSize, contactDetailsFontSize string
+	var sectionTitleFontSize, itemTitleFontSize, itemMetaFontSize, pageFormat, itemTitleLayout string
+	if err := row.Scan(
+		&s.ResumeID, &s.ThemeID, &fontSize, &contactNameFontSize, &contactHeadlineFontSize,
+		&contactDetailsFontSize, &sectionTitleFontSize, &itemTitleFontSize, &itemMetaFontSize,
+		&pageFormat, &s.MarginHorizontalMm, &s.MarginVerticalMm, &s.ShowPhoto, &itemTitleLayout, &s.Locale,
+	); err != nil {
 		return nil, err
 	}
 	s.FontSize = model.FontSize(fontSize)
+	s.ContactNameFontSize = model.FontSize(contactNameFontSize)
+	s.ContactHeadlineFontSize = model.FontSize(contactHeadlineFontSize)
+	s.ContactDetailsFontSize = model.FontSize(contactDetailsFontSize)
+	s.SectionTitleFontSize = model.FontSize(sectionTitleFontSize)
+	s.ItemTitleFontSize = model.FontSize(itemTitleFontSize)
+	s.ItemMetaFontSize = model.FontSize(itemMetaFontSize)
 	s.PageFormat = model.PageFormat(pageFormat)
+	s.ItemTitleLayout = model.ItemTitleLayout(itemTitleLayout)
+	if !s.FontSize.IsValid() {
+		s.FontSize = model.FontSizeM
+	}
+	if !s.ContactNameFontSize.IsValid() {
+		s.ContactNameFontSize = model.FontSizeM
+	}
+	if !s.ContactHeadlineFontSize.IsValid() {
+		s.ContactHeadlineFontSize = model.FontSizeM
+	}
+	if !s.ContactDetailsFontSize.IsValid() {
+		s.ContactDetailsFontSize = model.FontSizeM
+	}
+	if !s.SectionTitleFontSize.IsValid() {
+		s.SectionTitleFontSize = model.FontSizeM
+	}
+	if !s.ItemTitleFontSize.IsValid() {
+		s.ItemTitleFontSize = model.FontSizeM
+	}
+	if !s.ItemMetaFontSize.IsValid() {
+		s.ItemMetaFontSize = model.FontSizeM
+	}
+	if !s.ItemTitleLayout.IsValid() {
+		s.ItemTitleLayout = model.ItemTitleLayoutStacked
+	}
 	return cloneResumeSettings(&s), nil
 }
 

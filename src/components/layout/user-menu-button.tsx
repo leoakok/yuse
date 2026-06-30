@@ -7,6 +7,7 @@ import {
   LogOut,
   Mail,
   Settings,
+  Shield,
 } from "lucide-react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
@@ -38,6 +39,8 @@ export function UserMenuButton() {
   const pathname = usePathname();
   const settingsActive = pathname.startsWith("/settings");
   const connectionsActive = pathname.startsWith("/connections");
+  const adminActive = pathname.startsWith("/admin");
+  const isAdmin = user.role === "ADMIN";
 
   return (
     <DropdownMenu>
@@ -87,6 +90,15 @@ export function UserMenuButton() {
             <Link2 />
             Connections
           </DropdownMenuItem>
+          {isAdmin ? (
+            <DropdownMenuItem
+              render={<Link href="/admin" />}
+              className={cn(adminActive && "bg-accent text-accent-foreground")}
+            >
+              <Shield />
+              Admin
+            </DropdownMenuItem>
+          ) : null}
         </DropdownMenuGroup>
         <DropdownMenuSeparator />
         <DropdownMenuGroup>

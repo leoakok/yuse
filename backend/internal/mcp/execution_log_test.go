@@ -32,7 +32,7 @@ func TestSummarizeSearchGitHubResult(t *testing.T) {
 		},
 	}
 	summary := SummarizeToolResult("search_github", result, "")
-	if summary != "Listed 2 repos for @leoakok" {
+	if summary != "Found 2 repos on your GitHub" {
 		t.Fatalf("unexpected summary: %q", summary)
 	}
 }
@@ -54,7 +54,7 @@ func TestBuildActionLogPayloadIncludesDurationAndSummary(t *testing.T) {
 	if payload["authenticatedAs"] != "@leoakok" {
 		t.Fatalf("expected authenticatedAs, got %v", payload["authenticatedAs"])
 	}
-	if payload["resultSummary"] != "Listed 1 repos for @leoakok" {
+	if payload["resultSummary"] != "Found 1 repo on your GitHub" {
 		t.Fatalf("expected resultSummary, got %v", payload["resultSummary"])
 	}
 }

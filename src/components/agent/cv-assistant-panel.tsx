@@ -7,8 +7,6 @@ import { toast } from "sonner";
 import { AssistantComposer } from "@/components/agent/assistant-composer";
 import {
   AssistantMessageBubble,
-  failedToolActivitiesFromLogs,
-  toolActivitiesFromLogs,
 } from "@/components/agent/assistant-message";
 import { AssistantThreadHistory } from "@/components/agent/assistant-thread-picker";
 import { useCvAssistant } from "@/components/agent/cv-assistant-provider";
@@ -42,7 +40,6 @@ export function CvAssistantPanel() {
     startNewChat,
     switchThread,
     deleteThread,
-    lastActionLogs,
     streamingMessageId,
     lastAffectedResumeIds,
   } = useCvAssistant();
@@ -88,8 +85,6 @@ export function CvAssistantPanel() {
     : undefined;
 
   const lastAssistantMessageId = [...messages].reverse().find((m) => m.role === "ASSISTANT")?.id;
-  const lastToolActivities = toolActivitiesFromLogs(lastActionLogs);
-  const lastFailedToolActivities = failedToolActivitiesFromLogs(lastActionLogs);
   const createdResumeId = lastAffectedResumeIds.at(-1);
   const chatActionsDisabled = isLoading || isThreadsLoading || !activeThreadId;
 
@@ -133,7 +128,7 @@ export function CvAssistantPanel() {
       {isOpen ? (
         <div
           className={cn(
-            "pointer-events-auto flex h-[min(520px,70dvh)] w-[min(400px,calc(100vw-2rem))] flex-col overflow-hidden rounded-2xl border bg-background shadow-xl"
+            "pointer-events-auto flex h-[min(640px,80dvh)] w-[min(480px,calc(100vw-2rem))] flex-col overflow-hidden rounded-2xl border bg-background shadow-xl"
           )}
         >
           <div className="flex items-center justify-between gap-2 border-b px-3 py-3">
@@ -149,19 +144,12 @@ export function CvAssistantPanel() {
                   <span className="sr-only">Back to chat</span>
                 </Button>
               ) : null}
-              <div className="min-w-0 flex-1">
-                <div className="flex items-center gap-1.5">
-                  {!historyOpen ? (
-                    <YuseLogo className="size-5 shrink-0" />
-                  ) : null}
-                  <p className="text-sm font-semibold">{historyOpen ? "Past chats" : "Yuse"}</p>
-                </div>
-                <p className="truncate text-xs text-muted-foreground">
-                  {isThreadsLoading
-                    ? "Loading…"
-                    : historyOpen
-                      ? "Pick a chat or start fresh"
-                      : "Your CV workspace"}
+              <div className="flex min-w-0 flex-1 items-center gap-1.5">
+                {!historyOpen ? (
+                  <YuseLogo className="size-5 shrink-0" />
+                ) : null}
+                <p className="truncate text-sm font-semibold">
+                  {historyOpen ? "Past chats" : "Yuse"}
                 </p>
               </div>
             </div>
@@ -244,12 +232,6 @@ export function CvAssistantPanel() {
                       actionsDisabled={chatActionsDisabled}
                       isBeingEdited={message.id === editingMessageId}
                       onEditStart={handleEditStart}
-                      toolActivities={
-                        message.id === lastAssistantMessageId ? lastToolActivities : undefined
-                      }
-                      failedToolActivities={
-                        message.id === lastAssistantMessageId ? lastFailedToolActivities : undefined
-                      }
                       liveActivities={
                         message.id === streamingMessageId ? agentState.activities : undefined
                       }
@@ -328,7 +310,7 @@ export function CvAssistantPanel() {
         onClick={toggleOpen}
         aria-label={isOpen ? "Close Yuse" : "Open Yuse"}
       >
-        <YuseLogo className="size-6" monochrome />
+        <YuseLogo className="size-6" />
       </Button>
     </div>
   );

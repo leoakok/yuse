@@ -13,7 +13,8 @@ import { setLastOpenedResumeId } from "@/lib/cv/preferences";
 import { useRedirectIfResumeMissing } from "@/lib/cv/use-redirect-if-resume-missing";
 import { useWorkspace } from "@/components/layout/workspace-provider";
 import { useCvAssistant } from "@/components/agent/cv-assistant-provider";
-import type { PageFormat, ResumeWithContent } from "@/lib/types/cv";
+import type { ItemTitleLayout, PageFormat, ResumeWithContent } from "@/lib/types/cv";
+import { DEFAULT_CV_TYPOGRAPHY_SETTINGS, type CvTypographySettings } from "@/lib/cv/typography";
 
 interface ResumePageProps {
   params: Promise<{ id: string }>;
@@ -29,6 +30,8 @@ export default function ResumePage({ params }: ResumePageProps) {
   const [previewMarginHorizontalMm, setPreviewMarginHorizontalMm] = useState<number | null>(null);
   const [previewMarginVerticalMm, setPreviewMarginVerticalMm] = useState<number | null>(null);
   const [previewShowPhoto, setPreviewShowPhoto] = useState<boolean | null>(null);
+  const [previewItemTitleLayout, setPreviewItemTitleLayout] = useState<ItemTitleLayout | null>(null);
+  const [previewTypography, setPreviewTypography] = useState<CvTypographySettings | null>(null);
   const [isDownloading, setIsDownloading] = useState(false);
   const [downloadError, setDownloadError] = useState<string | null>(null);
 
@@ -53,6 +56,8 @@ export default function ResumePage({ params }: ResumePageProps) {
         setPreviewMarginHorizontalMm(null);
         setPreviewMarginVerticalMm(null);
         setPreviewShowPhoto(null);
+        setPreviewItemTitleLayout(null);
+        setPreviewTypography(null);
         setLoading(false);
       }
     });
@@ -71,11 +76,31 @@ export default function ResumePage({ params }: ResumePageProps) {
     const marginVerticalMm =
       previewMarginVerticalMm ?? content.settings.marginVerticalMm ?? DEFAULT_PAGE_MARGIN_MM;
     const showPhoto = previewShowPhoto ?? content.settings.showPhoto;
+    const itemTitleLayout = previewItemTitleLayout ?? content.settings.itemTitleLayout ?? "STACKED";
+    const typography = previewTypography ?? {
+      fontSize: content.settings.fontSize ?? DEFAULT_CV_TYPOGRAPHY_SETTINGS.fontSize,
+      contactNameFontSize:
+        content.settings.contactNameFontSize ?? DEFAULT_CV_TYPOGRAPHY_SETTINGS.contactNameFontSize,
+      contactHeadlineFontSize:
+        content.settings.contactHeadlineFontSize ??
+        DEFAULT_CV_TYPOGRAPHY_SETTINGS.contactHeadlineFontSize,
+      contactDetailsFontSize:
+        content.settings.contactDetailsFontSize ??
+        DEFAULT_CV_TYPOGRAPHY_SETTINGS.contactDetailsFontSize,
+      sectionTitleFontSize:
+        content.settings.sectionTitleFontSize ?? DEFAULT_CV_TYPOGRAPHY_SETTINGS.sectionTitleFontSize,
+      itemTitleFontSize:
+        content.settings.itemTitleFontSize ?? DEFAULT_CV_TYPOGRAPHY_SETTINGS.itemTitleFontSize,
+      itemMetaFontSize:
+        content.settings.itemMetaFontSize ?? DEFAULT_CV_TYPOGRAPHY_SETTINGS.itemMetaFontSize,
+    };
     if (
       !previewPageFormat &&
       previewMarginHorizontalMm == null &&
       previewMarginVerticalMm == null &&
-      previewShowPhoto == null
+      previewShowPhoto == null &&
+      previewItemTitleLayout == null &&
+      previewTypography == null
     ) {
       return content;
     }
@@ -87,9 +112,19 @@ export default function ResumePage({ params }: ResumePageProps) {
         marginHorizontalMm,
         marginVerticalMm,
         showPhoto,
+        itemTitleLayout,
+        ...typography,
       },
     };
-  }, [content, previewPageFormat, previewMarginHorizontalMm, previewMarginVerticalMm, previewShowPhoto]);
+  }, [
+    content,
+    previewPageFormat,
+    previewMarginHorizontalMm,
+    previewMarginVerticalMm,
+    previewShowPhoto,
+    previewItemTitleLayout,
+    previewTypography,
+  ]);
 
   useRedirectIfResumeMissing(id, loading, content !== null);
 
@@ -132,6 +167,8 @@ export default function ResumePage({ params }: ResumePageProps) {
         onContentChange={setContent}
         onPageFormatPreviewChange={setPreviewPageFormat}
         onShowPhotoPreviewChange={setPreviewShowPhoto}
+        onItemTitleLayoutPreviewChange={setPreviewItemTitleLayout}
+        onTypographyPreviewChange={setPreviewTypography}
         onMarginHorizontalPreviewChange={setPreviewMarginHorizontalMm}
         onMarginVerticalPreviewChange={setPreviewMarginVerticalMm}
         onDownload={handleDownload}

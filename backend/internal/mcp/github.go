@@ -1058,17 +1058,18 @@ func needsGitHubAPIFallback(rawURL string, htmlResult map[string]any) bool {
 
 func summarizeGitHubProfile(profile map[string]any) map[string]any {
 	return map[string]any{
-		"login":       profile["login"],
-		"name":        profile["name"],
-		"bio":         profile["bio"],
-		"company":     profile["company"],
-		"location":    profile["location"],
-		"blog":        profile["blog"],
-		"html_url":    profile["html_url"],
+		"login":        profile["login"],
+		"name":         profile["name"],
+		"bio":          profile["bio"],
+		"company":      profile["company"],
+		"location":     profile["location"],
+		"blog":         profile["blog"],
+		"html_url":     profile["html_url"],
+		"avatar_url":   profile["avatar_url"],
 		"public_repos": profile["public_repos"],
-		"followers":   profile["followers"],
-		"following":   profile["following"],
-		"created_at":  profile["created_at"],
+		"followers":    profile["followers"],
+		"following":    profile["following"],
+		"created_at":   profile["created_at"],
 	}
 }
 
@@ -1176,6 +1177,10 @@ func (g *GitHubClient) Search(query string, listUserRepos bool, maxResults int) 
 			len(filtered),
 			len(userRepos),
 		)
+		if profile, profileErr := g.FetchProfile(login); profileErr == nil {
+			out["profile"] = profile
+			enrichGitHubProfileResult(out)
+		}
 		return out, nil
 	}
 

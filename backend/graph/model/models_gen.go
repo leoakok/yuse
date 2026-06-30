@@ -9,12 +9,31 @@ import (
 	"strconv"
 )
 
-type AddPortfolioSectionItemInput struct {
-	PortfolioID string         `json:"portfolioId"`
-	SectionID   string         `json:"sectionId"`
-	Headline    *string        `json:"headline,omitempty"`
-	Body        *string        `json:"body,omitempty"`
-	Metadata    map[string]any `json:"metadata,omitempty"`
+type AddPortfolioProjectInput struct {
+	PortfolioID string   `json:"portfolioId"`
+	Title       string   `json:"title"`
+	Tagline     *string  `json:"tagline,omitempty"`
+	Problem     *string  `json:"problem,omitempty"`
+	Approach    *string  `json:"approach,omitempty"`
+	Outcome     *string  `json:"outcome,omitempty"`
+	TechStack   []string `json:"techStack,omitempty"`
+	LiveURL     *string  `json:"liveUrl,omitempty"`
+	RepoURL     *string  `json:"repoUrl,omitempty"`
+	ImageURL    *string  `json:"imageUrl,omitempty"`
+	Featured    *bool    `json:"featured,omitempty"`
+}
+
+type AddPortfolioSkillInput struct {
+	PortfolioID string  `json:"portfolioId"`
+	Name        string  `json:"name"`
+	Category    *string `json:"category,omitempty"`
+}
+
+type AddPortfolioTestimonialInput struct {
+	PortfolioID string  `json:"portfolioId"`
+	Quote       string  `json:"quote"`
+	Author      *string `json:"author,omitempty"`
+	Role        *string `json:"role,omitempty"`
 }
 
 type AddResumeSectionItemInput struct {
@@ -40,6 +59,24 @@ type AssistantAttachmentInput struct {
 	MimeType      string  `json:"mimeType"`
 	ContentBase64 *string `json:"contentBase64,omitempty"`
 	ExtractedText *string `json:"extractedText,omitempty"`
+}
+
+// Result of the cheap pre-classification layer, exposed for the admin experiment page.
+type AssistantClassification struct {
+	Category   AssistantCategory `json:"category"`
+	Confidence float64           `json:"confidence"`
+	Tags       []string          `json:"tags"`
+	Reason     string            `json:"reason"`
+	// Where the decision came from: fast-path, classifier, or fallback.
+	Source string `json:"source"`
+	// True when the request is handled before the main agent (out of scope, unclear, greeting).
+	ScopeHandled bool `json:"scopeHandled"`
+	// The canned reply used when scopeHandled is true (out of scope / unclear / greeting).
+	CannedReply *string `json:"cannedReply,omitempty"`
+	// Dictionary entries selected for this category/tags.
+	SelectedEntries []*KnowledgeEntry `json:"selectedEntries"`
+	// The guidance block that would be injected into the main agent prompt.
+	Guidance string `json:"guidance"`
 }
 
 type AssistantContextInput struct {
@@ -86,19 +123,31 @@ type ConnectionStatus struct {
 }
 
 type ContactProfile struct {
-	ID          string  `json:"id"`
-	WorkspaceID string  `json:"workspaceId"`
-	FullName    string  `json:"fullName"`
-	Headline    *string `json:"headline,omitempty"`
-	Email       *string `json:"email,omitempty"`
-	Phone       *string `json:"phone,omitempty"`
-	Location    *string `json:"location,omitempty"`
-	Website     *string `json:"website,omitempty"`
-	LinkedIn    *string `json:"linkedIn,omitempty"`
-	Github      *string `json:"github,omitempty"`
-	PhotoURL    *string `json:"photoUrl,omitempty"`
-	CreatedAt   string  `json:"createdAt"`
-	UpdatedAt   string  `json:"updatedAt"`
+	ID                string  `json:"id"`
+	WorkspaceID       string  `json:"workspaceId"`
+	FullName          string  `json:"fullName"`
+	Headline          *string `json:"headline,omitempty"`
+	Email             *string `json:"email,omitempty"`
+	Phone             *string `json:"phone,omitempty"`
+	Location          *string `json:"location,omitempty"`
+	Website           *string `json:"website,omitempty"`
+	LinkedIn          *string `json:"linkedIn,omitempty"`
+	Github            *string `json:"github,omitempty"`
+	PhotoURL          *string `json:"photoUrl,omitempty"`
+	LinkedinPhotoURL  *string `json:"linkedinPhotoUrl,omitempty"`
+	GithubPhotoURL    *string `json:"githubPhotoUrl,omitempty"`
+	EffectivePhotoURL *string `json:"effectivePhotoUrl,omitempty"`
+	CreatedAt         string  `json:"createdAt"`
+	UpdatedAt         string  `json:"updatedAt"`
+}
+
+type CreateKnowledgeEntryInput struct {
+	Slug     string            `json:"slug"`
+	Title    string            `json:"title"`
+	Category AssistantCategory `json:"category"`
+	Tags     []string          `json:"tags,omitempty"`
+	Body     string            `json:"body"`
+	Enabled  *bool             `json:"enabled,omitempty"`
 }
 
 type CreateTwinEntryInput struct {
@@ -116,6 +165,19 @@ type CvTheme struct {
 	Config   map[string]any `json:"config"`
 }
 
+// A curated, tag-keyed guidance entry the agent injects into context based on the detected category.
+type KnowledgeEntry struct {
+	ID        string            `json:"id"`
+	Slug      string            `json:"slug"`
+	Title     string            `json:"title"`
+	Category  AssistantCategory `json:"category"`
+	Tags      []string          `json:"tags"`
+	Body      string            `json:"body"`
+	Enabled   bool              `json:"enabled"`
+	CreatedAt string            `json:"createdAt"`
+	UpdatedAt string            `json:"updatedAt"`
+}
+
 type Mutation struct {
 }
 
@@ -123,29 +185,69 @@ type Portfolio struct {
 	ID               string  `json:"id"`
 	WorkspaceID      string  `json:"workspaceId"`
 	Title            string  `json:"title"`
+	Tagline          string  `json:"tagline"`
+	About            string  `json:"about"`
 	ContactProfileID *string `json:"contactProfileId,omitempty"`
 	CreatedBy        string  `json:"createdBy"`
 	CreatedAt        string  `json:"createdAt"`
 	UpdatedAt        string  `json:"updatedAt"`
 }
 
+type PortfolioProject struct {
+	ID            string   `json:"id"`
+	PortfolioID   string   `json:"portfolioId"`
+	Title         string   `json:"title"`
+	Tagline       string   `json:"tagline"`
+	Problem       string   `json:"problem"`
+	Approach      string   `json:"approach"`
+	Outcome       string   `json:"outcome"`
+	TechStack     []string `json:"techStack"`
+	LiveURL       *string  `json:"liveUrl,omitempty"`
+	RepoURL       *string  `json:"repoUrl,omitempty"`
+	ImageURL      *string  `json:"imageUrl,omitempty"`
+	Featured      bool     `json:"featured"`
+	ShowInPreview bool     `json:"showInPreview"`
+	SortOrder     int      `json:"sortOrder"`
+	CreatedAt     string   `json:"createdAt"`
+	UpdatedAt     string   `json:"updatedAt"`
+}
+
 type PortfolioSettings struct {
-	PortfolioID        string     `json:"portfolioId"`
-	ThemeID            string     `json:"themeId"`
-	FontSize           FontSize   `json:"fontSize"`
-	PageFormat         PageFormat `json:"pageFormat"`
-	MarginHorizontalMm float64    `json:"marginHorizontalMm"`
-	MarginVerticalMm   float64    `json:"marginVerticalMm"`
-	ShowPhoto          bool       `json:"showPhoto"`
-	Locale             string     `json:"locale"`
+	PortfolioID string          `json:"portfolioId"`
+	ThemeID     string          `json:"themeId"`
+	Layout      PortfolioLayout `json:"layout"`
+	AccentColor string          `json:"accentColor"`
+	ShowPhoto   bool            `json:"showPhoto"`
+	Locale      string          `json:"locale"`
+}
+
+type PortfolioSkill struct {
+	ID            string  `json:"id"`
+	PortfolioID   string  `json:"portfolioId"`
+	Name          string  `json:"name"`
+	Category      *string `json:"category,omitempty"`
+	ShowInPreview bool    `json:"showInPreview"`
+	SortOrder     int     `json:"sortOrder"`
+}
+
+type PortfolioTestimonial struct {
+	ID            string `json:"id"`
+	PortfolioID   string `json:"portfolioId"`
+	Quote         string `json:"quote"`
+	Author        string `json:"author"`
+	Role          string `json:"role"`
+	ShowInPreview bool   `json:"showInPreview"`
+	SortOrder     int    `json:"sortOrder"`
 }
 
 type PortfolioWithContent struct {
-	Portfolio      *Portfolio          `json:"portfolio"`
-	ContactProfile *ContactProfile     `json:"contactProfile,omitempty"`
-	Settings       *PortfolioSettings  `json:"settings"`
-	Theme          *CvTheme            `json:"theme"`
-	Sections       []*SectionWithItems `json:"sections"`
+	Portfolio      *Portfolio              `json:"portfolio"`
+	ContactProfile *ContactProfile         `json:"contactProfile,omitempty"`
+	Settings       *PortfolioSettings      `json:"settings"`
+	Theme          *CvTheme                `json:"theme"`
+	Projects       []*PortfolioProject     `json:"projects"`
+	Skills         []*PortfolioSkill       `json:"skills"`
+	Testimonials   []*PortfolioTestimonial `json:"testimonials"`
 }
 
 type ProfilePhotoUpload struct {
@@ -169,14 +271,21 @@ type Resume struct {
 }
 
 type ResumeSettings struct {
-	ResumeID           string     `json:"resumeId"`
-	ThemeID            string     `json:"themeId"`
-	FontSize           FontSize   `json:"fontSize"`
-	PageFormat         PageFormat `json:"pageFormat"`
-	MarginHorizontalMm float64    `json:"marginHorizontalMm"`
-	MarginVerticalMm   float64    `json:"marginVerticalMm"`
-	ShowPhoto          bool       `json:"showPhoto"`
-	Locale             string     `json:"locale"`
+	ResumeID                string          `json:"resumeId"`
+	ThemeID                 string          `json:"themeId"`
+	FontSize                FontSize        `json:"fontSize"`
+	ContactNameFontSize     FontSize        `json:"contactNameFontSize"`
+	ContactHeadlineFontSize FontSize        `json:"contactHeadlineFontSize"`
+	ContactDetailsFontSize  FontSize        `json:"contactDetailsFontSize"`
+	SectionTitleFontSize    FontSize        `json:"sectionTitleFontSize"`
+	ItemTitleFontSize       FontSize        `json:"itemTitleFontSize"`
+	ItemMetaFontSize        FontSize        `json:"itemMetaFontSize"`
+	PageFormat              PageFormat      `json:"pageFormat"`
+	MarginHorizontalMm      float64         `json:"marginHorizontalMm"`
+	MarginVerticalMm        float64         `json:"marginVerticalMm"`
+	ShowPhoto               bool            `json:"showPhoto"`
+	ItemTitleLayout         ItemTitleLayout `json:"itemTitleLayout"`
+	Locale                  string          `json:"locale"`
 }
 
 type ResumeWithContent struct {
@@ -223,6 +332,12 @@ type SectionWithItems struct {
 	Items   []*SectionItem `json:"items"`
 }
 
+type SetPortfolioProjectVisibilityInput struct {
+	PortfolioID   string `json:"portfolioId"`
+	ProjectID     string `json:"projectId"`
+	ShowInPreview bool   `json:"showInPreview"`
+}
+
 type TrackedJob struct {
 	ID          string         `json:"id"`
 	WorkspaceID string         `json:"workspaceId"`
@@ -253,56 +368,85 @@ type TwinEntry struct {
 }
 
 type UpdateContactProfileInput struct {
-	ResumeID string  `json:"resumeId"`
-	FullName *string `json:"fullName,omitempty"`
-	Headline *string `json:"headline,omitempty"`
-	Email    *string `json:"email,omitempty"`
-	Phone    *string `json:"phone,omitempty"`
-	Location *string `json:"location,omitempty"`
-	Website  *string `json:"website,omitempty"`
-	LinkedIn *string `json:"linkedIn,omitempty"`
-	Github   *string `json:"github,omitempty"`
-	PhotoURL *string `json:"photoUrl,omitempty"`
+	ResumeID         string  `json:"resumeId"`
+	FullName         *string `json:"fullName,omitempty"`
+	Headline         *string `json:"headline,omitempty"`
+	Email            *string `json:"email,omitempty"`
+	Phone            *string `json:"phone,omitempty"`
+	Location         *string `json:"location,omitempty"`
+	Website          *string `json:"website,omitempty"`
+	LinkedIn         *string `json:"linkedIn,omitempty"`
+	Github           *string `json:"github,omitempty"`
+	PhotoURL         *string `json:"photoUrl,omitempty"`
+	LinkedinPhotoURL *string `json:"linkedinPhotoUrl,omitempty"`
+	GithubPhotoURL   *string `json:"githubPhotoUrl,omitempty"`
+}
+
+type UpdateKnowledgeEntryInput struct {
+	ID       string             `json:"id"`
+	Slug     *string            `json:"slug,omitempty"`
+	Title    *string            `json:"title,omitempty"`
+	Category *AssistantCategory `json:"category,omitempty"`
+	Tags     []string           `json:"tags,omitempty"`
+	Body     *string            `json:"body,omitempty"`
+	Enabled  *bool              `json:"enabled,omitempty"`
 }
 
 type UpdatePortfolioContactProfileInput struct {
-	PortfolioID string  `json:"portfolioId"`
-	FullName    *string `json:"fullName,omitempty"`
-	Headline    *string `json:"headline,omitempty"`
-	Email       *string `json:"email,omitempty"`
-	Phone       *string `json:"phone,omitempty"`
-	Location    *string `json:"location,omitempty"`
-	Website     *string `json:"website,omitempty"`
-	LinkedIn    *string `json:"linkedIn,omitempty"`
-	Github      *string `json:"github,omitempty"`
-	PhotoURL    *string `json:"photoUrl,omitempty"`
+	PortfolioID      string  `json:"portfolioId"`
+	FullName         *string `json:"fullName,omitempty"`
+	Headline         *string `json:"headline,omitempty"`
+	Email            *string `json:"email,omitempty"`
+	Phone            *string `json:"phone,omitempty"`
+	Location         *string `json:"location,omitempty"`
+	Website          *string `json:"website,omitempty"`
+	LinkedIn         *string `json:"linkedIn,omitempty"`
+	Github           *string `json:"github,omitempty"`
+	PhotoURL         *string `json:"photoUrl,omitempty"`
+	LinkedinPhotoURL *string `json:"linkedinPhotoUrl,omitempty"`
+	GithubPhotoURL   *string `json:"githubPhotoUrl,omitempty"`
 }
 
-type UpdatePortfolioSectionItemInput struct {
-	PortfolioID   string         `json:"portfolioId"`
-	SectionID     string         `json:"sectionId"`
-	SectionItemID string         `json:"sectionItemId"`
-	Headline      *string        `json:"headline,omitempty"`
-	Body          *string        `json:"body,omitempty"`
-	Metadata      map[string]any `json:"metadata,omitempty"`
-}
-
-type UpdatePortfolioSectionItemVisibilityInput struct {
-	PortfolioID   string `json:"portfolioId"`
-	SectionID     string `json:"sectionId"`
-	SectionItemID string `json:"sectionItemId"`
-	ShowInPreview bool   `json:"showInPreview"`
+type UpdatePortfolioProjectInput struct {
+	PortfolioID   string   `json:"portfolioId"`
+	ProjectID     string   `json:"projectId"`
+	Title         *string  `json:"title,omitempty"`
+	Tagline       *string  `json:"tagline,omitempty"`
+	Problem       *string  `json:"problem,omitempty"`
+	Approach      *string  `json:"approach,omitempty"`
+	Outcome       *string  `json:"outcome,omitempty"`
+	TechStack     []string `json:"techStack,omitempty"`
+	LiveURL       *string  `json:"liveUrl,omitempty"`
+	RepoURL       *string  `json:"repoUrl,omitempty"`
+	ImageURL      *string  `json:"imageUrl,omitempty"`
+	Featured      *bool    `json:"featured,omitempty"`
+	ShowInPreview *bool    `json:"showInPreview,omitempty"`
 }
 
 type UpdatePortfolioSettingsInput struct {
-	PortfolioID        string      `json:"portfolioId"`
-	PageFormat         *PageFormat `json:"pageFormat,omitempty"`
-	FontSize           *FontSize   `json:"fontSize,omitempty"`
-	MarginHorizontalMm *float64    `json:"marginHorizontalMm,omitempty"`
-	MarginVerticalMm   *float64    `json:"marginVerticalMm,omitempty"`
-	ThemeID            *string     `json:"themeId,omitempty"`
-	ShowPhoto          *bool       `json:"showPhoto,omitempty"`
-	Locale             *string     `json:"locale,omitempty"`
+	PortfolioID string           `json:"portfolioId"`
+	Layout      *PortfolioLayout `json:"layout,omitempty"`
+	AccentColor *string          `json:"accentColor,omitempty"`
+	ThemeID     *string          `json:"themeId,omitempty"`
+	ShowPhoto   *bool            `json:"showPhoto,omitempty"`
+	Locale      *string          `json:"locale,omitempty"`
+}
+
+type UpdatePortfolioSkillInput struct {
+	PortfolioID   string  `json:"portfolioId"`
+	SkillID       string  `json:"skillId"`
+	Name          *string `json:"name,omitempty"`
+	Category      *string `json:"category,omitempty"`
+	ShowInPreview *bool   `json:"showInPreview,omitempty"`
+}
+
+type UpdatePortfolioTestimonialInput struct {
+	PortfolioID   string  `json:"portfolioId"`
+	TestimonialID string  `json:"testimonialId"`
+	Quote         *string `json:"quote,omitempty"`
+	Author        *string `json:"author,omitempty"`
+	Role          *string `json:"role,omitempty"`
+	ShowInPreview *bool   `json:"showInPreview,omitempty"`
 }
 
 type UpdateResumeSectionItemInput struct {
@@ -322,14 +466,21 @@ type UpdateResumeSectionItemVisibilityInput struct {
 }
 
 type UpdateResumeSettingsInput struct {
-	ResumeID           string      `json:"resumeId"`
-	PageFormat         *PageFormat `json:"pageFormat,omitempty"`
-	FontSize           *FontSize   `json:"fontSize,omitempty"`
-	MarginHorizontalMm *float64    `json:"marginHorizontalMm,omitempty"`
-	MarginVerticalMm   *float64    `json:"marginVerticalMm,omitempty"`
-	ThemeID            *string     `json:"themeId,omitempty"`
-	ShowPhoto          *bool       `json:"showPhoto,omitempty"`
-	Locale             *string     `json:"locale,omitempty"`
+	ResumeID                string           `json:"resumeId"`
+	PageFormat              *PageFormat      `json:"pageFormat,omitempty"`
+	FontSize                *FontSize        `json:"fontSize,omitempty"`
+	ContactNameFontSize     *FontSize        `json:"contactNameFontSize,omitempty"`
+	ContactHeadlineFontSize *FontSize        `json:"contactHeadlineFontSize,omitempty"`
+	ContactDetailsFontSize  *FontSize        `json:"contactDetailsFontSize,omitempty"`
+	SectionTitleFontSize    *FontSize        `json:"sectionTitleFontSize,omitempty"`
+	ItemTitleFontSize       *FontSize        `json:"itemTitleFontSize,omitempty"`
+	ItemMetaFontSize        *FontSize        `json:"itemMetaFontSize,omitempty"`
+	MarginHorizontalMm      *float64         `json:"marginHorizontalMm,omitempty"`
+	MarginVerticalMm        *float64         `json:"marginVerticalMm,omitempty"`
+	ThemeID                 *string          `json:"themeId,omitempty"`
+	ShowPhoto               *bool            `json:"showPhoto,omitempty"`
+	ItemTitleLayout         *ItemTitleLayout `json:"itemTitleLayout,omitempty"`
+	Locale                  *string          `json:"locale,omitempty"`
 }
 
 type UpdateTrackedJobInput struct {
@@ -353,12 +504,13 @@ type UpdateTwinEntryInput struct {
 }
 
 type User struct {
-	ID          string  `json:"id"`
-	Email       string  `json:"email"`
-	DisplayName string  `json:"displayName"`
-	AvatarURL   *string `json:"avatarUrl,omitempty"`
-	CreatedAt   string  `json:"createdAt"`
-	UpdatedAt   string  `json:"updatedAt"`
+	ID          string   `json:"id"`
+	Email       string   `json:"email"`
+	DisplayName string   `json:"displayName"`
+	AvatarURL   *string  `json:"avatarUrl,omitempty"`
+	Role        UserRole `json:"role"`
+	CreatedAt   string   `json:"createdAt"`
+	UpdatedAt   string   `json:"updatedAt"`
 }
 
 type Workspace struct {
@@ -376,6 +528,74 @@ type WorkspaceStats struct {
 	PortfolioCount   int `json:"portfolioCount"`
 	SectionCount     int `json:"sectionCount"`
 	SectionItemCount int `json:"sectionItemCount"`
+}
+
+// Detected request category from the cheap intent layer that runs before the main agent.
+type AssistantCategory string
+
+const (
+	AssistantCategoryUpdateCv       AssistantCategory = "UPDATE_CV"
+	AssistantCategoryCreateCv       AssistantCategory = "CREATE_CV"
+	AssistantCategoryPortfolio      AssistantCategory = "PORTFOLIO"
+	AssistantCategoryJobApplication AssistantCategory = "JOB_APPLICATION"
+	AssistantCategoryAdvice         AssistantCategory = "ADVICE"
+	AssistantCategoryOutOfScope     AssistantCategory = "OUT_OF_SCOPE"
+	AssistantCategoryChitchat       AssistantCategory = "CHITCHAT"
+	AssistantCategoryUnclear        AssistantCategory = "UNCLEAR"
+)
+
+var AllAssistantCategory = []AssistantCategory{
+	AssistantCategoryUpdateCv,
+	AssistantCategoryCreateCv,
+	AssistantCategoryPortfolio,
+	AssistantCategoryJobApplication,
+	AssistantCategoryAdvice,
+	AssistantCategoryOutOfScope,
+	AssistantCategoryChitchat,
+	AssistantCategoryUnclear,
+}
+
+func (e AssistantCategory) IsValid() bool {
+	switch e {
+	case AssistantCategoryUpdateCv, AssistantCategoryCreateCv, AssistantCategoryPortfolio, AssistantCategoryJobApplication, AssistantCategoryAdvice, AssistantCategoryOutOfScope, AssistantCategoryChitchat, AssistantCategoryUnclear:
+		return true
+	}
+	return false
+}
+
+func (e AssistantCategory) String() string {
+	return string(e)
+}
+
+func (e *AssistantCategory) UnmarshalGQL(v any) error {
+	str, ok := v.(string)
+	if !ok {
+		return fmt.Errorf("enums must be strings")
+	}
+
+	*e = AssistantCategory(str)
+	if !e.IsValid() {
+		return fmt.Errorf("%s is not a valid AssistantCategory", str)
+	}
+	return nil
+}
+
+func (e AssistantCategory) MarshalGQL(w io.Writer) {
+	fmt.Fprint(w, strconv.Quote(e.String()))
+}
+
+func (e *AssistantCategory) UnmarshalJSON(b []byte) error {
+	s, err := strconv.Unquote(string(b))
+	if err != nil {
+		return err
+	}
+	return e.UnmarshalGQL(s)
+}
+
+func (e AssistantCategory) MarshalJSON() ([]byte, error) {
+	var buf bytes.Buffer
+	e.MarshalGQL(&buf)
+	return buf.Bytes(), nil
 }
 
 type AssistantMessageRole string
@@ -558,20 +778,24 @@ func (e ConnectionProvider) MarshalJSON() ([]byte, error) {
 type FontSize string
 
 const (
-	FontSizeS FontSize = "S"
-	FontSizeM FontSize = "M"
-	FontSizeL FontSize = "L"
+	FontSizeXs FontSize = "XS"
+	FontSizeS  FontSize = "S"
+	FontSizeM  FontSize = "M"
+	FontSizeL  FontSize = "L"
+	FontSizeXl FontSize = "XL"
 )
 
 var AllFontSize = []FontSize{
+	FontSizeXs,
 	FontSizeS,
 	FontSizeM,
 	FontSizeL,
+	FontSizeXl,
 }
 
 func (e FontSize) IsValid() bool {
 	switch e {
-	case FontSizeS, FontSizeM, FontSizeL:
+	case FontSizeXs, FontSizeS, FontSizeM, FontSizeL, FontSizeXl:
 		return true
 	}
 	return false
@@ -607,6 +831,62 @@ func (e *FontSize) UnmarshalJSON(b []byte) error {
 }
 
 func (e FontSize) MarshalJSON() ([]byte, error) {
+	var buf bytes.Buffer
+	e.MarshalGQL(&buf)
+	return buf.Bytes(), nil
+}
+
+// How section item title and subtitle (role/company, degree/school, etc.) are laid out.
+type ItemTitleLayout string
+
+const (
+	ItemTitleLayoutStacked ItemTitleLayout = "STACKED"
+	ItemTitleLayoutInline  ItemTitleLayout = "INLINE"
+)
+
+var AllItemTitleLayout = []ItemTitleLayout{
+	ItemTitleLayoutStacked,
+	ItemTitleLayoutInline,
+}
+
+func (e ItemTitleLayout) IsValid() bool {
+	switch e {
+	case ItemTitleLayoutStacked, ItemTitleLayoutInline:
+		return true
+	}
+	return false
+}
+
+func (e ItemTitleLayout) String() string {
+	return string(e)
+}
+
+func (e *ItemTitleLayout) UnmarshalGQL(v any) error {
+	str, ok := v.(string)
+	if !ok {
+		return fmt.Errorf("enums must be strings")
+	}
+
+	*e = ItemTitleLayout(str)
+	if !e.IsValid() {
+		return fmt.Errorf("%s is not a valid ItemTitleLayout", str)
+	}
+	return nil
+}
+
+func (e ItemTitleLayout) MarshalGQL(w io.Writer) {
+	fmt.Fprint(w, strconv.Quote(e.String()))
+}
+
+func (e *ItemTitleLayout) UnmarshalJSON(b []byte) error {
+	s, err := strconv.Unquote(string(b))
+	if err != nil {
+		return err
+	}
+	return e.UnmarshalGQL(s)
+}
+
+func (e ItemTitleLayout) MarshalJSON() ([]byte, error) {
 	var buf bytes.Buffer
 	e.MarshalGQL(&buf)
 	return buf.Bytes(), nil
@@ -785,6 +1065,61 @@ func (e *PageFormat) UnmarshalJSON(b []byte) error {
 }
 
 func (e PageFormat) MarshalJSON() ([]byte, error) {
+	var buf bytes.Buffer
+	e.MarshalGQL(&buf)
+	return buf.Bytes(), nil
+}
+
+type PortfolioLayout string
+
+const (
+	PortfolioLayoutSingle PortfolioLayout = "SINGLE"
+	PortfolioLayoutSplit  PortfolioLayout = "SPLIT"
+)
+
+var AllPortfolioLayout = []PortfolioLayout{
+	PortfolioLayoutSingle,
+	PortfolioLayoutSplit,
+}
+
+func (e PortfolioLayout) IsValid() bool {
+	switch e {
+	case PortfolioLayoutSingle, PortfolioLayoutSplit:
+		return true
+	}
+	return false
+}
+
+func (e PortfolioLayout) String() string {
+	return string(e)
+}
+
+func (e *PortfolioLayout) UnmarshalGQL(v any) error {
+	str, ok := v.(string)
+	if !ok {
+		return fmt.Errorf("enums must be strings")
+	}
+
+	*e = PortfolioLayout(str)
+	if !e.IsValid() {
+		return fmt.Errorf("%s is not a valid PortfolioLayout", str)
+	}
+	return nil
+}
+
+func (e PortfolioLayout) MarshalGQL(w io.Writer) {
+	fmt.Fprint(w, strconv.Quote(e.String()))
+}
+
+func (e *PortfolioLayout) UnmarshalJSON(b []byte) error {
+	s, err := strconv.Unquote(string(b))
+	if err != nil {
+		return err
+	}
+	return e.UnmarshalGQL(s)
+}
+
+func (e PortfolioLayout) MarshalJSON() ([]byte, error) {
 	var buf bytes.Buffer
 	e.MarshalGQL(&buf)
 	return buf.Bytes(), nil
@@ -983,6 +1318,62 @@ func (e *TwinEntryType) UnmarshalJSON(b []byte) error {
 }
 
 func (e TwinEntryType) MarshalJSON() ([]byte, error) {
+	var buf bytes.Buffer
+	e.MarshalGQL(&buf)
+	return buf.Bytes(), nil
+}
+
+// Platform role. ADMIN can manage the knowledge dictionary and view the agent experiment page.
+type UserRole string
+
+const (
+	UserRoleUser  UserRole = "USER"
+	UserRoleAdmin UserRole = "ADMIN"
+)
+
+var AllUserRole = []UserRole{
+	UserRoleUser,
+	UserRoleAdmin,
+}
+
+func (e UserRole) IsValid() bool {
+	switch e {
+	case UserRoleUser, UserRoleAdmin:
+		return true
+	}
+	return false
+}
+
+func (e UserRole) String() string {
+	return string(e)
+}
+
+func (e *UserRole) UnmarshalGQL(v any) error {
+	str, ok := v.(string)
+	if !ok {
+		return fmt.Errorf("enums must be strings")
+	}
+
+	*e = UserRole(str)
+	if !e.IsValid() {
+		return fmt.Errorf("%s is not a valid UserRole", str)
+	}
+	return nil
+}
+
+func (e UserRole) MarshalGQL(w io.Writer) {
+	fmt.Fprint(w, strconv.Quote(e.String()))
+}
+
+func (e *UserRole) UnmarshalJSON(b []byte) error {
+	s, err := strconv.Unquote(string(b))
+	if err != nil {
+		return err
+	}
+	return e.UnmarshalGQL(s)
+}
+
+func (e UserRole) MarshalJSON() ([]byte, error) {
 	var buf bytes.Buffer
 	e.MarshalGQL(&buf)
 	return buf.Bytes(), nil

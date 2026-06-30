@@ -183,6 +183,8 @@ func (r *Registry) ExecuteWithProgress(toolName string, argsJSON []byte, progres
 		input.LinkedIn = optionalStringPtr(args, "linkedIn")
 		input.Github = optionalStringPtr(args, "github")
 		input.PhotoURL = optionalStringPtr(args, "photoUrl")
+		input.LinkedinPhotoURL = optionalStringPtr(args, "linkedinPhotoUrl")
+		input.GithubPhotoURL = optionalStringPtr(args, "githubPhotoUrl")
 		content, err := r.exec.UpdateContactProfile(context.Background(), input)
 		if err != nil {
 			exec.Error = err.Error()
@@ -331,11 +333,53 @@ func (r *Registry) ExecuteWithProgress(toolName string, argsJSON []byte, progres
 				input.FontSize = &fs
 			}
 		}
+		if v, ok := optionalEnum(args, "contactNameFontSize"); ok {
+			fs := model.FontSize(v)
+			if fs.IsValid() {
+				input.ContactNameFontSize = &fs
+			}
+		}
+		if v, ok := optionalEnum(args, "contactHeadlineFontSize"); ok {
+			fs := model.FontSize(v)
+			if fs.IsValid() {
+				input.ContactHeadlineFontSize = &fs
+			}
+		}
+		if v, ok := optionalEnum(args, "contactDetailsFontSize"); ok {
+			fs := model.FontSize(v)
+			if fs.IsValid() {
+				input.ContactDetailsFontSize = &fs
+			}
+		}
+		if v, ok := optionalEnum(args, "sectionTitleFontSize"); ok {
+			fs := model.FontSize(v)
+			if fs.IsValid() {
+				input.SectionTitleFontSize = &fs
+			}
+		}
+		if v, ok := optionalEnum(args, "itemTitleFontSize"); ok {
+			fs := model.FontSize(v)
+			if fs.IsValid() {
+				input.ItemTitleFontSize = &fs
+			}
+		}
+		if v, ok := optionalEnum(args, "itemMetaFontSize"); ok {
+			fs := model.FontSize(v)
+			if fs.IsValid() {
+				input.ItemMetaFontSize = &fs
+			}
+		}
 		if v, ok := optionalString(args, "themeId"); ok && v != "" {
 			input.ThemeID = &v
 		}
 		if v, ok := optionalBool(args, "showPhoto"); ok {
 			input.ShowPhoto = &v
+		}
+		if v, ok := optionalEnum(args, "itemTitleLayout"); ok {
+			layout := model.ItemTitleLayout(v)
+			if layout.IsValid() {
+				input.ItemTitleLayout = &layout
+			}
 		}
 		if v, ok := optionalString(args, "locale"); ok && v != "" {
 			input.Locale = &v
@@ -632,6 +676,7 @@ func (r *Registry) ExecuteWithProgress(toolName string, argsJSON []byte, progres
 			exec.Error = err.Error()
 			return exec
 		}
+		enrichGitHubProfileResult(result)
 		exec.Result = result
 
 	case "explore_website":
@@ -651,6 +696,7 @@ func (r *Registry) ExecuteWithProgress(toolName string, argsJSON []byte, progres
 				exec.Error = liErr.Error()
 				return exec
 			}
+			enrichLinkedInProfileResult(result)
 			result["siteKind"] = "linkedin_profile"
 			result["strategy"] = "linkedin_profile"
 			exec.Result = result
@@ -728,6 +774,7 @@ func (r *Registry) ExecuteWithProgress(toolName string, argsJSON []byte, progres
 			exec.Error = err.Error()
 			return exec
 		}
+		enrichLinkedInProfileResult(result)
 		exec.Result = result
 
 	default:
@@ -869,15 +916,17 @@ func resumeContentSummary(content *model.ResumeWithContent) map[string]any {
 	if content.ContactProfile != nil {
 		cp := content.ContactProfile
 		out["contactProfile"] = map[string]any{
-			"fullName": cp.FullName,
-			"headline": cp.Headline,
-			"email":    cp.Email,
-			"phone":    cp.Phone,
-			"location": cp.Location,
-			"website":  cp.Website,
-			"linkedIn": cp.LinkedIn,
-			"github":   cp.Github,
-			"photoUrl": cp.PhotoURL,
+			"fullName":         cp.FullName,
+			"headline":         cp.Headline,
+			"email":            cp.Email,
+			"phone":            cp.Phone,
+			"location":         cp.Location,
+			"website":          cp.Website,
+			"linkedIn":         cp.LinkedIn,
+			"github":           cp.Github,
+			"photoUrl":         cp.PhotoURL,
+			"linkedinPhotoUrl": cp.LinkedinPhotoURL,
+			"githubPhotoUrl":   cp.GithubPhotoURL,
 		}
 	} else {
 		out["contactProfile"] = nil

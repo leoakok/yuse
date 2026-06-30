@@ -13,6 +13,8 @@ import type {
   ResumeWithContent,
   Section,
   SectionItem,
+  ItemTitleLayout,
+  CvFontSize,
   SectionItemMetadata,
   SectionItemUsage,
   PageFormat,
@@ -28,6 +30,7 @@ import type {
   UpdateTrackedJobInput,
 } from "@/lib/types/job";
 import { mapPortfolioWithContent } from "@/lib/api/portfolio-api";
+import { DEFAULT_CV_TYPOGRAPHY_SETTINGS } from "@/lib/cv/typography";
 import { DEFAULT_PAGE_MARGIN_MM } from "@/lib/cv/page-format";
 import { normalizeUserMessage } from "@/lib/assistant/attachments";
 import {
@@ -69,6 +72,7 @@ import {
 } from "@/lib/graphql/operations";
 import { buildAgentSteps } from "@/lib/assistant/state";
 import { AGENT_PHASE_LABELS } from "@/lib/types/assistant";
+import { graphqlRequest } from "@/lib/graphql/client";
 
 function mapMetadata(metadata: Record<string, unknown> | null | undefined) {
   const result: Record<string, string | undefined> = {};
@@ -140,15 +144,39 @@ function mapPageFormat(value: string | undefined): PageFormat {
   return value === "LETTER" ? "LETTER" : "A4";
 }
 
+function mapItemTitleLayout(value: string | undefined): ItemTitleLayout {
+  return value === "INLINE" ? "INLINE" : "STACKED";
+}
+
+function mapFontSize(value: string | undefined): CvFontSize {
+  if (value === "S" || value === "L") return value;
+  return "M";
+}
+
+function mapResumeSettings(settings: ResumeSettings): ResumeSettings {
+  return {
+    ...settings,
+    fontSize: mapFontSize(settings.fontSize as string | undefined),
+    contactNameFontSize: mapFontSize(settings.contactNameFontSize as string | undefined),
+    contactHeadlineFontSize: mapFontSize(settings.contactHeadlineFontSize as string | undefined),
+    contactDetailsFontSize: mapFontSize(settings.contactDetailsFontSize as string | undefined),
+    sectionTitleFontSize: mapFontSize(settings.sectionTitleFontSize as string | undefined),
+    itemTitleFontSize: mapFontSize(settings.itemTitleFontSize as string | undefined),
+    itemMetaFontSize: mapFontSize(settings.itemMetaFontSize as string | undefined),
+    pageFormat: mapPageFormat(settings.pageFormat as string | undefined),
+    marginHorizontalMm: settings.marginHorizontalMm ?? DEFAULT_PAGE_MARGIN_MM,
+    marginVerticalMm: settings.marginVerticalMm ?? DEFAULT_PAGE_MARGIN_MM,
+    itemTitleLayout: mapItemTitleLayout(settings.itemTitleLayout as string | undefined),
+  };
+}
+
 export function mapResumeWithContent(data: ResumeWithContent): ResumeWithContent {
   return {
     ...data,
-    settings: {
+    settings: mapResumeSettings({
+      ...DEFAULT_CV_TYPOGRAPHY_SETTINGS,
       ...data.settings,
-      pageFormat: mapPageFormat(data.settings.pageFormat as string | undefined),
-      marginHorizontalMm: data.settings.marginHorizontalMm ?? DEFAULT_PAGE_MARGIN_MM,
-      marginVerticalMm: data.settings.marginVerticalMm ?? DEFAULT_PAGE_MARGIN_MM,
-    },
+    } as ResumeSettings),
     sections: data.sections.map((s) => ({
       section: s.section,
       items: s.items.map(mapSectionItem),
@@ -171,8 +199,15 @@ export async function updateResumeSettings(
     Partial<ResumeSettings>,
     | "pageFormat"
     | "fontSize"
+    | "contactNameFontSize"
+    | "contactHeadlineFontSize"
+    | "contactDetailsFontSize"
+    | "sectionTitleFontSize"
+    | "itemTitleFontSize"
+    | "itemMetaFontSize"
     | "themeId"
     | "showPhoto"
+    | "itemTitleLayout"
     | "locale"
     | "marginHorizontalMm"
     | "marginVerticalMm"
@@ -181,8 +216,17 @@ export async function updateResumeSettings(
   const input: Record<string, unknown> = { resumeId };
   if (patch.pageFormat != null) input.pageFormat = patch.pageFormat;
   if (patch.fontSize != null) input.fontSize = patch.fontSize;
+  if (patch.contactNameFontSize != null) input.contactNameFontSize = patch.contactNameFontSize;
+  if (patch.contactHeadlineFontSize != null) {
+    input.contactHeadlineFontSize = patch.contactHeadlineFontSize;
+  }
+  if (patch.contactDetailsFontSize != null) input.contactDetailsFontSize = patch.contactDetailsFontSize;
+  if (patch.sectionTitleFontSize != null) input.sectionTitleFontSize = patch.sectionTitleFontSize;
+  if (patch.itemTitleFontSize != null) input.itemTitleFontSize = patch.itemTitleFontSize;
+  if (patch.itemMetaFontSize != null) input.itemMetaFontSize = patch.itemMetaFontSize;
   if (patch.themeId != null) input.themeId = patch.themeId;
   if (patch.showPhoto != null) input.showPhoto = patch.showPhoto;
+  if (patch.itemTitleLayout != null) input.itemTitleLayout = patch.itemTitleLayout;
   if (patch.locale != null) input.locale = patch.locale;
   if (patch.marginHorizontalMm != null) input.marginHorizontalMm = patch.marginHorizontalMm;
   if (patch.marginVerticalMm != null) input.marginVerticalMm = patch.marginVerticalMm;
@@ -191,13 +235,10 @@ export async function updateResumeSettings(
     UPDATE_RESUME_SETTINGS_MUTATION,
     { input }
   );
-  return {
+  return mapResumeSettings({
+    ...DEFAULT_CV_TYPOGRAPHY_SETTINGS,
     ...data.updateResumeSettings,
-    pageFormat: mapPageFormat(data.updateResumeSettings.pageFormat as string),
-    marginHorizontalMm:
-      data.updateResumeSettings.marginHorizontalMm ?? DEFAULT_PAGE_MARGIN_MM,
-    marginVerticalMm: data.updateResumeSettings.marginVerticalMm ?? DEFAULT_PAGE_MARGIN_MM,
-  };
+  } as ResumeSettings);
 }
 
 export async function updateResumeSectionItemVisibility(
@@ -275,6 +316,8 @@ export async function updateContactProfile(
     linkedIn?: string;
     github?: string;
     photoUrl?: string;
+    linkedinPhotoUrl?: string;
+    githubPhotoUrl?: string;
   }
 ): Promise<ResumeWithContent> {
   const input: Record<string, unknown> = { resumeId };

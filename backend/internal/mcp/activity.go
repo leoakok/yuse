@@ -10,130 +10,122 @@ func ToolActivityStartLabel(toolName string, args map[string]any) string {
 	switch toolName {
 	case "web_search":
 		if q, ok := optionalString(args, "query"); ok && q != "" {
-			return fmt.Sprintf("Searching the web for %q…", truncateLabel(q, 48))
+			return fmt.Sprintf("Let me search for %q…", truncateLabel(q, 48))
 		}
-		return "Searching the web…"
+		return "Let me search for that…"
 	case "fetch_url":
-		if u, ok := optionalString(args, "url"); ok && u != "" {
-			return fmt.Sprintf("Reading %s…", truncateLabel(u, 56))
-		}
-		return "Reading a web page…"
+		return "Let me read that page…"
 	case "explore_website":
-		if u, ok := optionalString(args, "url"); ok && u != "" {
-			return fmt.Sprintf("Exploring %s…", truncateLabel(u, 56))
-		}
-		return "Exploring website…"
+		return "Let me explore that site…"
 	case "crawl_site":
-		if u, ok := optionalString(args, "url"); ok && u != "" {
-			return fmt.Sprintf("Exploring %s…", truncateLabel(u, 56))
-		}
-		return "Exploring website…"
+		return "Let me explore that site…"
 	case "crawl_github_profile":
-		if u, ok := optionalString(args, "url"); ok && u != "" {
-			return fmt.Sprintf("Crawling GitHub profile %s…", truncateLabel(u, 48))
-		}
-		return "Crawling GitHub profile…"
+		return "Let me check your GitHub profile…"
 	case "search_github":
 		if listRepos, ok := optionalBool(args, "listUserRepos"); ok && listRepos {
 			if q, ok := optionalString(args, "query"); ok && strings.TrimSpace(q) != "" {
-				return fmt.Sprintf("Searching your GitHub repos for %q…", truncateLabel(q, 48))
+				return fmt.Sprintf("Let me search your GitHub for %q…", truncateLabel(q, 48))
 			}
-			return "Listing your GitHub repos…"
+			return "Let me look through your GitHub repos…"
 		}
 		if q, ok := optionalString(args, "query"); ok && q != "" {
-			return fmt.Sprintf("Searching GitHub for %q…", truncateLabel(q, 48))
+			return fmt.Sprintf("Let me search GitHub for %q…", truncateLabel(q, 48))
 		}
-		return "Searching GitHub…"
+		return "Let me search GitHub…"
 	case "fetch_linkedin_profile":
-		if u := linkedInProfileURLFromArgs(args); u != "" {
-			return fmt.Sprintf("Reading LinkedIn profile %s…", truncateLabel(u, 56))
-		}
-		return "Reading LinkedIn profile…"
+		return "Let me check your LinkedIn profile…"
 	case "get_resume_content":
-		return "Reading your resume…"
+		return "Let me read your CV…"
 	case "get_resume":
-		return "Looking up resume details…"
+		return "Let me pull up that CV…"
 	case "list_resumes":
-		return "Listing your resumes…"
+		return "Let me see what CVs you have…"
 	case "list_sections":
-		return "Listing resume sections…"
+		return "Let me check your CV sections…"
 	case "list_twin_entries":
-		return "Reading your Digital Twin…"
+		return "Let me look at your Digital Twin…"
 	case "get_twin_entry":
-		return "Reading a twin entry…"
+		return "Let me pull up that twin entry…"
 	case "list_cv_themes":
-		return "Loading CV themes…"
+		return "Let me load CV themes…"
 	case "create_resume":
 		if title, ok := optionalString(args, "title"); ok && title != "" {
-			return fmt.Sprintf("Creating resume %q…", truncateLabel(title, 40))
+			return fmt.Sprintf("I'll create a CV called %q…", truncateLabel(title, 40))
 		}
-		return "Creating a new resume…"
+		return "I'll create a new CV for you…"
 	case "duplicate_resume":
-		return "Duplicating resume…"
+		return "Let me duplicate that CV…"
 	case "delete_resume":
-		return "Deleting resume…"
+		return "Let me delete that CV…"
 	case "update_resume":
-		return "Updating resume title…"
+		return "Let me update the CV title…"
 	case "add_section_item":
 		if headline, ok := optionalString(args, "headline"); ok && headline != "" {
-			return fmt.Sprintf("Adding %s…", truncateLabel(headline, 40))
+			return fmt.Sprintf("Let me add %s to your CV…", truncateLabel(headline, 40))
 		}
-		return "Adding a section item…"
+		return "Let me add something to your CV…"
 	case "update_section_item":
-		return "Updating a section item…"
+		return "Let me update that CV entry…"
 	case "set_item_visibility":
-		return "Updating item visibility…"
+		return "Let me update what's visible…"
 	case "update_contact_profile":
-		return "Updating your profile…"
+		return "Let me update your contact details…"
 	case "update_resume_settings":
-		return "Updating resume design…"
+		return "Let me tweak the CV design…"
 	case "list_portfolios":
-		return "Listing your portfolios…"
+		return "Let me see what portfolios you have…"
 	case "get_portfolio_content":
-		return "Reading your portfolio…"
+		return "Let me read your portfolio…"
 	case "get_portfolio":
-		return "Looking up portfolio details…"
+		return "Let me pull up that portfolio…"
 	case "create_portfolio":
 		if title, ok := optionalString(args, "title"); ok && title != "" {
-			return fmt.Sprintf("Creating portfolio %q…", truncateLabel(title, 40))
+			return fmt.Sprintf("I'll create a portfolio called %q…", truncateLabel(title, 40))
 		}
-		return "Creating a new portfolio…"
+		return "I'll create a new portfolio for you…"
 	case "duplicate_portfolio":
-		return "Duplicating portfolio…"
+		return "Let me duplicate that portfolio…"
 	case "delete_portfolio":
-		return "Deleting portfolio…"
+		return "Let me delete that portfolio…"
 	case "update_portfolio":
-		return "Updating portfolio title…"
-	case "add_portfolio_section_item":
-		if headline, ok := optionalString(args, "headline"); ok && headline != "" {
-			return fmt.Sprintf("Adding %s…", truncateLabel(headline, 40))
+		return "Let me update your portfolio…"
+	case "add_portfolio_project":
+		if title, ok := optionalString(args, "title"); ok && title != "" {
+			return fmt.Sprintf("Let me add the project %q…", truncateLabel(title, 40))
 		}
-		return "Adding a section item…"
-	case "update_portfolio_section_item":
-		return "Updating a section item…"
-	case "set_portfolio_item_visibility":
-		return "Updating item visibility…"
+		return "Let me add a project…"
+	case "update_portfolio_project":
+		return "Let me update that project…"
+	case "add_portfolio_skill":
+		if name, ok := optionalString(args, "name"); ok && name != "" {
+			return fmt.Sprintf("Let me add %s as a skill…", truncateLabel(name, 40))
+		}
+		return "Let me add a skill…"
+	case "update_portfolio_skill":
+		return "Let me update that skill…"
+	case "add_portfolio_testimonial":
+		return "Let me add a testimonial…"
 	case "update_portfolio_contact_profile":
-		return "Updating your profile…"
+		return "Let me update your profile…"
 	case "update_portfolio_settings":
-		return "Updating portfolio design…"
+		return "Let me tweak the portfolio design…"
 	case "create_twin_entry":
 		if title, ok := optionalString(args, "title"); ok && title != "" {
-			return fmt.Sprintf("Saving to Digital Twin: %s…", truncateLabel(title, 40))
+			return fmt.Sprintf("Let me save %q to your Digital Twin…", truncateLabel(title, 40))
 		}
-		return "Saving to Digital Twin…"
+		return "Let me save that to your Digital Twin…"
 	case "update_twin_entry":
-		return "Updating Digital Twin entry…"
+		return "Let me update your Digital Twin…"
 	case "list_tracked_jobs":
-		return "Listing tracked jobs…"
+		return "Let me check your tracked jobs…"
 	case "get_tracked_job":
-		return "Reading job application…"
+		return "Let me pull up that job application…"
 	case "update_tracked_job":
-		return "Saving job application…"
+		return "Let me save that job application…"
 	case "delete_twin_entry":
-		return "Deleting twin entry…"
+		return "Let me remove that twin entry…"
 	default:
-		return humanizeToolName(toolName) + "…"
+		return "Let me " + humanizeToolName(toolName) + "…"
 	}
 }
 
@@ -144,42 +136,107 @@ func ToolActivityEndLabel(exec Execution) string {
 	}
 	switch exec.Tool {
 	case "web_search":
-		return "Finished web search"
+		return "Found some useful links"
 	case "fetch_url":
-		return "Finished reading page"
-	case "explore_website":
-		return "Finished exploring website"
-	case "crawl_site":
-		return "Finished exploring site"
+		return "Read that page"
+	case "explore_website", "crawl_site":
+		return "Finished exploring the site"
 	case "crawl_github_profile":
-		return "Finished GitHub profile crawl"
+		return "Got your GitHub profile"
 	case "search_github":
-		if exec.Error != "" {
-			return "GitHub repo search failed"
-		}
 		if m, ok := exec.Result.(map[string]any); ok {
 			if auth := AuthenticatedAsFromResult(m); auth != "" {
 				count := repoCountFromResult(m, "repositories", "importRepositories")
-				return fmt.Sprintf("Listed %d repos for %s", count, auth)
+				query, _ := m["query"].(string)
+				query = strings.TrimSpace(query)
+				if query == "" {
+					if count > 0 {
+						return githubReposFoundLabel(count)
+					}
+					return "Got your GitHub repos"
+				}
+				matched := intFromAny(m["matchedCount"])
+				if matched == 0 {
+					matched = count
+				}
+				return fmt.Sprintf("Found %d matching repos on your GitHub", matched)
 			}
 		}
-		return "Finished GitHub search"
+		return "Finished searching GitHub"
 	case "fetch_linkedin_profile":
-		return "Finished reading LinkedIn profile"
+		return "Got your LinkedIn profile"
 	case "get_resume_content":
-		return "Read resume content"
+		return "Read your CV"
+	case "get_resume":
+		return "Pulled up that CV"
+	case "list_resumes":
+		return "Checked your CVs"
+	case "list_sections":
+		return "Checked your CV sections"
+	case "list_twin_entries":
+		return "Looked at your Digital Twin"
+	case "get_twin_entry":
+		return "Pulled up that twin entry"
+	case "list_cv_themes":
+		return "Loaded CV themes"
 	case "create_resume":
-		return "Created resume"
+		return "Created your new CV"
+	case "duplicate_resume":
+		return "Duplicated that CV"
+	case "delete_resume":
+		return "Deleted that CV"
+	case "update_resume":
+		return "Updated the CV title"
 	case "add_section_item":
-		return "Added section item"
+		return "Added something to your CV"
 	case "update_section_item":
-		return "Updated section item"
+		return "Updated that CV entry"
+	case "set_item_visibility":
+		return "Updated what's visible"
 	case "update_contact_profile":
-		return "Updated profile"
+		return "Updated your contact details"
+	case "update_resume_settings":
+		return "Updated the CV design"
+	case "list_portfolios":
+		return "Checked your portfolios"
+	case "get_portfolio_content":
+		return "Read your portfolio"
+	case "get_portfolio":
+		return "Pulled up that portfolio"
+	case "create_portfolio":
+		return "Created your new portfolio"
+	case "duplicate_portfolio":
+		return "Duplicated that portfolio"
+	case "delete_portfolio":
+		return "Deleted that portfolio"
+	case "update_portfolio":
+		return "Updated your portfolio"
+	case "add_portfolio_project":
+		return "Added a project"
+	case "update_portfolio_project":
+		return "Updated that project"
+	case "add_portfolio_skill":
+		return "Added a skill"
+	case "update_portfolio_skill":
+		return "Updated that skill"
+	case "add_portfolio_testimonial":
+		return "Added a testimonial"
+	case "update_portfolio_contact_profile":
+		return "Updated your profile"
+	case "update_portfolio_settings":
+		return "Updated the portfolio design"
 	case "create_twin_entry":
-		return "Saved to Digital Twin"
+		return "Saved to your Digital Twin"
+	case "update_twin_entry":
+		return "Updated your Digital Twin"
+	case "delete_twin_entry":
+		return "Removed that twin entry"
+	case "list_tracked_jobs":
+		return "Checked your tracked jobs"
+	case "get_tracked_job":
+		return "Pulled up that job application"
 	case "update_tracked_job":
-		return "Saved job application"
+		return "Saved that job application"
 	default:
 		label := strings.TrimSuffix(ToolActivityStartLabel(exec.Tool, exec.Arguments), "…")
 		return label

@@ -32,6 +32,19 @@ export function getPageFormatSpec(format: PageFormat): PageFormatSpec {
 const PX_PER_IN = 96;
 const MM_PER_IN = 25.4;
 
+export const MARGIN_MIN_MM = 6;
+export const MARGIN_MAX_MM = 30;
+
+/** Every 1 mm from 6–30 for fine margin control. */
+export function marginPresetValues(): number[] {
+  return Array.from({ length: MARGIN_MAX_MM - MARGIN_MIN_MM + 1 }, (_, i) => i + MARGIN_MIN_MM);
+}
+
+export function snapMarginMm(mm: number): number {
+  const rounded = Math.round(mm);
+  return Math.max(MARGIN_MIN_MM, Math.min(MARGIN_MAX_MM, rounded));
+}
+
 export const DEFAULT_PAGE_MARGIN_MM = 12;
 
 export interface PageMarginsMm {

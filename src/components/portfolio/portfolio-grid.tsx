@@ -3,7 +3,7 @@
 import { useEffect, useState } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
-import { Copy, Download, Loader2, MoreHorizontal, Trash2 } from "lucide-react";
+import { Copy, Loader2, MoreHorizontal, Trash2 } from "lucide-react";
 import { toast } from "sonner";
 import type { Portfolio, PortfolioWithContent } from "@/lib/types/portfolio";
 import { portfolioPath } from "@/lib/portfolio/routes";
@@ -12,9 +12,7 @@ import {
   duplicatePortfolio,
   getPortfolioWithContent,
 } from "@/lib/api/portfolio-api";
-import { exportPortfolioPdf } from "@/lib/portfolio/export-pdf";
-import { portfolioToPreviewContent } from "@/lib/portfolio/preview";
-import { CvPreview } from "@/components/cv/cv-preview";
+import { PortfolioSitePreview } from "@/components/portfolio/portfolio-site-preview";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import {
@@ -53,7 +51,6 @@ function PortfolioCard({ portfolio, onDeleted }: PortfolioCardProps) {
   const [deleteOpen, setDeleteOpen] = useState(false);
   const [isDeleting, setIsDeleting] = useState(false);
   const [isDuplicating, setIsDuplicating] = useState(false);
-  const [isDownloading, setIsDownloading] = useState(false);
 
   useEffect(() => {
     let cancelled = false;
@@ -97,28 +94,6 @@ function PortfolioCard({ portfolio, onDeleted }: PortfolioCardProps) {
     }
   }
 
-  async function handleDownload() {
-    if (isDownloading) return;
-    setIsDownloading(true);
-    try {
-      const exportContent = content ?? (await getPortfolioWithContent(portfolio.id));
-      if (!exportContent) {
-        throw new Error("Portfolio content is not available.");
-      }
-      await exportPortfolioPdf({
-        content: exportContent,
-        filename: exportContent.portfolio.title,
-      });
-      toast.success("Print dialog opened.");
-    } catch (error) {
-      const message =
-        error instanceof Error ? error.message : "Could not download this portfolio.";
-      toast.error(message);
-    } finally {
-      setIsDownloading(false);
-    }
-  }
-
   return (
     <>
       <Card className="group flex h-full flex-col overflow-hidden transition-colors hover:bg-muted/40">
@@ -130,13 +105,9 @@ function PortfolioCard({ portfolio, onDeleted }: PortfolioCardProps) {
               <div className="absolute inset-0 flex justify-center overflow-hidden pt-3">
                 <div
                   className="origin-top shadow-sm"
-                  style={{ transform: "scale(0.38)" }}
+                  style={{ transform: "scale(0.32)" }}
                 >
-                  <CvPreview
-                    content={portfolioToPreviewContent(content)}
-                    className="shadow-none"
-                    singlePage
-                  />
+                  <PortfolioSitePreview content={content} className="w-[640px]" />
                 </div>
               </div>
             ) : (
@@ -166,13 +137,6 @@ function PortfolioCard({ portfolio, onDeleted }: PortfolioCardProps) {
                 }
               />
               <DropdownMenuContent align="end" className="min-w-40">
-                <DropdownMenuItem
-                  disabled={isDownloading}
-                  onClick={() => void handleDownload()}
-                >
-                  {isDownloading ? <Loader2 className="animate-spin" /> : <Download />}
-                  Download
-                </DropdownMenuItem>
                 <DropdownMenuItem
                   disabled={isDuplicating}
                   onClick={() => void handleDuplicate()}

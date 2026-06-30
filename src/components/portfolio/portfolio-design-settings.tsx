@@ -1,8 +1,7 @@
 "use client";
 
-import { useState } from "react";
-import type { PageFormat } from "@/lib/types/cv";
-import { DEFAULT_PAGE_MARGIN_MM, PAGE_FORMATS } from "@/lib/cv/page-format";
+import { useState, type ReactNode } from "react";
+import type { PortfolioLayout } from "@/lib/types/portfolio";
 import { updatePortfolioSettings } from "@/lib/api/portfolio-api";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -11,207 +10,150 @@ import { cn } from "@/lib/utils";
 interface PortfolioDesignSettingsProps {
   portfolioId: string;
   themeName: string;
-  pageFormat: PageFormat;
-  savedPageFormat: PageFormat;
+  layout: PortfolioLayout;
+  savedLayout: PortfolioLayout;
+  accentColor: string;
+  savedAccentColor: string;
   showPhoto?: boolean;
   savedShowPhoto?: boolean;
-  marginHorizontalMm?: number;
-  marginVerticalMm?: number;
-  savedMarginHorizontalMm?: number;
-  savedMarginVerticalMm?: number;
-  onPageFormatChange: (format: PageFormat) => void;
+  onLayoutChange: (layout: PortfolioLayout) => void;
+  onAccentColorChange: (color: string) => void;
   onShowPhotoChange?: (showPhoto: boolean) => void;
-  onMarginHorizontalChange?: (value: number) => void;
-  onMarginVerticalChange?: (value: number) => void;
-  onSaved?: (settings: {
-    pageFormat: PageFormat;
-    showPhoto: boolean;
-    marginHorizontalMm: number;
-    marginVerticalMm: number;
-  }) => void;
+  onSaved?: (settings: { layout: PortfolioLayout; accentColor: string; showPhoto: boolean }) => void;
 }
 
-const MARGIN_PRESETS_MM = [8, 10, 12, 15, 20, 25];
+const ACCENT_PRESETS = ["#2563eb", "#7c3aed", "#059669", "#dc2626", "#ea580c", "#0f172a"];
 
-function clampMargin(value: number): number {
-  if (!Number.isFinite(value)) return DEFAULT_PAGE_MARGIN_MM;
-  return Math.min(40, Math.max(0, Math.round(value * 10) / 10));
+const LAYOUT_OPTIONS: { id: PortfolioLayout; label: string }[] = [
+  { id: "SINGLE", label: "Single" },
+  { id: "SPLIT", label: "Split" },
+];
+
+function DesignBlock({ title, children }: { title: string; children: ReactNode }) {
+  return (
+    <section className="rounded-lg border bg-card p-3">
+      <h2 className="mb-2.5 text-xs font-medium text-muted-foreground">{title}</h2>
+      {children}
+    </section>
+  );
+}
+
+function OptionPills<T extends string>({
+  options,
+  value,
+  onChange,
+}: {
+  options: { id: T; label: string }[];
+  value: T;
+  onChange: (id: T) => void;
+}) {
+  return (
+    <div className="flex gap-1">
+      {options.map((option) => {
+        const selected = value === option.id;
+        return (
+          <button
+            key={option.id}
+            type="button"
+            onClick={() => onChange(option.id)}
+            className={cn(
+              "flex-1 rounded-md border px-2 py-1.5 text-xs transition-colors",
+              selected
+                ? "border-primary bg-primary/5 font-medium text-foreground"
+                : "text-muted-foreground hover:bg-muted/50"
+            )}
+          >
+            {option.label}
+          </button>
+        );
+      })}
+    </div>
+  );
 }
 
 export function PortfolioDesignSettings({
   portfolioId,
   themeName,
-  pageFormat,
-  savedPageFormat,
+  layout,
+  savedLayout,
+  accentColor,
+  savedAccentColor,
   showPhoto = false,
   savedShowPhoto = false,
-  marginHorizontalMm = DEFAULT_PAGE_MARGIN_MM,
-  marginVerticalMm = DEFAULT_PAGE_MARGIN_MM,
-  savedMarginHorizontalMm = DEFAULT_PAGE_MARGIN_MM,
-  savedMarginVerticalMm = DEFAULT_PAGE_MARGIN_MM,
-  onPageFormatChange,
+  onLayoutChange,
+  onAccentColorChange,
   onShowPhotoChange = () => {},
-  onMarginHorizontalChange = () => {},
-  onMarginVerticalChange = () => {},
   onSaved,
 }: PortfolioDesignSettingsProps) {
   const [saving, setSaving] = useState(false);
   const [saved, setSaved] = useState(false);
   const dirty =
-    pageFormat !== savedPageFormat ||
-    showPhoto !== savedShowPhoto ||
-    marginHorizontalMm !== savedMarginHorizontalMm ||
-    marginVerticalMm !== savedMarginVerticalMm;
+    layout !== savedLayout ||
+    accentColor !== savedAccentColor ||
+    showPhoto !== savedShowPhoto;
 
   const handleSave = async () => {
     setSaving(true);
     setSaved(false);
     try {
-      await updatePortfolioSettings(portfolioId, {
-        pageFormat,
-        showPhoto,
-        marginHorizontalMm,
-        marginVerticalMm,
-      });
+      await updatePortfolioSettings(portfolioId, { layout, accentColor, showPhoto });
       setSaved(true);
-      onSaved?.({ pageFormat, showPhoto, marginHorizontalMm, marginVerticalMm });
+      onSaved?.({ layout, accentColor, showPhoto });
     } finally {
       setSaving(false);
     }
   };
 
   return (
-    <div className="space-y-6">
-      <section className="rounded-lg border bg-card p-4">
-        <h2 className="text-sm font-medium">Theme</h2>
-        <p className="mt-1 text-xs text-muted-foreground">
-          The visual style applied to your resume preview.
-        </p>
-        <p className="mt-3 text-sm font-medium">{themeName}</p>
-      </section>
+    <div className="space-y-3">
+      <DesignBlock title="Theme">
+        <p className="text-sm font-medium">{themeName}</p>
+      </DesignBlock>
 
-      <section className="rounded-lg border bg-card p-4">
-        <h2 className="text-sm font-medium">Page size</h2>
-        <p className="mt-1 text-xs text-muted-foreground">
-          Choose the paper format for your live preview and PDF export.
-        </p>
-        <div className="mt-4 grid gap-2">
-          {PAGE_FORMATS.map((format) => {
-            const selected = pageFormat === format.id;
-            return (
-              <button
-                key={format.id}
-                type="button"
-                onClick={() => onPageFormatChange(format.id)}
-                className={cn(
-                  "rounded-lg border px-4 py-3 text-left transition-colors",
-                  selected
-                    ? "border-primary bg-primary/5 ring-1 ring-primary"
-                    : "hover:bg-muted/50"
-                )}
-              >
-                <p className="text-sm font-medium">{format.label}</p>
-                <p className="mt-0.5 text-xs text-muted-foreground">{format.description}</p>
-              </button>
-            );
-          })}
-        </div>
-      </section>
-
-      <section className="rounded-lg border bg-card p-4">
-        <h2 className="text-sm font-medium">Page margins</h2>
-        <p className="mt-1 text-xs text-muted-foreground">
-          Horizontal and vertical margins in millimeters. Applies to preview and PDF export.
-        </p>
-        <div className="mt-4 grid gap-4 sm:grid-cols-2">
-          <label className="space-y-1.5">
-            <span className="text-xs font-medium text-muted-foreground">Horizontal</span>
-            <div className="flex items-center gap-2">
-              <Input
-                type="number"
-                min={0}
-                max={40}
-                step={0.5}
-                value={marginHorizontalMm}
-                onChange={(event) => {
-                  onMarginHorizontalChange(clampMargin(Number(event.target.value)));
-                  setSaved(false);
-                }}
-              />
-              <span className="text-xs text-muted-foreground">mm</span>
-            </div>
-          </label>
-          <label className="space-y-1.5">
-            <span className="text-xs font-medium text-muted-foreground">Vertical</span>
-            <div className="flex items-center gap-2">
-              <Input
-                type="number"
-                min={0}
-                max={40}
-                step={0.5}
-                value={marginVerticalMm}
-                onChange={(event) => {
-                  onMarginVerticalChange(clampMargin(Number(event.target.value)));
-                  setSaved(false);
-                }}
-              />
-              <span className="text-xs text-muted-foreground">mm</span>
-            </div>
+      <DesignBlock title="Layout">
+        <div className="space-y-3">
+          <OptionPills options={LAYOUT_OPTIONS} value={layout} onChange={onLayoutChange} />
+          <label className="flex items-center gap-2 text-xs">
+            <input
+              type="checkbox"
+              checked={showPhoto}
+              onChange={(e) => onShowPhotoChange(e.target.checked)}
+              className="size-3.5 rounded border"
+            />
+            Show photo
           </label>
         </div>
-        <div className="mt-3 flex flex-wrap gap-2">
-          {MARGIN_PRESETS_MM.map((preset) => (
+      </DesignBlock>
+
+      <DesignBlock title="Accent">
+        <div className="flex flex-wrap items-center gap-2">
+          {ACCENT_PRESETS.map((preset) => (
             <button
               key={preset}
               type="button"
-              onClick={() => {
-                onMarginHorizontalChange(preset);
-                onMarginVerticalChange(preset);
-                setSaved(false);
-              }}
-              className="rounded-md border px-2.5 py-1 text-xs text-muted-foreground transition-colors hover:bg-muted/50"
-            >
-              {preset} mm
-            </button>
+              aria-label={`Accent ${preset}`}
+              onClick={() => onAccentColorChange(preset)}
+              className={cn(
+                "size-7 rounded-full ring-offset-2 transition-transform hover:scale-110",
+                accentColor === preset && "ring-2 ring-primary"
+              )}
+              style={{ backgroundColor: preset }}
+            />
           ))}
-        </div>
-      </section>
-
-      <section className="rounded-lg border bg-card p-4">
-        <h2 className="text-sm font-medium">Profile photo</h2>
-        <p className="mt-1 text-xs text-muted-foreground">
-          Show your profile photo in the resume header when a photo URL is set on your profile.
-        </p>
-        <label className="mt-4 flex items-center gap-2 text-sm">
-          <input
-            type="checkbox"
-            checked={showPhoto}
-            onChange={(event) => {
-              onShowPhotoChange(event.target.checked);
-              setSaved(false);
-            }}
-            className="size-4 rounded border"
+          <Input
+            type="color"
+            value={accentColor}
+            onChange={(e) => onAccentColorChange(e.target.value)}
+            className="h-7 w-12 cursor-pointer p-0.5"
           />
-          Show photo in preview
-        </label>
-      </section>
-
-      <section className="rounded-lg border border-dashed bg-muted/20 p-4">
-        <h2 className="text-sm font-medium text-muted-foreground">Coming soon</h2>
-        <ul className="mt-2 space-y-1 text-xs text-muted-foreground">
-          <li>Font family and sizes</li>
-          <li>Accent colors</li>
-          <li>Section spacing</li>
-        </ul>
-      </section>
+        </div>
+      </DesignBlock>
 
       {dirty || saved ? (
-        <div className="flex items-center justify-end gap-2">
-          {saved && !dirty ? (
-            <p className="text-xs text-muted-foreground">Changes saved</p>
-          ) : null}
+        <div className="flex items-center justify-end gap-2 pt-1">
+          {saved && !dirty ? <span className="text-xs text-muted-foreground">Saved</span> : null}
           <Button size="sm" onClick={() => void handleSave()} disabled={saving || !dirty}>
-            {saving ? "Saving…" : "Save changes"}
+            {saving ? "Saving…" : "Save"}
           </Button>
         </div>
       ) : null}

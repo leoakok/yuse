@@ -3,6 +3,7 @@
 import { useState } from "react";
 import { Pencil } from "lucide-react";
 import type { ContactProfile } from "@/lib/types/portfolio";
+import { effectiveContactPhotoUrl } from "@/lib/cv/contact-photo";
 import { PortfolioProfileEditDialog } from "@/components/portfolio/portfolio-profile-edit-dialog";
 import { Button } from "@/components/ui/button";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
@@ -34,10 +35,11 @@ export function PortfolioProfileSection({
 }: PortfolioProfileSectionProps) {
   const [editOpen, setEditOpen] = useState(false);
   const details = contactDetailLines(contactProfile);
+  const photoUrl = effectiveContactPhotoUrl(contactProfile);
   const hasContent =
     contactProfile?.fullName ||
     contactProfile?.headline ||
-    contactProfile?.photoUrl ||
+    photoUrl ||
     details.length > 0;
 
   function openEdit() {
@@ -78,9 +80,9 @@ export function PortfolioProfileSection({
         >
           {hasContent ? (
             <div className="flex min-w-0 items-start gap-3">
-              {contactProfile?.photoUrl ? (
+              {photoUrl ? (
                 <Avatar className="size-10 shrink-0">
-                  <AvatarImage src={contactProfile.photoUrl} alt="" />
+                  <AvatarImage src={photoUrl} alt="" />
                   <AvatarFallback />
                 </Avatar>
               ) : null}

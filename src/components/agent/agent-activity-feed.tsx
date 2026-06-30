@@ -1,9 +1,13 @@
 "use client";
 
-import { useState } from "react";
+import { useEffect, useRef, useState, type Dispatch, type SetStateAction } from "react";
 import { Check, ChevronDown, LoaderCircle, X } from "lucide-react";
 import type { AgentActivity } from "@/lib/types/assistant";
+import { humanizeStatusLabel, isThinkingStatusLabel } from "@/lib/assistant/status-labels";
 import { cn } from "@/lib/utils";
+
+const COMPLETED_HOLD_MS = 1400;
+const FADE_OUT_MS = 280;
 
 function ActivityIcon({ status }: { status: AgentActivity["status"] }) {
   if (status === "complete") {
@@ -16,9 +20,161 @@ function ActivityIcon({ status }: { status: AgentActivity["status"] }) {
 }
 
 export function isThinkingLabel(label: string | undefined): boolean {
-  if (!label) return false;
-  const normalized = label.toLowerCase().replace(/…/g, "").replace(/\./g, "").trim();
-  return normalized === "thinking";
+  return isThinkingStatusLabel(label);
+}
+
+type SlotPhase = "enter" | "visible" | "exit";
+
+interface ActivitySlot {
+  id: string;
+  activity: AgentActivity;
+  phase: SlotPhase;
+}
+
+function prefersReducedMotion(): boolean {
+  if (typeof window === "undefined") return false;
+  return window.matchMedia("(prefers-reduced-motion: reduce)").matches;
+}
+
+function scheduleFadeOut(
+  activityId: string,
+  timersRef: { current: ReturnType<typeof setTimeout>[] },
+  scheduledRef: { current: Set<string> },
+  setSlots: Dispatch<SetStateAction<ActivitySlot[]>>
+) {
+  if (scheduledRef.current.has(activityId)) return;
+  scheduledRef.current.add(activityId);
+
+  const holdMs = prefersReducedMotion() ? 250 : COMPLETED_HOLD_MS;
+  const fadeMs = prefersReducedMotion() ? 0 : FADE_OUT_MS;
+
+  const holdTimer = setTimeout(() => {
+    setSlots((current) =>
+      current.map((slot) =>
+        slot.id === activityId ? { ...slot, phase: "exit" } : slot
+      )
+    );
+
+    const removeTimer = setTimeout(() => {
+      setSlots((current) => current.filter((slot) => slot.id !== activityId));
+      scheduledRef.current.delete(activityId);
+    }, fadeMs);
+
+    timersRef.current.push(removeTimer);
+  }, holdMs);
+
+  timersRef.current.push(holdTimer);
+}
+
+/**
+ * Keeps errors visible, shows the current step prominently, and fades out
+ * completed steps one at a time instead of stacking the full history.
+ */
+function useStepwiseActivitySlots(activities: AgentActivity[]): ActivitySlot[] {
+  const [slots, setSlots] = useState<ActivitySlot[]>([]);
+  const timersRef = useRef<ReturnType<typeof setTimeout>[]>([]);
+  const scheduledRef = useRef<Set<string>>(new Set());
+  const prevActivitiesRef = useRef<AgentActivity[]>([]);
+
+  useEffect(() => {
+    return () => {
+      timersRef.current.forEach(clearTimeout);
+      timersRef.current = [];
+    };
+  }, []);
+
+  useEffect(() => {
+    if (activities.length === 0) {
+      timersRef.current.forEach(clearTimeout);
+      timersRef.current = [];
+      scheduledRef.current.clear();
+      prevActivitiesRef.current = [];
+      setSlots([]);
+      return;
+    }
+
+    const prevById = new Map(prevActivitiesRef.current.map((activity) => [activity.id, activity]));
+    prevActivitiesRef.current = activities;
+
+    const errors = activities.filter((activity) => activity.status === "error");
+    const active = [...activities].reverse().find((activity) => activity.status === "active");
+    const completes = activities.filter((activity) => activity.status === "complete");
+    const latestComplete = completes.at(-1);
+
+    setSlots((prev) => {
+      const prevPhases = new Map(prev.map((slot) => [slot.id, slot.phase]));
+      const next: ActivitySlot[] = [];
+
+      for (const error of errors) {
+        next.push({
+          id: error.id,
+          activity: error,
+          phase: prevPhases.get(error.id) ?? "visible",
+        });
+      }
+
+      if (latestComplete) {
+        const wasActive = prevById.get(latestComplete.id)?.status === "active";
+        const alreadyVisible = prev.some((slot) => slot.id === latestComplete.id);
+        next.push({
+          id: latestComplete.id,
+          activity: latestComplete,
+          phase: alreadyVisible
+            ? wasActive
+              ? "visible"
+              : (prevPhases.get(latestComplete.id) ?? "visible")
+            : "enter",
+        });
+      }
+
+      if (active && active.id !== latestComplete?.id) {
+        const alreadyVisible = prev.some((slot) => slot.id === active.id);
+        next.push({
+          id: active.id,
+          activity: active,
+          phase: alreadyVisible ? "visible" : "enter",
+        });
+      }
+
+      return next;
+    });
+
+    if (latestComplete) {
+      scheduleFadeOut(latestComplete.id, timersRef, scheduledRef, setSlots);
+    }
+  }, [activities]);
+
+  return slots;
+}
+
+interface ActivityStepRowProps {
+  slot: ActivitySlot;
+}
+
+function ActivityStepRow({ slot }: ActivityStepRowProps) {
+  const { activity, phase } = slot;
+
+  return (
+    <li
+      className={cn(
+        "flex items-start gap-2.5 text-xs transition-all duration-300 ease-out motion-reduce:transition-none",
+        phase === "enter" &&
+          "motion-safe:animate-in motion-safe:fade-in motion-safe:slide-in-from-bottom-1 motion-safe:duration-300",
+        phase === "exit" &&
+          "pointer-events-none motion-safe:animate-out motion-safe:fade-out motion-safe:duration-300 motion-reduce:opacity-0",
+        phase === "visible" && "opacity-100",
+        activity.status === "active" && "font-medium text-foreground",
+        activity.status === "complete" && "text-muted-foreground",
+        activity.status === "error" && "text-destructive"
+      )}
+      aria-hidden={phase === "exit" ? true : undefined}
+    >
+      <span className="mt-0.5 shrink-0">
+        <ActivityIcon status={activity.status} />
+      </span>
+      <span>{activity.label}</span>
+    </li>
+  );
 }
 
 interface AgentActivityFeedProps {
@@ -26,36 +182,44 @@ interface AgentActivityFeedProps {
   className?: string;
 }
 
-/** Always-visible tool step list during streaming. */
+/** Step-by-step tool progress during streaming — one current action at a time. */
 export function AgentActivityFeed({ activities, className }: AgentActivityFeedProps) {
-  if (activities.length === 0) {
+  const slots = useStepwiseActivitySlots(activities);
+
+  if (slots.length === 0) {
     return null;
   }
 
+  const hasErrors = slots.some((slot) => slot.activity.status === "error");
+  const stepSlots = slots.filter((slot) => slot.activity.status !== "error");
+  const errorSlots = slots.filter((slot) => slot.activity.status === "error");
+
   return (
-    <ol
+    <div
       className={cn(
-        "space-y-2 rounded-lg border bg-muted/40 px-3 py-2.5 backdrop-blur-sm",
+        "rounded-lg border bg-muted/40 px-3 py-2.5 backdrop-blur-sm",
         className
       )}
+      aria-live="polite"
+      aria-relevant="additions text"
     >
-      {activities.map((activity) => (
-        <li key={activity.id} className="flex items-start gap-2.5 text-xs">
-          <span className="mt-0.5 shrink-0">
-            <ActivityIcon status={activity.status} />
-          </span>
-          <span
-            className={cn(
-              activity.status === "active" && "font-medium text-foreground",
-              activity.status === "complete" && "text-muted-foreground",
-              activity.status === "error" && "text-destructive"
-            )}
-          >
-            {activity.label}
-          </span>
-        </li>
-      ))}
-    </ol>
+      {hasErrors ? (
+        <ol className="space-y-1.5">
+          {errorSlots.map((slot) => (
+            <ActivityStepRow key={slot.id} slot={slot} />
+          ))}
+        </ol>
+      ) : null}
+      {stepSlots.length > 0 ? (
+        <ol
+          className={cn(hasErrors && "mt-2 border-t border-border/60 pt-2", "space-y-1.5")}
+        >
+          {stepSlots.map((slot) => (
+            <ActivityStepRow key={slot.id} slot={slot} />
+          ))}
+        </ol>
+      ) : null}
+    </div>
   );
 }
 
@@ -69,7 +233,7 @@ interface ThinkingCollapsibleProps {
 
 /** Collapsible block for model reasoning / thinking phase only. */
 export function ThinkingCollapsible({
-  label = "Thinking…",
+  label = "Give me a moment…",
   content,
   isActive = false,
   defaultOpen = false,
@@ -132,7 +296,7 @@ export function LiveStatusLine({ label, className }: LiveStatusLineProps) {
       )}
     >
       <LoaderCircle className="size-3.5 shrink-0 animate-spin text-primary" />
-      <span>{label}</span>
+      <span>{humanizeStatusLabel(label) ?? label}</span>
     </p>
   );
 }

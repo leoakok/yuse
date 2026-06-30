@@ -34,13 +34,3 @@ func resumeDefaultSectionSpecs() []workspaceSectionSpec {
 	}
 	return out
 }
-
-func portfolioDefaultSectionSpecs() []workspaceSectionSpec {
-	return []workspaceSectionSpec{
-		{model.SectionTypeSummary, "Summary", true},
-		{model.SectionTypeProjects, "Projects", true},
-		{model.SectionTypeSkills, "Skills", true},
-		{model.SectionTypeExperience, "Work Experience", true},
-		{model.SectionTypeEducation, "Education", true},
-	}
-}

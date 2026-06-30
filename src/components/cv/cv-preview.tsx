@@ -1,7 +1,8 @@
 "use client";
 
 import { useLayoutEffect, useMemo, useRef, useState } from "react";
-import type { ContactProfile, ResumeWithContent, Section, SectionItem } from "@/lib/types/cv";
+import type { ContactProfile, ItemTitleLayout, ResumeWithContent, Section, SectionItem } from "@/lib/types/cv";
+import { effectiveContactPhotoUrl } from "@/lib/cv/contact-photo";
 import {
   buildCvBlocks,
   measureCvBlocks,
@@ -20,6 +21,7 @@ import {
   formatItemHeadline,
   getSectionItemSubtitle,
 } from "@/lib/cv/section-item-display";
+import { resolveCvTypography, type CvTypography } from "@/lib/cv/typography";
 import { cn } from "@/lib/utils";
 
 interface CvPreviewProps {
@@ -39,22 +41,17 @@ function formatDateRange(metadata: Record<string, string | undefined>) {
   return `${start} – ${end}`;
 }
 
-function getFontSizeClass(fontSize: ResumeWithContent["settings"]["fontSize"]) {
-  return fontSize === "S"
-    ? "text-[11px]"
-    : fontSize === "L"
-      ? "text-[15px]"
-      : "text-[13px]";
-}
-
 function CvPreviewHeader({
   contactProfile,
   showPhoto = false,
+  typography,
 }: {
   contactProfile: ContactProfile;
   showPhoto?: boolean;
+  typography: CvTypography;
 }) {
-  const photoVisible = showPhoto && contactProfile.photoUrl;
+  const photoUrl = effectiveContactPhotoUrl(contactProfile);
+  const photoVisible = showPhoto && photoUrl;
 
   return (
     <header className="mb-6 border-b border-zinc-200 pb-4 dark:border-zinc-800">
@@ -62,17 +59,30 @@ function CvPreviewHeader({
         {photoVisible ? (
           // eslint-disable-next-line @next/next/no-img-element
           <img
-            src={contactProfile.photoUrl}
+            src={photoUrl}
             alt=""
             className="h-16 w-16 shrink-0 rounded-full object-cover ring-1 ring-zinc-200 dark:ring-zinc-700"
           />
         ) : null}
         <div className="min-w-0 flex-1">
-          <h1 className="text-2xl font-bold tracking-tight">{contactProfile.fullName}</h1>
+          <h1
+            className="font-bold tracking-tight"
+            style={{ fontSize: `${typography.contactNamePx}px` }}
+          >
+            {contactProfile.fullName}
+          </h1>
           {contactProfile.headline ? (
-            <p className="mt-1 text-zinc-600 dark:text-zinc-400">{contactProfile.headline}</p>
+            <p
+              className="mt-1 text-zinc-600 dark:text-zinc-400"
+              style={{ fontSize: `${typography.contactHeadlinePx}px` }}
+            >
+              {contactProfile.headline}
+            </p>
           ) : null}
-          <div className="mt-2 flex flex-wrap gap-x-3 gap-y-1 text-xs text-zinc-500">
+          <div
+            className="mt-2 flex flex-wrap gap-x-3 gap-y-1 text-zinc-500"
+            style={{ fontSize: `${typography.contactDetailsPx}px` }}
+          >
             {contactProfile.email ? <span>{contactProfile.email}</span> : null}
             {contactProfile.phone ? <span>{contactProfile.phone}</span> : null}
             {contactProfile.location ? <span>{contactProfile.location}</span> : null}
@@ -84,36 +94,82 @@ function CvPreviewHeader({
   );
 }
 
-function CvPreviewSectionTitle({ section }: { section: Section }) {
+function CvPreviewSectionTitle({
+  section,
+  typography,
+}: {
+  section: Section;
+  typography: CvTypography;
+}) {
   return (
-    <h2 className="mb-2 border-b border-zinc-300 text-xs font-semibold uppercase tracking-wider text-zinc-700 dark:border-zinc-700 dark:text-zinc-300">
+    <h2
+      className="mb-2 border-b border-zinc-300 font-semibold uppercase tracking-wider text-zinc-700 dark:border-zinc-700 dark:text-zinc-300"
+      style={{ fontSize: `${typography.sectionTitlePx}px` }}
+    >
       {section.title}
     </h2>
   );
 }
 
-function CvPreviewItem({ item }: { item: SectionItem }) {
+function CvPreviewItem({
+  item,
+  itemTitleLayout,
+  typography,
+}: {
+  item: SectionItem;
+  itemTitleLayout: ItemTitleLayout;
+  typography: CvTypography;
+}) {
   const dates = formatDateRange(item.metadata);
   const subtitle = getSectionItemSubtitle(item);
   const headline = formatItemHeadline(item);
+  const inline = itemTitleLayout === "INLINE" && subtitle;
+  const metaStyle = { fontSize: `${typography.itemMetaPx}px` };
 
   return (
     <div>
       <div className="flex items-baseline justify-between gap-2">
-        <h3 className="font-semibold">{headline}</h3>
-        {dates ? <span className="shrink-0 text-xs text-zinc-500">{dates}</span> : null}
+        <div className="min-w-0">
+          {inline ? (
+            <h3 className="font-semibold" style={{ fontSize: `${typography.itemTitlePx}px` }}>
+              {headline}
+              <span className="font-normal text-zinc-500" style={metaStyle}>
+                {" "}
+                · {subtitle}
+              </span>
+            </h3>
+          ) : (
+            <h3
+              className="font-semibold"
+              style={{ fontSize: `${typography.itemTitlePx}px` }}
+            >
+              {headline}
+            </h3>
+          )}
+        </div>
+        {dates ? (
+          <span className="shrink-0 text-zinc-500" style={metaStyle}>
+            {dates}
+          </span>
+        ) : null}
       </div>
-      {subtitle ? (
-        <p className="text-xs text-zinc-500">{subtitle}</p>
+      {!inline && subtitle ? (
+        <p className="text-zinc-500" style={metaStyle}>
+          {subtitle}
+        </p>
       ) : null}
       {item.type === "EXPERIENCE" && item.metadata.location ? (
-        <p className="text-xs text-zinc-500">{item.metadata.location}</p>
+        <p className="text-zinc-500" style={metaStyle}>
+          {item.metadata.location}
+        </p>
       ) : null}
       {item.body ? (
-        <MarkdownContent
-          content={item.body}
-          className="mt-1 text-zinc-700 dark:text-zinc-300"
-        />
+        <div style={{ fontSize: `${typography.bodyPx}px` }}>
+          <MarkdownContent
+            content={item.body}
+            className="mt-1 text-zinc-700 dark:text-zinc-300"
+          />
+        </div>
       ) : null}
     </div>
   );
@@ -151,17 +207,19 @@ function groupPageBlocks(pageBlocks: CvBlock[]) {
 function CvPreviewPage({
   pageBlocks,
   page,
-  fontSize,
+  typography,
   pagePadding,
   showPhoto,
+  itemTitleLayout,
   className,
   fixedHeight,
 }: {
   pageBlocks: CvBlock[];
   page: ReturnType<typeof getPageFormatSpec>;
-  fontSize: string;
+  typography: CvTypography;
   pagePadding: string;
   showPhoto?: boolean;
+  itemTitleLayout: ItemTitleLayout;
   className?: string;
   fixedHeight?: boolean;
 }) {
@@ -172,12 +230,12 @@ function CvPreviewPage({
       className={cn(
         "rounded-sm bg-white text-zinc-900 shadow-lg ring-1 ring-black/5 dark:bg-zinc-950 dark:text-zinc-100 dark:ring-white/10",
         "box-border shrink-0 overflow-hidden",
-        fontSize,
         className
       )}
       style={{
         width: page.width,
         padding: pagePadding,
+        fontSize: `${typography.bodyPx}px`,
         ...(fixedHeight
           ? { height: page.minHeight, minHeight: page.minHeight }
           : { minHeight: page.minHeight }),
@@ -189,7 +247,11 @@ function CvPreviewPage({
           return (
             <div key={`header-${index}`}>
               {block?.kind === "header" ? (
-                <CvPreviewHeader contactProfile={block.contactProfile} showPhoto={showPhoto} />
+                <CvPreviewHeader
+                  contactProfile={block.contactProfile}
+                  showPhoto={showPhoto}
+                  typography={typography}
+                />
               ) : null}
             </div>
           );
@@ -200,11 +262,18 @@ function CvPreviewPage({
 
         return (
           <section key={`${group.section.id}-${index}`} className={index > 0 ? "mt-5" : undefined}>
-            {titleBlock ? <CvPreviewSectionTitle section={titleBlock.section} /> : null}
+            {titleBlock ? (
+              <CvPreviewSectionTitle section={titleBlock.section} typography={typography} />
+            ) : null}
             <div className="space-y-3">
               {items.map((block) =>
                 block.kind === "item" ? (
-                  <CvPreviewItem key={block.item.id} item={block.item} />
+                  <CvPreviewItem
+                    key={block.item.id}
+                    item={block.item}
+                    itemTitleLayout={itemTitleLayout}
+                    typography={typography}
+                  />
                 ) : null
               )}
             </div>
@@ -218,16 +287,18 @@ function CvPreviewPage({
 function CvPreviewMeasureLayout({
   blocks,
   page,
-  fontSize,
+  typography,
   pagePadding,
   showPhoto,
+  itemTitleLayout,
   measureRef,
 }: {
   blocks: CvBlock[];
   page: ReturnType<typeof getPageFormatSpec>;
-  fontSize: string;
+  typography: CvTypography;
   pagePadding: string;
   showPhoto?: boolean;
+  itemTitleLayout: ItemTitleLayout;
   measureRef: React.RefObject<HTMLDivElement | null>;
 }) {
   const groups: { section: Section | null; blockIndices: number[] }[] = [];
@@ -262,8 +333,8 @@ function CvPreviewMeasureLayout({
       className="pointer-events-none absolute left-[-9999px] top-0 opacity-0"
     >
       <div
-        className={cn("box-border", fontSize)}
-        style={{ width: page.width, padding: pagePadding }}
+        className="box-border"
+        style={{ width: page.width, padding: pagePadding, fontSize: `${typography.bodyPx}px` }}
         data-cv-measure-root
       >
         {groups.map((group, groupIndex) => {
@@ -272,7 +343,11 @@ function CvPreviewMeasureLayout({
             return (
               <div key={`m-header-${groupIndex}`} data-cv-block-index={group.blockIndices[0]}>
                 {block.kind === "header" ? (
-                  <CvPreviewHeader contactProfile={block.contactProfile} showPhoto={showPhoto} />
+                  <CvPreviewHeader
+                    contactProfile={block.contactProfile}
+                    showPhoto={showPhoto}
+                    typography={typography}
+                  />
                 ) : null}
               </div>
             );
@@ -292,7 +367,7 @@ function CvPreviewMeasureLayout({
             >
               {titleIndex != null ? (
                 <div data-cv-block-index={titleIndex}>
-                  <CvPreviewSectionTitle section={group.section} />
+                  <CvPreviewSectionTitle section={group.section} typography={typography} />
                 </div>
               ) : null}
               <div className="space-y-3">
@@ -300,7 +375,13 @@ function CvPreviewMeasureLayout({
                   const block = blocks[blockIndex];
                   return (
                     <div key={blockIndex} data-cv-block-index={blockIndex}>
-                      {block.kind === "item" ? <CvPreviewItem item={block.item} /> : null}
+                      {block.kind === "item" ? (
+                        <CvPreviewItem
+                          item={block.item}
+                          itemTitleLayout={itemTitleLayout}
+                          typography={typography}
+                        />
+                      ) : null}
                     </div>
                   );
                 })}
@@ -324,8 +405,9 @@ export function CvPreview({
   const page = getPageFormatSpec(pageFormat);
   const margins = getPageMargins(content.settings);
   const pagePadding = getPagePaddingStyle(margins);
-  const fontSize = getFontSizeClass(content.settings.fontSize);
+  const typography = useMemo(() => resolveCvTypography(content.settings), [content.settings]);
   const showPhoto = content.settings.showPhoto;
+  const itemTitleLayout = content.settings.itemTitleLayout ?? "STACKED";
   const measureRef = useRef<HTMLDivElement>(null);
   const [pageIndices, setPageIndices] = useState<number[][] | null>(null);
 
@@ -333,6 +415,8 @@ export function CvPreview({
     () => buildCvBlocks(contactProfile, sections),
     [contactProfile, sections]
   );
+
+  const typographyKey = JSON.stringify(typography);
 
   useLayoutEffect(() => {
     const root = measureRef.current?.querySelector<HTMLElement>("[data-cv-measure-root]");
@@ -344,7 +428,7 @@ export function CvPreview({
     const metrics = measureCvBlocks(root);
     const maxHeight = getUsablePageHeightPx(pageFormat, margins.vertical);
     setPageIndices(paginateCvBlocks(metrics, maxHeight));
-  }, [blocks, pageFormat, fontSize, showPhoto, margins.horizontal, margins.vertical]);
+  }, [blocks, pageFormat, typographyKey, showPhoto, itemTitleLayout, margins.horizontal, margins.vertical]);
 
   const pages = useMemo(() => {
     const fallback = [blocks.map((_, i) => i)];
@@ -368,7 +452,6 @@ export function CvPreview({
   const articleClassName = cn(
     "rounded-sm bg-white text-zinc-900 shadow-lg ring-1 ring-black/5 dark:bg-zinc-950 dark:text-zinc-100 dark:ring-white/10",
     "box-border shrink-0",
-    fontSize,
     className
   );
 
@@ -377,7 +460,12 @@ export function CvPreview({
       <div className="mx-auto w-fit">
         <article
           className={articleClassName}
-          style={{ width: page.width, minHeight: page.minHeight, padding: pagePadding }}
+          style={{
+            width: page.width,
+            minHeight: page.minHeight,
+            padding: pagePadding,
+            fontSize: `${typography.bodyPx}px`,
+          }}
         />
       </div>
     );
@@ -390,9 +478,10 @@ export function CvPreview({
       <CvPreviewMeasureLayout
         blocks={blocks}
         page={page}
-        fontSize={fontSize}
+        typography={typography}
         pagePadding={pagePadding}
         showPhoto={showPhoto}
+        itemTitleLayout={itemTitleLayout}
         measureRef={measureRef}
       />
 
@@ -402,9 +491,10 @@ export function CvPreview({
             key={pageIndex}
             pageBlocks={pageBlocks}
             page={page}
-            fontSize={fontSize}
+            typography={typography}
             pagePadding={pagePadding}
             showPhoto={showPhoto}
+            itemTitleLayout={itemTitleLayout}
             className={className}
             fixedHeight={isPaginated || singlePage}
           />

@@ -88,6 +88,8 @@ func TestSearchListUserReposSkipsGlobalSearch(t *testing.T) {
 		switch r.URL.Path {
 		case "/user":
 			_, _ = w.Write([]byte(`{"login":"leoakok"}`))
+		case "/users/leoakok":
+			_, _ = w.Write([]byte(`{"login":"leoakok","avatar_url":"https://avatars.githubusercontent.com/u/99"}`))
 		case "/user/repos":
 			_, _ = w.Write([]byte(`[{"name":"app","full_name":"leoakok/app","html_url":"https://github.com/leoakok/app","fork":false}]`))
 		case "/users/leoakok/orgs":
@@ -118,6 +120,9 @@ func TestSearchListUserReposSkipsGlobalSearch(t *testing.T) {
 	importRepos, _ := result["importRepositories"].([]map[string]any)
 	if len(importRepos) != 1 {
 		t.Fatalf("expected 1 import repo, got %d", len(importRepos))
+	}
+	if result["githubPhotoUrl"] != "https://avatars.githubusercontent.com/u/99" {
+		t.Fatalf("expected githubPhotoUrl, got %v", result["githubPhotoUrl"])
 	}
 }
 
@@ -156,7 +161,7 @@ func (githubTokenExecutor) GetPortfolio(string) (*model.Portfolio, error) { retu
 func (githubTokenExecutor) CreatePortfolio(string) *model.Portfolio { return nil }
 func (githubTokenExecutor) DuplicatePortfolio(string) (*model.Portfolio, error) { return nil, nil }
 func (githubTokenExecutor) DeletePortfolio(string) (bool, error) { return false, nil }
-func (githubTokenExecutor) UpdatePortfolio(string, *string, *string) (*model.Portfolio, error) {
+func (githubTokenExecutor) UpdatePortfolio(string, *string, *string, *string, *string) (*model.Portfolio, error) {
 	return nil, nil
 }
 func (githubTokenExecutor) GetPortfolioWithContent(string) (*model.PortfolioWithContent, error) {
@@ -165,13 +170,34 @@ func (githubTokenExecutor) GetPortfolioWithContent(string) (*model.PortfolioWith
 func (githubTokenExecutor) UpdatePortfolioContactProfile(_ context.Context, _ model.UpdatePortfolioContactProfileInput) (*model.PortfolioWithContent, error) {
 	return nil, nil
 }
-func (githubTokenExecutor) AddPortfolioSectionItem(model.AddPortfolioSectionItemInput) (*model.PortfolioWithContent, error) {
+func (githubTokenExecutor) AddPortfolioProject(model.AddPortfolioProjectInput) (*model.PortfolioWithContent, error) {
 	return nil, nil
 }
-func (githubTokenExecutor) UpdatePortfolioSectionItem(model.UpdatePortfolioSectionItemInput) (*model.PortfolioWithContent, error) {
+func (githubTokenExecutor) UpdatePortfolioProject(model.UpdatePortfolioProjectInput) (*model.PortfolioWithContent, error) {
 	return nil, nil
 }
-func (githubTokenExecutor) UpdatePortfolioSectionItemVisibility(model.UpdatePortfolioSectionItemVisibilityInput) (*model.PortfolioWithContent, error) {
+func (githubTokenExecutor) DeletePortfolioProject(string, string) (*model.PortfolioWithContent, error) {
+	return nil, nil
+}
+func (githubTokenExecutor) SetPortfolioProjectVisibility(model.SetPortfolioProjectVisibilityInput) (*model.PortfolioWithContent, error) {
+	return nil, nil
+}
+func (githubTokenExecutor) AddPortfolioSkill(model.AddPortfolioSkillInput) (*model.PortfolioWithContent, error) {
+	return nil, nil
+}
+func (githubTokenExecutor) UpdatePortfolioSkill(model.UpdatePortfolioSkillInput) (*model.PortfolioWithContent, error) {
+	return nil, nil
+}
+func (githubTokenExecutor) DeletePortfolioSkill(string, string) (*model.PortfolioWithContent, error) {
+	return nil, nil
+}
+func (githubTokenExecutor) AddPortfolioTestimonial(model.AddPortfolioTestimonialInput) (*model.PortfolioWithContent, error) {
+	return nil, nil
+}
+func (githubTokenExecutor) UpdatePortfolioTestimonial(model.UpdatePortfolioTestimonialInput) (*model.PortfolioWithContent, error) {
+	return nil, nil
+}
+func (githubTokenExecutor) DeletePortfolioTestimonial(string, string) (*model.PortfolioWithContent, error) {
 	return nil, nil
 }
 func (githubTokenExecutor) UpdatePortfolioSettings(model.UpdatePortfolioSettingsInput) (*model.PortfolioSettings, error) {

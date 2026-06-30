@@ -57,8 +57,7 @@ export const authConfig = {
       const isGraphqlProxy = pathname.startsWith("/api/graphql");
       const isGitHubOAuthCallback = pathname === "/api/auth/github/callback";
 
-      // The marketing landing page is public. Signed-in visitors are sent to
-      // the app by the page itself (server-side redirect to /home).
+      // The marketing landing page is always public for signed-in and signed-out visitors.
       if (isLanding) {
         return true;
       }

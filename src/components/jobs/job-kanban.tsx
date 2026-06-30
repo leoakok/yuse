@@ -3,7 +3,6 @@
 import { useEffect, useState } from "react";
 import {
   DndContext,
-  DragOverlay,
   KeyboardSensor,
   PointerSensor,
   closestCorners,
@@ -12,7 +11,6 @@ import {
   useSensor,
   useSensors,
   type DragEndEvent,
-  type DragStartEvent,
 } from "@dnd-kit/core";
 import { CSS } from "@dnd-kit/utilities";
 import { FileText } from "lucide-react";
@@ -49,12 +47,25 @@ function resolveDropStatus(overId: string | number, jobs: TrackedJob[]): JobStat
   return overJob?.status ?? null;
 }
 
+function usePrefersReducedMotion() {
+  const [reduced, setReduced] = useState(false);
+
+  useEffect(() => {
+    const media = window.matchMedia("(prefers-reduced-motion: reduce)");
+    setReduced(media.matches);
+    const onChange = () => setReduced(media.matches);
+    media.addEventListener("change", onChange);
+    return () => media.removeEventListener("change", onChange);
+  }, []);
+
+  return reduced;
+}
+
 interface JobCardContentProps {
   job: TrackedJob;
   onSelect?: (job: TrackedJob) => void;
   isSelected?: boolean;
   isDragging?: boolean;
-  isOverlay?: boolean;
 }
 
 function JobCardContent({
@@ -62,7 +73,6 @@ function JobCardContent({
   onSelect,
   isSelected,
   isDragging,
-  isOverlay,
 }: JobCardContentProps) {
   return (
     <Card
@@ -80,11 +90,10 @@ function JobCardContent({
           : undefined
       }
       className={cn(
-        "gap-2 rounded-lg border bg-card p-3 shadow-sm transition-[opacity,box-shadow,transform] duration-200 ease-out",
+        "gap-2 rounded-lg border bg-card p-3 shadow-sm transition-[box-shadow,transform] duration-200 ease-out",
         onSelect && "cursor-grab hover:shadow-md active:cursor-grabbing",
         isSelected && "border-primary/50 ring-1 ring-primary/20",
-        isDragging && "opacity-40 shadow-none",
-        isOverlay && "pointer-events-none shadow-lg"
+        isDragging && "shadow-lg",
       )}
     >
       <div className="min-w-0 space-y-1">
@@ -114,26 +123,6 @@ function JobCardContent({
   );
 }
 
-function DragOverlayCard({ job }: { job: TrackedJob }) {
-  const [tilted, setTilted] = useState(false);
-
-  useEffect(() => {
-    const frame = requestAnimationFrame(() => setTilted(true));
-    return () => cancelAnimationFrame(frame);
-  }, []);
-
-  return (
-    <div
-      className={cn(
-        "w-72 transition-transform duration-200 ease-out will-change-transform",
-        tilted ? "rotate-1" : "rotate-0"
-      )}
-    >
-      <JobCardContent job={job} isOverlay />
-    </div>
-  );
-}
-
 function DraggableJobCard({
   job,
   onSelect,
@@ -143,6 +132,7 @@ function DraggableJobCard({
   onSelect: (job: TrackedJob) => void;
   isSelected?: boolean;
 }) {
+  const reducedMotion = usePrefersReducedMotion();
   const { attributes, listeners, setNodeRef, transform, isDragging } = useDraggable({
     id: job.id,
     data: { type: "job", job },
@@ -156,16 +146,64 @@ function DraggableJobCard({
     <div
       ref={setNodeRef}
       style={style}
-      className="touch-none"
+      className={cn("touch-none", isDragging && "z-50")}
       {...listeners}
       {...attributes}
     >
-      <JobCardContent
-        job={job}
-        onSelect={onSelect}
-        isSelected={isSelected}
-        isDragging={isDragging}
-      />
+      <div
+        className={cn(
+          "transition-transform duration-200 ease-out will-change-transform",
+          isDragging && !reducedMotion && "rotate-1",
+        )}
+      >
+        <JobCardContent
+          job={job}
+          onSelect={onSelect}
+          isSelected={isSelected}
+          isDragging={isDragging}
+        />
+      </div>
+    </div>
+  );
+}
+
+function StaticKanbanColumn({
+  status,
+  jobs,
+  onSelect,
+  selectedJobId,
+}: {
+  status: JobStatus;
+  jobs: TrackedJob[];
+  onSelect: (job: TrackedJob) => void;
+  selectedJobId?: string | null;
+}) {
+  const columnJobs = jobs.filter((job) => job.status === status);
+
+  return (
+    <div className="flex w-72 shrink-0 flex-col rounded-xl border bg-muted/30">
+      <div className="flex items-center justify-between gap-2 border-b px-3 py-2.5">
+        <h3 className="text-sm font-semibold tracking-tight">{JOB_STATUS_LABELS[status]}</h3>
+        <Badge variant="secondary" className="tabular-nums">
+          {columnJobs.length}
+        </Badge>
+      </div>
+      <div className="flex min-h-36 flex-1 flex-col gap-2 p-2">
+        {columnJobs.length === 0 ? (
+          <div className="flex flex-1 items-center justify-center rounded-lg border border-dashed border-transparent px-3 py-8 text-center">
+            <p className="text-xs text-muted-foreground">Drop applications here</p>
+          </div>
+        ) : (
+          columnJobs.map((job) => (
+            <JobCardContent
+              key={job.id}
+              job={job}
+              onSelect={onSelect}
+              isSelected={job.id === selectedJobId}
+            />
+          ))
+        )}
+      </div>
     </div>
   );
 }
@@ -230,20 +268,18 @@ function KanbanColumn({
 }
 
 export function JobKanban({ jobs, onStatusChange, onSelect, selectedJobId }: JobKanbanProps) {
-  const [activeJob, setActiveJob] = useState<TrackedJob | null>(null);
+  const [mounted, setMounted] = useState(false);
+
+  useEffect(() => {
+    setMounted(true);
+  }, []);
 
   const sensors = useSensors(
     useSensor(PointerSensor, { activationConstraint: { distance: 6 } }),
     useSensor(KeyboardSensor)
   );
 
-  function handleDragStart(event: DragStartEvent) {
-    const job = jobs.find((item) => item.id === event.active.id);
-    setActiveJob(job ?? null);
-  }
-
   function handleDragEnd(event: DragEndEvent) {
-    setActiveJob(null);
     const { active, over } = event;
     if (!over) return;
 
@@ -267,11 +303,26 @@ export function JobKanban({ jobs, onStatusChange, onSelect, selectedJobId }: Job
     );
   }
 
+  if (!mounted) {
+    return (
+      <div className="flex gap-3 overflow-x-auto pb-2" aria-hidden>
+        {JOB_STATUS_ORDER.map((status) => (
+          <StaticKanbanColumn
+            key={status}
+            status={status}
+            jobs={jobs}
+            onSelect={onSelect}
+            selectedJobId={selectedJobId}
+          />
+        ))}
+      </div>
+    );
+  }
+
   return (
     <DndContext
       sensors={sensors}
       collisionDetection={closestCorners}
-      onDragStart={handleDragStart}
       onDragEnd={handleDragEnd}
     >
       <div className="flex gap-3 overflow-x-auto pb-2">
@@ -285,9 +336,6 @@ export function JobKanban({ jobs, onStatusChange, onSelect, selectedJobId }: Job
           />
         ))}
       </div>
-      <DragOverlay dropAnimation={{ duration: 200, easing: "ease" }}>
-        {activeJob ? <DragOverlayCard job={activeJob} /> : null}
-      </DragOverlay>
     </DndContext>
   );
 }
