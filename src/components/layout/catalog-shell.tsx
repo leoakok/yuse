@@ -1,5 +1,7 @@
 import type { ReactNode } from "react";
-import { PageHeader, PageTitle } from "@/components/layout/page-header";
+import { WorkspaceBody } from "@/components/agent/cv-assistant-shell";
+import { FloatingAppChrome } from "@/components/layout/floating-app-chrome";
+import { PageTitle } from "@/components/layout/page-header";
 import { cn } from "@/lib/utils";
 
 export type CatalogShellWidth = "default" | "narrow";
@@ -29,31 +31,33 @@ export function CatalogShell({
   children,
 }: CatalogShellProps) {
   return (
-    <div className="flex min-h-dvh flex-col bg-background">
-      <PageHeader />
-      <main
-        className={cn(
-          "w-full flex-1",
-          fillHeight ? "flex min-h-0 flex-col overflow-hidden" : "overflow-y-auto"
-        )}
-      >
-        <div
+    <div className="flex h-dvh flex-col bg-background">
+      <FloatingAppChrome />
+      <WorkspaceBody>
+        <main
           className={cn(
-            "mx-auto w-full min-w-0 px-4 py-8",
-            widthClass[width],
-            fillHeight && "flex min-h-0 flex-1 flex-col"
+            "w-full flex-1",
+            fillHeight ? "flex min-h-0 flex-col overflow-hidden" : "overflow-y-auto"
           )}
         >
-          <div className={cn(fillHeight && "shrink-0")}>
-            <PageTitle title={title} description={description} actions={actions} />
-          </div>
           <div
-            className={cn(fillHeight && "flex min-h-0 min-w-0 w-full flex-1 flex-col")}
+            className={cn(
+              "mx-auto w-full min-w-0 px-4 pt-8 pb-16",
+              widthClass[width],
+              fillHeight && "flex min-h-0 flex-1 flex-col"
+            )}
           >
-            {children}
+            <div className={cn(fillHeight && "shrink-0")}>
+              <PageTitle title={title} description={description} actions={actions} />
+            </div>
+            <div
+              className={cn(fillHeight && "flex min-h-0 min-w-0 w-full flex-1 flex-col")}
+            >
+              {children}
+            </div>
           </div>
-        </div>
-      </main>
+        </main>
+      </WorkspaceBody>
     </div>
   );
 }

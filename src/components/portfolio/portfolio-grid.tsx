@@ -191,14 +191,6 @@ function PortfolioCard({ portfolio, onDeleted }: PortfolioCardProps) {
           <DialogFooter>
             <Button
               type="button"
-              variant="outline"
-              disabled={isDeleting}
-              onClick={() => setDeleteOpen(false)}
-            >
-              Cancel
-            </Button>
-            <Button
-              type="button"
               variant="warning"
               disabled={isDeleting}
               onClick={() => void handleDelete()}

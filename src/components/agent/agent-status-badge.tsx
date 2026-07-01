@@ -1,4 +1,5 @@
 import type { AgentPhase } from "@/lib/types/assistant";
+import { motionPing } from "@/lib/ui/motion";
 import { cn } from "@/lib/utils";
 
 interface AgentStatusBadgeProps {
@@ -29,7 +30,7 @@ export function AgentStatusBadge({ phase, label, className }: AgentStatusBadgePr
     >
       {isActive ? (
         <span className="relative flex size-2">
-          <span className="absolute inline-flex size-full animate-ping rounded-full bg-primary opacity-40" />
+          <span className={cn("absolute inline-flex size-full rounded-full bg-primary opacity-40", motionPing)} />
           <span className="relative inline-flex size-2 rounded-full bg-primary" />
         </span>
       ) : null}

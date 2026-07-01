@@ -1,6 +1,7 @@
 "use client";
 
 import { useCallback, useEffect, useRef, useState } from "react";
+import { motionTransitionColors } from "@/lib/ui/motion";
 import { cn } from "@/lib/utils";
 
 interface ResizeHandleProps {
@@ -55,7 +56,7 @@ export function ResizeHandle({ onResize, className, label = "Resize panel" }: Re
       className={cn(
         "group relative z-10 w-1 shrink-0 cursor-col-resize touch-none",
         "bg-border/60 hover:bg-primary/40 active:bg-primary/60",
-        "transition-colors",
+        motionTransitionColors,
         className
       )}
     >
@@ -93,8 +94,20 @@ export function clamp(value: number, min: number, max: number) {
   return Math.min(max, Math.max(min, value));
 }
 
+export const EDITOR_KEY = "cv-shell-editor-width";
+
+export const EDITOR_DEFAULT = 400;
+export const EDITOR_MIN = 300;
+export const EDITOR_MAX = 560;
+
 export const PREVIEW_KEY = "cv-shell-preview-width";
 
 export const PREVIEW_DEFAULT = 384;
-export const PREVIEW_MIN = 240;
+export const PREVIEW_MIN = 280;
 export const PREVIEW_MAX = 720;
+
+export const ASSISTANT_KEY = "cv-shell-assistant-width";
+
+export const ASSISTANT_DEFAULT = 440;
+export const ASSISTANT_MIN = 320;
+export const ASSISTANT_MAX = 640;

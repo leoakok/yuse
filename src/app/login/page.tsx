@@ -1,5 +1,9 @@
+import type { Metadata } from "next";
 import { LoginForm } from "@/components/auth/login-form";
 import { YuseLogo } from "@/components/brand/yuse-logo";
+import { buildLoginMetadata } from "@/lib/site/metadata";
+
+export const metadata: Metadata = buildLoginMetadata();
 
 const AUTH_ERROR_MESSAGES: Record<string, string> = {
   Configuration:

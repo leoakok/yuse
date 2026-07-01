@@ -10,6 +10,7 @@ export type LocationDisplay = "HIDDEN" | "OWN_LINE" | "INLINE_WITH_COMPANY";
 export type FontWeightRole = "LIGHT" | "REGULAR" | "MEDIUM" | "SEMIBOLD";
 export type LineHeightDensity = "TIGHT" | "NORMAL" | "RELAXED";
 export type LetterSpacingDensity = "TIGHT" | "NORMAL";
+export type SectionTitleCase = "UPPERCASE" | "CAPITALIZE";
 export type PageBackground = "WHITE" | "OFF_WHITE" | "LIGHT_GRAY";
 export type SkillsProficiency = "NONE" | "DOTS" | "BARS" | "TEXT";
 export type LanguagesLayout = "LIST" | "INLINE" | "COLUMNS";
@@ -74,7 +75,7 @@ export interface CvDesignTokens {
   nameFontWeight: number;
   sectionTitleFontWeight: number;
   headingLetterSpacing: string;
-  sectionTitleSmallCaps: boolean;
+  sectionTitleCase: SectionTitleCase;
   headingFontFamily: FontFamily;
   bodyFontFamily: FontFamily;
   descriptionStyle: DescriptionStyle;
@@ -128,6 +129,17 @@ export function normalizeLetterSpacingDensity(value?: string): LetterSpacingDens
   return normalizeEnum(value, ["TIGHT", "NORMAL"], "NORMAL");
 }
 
+export function normalizeSectionTitleCase(value?: string): SectionTitleCase {
+  return normalizeEnum(value, ["UPPERCASE", "CAPITALIZE"], "CAPITALIZE");
+}
+
+export function formatSectionTitle(title: string, caseStyle: SectionTitleCase): string {
+  if (caseStyle === "UPPERCASE") {
+    return title.toUpperCase();
+  }
+  return title.replace(/\b\w/g, (char) => char.toUpperCase());
+}
+
 export function normalizePageBackground(value?: string): PageBackground {
   return normalizeEnum(value, ["WHITE", "OFF_WHITE", "LIGHT_GRAY"], "WHITE");
 }
@@ -170,7 +182,7 @@ export function resolveCvDesignTokens(settings: ResumeSettings): CvDesignTokens 
     headingLetterSpacing: ats
       ? "0"
       : LETTER_SPACING_EM[normalizeLetterSpacingDensity(settings.headingLetterSpacing)],
-    sectionTitleSmallCaps: ats ? false : settings.sectionTitleSmallCaps,
+    sectionTitleCase: ats ? "UPPERCASE" : normalizeSectionTitleCase(settings.sectionTitleCase),
     headingFontFamily: ats ? "SANS" : settings.headingFontFamily ?? settings.fontFamily ?? "SANS",
     bodyFontFamily: ats ? "SANS" : settings.bodyFontFamily ?? settings.fontFamily ?? "SANS",
     descriptionStyle: ats ? "BULLETS" : normalizeDescriptionStyle(settings.descriptionStyle),
@@ -217,7 +229,7 @@ export type ResumeDesignExtensionFields = Pick<
   | "sectionTitleFontWeight"
   | "lineHeight"
   | "headingLetterSpacing"
-  | "sectionTitleSmallCaps"
+  | "sectionTitleCase"
   | "textPrimaryColor"
   | "textMutedColor"
   | "pageBackground"
@@ -245,7 +257,7 @@ export const DEFAULT_RESUME_DESIGN_EXTENSION: ResumeDesignExtensionFields = {
   sectionTitleFontWeight: "SEMIBOLD",
   lineHeight: "NORMAL",
   headingLetterSpacing: "NORMAL",
-  sectionTitleSmallCaps: true,
+  sectionTitleCase: "CAPITALIZE",
   textPrimaryColor: "",
   textMutedColor: "",
   pageBackground: "WHITE",
@@ -274,7 +286,7 @@ export function pickResumeDesignExtension(settings: Partial<ResumeSettings>): Re
     sectionTitleFontWeight: normalizeFontWeightRole(settings.sectionTitleFontWeight),
     lineHeight: normalizeLineHeightDensity(settings.lineHeight),
     headingLetterSpacing: normalizeLetterSpacingDensity(settings.headingLetterSpacing),
-    sectionTitleSmallCaps: settings.sectionTitleSmallCaps ?? true,
+    sectionTitleCase: normalizeSectionTitleCase(settings.sectionTitleCase),
     textPrimaryColor: settings.textPrimaryColor ?? "",
     textMutedColor: settings.textMutedColor ?? "",
     pageBackground: normalizePageBackground(settings.pageBackground),

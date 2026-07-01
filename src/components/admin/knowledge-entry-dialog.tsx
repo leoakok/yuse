@@ -165,9 +165,6 @@ export function KnowledgeEntryDialog({ state, onClose, onSave }: KnowledgeEntryD
           </label>
         </div>
         <DialogFooter>
-          <Button type="button" variant="outline" onClick={onClose} disabled={saving}>
-            Cancel
-          </Button>
           <Button type="button" onClick={() => void handleSubmit()} disabled={saving}>
             {saving ? "Saving…" : state.mode === "create" ? "Add entry" : "Save changes"}
           </Button>

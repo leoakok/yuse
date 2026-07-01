@@ -607,7 +607,7 @@ export function ResumeDesignSettings({
   }, [status]);
 
   return (
-    <Accordion defaultValue={["theme-preset"]} className="space-y-2">
+    <Accordion defaultValue={["theme-preset"]} className="gap-0">
       <AccordionItem value="theme-preset">
         <AccordionTrigger>Theme</AccordionTrigger>
         <AccordionContent>
@@ -883,7 +883,7 @@ export function ResumeDesignSettings({
       <AccordionItem value="sections">
         <AccordionTrigger>Sections</AccordionTrigger>
         <AccordionContent>
-          <ul className="space-y-1">
+          <ul className="divide-y">
             {sections.map((entry, index) => {
               const hidden = !entry.showInPreview;
               const busy = sectionBusyId === entry.section.id;
@@ -891,10 +891,7 @@ export function ResumeDesignSettings({
               return (
                 <li
                   key={entry.section.id}
-                  className={cn(
-                    "flex flex-col gap-1 rounded-md border px-2 py-1.5",
-                    hidden && "opacity-60"
-                  )}
+                  className={cn("flex flex-col gap-1 py-2.5", hidden && "opacity-60")}
                 >
                   <div className="flex items-center gap-1">
                     <input

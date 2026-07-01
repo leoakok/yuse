@@ -5,6 +5,7 @@ import {
   getSectionItemSubtitle,
 } from "@/lib/cv/section-item-display";
 import { getPageMargins, getPageSizeMm } from "@/lib/cv/page-format";
+import { formatSectionTitle, resolveCvDesignTokens } from "@/lib/cv/resume-design";
 import { resolveCvTypography, typographyToPt } from "@/lib/cv/typography";
 import { stripMarkdown } from "@/lib/markdown/render";
 
@@ -94,7 +95,8 @@ class VectorPdfLayout {
     pageFormat: PageFormat,
     private marginH: number,
     private marginV: number,
-    private typo: Typography
+    private typo: Typography,
+    private formatSectionTitleText: (title: string) => string
   ) {
     this.pageSizeMm = getPageSizeMm(pageFormat);
     this.contentWidth = this.pageSizeMm.width - marginH * 2;
@@ -205,7 +207,7 @@ class VectorPdfLayout {
     this.ensureSpace(titleHeight + titleGap + sectionGap);
 
     this.pdf.setTextColor(63, 63, 70);
-    this.pdf.text(title.toUpperCase(), this.marginH, this.y);
+    this.pdf.text(this.formatSectionTitleText(title), this.marginH, this.y);
     this.y += titleHeight + titleGap;
 
     this.pdf.setDrawColor(212, 212, 216);
@@ -305,6 +307,9 @@ export async function exportResumePdfVector(options: {
   const pageFormat =
     options.pageFormat ?? content.settings.pageFormat ?? "A4";
   const typo = typographyToPt(resolveCvTypography(content.settings));
+  const designTokens = resolveCvDesignTokens(content.settings);
+  const formatTitle = (title: string) =>
+    formatSectionTitle(title, designTokens.sectionTitleCase);
 
   const { jsPDF } = await import("jspdf");
   const pageSizeMm = getPageSizeMm(pageFormat);
@@ -320,7 +325,8 @@ export async function exportResumePdfVector(options: {
     pageFormat,
     margins.horizontal,
     margins.vertical,
-    typo
+    typo,
+    formatTitle
   );
   const blocks = buildCvBlocks(content.contactProfile, content.sections);
   let lastBlock: CvBlock | null = null;

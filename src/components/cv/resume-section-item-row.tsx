@@ -11,6 +11,7 @@ import {
   DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
+import { motionHoverRevealGroup, motionTransitionColors } from "@/lib/ui/motion";
 import { stripMarkdown } from "@/lib/markdown/render";
 import { formatItemRowDetail } from "@/lib/cv/section-item-display";
 import { cn } from "@/lib/utils";
@@ -56,7 +57,8 @@ export function ResumeSectionItemRow({
   return (
     <li
       className={cn(
-        "group/item relative cursor-pointer px-4 py-2.5 text-sm transition-colors hover:bg-muted/40 lg:px-5",
+        "group/item relative cursor-pointer px-4 py-2.5 text-sm hover:bg-muted/40 lg:px-5",
+        motionTransitionColors,
         hidden && "opacity-50"
       )}
       onClick={onEdit}
@@ -81,13 +83,10 @@ export function ResumeSectionItemRow({
               {stripMarkdown(item.body)}
             </p>
           ) : null}
-          {hidden ? (
-            <p className="mt-1 text-[10px] text-muted-foreground">Hidden from preview</p>
-          ) : null}
         </div>
 
         <div
-          className="flex shrink-0 items-center gap-0.5 opacity-0 transition-opacity group-hover/item:opacity-100 group-focus-within/item:opacity-100"
+          className={cn("flex shrink-0 items-center gap-0.5", motionHoverRevealGroup("item"))}
           onClick={(event) => event.stopPropagation()}
           onKeyDown={(event) => event.stopPropagation()}
         >

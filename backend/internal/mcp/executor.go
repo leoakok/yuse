@@ -20,6 +20,10 @@ type Executor interface {
 	AddResumeSectionItem(input model.AddResumeSectionItemInput) (*model.ResumeWithContent, error)
 	UpdateResumeSectionItem(input model.UpdateResumeSectionItemInput) (*model.ResumeWithContent, error)
 	UpdateResumeSectionItemVisibility(input model.UpdateResumeSectionItemVisibilityInput) (*model.ResumeWithContent, error)
+	UpdateResumeSectionDisplayTitle(input model.UpdateResumeSectionDisplayTitleInput) (*model.ResumeWithContent, error)
+	ReorderResumeSections(input model.ReorderResumeSectionsInput) (*model.ResumeWithContent, error)
+	UpdateResumeSectionVisibility(input model.UpdateResumeSectionVisibilityInput) (*model.ResumeWithContent, error)
+	DeleteSectionItem(resumeID, sectionItemID string) (*model.ResumeWithContent, error)
 	UpdateResumeSettings(input model.UpdateResumeSettingsInput) (*model.ResumeSettings, error)
 	ListPortfolios() []*model.Portfolio
 	GetPortfolio(id string) (*model.Portfolio, error)
@@ -49,7 +53,9 @@ type Executor interface {
 	DeleteTwinEntry(id string) (bool, error)
 	ListTrackedJobs() []*model.TrackedJob
 	GetTrackedJob(id string) (*model.TrackedJob, error)
+	CreateTrackedJob(url string) (*model.TrackedJob, error)
 	UpdateTrackedJob(input model.UpdateTrackedJobInput) (*model.TrackedJob, error)
+	DeleteTrackedJob(id string) (bool, error)
 	GitHubAccessToken() string
 	UserEmail() string
 }

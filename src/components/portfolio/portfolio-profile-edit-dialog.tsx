@@ -226,14 +226,6 @@ export function PortfolioProfileEditDialog({
         </div>
 
         <DialogFooter>
-          <Button
-            type="button"
-            variant="outline"
-            disabled={isSaving}
-            onClick={() => onOpenChange(false)}
-          >
-            Cancel
-          </Button>
           <Button type="button" disabled={isSaving} onClick={() => void handleSave()}>
             {isSaving ? "Saving…" : "Save"}
           </Button>

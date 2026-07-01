@@ -16,6 +16,7 @@ import { Button } from "@/components/ui/button";
 import { Copy, Pencil } from "lucide-react";
 import { YuseLogo } from "@/components/brand/yuse-logo";
 import { toast } from "sonner";
+import { motionEnterFadeUp, motionHoverReveal, motionHoverRevealGroup } from "@/lib/ui/motion";
 import { cn } from "@/lib/utils";
 
 interface AssistantMessageBubbleProps {
@@ -67,11 +68,11 @@ export function AssistantMessageBubble({
     const attachments = message.attachments ?? [];
 
     return (
-      <div className="group flex justify-end">
-        <div className="flex max-w-[90%] flex-col items-end gap-1">
+      <div className={cn("group flex w-full justify-end", motionEnterFadeUp)}>
+        <div className="flex w-full min-w-0 flex-col items-end gap-1">
           <div
             className={cn(
-              "rounded-2xl bg-primary px-3 py-2 text-sm leading-relaxed text-primary-foreground",
+              "max-w-full rounded-2xl bg-primary px-3 py-2 text-sm leading-relaxed text-primary-foreground",
               isBeingEdited && "ring-2 ring-primary/40 ring-offset-2 ring-offset-background"
             )}
           >
@@ -85,7 +86,7 @@ export function AssistantMessageBubble({
             ) : null}
           </div>
           {canEdit ? (
-            <div className="flex items-center opacity-0 transition-opacity group-hover:opacity-100 group-focus-within:opacity-100">
+            <div className={cn("flex items-center", motionHoverReveal)}>
               <Button
                 type="button"
                 variant="ghost"
@@ -115,7 +116,7 @@ export function AssistantMessageBubble({
   const showContent = Boolean(message.content) || !isStreaming;
 
   return (
-    <div className="group/msg max-w-[95%]">
+    <div className={cn("group/msg w-full min-w-0", motionEnterFadeUp)}>
       <div className="mb-1.5 flex items-center gap-2 text-xs text-muted-foreground">
         <span className="flex size-5 items-center justify-center rounded-md bg-primary/10">
           <YuseLogo className="size-4" />
@@ -167,7 +168,7 @@ export function AssistantMessageBubble({
       ) : null}
 
       {canCopy ? (
-        <div className="mt-1 flex items-center opacity-0 transition-opacity group-hover/msg:opacity-100 group-focus-within/msg:opacity-100">
+        <div className={cn("mt-1 flex items-center", motionHoverRevealGroup("msg"))}>
           <Button
             type="button"
             variant="ghost"

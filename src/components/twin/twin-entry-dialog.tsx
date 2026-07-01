@@ -138,9 +138,6 @@ export function TwinEntryDialog({
         </div>
 
         <DialogFooter>
-          <Button variant="outline" onClick={() => onOpenChange(false)} disabled={isSaving}>
-            Cancel
-          </Button>
           <Button onClick={() => void handleSave()} disabled={isSaving || !title.trim()}>
             {isSaving ? "Saving…" : isEditing ? "Save changes" : "Add entry"}
           </Button>

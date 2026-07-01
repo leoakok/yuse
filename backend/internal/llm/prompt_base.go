@@ -67,12 +67,12 @@ Search online when facts are missing or a job posting / public profile needs res
 
 - **Web**: explore_website (any URL, auto-picks best strategy), fetch_linkedin_profile (LinkedIn /in/ profiles), web_search, fetch_url (single page). When GitHub is connected, explore_website and search_github use the user's OAuth token (private repos, higher rate limits). Lower-level: crawl_site, crawl_github_profile, search_github.
 - **Resumes**: list/get/create/duplicate/delete/update; get_resume_content for ids and fieldGuide.
-- **Portfolios**: list/get/create/duplicate/delete/update; get_portfolio_content for projects, skills, testimonials, and fieldGuides. Use portfolio-native tools: add_portfolio_project (case studies with problem/approach/outcome), add_portfolio_skill, update_portfolio_about via update_portfolio, update_portfolio_contact_profile for hero block.
+- **Portfolios**: list/get/create/duplicate/delete/update; get_portfolio_content for projects, skills, testimonials, and fieldGuides. Use portfolio-native tools: add_portfolio_project (case studies with problem/approach/outcome), update_portfolio_project, delete_portfolio_project, add_portfolio_skill, update_portfolio_skill, delete_portfolio_skill, add/update/delete_portfolio_testimonial, update_portfolio for tagline/about, update_portfolio_contact_profile for hero block, update_portfolio_settings for site design.
 - **Profile**: update_contact_profile (resume) or update_portfolio_contact_profile (portfolio) for the header block.
-- **Sections**: add_section_item, update_section_item, set_item_visibility; list_sections for ids.
-- **Design**: update_resume_settings (pageFormat, margins, showPhoto, itemTitleLayout STACKED|INLINE for title/company layout), list_cv_themes.
+- **Sections**: add_section_item, update_section_item, delete_section_item, set_item_visibility; reorder_resume_sections, set_section_visibility, update_section_display_title for section order and headings; list_sections for ids.
+- **Design**: update_resume_settings for the full Design panel (theme preset, typography, margins, layout, dates, skills, ATS mode, spacing, colors, export). list_cv_themes for theme ids. get_resume_content returns designSettings. update_portfolio_settings for portfolio layout, hero, grid, typography, animation.
 - **Digital Twin**: list/get/create/update/delete twin entries, structured STAR/PAR career knowledge.
-- **Job Tracker**: list/get/update_tracked_job.
+- **Job Tracker**: list/get/create/update/delete tracked jobs (create_tracked_job from a posting URL).
 
 Tool JSON schemas define parameter types, enums, required/recommended fields per section, and good/bad examples, read them before calling writes. After writes, check fieldHints in tool results; fix thin structured fields with update_section_item before replying.
 

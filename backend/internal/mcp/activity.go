@@ -68,6 +68,14 @@ func ToolActivityStartLabel(toolName string, args map[string]any) string {
 		return "Let me update that CV entry…"
 	case "set_item_visibility":
 		return "Let me update what's visible…"
+	case "reorder_resume_sections":
+		return "Let me reorder your CV sections…"
+	case "set_section_visibility":
+		return "Let me update section visibility…"
+	case "update_section_display_title":
+		return "Let me rename that section…"
+	case "delete_section_item":
+		return "Let me remove that entry…"
 	case "update_contact_profile":
 		return "Let me update your contact details…"
 	case "update_resume_settings":
@@ -96,6 +104,8 @@ func ToolActivityStartLabel(toolName string, args map[string]any) string {
 		return "Let me add a project…"
 	case "update_portfolio_project":
 		return "Let me update that project…"
+	case "delete_portfolio_project":
+		return "Let me remove that project…"
 	case "add_portfolio_skill":
 		if name, ok := optionalString(args, "name"); ok && name != "" {
 			return fmt.Sprintf("Let me add %s as a skill…", truncateLabel(name, 40))
@@ -103,8 +113,14 @@ func ToolActivityStartLabel(toolName string, args map[string]any) string {
 		return "Let me add a skill…"
 	case "update_portfolio_skill":
 		return "Let me update that skill…"
+	case "delete_portfolio_skill":
+		return "Let me remove that skill…"
 	case "add_portfolio_testimonial":
 		return "Let me add a testimonial…"
+	case "update_portfolio_testimonial":
+		return "Let me update that testimonial…"
+	case "delete_portfolio_testimonial":
+		return "Let me remove that testimonial…"
 	case "update_portfolio_contact_profile":
 		return "Let me update your profile…"
 	case "update_portfolio_settings":
@@ -120,8 +136,12 @@ func ToolActivityStartLabel(toolName string, args map[string]any) string {
 		return "Let me check your tracked jobs…"
 	case "get_tracked_job":
 		return "Let me pull up that job application…"
+	case "create_tracked_job":
+		return "Let me add that job to your tracker…"
 	case "update_tracked_job":
 		return "Let me save that job application…"
+	case "delete_tracked_job":
+		return "Let me remove that tracked job…"
 	case "delete_twin_entry":
 		return "Let me remove that twin entry…"
 	default:
@@ -193,6 +213,14 @@ func ToolActivityEndLabel(exec Execution) string {
 		return "Updated that CV entry"
 	case "set_item_visibility":
 		return "Updated what's visible"
+	case "reorder_resume_sections":
+		return "Reordered your CV sections"
+	case "set_section_visibility":
+		return "Updated section visibility"
+	case "update_section_display_title":
+		return "Updated the section heading"
+	case "delete_section_item":
+		return "Removed that entry"
 	case "update_contact_profile":
 		return "Updated your contact details"
 	case "update_resume_settings":
@@ -215,12 +243,20 @@ func ToolActivityEndLabel(exec Execution) string {
 		return "Added a project"
 	case "update_portfolio_project":
 		return "Updated that project"
+	case "delete_portfolio_project":
+		return "Removed that project"
 	case "add_portfolio_skill":
 		return "Added a skill"
 	case "update_portfolio_skill":
 		return "Updated that skill"
+	case "delete_portfolio_skill":
+		return "Removed that skill"
 	case "add_portfolio_testimonial":
 		return "Added a testimonial"
+	case "update_portfolio_testimonial":
+		return "Updated that testimonial"
+	case "delete_portfolio_testimonial":
+		return "Removed that testimonial"
 	case "update_portfolio_contact_profile":
 		return "Updated your profile"
 	case "update_portfolio_settings":
@@ -235,8 +271,12 @@ func ToolActivityEndLabel(exec Execution) string {
 		return "Checked your tracked jobs"
 	case "get_tracked_job":
 		return "Pulled up that job application"
+	case "create_tracked_job":
+		return "Added the job to your tracker"
 	case "update_tracked_job":
 		return "Saved that job application"
+	case "delete_tracked_job":
+		return "Removed that tracked job"
 	default:
 		label := strings.TrimSuffix(ToolActivityStartLabel(exec.Tool, exec.Arguments), "…")
 		return label

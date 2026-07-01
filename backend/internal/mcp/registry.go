@@ -279,6 +279,102 @@ func (r *Registry) ExecuteWithProgress(toolName string, argsJSON []byte, progres
 		exec.Result = wrapSectionItemWriteResult(content, section, headline, body, metadata)
 		exec.AffectedResumeIDs = []string{resumeID}
 
+	case "reorder_resume_sections":
+		resumeID, err := requireString(args, "resumeId")
+		if err != nil {
+			exec.Error = err.Error()
+			return exec
+		}
+		sectionIDs, err := optionalStringSliceRequired(args, "sectionIds")
+		if err != nil {
+			exec.Error = err.Error()
+			return exec
+		}
+		content, err := r.exec.ReorderResumeSections(model.ReorderResumeSectionsInput{
+			ResumeID:   resumeID,
+			SectionIds: sectionIDs,
+		})
+		if err != nil {
+			exec.Error = err.Error()
+			return exec
+		}
+		exec.Result = resumeContentSummary(content)
+		exec.AffectedResumeIDs = []string{resumeID}
+
+	case "set_section_visibility":
+		resumeID, err := requireString(args, "resumeId")
+		if err != nil {
+			exec.Error = err.Error()
+			return exec
+		}
+		sectionID, err := requireString(args, "sectionId")
+		if err != nil {
+			exec.Error = err.Error()
+			return exec
+		}
+		show, err := requireBool(args, "showInPreview")
+		if err != nil {
+			exec.Error = err.Error()
+			return exec
+		}
+		content, err := r.exec.UpdateResumeSectionVisibility(model.UpdateResumeSectionVisibilityInput{
+			ResumeID:      resumeID,
+			SectionID:     sectionID,
+			ShowInPreview: show,
+		})
+		if err != nil {
+			exec.Error = err.Error()
+			return exec
+		}
+		exec.Result = resumeContentSummary(content)
+		exec.AffectedResumeIDs = []string{resumeID}
+
+	case "update_section_display_title":
+		resumeID, err := requireString(args, "resumeId")
+		if err != nil {
+			exec.Error = err.Error()
+			return exec
+		}
+		sectionID, err := requireString(args, "sectionId")
+		if err != nil {
+			exec.Error = err.Error()
+			return exec
+		}
+		var displayTitle *string
+		if v, ok := optionalString(args, "displayTitle"); ok {
+			displayTitle = &v
+		}
+		content, err := r.exec.UpdateResumeSectionDisplayTitle(model.UpdateResumeSectionDisplayTitleInput{
+			ResumeID:     resumeID,
+			SectionID:    sectionID,
+			DisplayTitle: displayTitle,
+		})
+		if err != nil {
+			exec.Error = err.Error()
+			return exec
+		}
+		exec.Result = resumeContentSummary(content)
+		exec.AffectedResumeIDs = []string{resumeID}
+
+	case "delete_section_item":
+		resumeID, err := requireString(args, "resumeId")
+		if err != nil {
+			exec.Error = err.Error()
+			return exec
+		}
+		sectionItemID, err := requireString(args, "sectionItemId")
+		if err != nil {
+			exec.Error = err.Error()
+			return exec
+		}
+		content, err := r.exec.DeleteSectionItem(resumeID, sectionItemID)
+		if err != nil {
+			exec.Error = err.Error()
+			return exec
+		}
+		exec.Result = resumeContentSummary(content)
+		exec.AffectedResumeIDs = []string{resumeID}
+
 	case "set_item_visibility":
 		resumeID, err := requireString(args, "resumeId")
 		if err != nil {
@@ -320,76 +416,7 @@ func (r *Registry) ExecuteWithProgress(toolName string, argsJSON []byte, progres
 			exec.Error = err.Error()
 			return exec
 		}
-		input := model.UpdateResumeSettingsInput{ResumeID: resumeID}
-		if v, ok := optionalEnum(args, "pageFormat"); ok {
-			pf := model.PageFormat(v)
-			if pf.IsValid() {
-				input.PageFormat = &pf
-			}
-		}
-		if v, ok := optionalEnum(args, "fontSize"); ok {
-			fs := model.FontSize(v)
-			if fs.IsValid() {
-				input.FontSize = &fs
-			}
-		}
-		if v, ok := optionalEnum(args, "contactNameFontSize"); ok {
-			fs := model.FontSize(v)
-			if fs.IsValid() {
-				input.ContactNameFontSize = &fs
-			}
-		}
-		if v, ok := optionalEnum(args, "contactHeadlineFontSize"); ok {
-			fs := model.FontSize(v)
-			if fs.IsValid() {
-				input.ContactHeadlineFontSize = &fs
-			}
-		}
-		if v, ok := optionalEnum(args, "contactDetailsFontSize"); ok {
-			fs := model.FontSize(v)
-			if fs.IsValid() {
-				input.ContactDetailsFontSize = &fs
-			}
-		}
-		if v, ok := optionalEnum(args, "sectionTitleFontSize"); ok {
-			fs := model.FontSize(v)
-			if fs.IsValid() {
-				input.SectionTitleFontSize = &fs
-			}
-		}
-		if v, ok := optionalEnum(args, "itemTitleFontSize"); ok {
-			fs := model.FontSize(v)
-			if fs.IsValid() {
-				input.ItemTitleFontSize = &fs
-			}
-		}
-		if v, ok := optionalEnum(args, "itemMetaFontSize"); ok {
-			fs := model.FontSize(v)
-			if fs.IsValid() {
-				input.ItemMetaFontSize = &fs
-			}
-		}
-		if v, ok := optionalString(args, "themeId"); ok && v != "" {
-			input.ThemeID = &v
-		}
-		if v, ok := optionalBool(args, "showPhoto"); ok {
-			input.ShowPhoto = &v
-		}
-		if v, ok := optionalEnum(args, "itemTitleLayout"); ok {
-			layout := model.ItemTitleLayout(v)
-			if layout.IsValid() {
-				input.ItemTitleLayout = &layout
-			}
-		}
-		if v, ok := optionalString(args, "locale"); ok && v != "" {
-			input.Locale = &v
-		}
-		if v, ok := optionalFloat(args, "marginHorizontalMm"); ok {
-			input.MarginHorizontalMm = &v
-		}
-		if v, ok := optionalFloat(args, "marginVerticalMm"); ok {
-			input.MarginVerticalMm = &v
-		}
+		input := buildUpdateResumeSettingsInput(resumeID, args)
 		settings, err := r.exec.UpdateResumeSettings(input)
 		if err != nil {
 			exec.Error = err.Error()
@@ -509,6 +536,32 @@ func (r *Registry) ExecuteWithProgress(toolName string, argsJSON []byte, progres
 			return exec
 		}
 		exec.Result = job
+
+	case "create_tracked_job":
+		url, err := requireString(args, "url")
+		if err != nil {
+			exec.Error = err.Error()
+			return exec
+		}
+		job, err := r.exec.CreateTrackedJob(url)
+		if err != nil {
+			exec.Error = err.Error()
+			return exec
+		}
+		exec.Result = job
+
+	case "delete_tracked_job":
+		id, err := requireString(args, "id")
+		if err != nil {
+			exec.Error = err.Error()
+			return exec
+		}
+		ok, err := r.exec.DeleteTrackedJob(id)
+		if err != nil {
+			exec.Error = err.Error()
+			return exec
+		}
+		exec.Result = map[string]any{"deleted": ok, "id": id}
 
 	case "update_tracked_job":
 		id, err := requireString(args, "id")
@@ -952,14 +1005,58 @@ func resumeContentSummary(content *model.ResumeWithContent) map[string]any {
 			}
 			items = append(items, flattenItemMetadata(entry))
 		}
-		sections = append(sections, map[string]any{
-			"sectionId":  swi.Section.ID,
-			"type":       swi.Section.Type,
-			"title":      swi.Section.Title,
-			"fieldGuide": sectionItemFieldGuideObject(swi.Section.Type),
-			"items":      items,
-		})
+		entry := map[string]any{
+			"sectionId":     swi.Section.ID,
+			"type":          swi.Section.Type,
+			"title":         swi.Section.Title,
+			"showInPreview": swi.ShowInPreview,
+			"fieldGuide":    sectionItemFieldGuideObject(swi.Section.Type),
+			"items":         items,
+		}
+		if swi.DisplayTitle != nil && strings.TrimSpace(*swi.DisplayTitle) != "" {
+			entry["displayTitle"] = *swi.DisplayTitle
+		}
+		sections = append(sections, entry)
 	}
 	out["sections"] = sections
+	if content.Settings != nil {
+		out["designSettings"] = resumeDesignSettingsSummary(content.Settings)
+	}
 	return out
+}
+
+func resumeDesignSettingsSummary(s *model.ResumeSettings) map[string]any {
+	if s == nil {
+		return nil
+	}
+	summary := map[string]any{
+		"pageFormat":         s.PageFormat,
+		"designPresetId":     s.DesignPresetID,
+		"themeId":            s.ThemeID,
+		"fontFamily":         s.FontFamily,
+		"accentColor":        s.AccentColor,
+		"showPhoto":          s.ShowPhoto,
+		"photoPosition":      s.PhotoPosition,
+		"photoSize":          s.PhotoSize,
+		"itemTitleLayout":    s.ItemTitleLayout,
+		"itemTitleSeparator": s.ItemTitleSeparator,
+		"itemTitleOrder":     s.ItemTitleOrder,
+		"dateFormat":         s.DateFormat,
+		"datePosition":       s.DatePosition,
+		"skillsLayout":       s.SkillsLayout,
+		"atsMode":            s.AtsMode,
+		"columnLayout":       s.ColumnLayout,
+		"contactLayout":      s.ContactLayout,
+		"marginHorizontalMm": s.MarginHorizontalMm,
+		"marginVerticalMm":   s.MarginVerticalMm,
+		"locale":             s.Locale,
+	}
+	if len(s.ContactFields) > 0 {
+		fields := make([]string, 0, len(s.ContactFields))
+		for _, f := range s.ContactFields {
+			fields = append(fields, string(f))
+		}
+		summary["contactFields"] = fields
+	}
+	return summary
 }

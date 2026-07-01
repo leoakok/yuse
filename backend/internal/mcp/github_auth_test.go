@@ -153,6 +153,18 @@ func (githubTokenExecutor) UpdateResumeSectionItem(model.UpdateResumeSectionItem
 func (githubTokenExecutor) UpdateResumeSectionItemVisibility(model.UpdateResumeSectionItemVisibilityInput) (*model.ResumeWithContent, error) {
 	return nil, nil
 }
+func (githubTokenExecutor) UpdateResumeSectionDisplayTitle(model.UpdateResumeSectionDisplayTitleInput) (*model.ResumeWithContent, error) {
+	return nil, nil
+}
+func (githubTokenExecutor) ReorderResumeSections(model.ReorderResumeSectionsInput) (*model.ResumeWithContent, error) {
+	return nil, nil
+}
+func (githubTokenExecutor) UpdateResumeSectionVisibility(model.UpdateResumeSectionVisibilityInput) (*model.ResumeWithContent, error) {
+	return nil, nil
+}
+func (githubTokenExecutor) DeleteSectionItem(string, string) (*model.ResumeWithContent, error) {
+	return nil, nil
+}
 func (githubTokenExecutor) UpdateResumeSettings(model.UpdateResumeSettingsInput) (*model.ResumeSettings, error) {
 	return nil, nil
 }
@@ -216,9 +228,11 @@ func (githubTokenExecutor) UpdateTwinEntry(model.UpdateTwinEntryInput) (*model.T
 func (githubTokenExecutor) DeleteTwinEntry(string) (bool, error) { return false, nil }
 func (githubTokenExecutor) ListTrackedJobs() []*model.TrackedJob { return nil }
 func (githubTokenExecutor) GetTrackedJob(string) (*model.TrackedJob, error) { return nil, nil }
+func (githubTokenExecutor) CreateTrackedJob(string) (*model.TrackedJob, error) { return nil, nil }
 func (githubTokenExecutor) UpdateTrackedJob(model.UpdateTrackedJobInput) (*model.TrackedJob, error) {
 	return nil, nil
 }
+func (githubTokenExecutor) DeleteTrackedJob(string) (bool, error) { return false, nil }
 func (e githubTokenExecutor) GitHubAccessToken() string { return e.token }
 func (githubTokenExecutor) UserEmail() string { return "" }
 

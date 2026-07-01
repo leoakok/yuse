@@ -25,6 +25,11 @@ import {
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
 import { SUPPORT_MAILTO } from "@/lib/support";
+import {
+  floatingChipNavLinkClassName,
+  floatingChipSurfaceClassName,
+} from "@/lib/ui/floating-chip";
+import { motionTransitionColors } from "@/lib/ui/motion";
 import { cn } from "@/lib/utils";
 
 function getInitials(displayName: string): string {
@@ -34,13 +39,22 @@ function getInitials(displayName: string): string {
   return (parts[0][0] + parts[1][0]).toUpperCase();
 }
 
-export function UserMenuButton() {
+interface UserMenuButtonProps {
+  variant?: "standalone" | "grouped";
+  className?: string;
+}
+
+export function UserMenuButton({
+  variant = "standalone",
+  className,
+}: UserMenuButtonProps) {
   const { user } = useWorkspace();
-  const pathname = usePathname();
+  const pathname = usePathname() ?? "";
   const settingsActive = pathname.startsWith("/settings");
   const connectionsActive = pathname.startsWith("/connections");
   const adminActive = pathname.startsWith("/admin");
   const isAdmin = user.role === "ADMIN";
+  const isGrouped = variant === "grouped";
 
   return (
     <DropdownMenu>
@@ -50,9 +64,15 @@ export function UserMenuButton() {
             type="button"
             variant="ghost"
             className={cn(
-              "h-auto gap-2 rounded-md px-3 py-1.5 text-sm font-medium transition-colors",
-              "bg-accent text-accent-foreground hover:bg-accent/90 hover:text-accent-foreground",
-              "aria-expanded:bg-accent aria-expanded:text-accent-foreground"
+              !isGrouped && floatingChipSurfaceClassName,
+              isGrouped
+                ? cn(
+                    floatingChipNavLinkClassName,
+                    "gap-2 text-muted-foreground aria-expanded:bg-accent aria-expanded:text-accent-foreground aria-expanded:shadow-sm aria-expanded:hover:bg-accent/90"
+                  )
+                : "inline-flex h-8 min-h-8 items-center gap-2 rounded-full px-3 py-0 text-sm font-medium text-foreground hover:bg-muted/40 aria-expanded:border-primary/40 aria-expanded:bg-accent aria-expanded:text-accent-foreground aria-expanded:shadow-md aria-expanded:hover:bg-accent/90",
+              motionTransitionColors,
+              className
             )}
             aria-label={`Account menu for ${user.displayName}`}
           >

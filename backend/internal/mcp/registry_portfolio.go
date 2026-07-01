@@ -210,6 +210,26 @@ func (r *Registry) executePortfolioTool(toolName string, args map[string]any, ex
 		exec.AffectedPortfolioIDs = []string{portfolioID}
 		return true
 
+	case "delete_portfolio_project":
+		portfolioID, err := requireString(args, "portfolioId")
+		if err != nil {
+			exec.Error = err.Error()
+			return true
+		}
+		projectID, err := requireString(args, "projectId")
+		if err != nil {
+			exec.Error = err.Error()
+			return true
+		}
+		content, err := r.exec.DeletePortfolioProject(portfolioID, projectID)
+		if err != nil {
+			exec.Error = err.Error()
+			return true
+		}
+		exec.Result = portfolioContentSummary(content)
+		exec.AffectedPortfolioIDs = []string{portfolioID}
+		return true
+
 	case "add_portfolio_skill":
 		portfolioID, err := requireString(args, "portfolioId")
 		if err != nil {
@@ -262,6 +282,26 @@ func (r *Registry) executePortfolioTool(toolName string, args map[string]any, ex
 		exec.AffectedPortfolioIDs = []string{portfolioID}
 		return true
 
+	case "delete_portfolio_skill":
+		portfolioID, err := requireString(args, "portfolioId")
+		if err != nil {
+			exec.Error = err.Error()
+			return true
+		}
+		skillID, err := requireString(args, "skillId")
+		if err != nil {
+			exec.Error = err.Error()
+			return true
+		}
+		content, err := r.exec.DeletePortfolioSkill(portfolioID, skillID)
+		if err != nil {
+			exec.Error = err.Error()
+			return true
+		}
+		exec.Result = portfolioContentSummary(content)
+		exec.AffectedPortfolioIDs = []string{portfolioID}
+		return true
+
 	case "add_portfolio_testimonial":
 		portfolioID, err := requireString(args, "portfolioId")
 		if err != nil {
@@ -280,6 +320,54 @@ func (r *Registry) executePortfolioTool(toolName string, args map[string]any, ex
 			Role:        optionalStringPtr(args, "role"),
 		}
 		content, err := r.exec.AddPortfolioTestimonial(input)
+		if err != nil {
+			exec.Error = err.Error()
+			return true
+		}
+		exec.Result = portfolioContentSummary(content)
+		exec.AffectedPortfolioIDs = []string{portfolioID}
+		return true
+
+	case "update_portfolio_testimonial":
+		portfolioID, err := requireString(args, "portfolioId")
+		if err != nil {
+			exec.Error = err.Error()
+			return true
+		}
+		testimonialID, err := requireString(args, "testimonialId")
+		if err != nil {
+			exec.Error = err.Error()
+			return true
+		}
+		input := model.UpdatePortfolioTestimonialInput{
+			PortfolioID:   portfolioID,
+			TestimonialID: testimonialID,
+			Quote:         optionalStringPtr(args, "quote"),
+			Author:        optionalStringPtr(args, "author"),
+			Role:          optionalStringPtr(args, "role"),
+			ShowInPreview: optionalBoolPtr(args, "showInPreview"),
+		}
+		content, err := r.exec.UpdatePortfolioTestimonial(input)
+		if err != nil {
+			exec.Error = err.Error()
+			return true
+		}
+		exec.Result = portfolioContentSummary(content)
+		exec.AffectedPortfolioIDs = []string{portfolioID}
+		return true
+
+	case "delete_portfolio_testimonial":
+		portfolioID, err := requireString(args, "portfolioId")
+		if err != nil {
+			exec.Error = err.Error()
+			return true
+		}
+		testimonialID, err := requireString(args, "testimonialId")
+		if err != nil {
+			exec.Error = err.Error()
+			return true
+		}
+		content, err := r.exec.DeletePortfolioTestimonial(portfolioID, testimonialID)
 		if err != nil {
 			exec.Error = err.Error()
 			return true

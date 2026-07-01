@@ -133,7 +133,6 @@ export function PortfolioProjectEditDialog({
           </label>
         </div>
         <DialogFooter>
-          <Button variant="outline" onClick={onClose}>Cancel</Button>
           <Button onClick={() => void handleSubmit()} disabled={saving || !title.trim()}>
             {saving ? "Saving…" : "Save"}
           </Button>

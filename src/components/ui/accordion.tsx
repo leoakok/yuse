@@ -4,6 +4,10 @@ import * as React from "react";
 import { Accordion as AccordionPrimitive } from "@base-ui/react/accordion";
 import { ChevronDownIcon } from "lucide-react";
 
+import {
+  motionAccordionChevron,
+  motionTransitionColors,
+} from "@/lib/ui/motion";
 import { cn } from "@/lib/utils";
 
 function Accordion({ className, ...props }: AccordionPrimitive.Root.Props) {
@@ -11,7 +15,7 @@ function Accordion({ className, ...props }: AccordionPrimitive.Root.Props) {
     <AccordionPrimitive.Root
       data-slot="accordion"
       keepMounted
-      className={cn("flex flex-col gap-2", className)}
+      className={cn("flex flex-col gap-0", className)}
       {...props}
     />
   );
@@ -21,7 +25,7 @@ function AccordionItem({ className, ...props }: AccordionPrimitive.Item.Props) {
   return (
     <AccordionPrimitive.Item
       data-slot="accordion-item"
-      className={cn("rounded-lg border bg-card", className)}
+      className={cn("border-b border-border last:border-b-0", className)}
       {...props}
     />
   );
@@ -37,13 +41,14 @@ function AccordionTrigger({
       <AccordionPrimitive.Trigger
         data-slot="accordion-trigger"
         className={cn(
-          "group flex flex-1 items-center justify-between gap-2 px-3 py-2.5 text-left text-xs font-medium text-muted-foreground transition-colors hover:text-foreground data-panel-open:text-foreground",
+          "group flex flex-1 items-center justify-between gap-2 px-4 py-3 text-left text-sm font-semibold text-foreground hover:bg-muted/40 lg:px-5",
+          motionTransitionColors,
           className
         )}
         {...props}
       >
         {children}
-        <ChevronDownIcon className="size-4 shrink-0 text-muted-foreground transition-transform duration-200 group-data-[panel-open]:rotate-180" />
+        <ChevronDownIcon className={cn("size-4 shrink-0 text-muted-foreground", motionAccordionChevron)} />
       </AccordionPrimitive.Trigger>
     </AccordionPrimitive.Header>
   );
@@ -57,7 +62,7 @@ function AccordionContent({
   return (
     <AccordionPrimitive.Panel
       data-slot="accordion-content"
-      className={cn("overflow-hidden px-3 pb-3 data-closed:hidden", className)}
+      className={cn("overflow-hidden px-4 pb-4 data-closed:hidden lg:px-5", className)}
       {...props}
     >
       <div className="pt-0.5">{children}</div>

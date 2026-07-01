@@ -373,7 +373,7 @@ func defaultResumeSettings(resumeID string) *model.ResumeSettings {
 		SectionTitleFontWeight:  model.FontWeightRoleSemibold,
 		LineHeight:              model.LineHeightDensityNormal,
 		HeadingLetterSpacing:    model.LetterSpacingDensityNormal,
-		SectionTitleSmallCaps:   true,
+		SectionTitleCase:        model.SectionTitleCaseCapitalize,
 		TextPrimaryColor:        "",
 		TextMutedColor:          "",
 		PageBackground:          model.PageBackgroundWhite,

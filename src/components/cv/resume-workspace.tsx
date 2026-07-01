@@ -9,6 +9,7 @@ import {
   List,
   Loader2,
   MoreHorizontal,
+  PanelLeftClose,
   Plus,
   Trash2,
 } from "lucide-react";
@@ -79,8 +80,13 @@ import {
 } from "@/lib/api/cv-api";
 import { resumePath } from "@/lib/cv/routes";
 import { DEFAULT_PAGE_MARGIN_MM } from "@/lib/cv/page-format";
-import { SECTION_TYPE_LABELS } from "@/lib/cv/constants";
 import { cn } from "@/lib/utils";
+import {
+  WorkspacePanel,
+  WorkspacePanelBody,
+  WorkspacePanelHeader,
+} from "@/components/layout/workspace-panel";
+import { useEditorPanel } from "@/components/layout/editor-panel-provider";
 
 function initialMargin(value: number | undefined): number {
   return value ?? DEFAULT_PAGE_MARGIN_MM;
@@ -158,6 +164,7 @@ export function ResumeWorkspace({
   onDismissDownloadError,
 }: ResumeWorkspaceProps) {
   const router = useRouter();
+  const { setOpen: setEditorOpen } = useEditorPanel();
   const [mode, setMode] = useState<WorkspaceMode>("sections");
   const [pageFormat, setPageFormat] = useState<PageFormat>(
     content.settings.pageFormat ?? "A4"
@@ -645,99 +652,115 @@ export function ResumeWorkspace({
   }
 
   return (
-    <div className="flex min-h-0 flex-1 flex-col">
-      <div className="flex shrink-0 items-center justify-between border-b px-4 py-3">
-        <div className="flex rounded-lg border p-0.5">
-          <Button
-            type="button"
-            variant="ghost"
-            size="sm"
-            className={cn("h-7 gap-1.5 px-2.5", mode === "sections" && "bg-muted")}
-            aria-pressed={mode === "sections"}
-            onClick={() => setMode("sections")}
-          >
-            <List className="size-3.5" />
-            Sections
-          </Button>
-          <Button
-            type="button"
-            variant="ghost"
-            size="sm"
-            className={cn("h-7 gap-1.5 px-2.5", mode === "design" && "bg-muted")}
-            aria-pressed={mode === "design"}
-            onClick={() => setMode("design")}
-          >
-            <LayoutTemplate className="size-3.5" />
-            Design
-          </Button>
-        </div>
-        <div className="flex items-center gap-2">
-          {downloadError ? (
-            <p
-              className="max-w-48 truncate text-xs text-destructive"
-              role="alert"
-              title={downloadError}
-            >
-              {downloadError}
-              {onDismissDownloadError ? (
-                <button
-                  type="button"
-                  className="ml-1 underline"
-                  onClick={onDismissDownloadError}
-                >
-                  Dismiss
-                </button>
-              ) : null}
-            </p>
-          ) : null}
-          <Button
-            type="button"
-            variant="ghost"
-            size="icon-xs"
-            className="text-muted-foreground"
-            onClick={() => void onDownload?.()}
-            disabled={!onDownload || isDownloading}
-            aria-label={isDownloading ? "Opening print view" : "Print or save as PDF"}
-          >
-            {isDownloading ? <Loader2 className="animate-spin" /> : <Download />}
-          </Button>
-          <DropdownMenu>
-            <DropdownMenuTrigger
-              render={
-                <Button
-                  type="button"
-                  variant="ghost"
-                  size="icon-xs"
-                  className="text-muted-foreground"
-                  aria-label="More actions"
-                >
-                  <MoreHorizontal />
-                </Button>
-              }
-            />
-            <DropdownMenuContent align="end" className="min-w-40">
-              <DropdownMenuItem
-                disabled={isDuplicating}
-                onClick={() => void handleDuplicate()}
-              >
-                <Copy />
-                Duplicate
-              </DropdownMenuItem>
-              <DropdownMenuItem
-                variant="warning"
-                onClick={() => setDeleteOpen(true)}
-              >
-                <Trash2 />
-                Delete
-              </DropdownMenuItem>
-            </DropdownMenuContent>
-          </DropdownMenu>
-        </div>
-      </div>
+    <WorkspacePanel>
+      <WorkspacePanelBody>
       <ScrollArea className="min-h-0 flex-1">
+      <WorkspacePanelHeader
+        leading={
+          <div className="flex min-w-0 items-center gap-2">
+            <Button
+              type="button"
+              variant="ghost"
+              size="icon"
+              className="hidden size-8 shrink-0 lg:inline-flex"
+              onClick={() => setEditorOpen(false)}
+            >
+              <PanelLeftClose className="size-4" />
+              <span className="sr-only">Hide editor</span>
+            </Button>
+            <div className="flex min-w-0 rounded-lg border p-0.5">
+              <Button
+                type="button"
+                variant="ghost"
+                size="sm"
+                className={cn("h-7 gap-1.5 px-2.5", mode === "sections" && "bg-muted")}
+                aria-pressed={mode === "sections"}
+                onClick={() => setMode("sections")}
+              >
+                <List className="size-3.5" />
+                Sections
+              </Button>
+              <Button
+                type="button"
+                variant="ghost"
+                size="sm"
+                className={cn("h-7 gap-1.5 px-2.5", mode === "design" && "bg-muted")}
+                aria-pressed={mode === "design"}
+                onClick={() => setMode("design")}
+              >
+                <LayoutTemplate className="size-3.5" />
+                Design
+              </Button>
+            </div>
+          </div>
+        }
+        trailing={
+          <div className="flex shrink-0 items-center gap-2">
+            {downloadError ? (
+              <p
+                className="max-w-48 truncate text-xs text-destructive"
+                role="alert"
+                title={downloadError}
+              >
+                {downloadError}
+                {onDismissDownloadError ? (
+                  <button
+                    type="button"
+                    className="ml-1 underline"
+                    onClick={onDismissDownloadError}
+                  >
+                    Dismiss
+                  </button>
+                ) : null}
+              </p>
+            ) : null}
+            <Button
+              type="button"
+              variant="ghost"
+              size="icon-xs"
+              className="text-muted-foreground"
+              onClick={() => void onDownload?.()}
+              disabled={!onDownload || isDownloading}
+              aria-label={isDownloading ? "Opening print view" : "Print or save as PDF"}
+            >
+              {isDownloading ? <Loader2 className="animate-spin" /> : <Download />}
+            </Button>
+            <DropdownMenu>
+              <DropdownMenuTrigger
+                render={
+                  <Button
+                    type="button"
+                    variant="ghost"
+                    size="icon-xs"
+                    className="text-muted-foreground"
+                    aria-label="More actions"
+                  >
+                    <MoreHorizontal />
+                  </Button>
+                }
+              />
+              <DropdownMenuContent align="end" className="min-w-40">
+                <DropdownMenuItem
+                  disabled={isDuplicating}
+                  onClick={() => void handleDuplicate()}
+                >
+                  <Copy />
+                  Duplicate
+                </DropdownMenuItem>
+                <DropdownMenuItem
+                  variant="warning"
+                  onClick={() => setDeleteOpen(true)}
+                >
+                  <Trash2 />
+                  Delete
+                </DropdownMenuItem>
+              </DropdownMenuContent>
+            </DropdownMenu>
+          </div>
+        }
+      />
         <div>
           {mode === "design" ? (
-            <div className="px-4 py-3 lg:px-5">
             <ResumeDesignSettings
               resumeId={content.resume.id}
               themeName={content.theme.name}
@@ -835,7 +858,6 @@ export function ResumeWorkspace({
               onMarginVerticalChange={handleMarginVerticalChange}
               onSaved={handleDesignSaved}
             />
-            </div>
           ) : (
             <div className="divide-y">
               <ResumeProfileSection
@@ -845,31 +867,28 @@ export function ResumeWorkspace({
               />
               {content.sections.map(({ section, items }) => (
                 <section key={section.id}>
-                  <div className="flex items-center justify-between gap-2 px-4 py-3 lg:px-5">
-                    <div className="min-w-0">
-                      <h2 className="text-sm font-semibold">{section.title}</h2>
-                      <p className="text-[11px] text-muted-foreground">
-                        {SECTION_TYPE_LABELS[section.type] ?? section.type}
-                      </p>
+                  {section.type !== "SUMMARY" ? (
+                    <div className="flex items-center justify-between gap-2 px-4 py-3 lg:px-5">
+                      <h2 className="min-w-0 text-sm font-semibold">{section.title}</h2>
+                      <Button
+                        type="button"
+                        variant="ghost"
+                        size="icon-xs"
+                        className="shrink-0 text-muted-foreground"
+                        aria-label={`Add item to ${section.title}`}
+                        onClick={() =>
+                          setItemDialog({
+                            mode: "create",
+                            sectionId: section.id,
+                            sectionType: section.type,
+                            sectionTitle: section.title,
+                          })
+                        }
+                      >
+                        <Plus />
+                      </Button>
                     </div>
-                    <Button
-                      type="button"
-                      variant="ghost"
-                      size="icon-xs"
-                      className="shrink-0 text-muted-foreground"
-                      aria-label={`Add item to ${section.title}`}
-                      onClick={() =>
-                        setItemDialog({
-                          mode: "create",
-                          sectionId: section.id,
-                          sectionType: section.type,
-                          sectionTitle: section.title,
-                        })
-                      }
-                    >
-                      <Plus />
-                    </Button>
-                  </div>
+                  ) : null}
                   <ul className="divide-y">
                     {items.map((item) => (
                       <ResumeSectionItemRow
@@ -896,6 +915,7 @@ export function ResumeWorkspace({
           )}
         </div>
       </ScrollArea>
+      </WorkspacePanelBody>
       <SectionItemEditDialog
         resumeId={content.resume.id}
         dialog={itemDialog}
@@ -921,17 +941,6 @@ export function ResumeWorkspace({
           <DialogFooter>
             <Button
               type="button"
-              variant="outline"
-              disabled={isDeletingItem}
-              onClick={() => {
-                setDeleteItemTarget(null);
-                setDeleteItemUsage(undefined);
-              }}
-            >
-              Cancel
-            </Button>
-            <Button
-              type="button"
               variant="warning"
               disabled={!deleteItemTarget || isDeletingItem || deleteItemUsage === undefined}
               onClick={() => void handleDeleteItem()}
@@ -953,14 +962,6 @@ export function ResumeWorkspace({
           <DialogFooter>
             <Button
               type="button"
-              variant="outline"
-              disabled={isDeleting}
-              onClick={() => setDeleteOpen(false)}
-            >
-              Cancel
-            </Button>
-            <Button
-              type="button"
               variant="warning"
               disabled={isDeleting}
               onClick={() => void handleDelete()}
@@ -970,6 +971,6 @@ export function ResumeWorkspace({
           </DialogFooter>
         </DialogContent>
       </Dialog>
-    </div>
+    </WorkspacePanel>
   );
 }

@@ -8,6 +8,13 @@ import {
   isResumesNavActive,
   isJobTrackerNavActive,
 } from "@/lib/nav";
+import { UserMenuButton } from "@/components/layout/user-menu-button";
+import {
+  floatingChipClassName,
+  floatingChipGroupClassName,
+  floatingChipNavLinkClassName,
+} from "@/lib/ui/floating-chip";
+import { motionTransitionColors } from "@/lib/ui/motion";
 import { cn } from "@/lib/utils";
 
 function isNavItemActive(pathname: string, id: string) {
@@ -18,12 +25,25 @@ function isNavItemActive(pathname: string, id: string) {
   );
 }
 
-function navLinkClassName(isActive: boolean, className?: string) {
+function groupedNavLinkClassName(isActive: boolean, className?: string) {
   return cn(
-    "rounded-md px-3 py-1.5 text-sm font-medium transition-colors",
+    floatingChipNavLinkClassName,
+    motionTransitionColors,
     isActive
-      ? "bg-accent text-accent-foreground"
-      : "text-muted-foreground hover:bg-muted hover:text-foreground",
+      ? "bg-accent text-accent-foreground shadow-sm"
+      : "text-muted-foreground",
+    className
+  );
+}
+
+function standaloneNavLinkClassName(isActive: boolean, className?: string) {
+  return cn(
+    floatingChipClassName,
+    "text-sm font-medium",
+    motionTransitionColors,
+    isActive
+      ? "border-primary/40 bg-accent text-accent-foreground shadow-md"
+      : "text-muted-foreground hover:bg-muted/40 hover:text-foreground",
     className
   );
 }
@@ -32,6 +52,8 @@ interface NavLinksProps {
   className?: string;
   linkClassName?: string;
   orientation?: "horizontal" | "vertical";
+  grouped?: boolean;
+  showAccount?: boolean;
   onNavigate?: () => void;
 }
 
@@ -39,16 +61,21 @@ export function NavLinks({
   className,
   linkClassName,
   orientation = "horizontal",
+  grouped = false,
+  showAccount = false,
   onNavigate,
 }: NavLinksProps) {
-  const pathname = usePathname();
+  const pathname = usePathname() ?? "";
+  const isGroupedHorizontal = grouped && orientation === "horizontal";
 
   return (
     <nav
       className={cn(
-        orientation === "horizontal"
-          ? "flex items-center justify-center gap-1"
-          : "flex flex-col gap-1 p-4",
+        isGroupedHorizontal
+          ? floatingChipGroupClassName
+          : orientation === "horizontal"
+            ? "flex items-center justify-center gap-2"
+            : "flex flex-col gap-2 p-4",
         className
       )}
     >
@@ -59,19 +86,41 @@ export function NavLinks({
             key={item.id}
             href={item.href}
             onClick={onNavigate}
-            className={navLinkClassName(
-              isActive,
-              cn(orientation === "vertical" && "px-4 py-2", linkClassName)
-            )}
+            className={
+              isGroupedHorizontal
+                ? groupedNavLinkClassName(
+                    isActive,
+                    cn(orientation === "vertical" && "w-full justify-center", linkClassName)
+                  )
+                : standaloneNavLinkClassName(
+                    isActive,
+                    cn(orientation === "vertical" && "w-full justify-center", linkClassName)
+                  )
+            }
           >
             {item.label}
           </Link>
         );
       })}
+      {isGroupedHorizontal && showAccount ? (
+        <>
+          <div
+            className="mx-0.5 h-5 w-px shrink-0 bg-border/60"
+            aria-hidden
+          />
+          <UserMenuButton variant="grouped" />
+        </>
+      ) : null}
     </nav>
   );
 }
 
-export function AppNav() {
-  return <NavLinks className="hidden md:flex" />;
+interface AppNavProps {
+  showAccount?: boolean;
+}
+
+export function AppNav({ showAccount = true }: AppNavProps) {
+  return (
+    <NavLinks grouped showAccount={showAccount} className="hidden md:flex" />
+  );
 }

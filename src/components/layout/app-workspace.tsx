@@ -1,6 +1,6 @@
 import type { ReactNode } from "react";
 import { AppShell } from "@/components/layout/app-shell";
-import { PageHeader } from "@/components/layout/page-header";
+import { EditorPanelProvider } from "@/components/layout/editor-panel-provider";
 
 interface AppWorkspaceProps {
   children: ReactNode;
@@ -10,8 +10,10 @@ interface AppWorkspaceProps {
 
 export function AppWorkspace({ children, preview, actions }: AppWorkspaceProps) {
   return (
-    <AppShell header={<PageHeader actions={actions} />} preview={preview}>
-      {children}
-    </AppShell>
+    <EditorPanelProvider>
+      <AppShell chromeActions={actions} preview={preview}>
+        {children}
+      </AppShell>
+    </EditorPanelProvider>
   );
 }

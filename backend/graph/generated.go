@@ -364,9 +364,9 @@ type ComplexityRoot struct {
 		ResumeID                func(childComplexity int) int
 		SectionDividerStyle     func(childComplexity int) int
 		SectionSpacing          func(childComplexity int) int
+		SectionTitleCase        func(childComplexity int) int
 		SectionTitleFontSize    func(childComplexity int) int
 		SectionTitleFontWeight  func(childComplexity int) int
-		SectionTitleSmallCaps   func(childComplexity int) int
 		ShowPhoto               func(childComplexity int) int
 		SidebarPosition         func(childComplexity int) int
 		SidebarWidth            func(childComplexity int) int
@@ -2697,6 +2697,13 @@ func (e *executableSchema) Complexity(ctx context.Context, typeName, field strin
 
 		return e.complexity.ResumeSettings.SectionSpacing(childComplexity), true
 
+	case "ResumeSettings.sectionTitleCase":
+		if e.complexity.ResumeSettings.SectionTitleCase == nil {
+			break
+		}
+
+		return e.complexity.ResumeSettings.SectionTitleCase(childComplexity), true
+
 	case "ResumeSettings.sectionTitleFontSize":
 		if e.complexity.ResumeSettings.SectionTitleFontSize == nil {
 			break
@@ -2710,13 +2717,6 @@ func (e *executableSchema) Complexity(ctx context.Context, typeName, field strin
 		}
 
 		return e.complexity.ResumeSettings.SectionTitleFontWeight(childComplexity), true
-
-	case "ResumeSettings.sectionTitleSmallCaps":
-		if e.complexity.ResumeSettings.SectionTitleSmallCaps == nil {
-			break
-		}
-
-		return e.complexity.ResumeSettings.SectionTitleSmallCaps(childComplexity), true
 
 	case "ResumeSettings.showPhoto":
 		if e.complexity.ResumeSettings.ShowPhoto == nil {
@@ -7755,8 +7755,8 @@ func (ec *executionContext) fieldContext_Mutation_updateResumeSettings(ctx conte
 				return ec.fieldContext_ResumeSettings_lineHeight(ctx, field)
 			case "headingLetterSpacing":
 				return ec.fieldContext_ResumeSettings_headingLetterSpacing(ctx, field)
-			case "sectionTitleSmallCaps":
-				return ec.fieldContext_ResumeSettings_sectionTitleSmallCaps(ctx, field)
+			case "sectionTitleCase":
+				return ec.fieldContext_ResumeSettings_sectionTitleCase(ctx, field)
 			case "textPrimaryColor":
 				return ec.fieldContext_ResumeSettings_textPrimaryColor(ctx, field)
 			case "textMutedColor":
@@ -17729,8 +17729,8 @@ func (ec *executionContext) fieldContext_ResumeSettings_headingLetterSpacing(_ c
 	return fc, nil
 }
 
-func (ec *executionContext) _ResumeSettings_sectionTitleSmallCaps(ctx context.Context, field graphql.CollectedField, obj *model.ResumeSettings) (ret graphql.Marshaler) {
-	fc, err := ec.fieldContext_ResumeSettings_sectionTitleSmallCaps(ctx, field)
+func (ec *executionContext) _ResumeSettings_sectionTitleCase(ctx context.Context, field graphql.CollectedField, obj *model.ResumeSettings) (ret graphql.Marshaler) {
+	fc, err := ec.fieldContext_ResumeSettings_sectionTitleCase(ctx, field)
 	if err != nil {
 		return graphql.Null
 	}
@@ -17743,7 +17743,7 @@ func (ec *executionContext) _ResumeSettings_sectionTitleSmallCaps(ctx context.Co
 	}()
 	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (any, error) {
 		ctx = rctx // use context from middleware stack in children
-		return obj.SectionTitleSmallCaps, nil
+		return obj.SectionTitleCase, nil
 	})
 	if err != nil {
 		ec.Error(ctx, err)
@@ -17755,19 +17755,19 @@ func (ec *executionContext) _ResumeSettings_sectionTitleSmallCaps(ctx context.Co
 		}
 		return graphql.Null
 	}
-	res := resTmp.(bool)
+	res := resTmp.(model.SectionTitleCase)
 	fc.Result = res
-	return ec.marshalNBoolean2bool(ctx, field.Selections, res)
+	return ec.marshalNSectionTitleCase2githubᚗcomᚋleoᚋaiᚑweekendᚋbackendᚋgraphᚋmodelᚐSectionTitleCase(ctx, field.Selections, res)
 }
 
-func (ec *executionContext) fieldContext_ResumeSettings_sectionTitleSmallCaps(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+func (ec *executionContext) fieldContext_ResumeSettings_sectionTitleCase(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
 	fc = &graphql.FieldContext{
 		Object:     "ResumeSettings",
 		Field:      field,
 		IsMethod:   false,
 		IsResolver: false,
 		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
-			return nil, errors.New("field of type Boolean does not have child fields")
+			return nil, errors.New("field of type SectionTitleCase does not have child fields")
 		},
 	}
 	return fc, nil
@@ -18564,8 +18564,8 @@ func (ec *executionContext) fieldContext_ResumeWithContent_settings(_ context.Co
 				return ec.fieldContext_ResumeSettings_lineHeight(ctx, field)
 			case "headingLetterSpacing":
 				return ec.fieldContext_ResumeSettings_headingLetterSpacing(ctx, field)
-			case "sectionTitleSmallCaps":
-				return ec.fieldContext_ResumeSettings_sectionTitleSmallCaps(ctx, field)
+			case "sectionTitleCase":
+				return ec.fieldContext_ResumeSettings_sectionTitleCase(ctx, field)
 			case "textPrimaryColor":
 				return ec.fieldContext_ResumeSettings_textPrimaryColor(ctx, field)
 			case "textMutedColor":
@@ -25111,7 +25111,7 @@ func (ec *executionContext) unmarshalInputUpdateResumeSettingsInput(ctx context.
 		asMap[k] = v
 	}
 
-	fieldsInOrder := [...]string{"resumeId", "pageFormat", "fontSize", "contactNameFontSize", "contactHeadlineFontSize", "contactDetailsFontSize", "sectionTitleFontSize", "itemTitleFontSize", "itemMetaFontSize", "marginHorizontalMm", "marginVerticalMm", "themeId", "showPhoto", "itemTitleLayout", "itemTitleSeparator", "itemTitleOrder", "fontFamily", "accentColor", "sectionDividerStyle", "dateFormat", "datePosition", "skillsLayout", "atsMode", "columnLayout", "sidebarPosition", "sidebarWidth", "designPresetId", "photoPosition", "photoSize", "contactLayout", "contactFields", "sectionSpacing", "itemSpacing", "descriptionStyle", "bulletChar", "itemTitleEmphasis", "highlightCurrentRole", "locationDisplay", "headingFontFamily", "bodyFontFamily", "nameFontWeight", "sectionTitleFontWeight", "lineHeight", "headingLetterSpacing", "sectionTitleSmallCaps", "textPrimaryColor", "textMutedColor", "pageBackground", "linkColor", "skillsProficiency", "languagesLayout", "certificationsLayout", "keepSectionsTogether", "maxItemsBeforeBreak", "footerStyle", "exportFilenameTemplate", "locale"}
+	fieldsInOrder := [...]string{"resumeId", "pageFormat", "fontSize", "contactNameFontSize", "contactHeadlineFontSize", "contactDetailsFontSize", "sectionTitleFontSize", "itemTitleFontSize", "itemMetaFontSize", "marginHorizontalMm", "marginVerticalMm", "themeId", "showPhoto", "itemTitleLayout", "itemTitleSeparator", "itemTitleOrder", "fontFamily", "accentColor", "sectionDividerStyle", "dateFormat", "datePosition", "skillsLayout", "atsMode", "columnLayout", "sidebarPosition", "sidebarWidth", "designPresetId", "photoPosition", "photoSize", "contactLayout", "contactFields", "sectionSpacing", "itemSpacing", "descriptionStyle", "bulletChar", "itemTitleEmphasis", "highlightCurrentRole", "locationDisplay", "headingFontFamily", "bodyFontFamily", "nameFontWeight", "sectionTitleFontWeight", "lineHeight", "headingLetterSpacing", "sectionTitleCase", "textPrimaryColor", "textMutedColor", "pageBackground", "linkColor", "skillsProficiency", "languagesLayout", "certificationsLayout", "keepSectionsTogether", "maxItemsBeforeBreak", "footerStyle", "exportFilenameTemplate", "locale"}
 	for _, k := range fieldsInOrder {
 		v, ok := asMap[k]
 		if !ok {
@@ -25426,13 +25426,13 @@ func (ec *executionContext) unmarshalInputUpdateResumeSettingsInput(ctx context.
 				return it, err
 			}
 			it.HeadingLetterSpacing = data
-		case "sectionTitleSmallCaps":
-			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("sectionTitleSmallCaps"))
-			data, err := ec.unmarshalOBoolean2ᚖbool(ctx, v)
+		case "sectionTitleCase":
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("sectionTitleCase"))
+			data, err := ec.unmarshalOSectionTitleCase2ᚖgithubᚗcomᚋleoᚋaiᚑweekendᚋbackendᚋgraphᚋmodelᚐSectionTitleCase(ctx, v)
 			if err != nil {
 				return it, err
 			}
-			it.SectionTitleSmallCaps = data
+			it.SectionTitleCase = data
 		case "textPrimaryColor":
 			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("textPrimaryColor"))
 			data, err := ec.unmarshalOString2ᚖstring(ctx, v)
@@ -28107,8 +28107,8 @@ func (ec *executionContext) _ResumeSettings(ctx context.Context, sel ast.Selecti
 			if out.Values[i] == graphql.Null {
 				out.Invalids++
 			}
-		case "sectionTitleSmallCaps":
-			out.Values[i] = ec._ResumeSettings_sectionTitleSmallCaps(ctx, field, obj)
+		case "sectionTitleCase":
+			out.Values[i] = ec._ResumeSettings_sectionTitleCase(ctx, field, obj)
 			if out.Values[i] == graphql.Null {
 				out.Invalids++
 			}
@@ -30660,6 +30660,16 @@ func (ec *executionContext) marshalNSectionItem2ᚖgithubᚗcomᚋleoᚋaiᚑwee
 	return ec._SectionItem(ctx, sel, v)
 }
 
+func (ec *executionContext) unmarshalNSectionTitleCase2githubᚗcomᚋleoᚋaiᚑweekendᚋbackendᚋgraphᚋmodelᚐSectionTitleCase(ctx context.Context, v any) (model.SectionTitleCase, error) {
+	var res model.SectionTitleCase
+	err := res.UnmarshalGQL(v)
+	return res, graphql.ErrorOnPath(ctx, err)
+}
+
+func (ec *executionContext) marshalNSectionTitleCase2githubᚗcomᚋleoᚋaiᚑweekendᚋbackendᚋgraphᚋmodelᚐSectionTitleCase(ctx context.Context, sel ast.SelectionSet, v model.SectionTitleCase) graphql.Marshaler {
+	return v
+}
+
 func (ec *executionContext) unmarshalNSectionType2githubᚗcomᚋleoᚋaiᚑweekendᚋbackendᚋgraphᚋmodelᚐSectionType(ctx context.Context, v any) (model.SectionType, error) {
 	var res model.SectionType
 	err := res.UnmarshalGQL(v)
@@ -32126,6 +32136,22 @@ func (ec *executionContext) marshalOSectionItemUsage2ᚖgithubᚗcomᚋleoᚋai�
 		return graphql.Null
 	}
 	return ec._SectionItemUsage(ctx, sel, v)
+}
+
+func (ec *executionContext) unmarshalOSectionTitleCase2ᚖgithubᚗcomᚋleoᚋaiᚑweekendᚋbackendᚋgraphᚋmodelᚐSectionTitleCase(ctx context.Context, v any) (*model.SectionTitleCase, error) {
+	if v == nil {
+		return nil, nil
+	}
+	var res = new(model.SectionTitleCase)
+	err := res.UnmarshalGQL(v)
+	return res, graphql.ErrorOnPath(ctx, err)
+}
+
+func (ec *executionContext) marshalOSectionTitleCase2ᚖgithubᚗcomᚋleoᚋaiᚑweekendᚋbackendᚋgraphᚋmodelᚐSectionTitleCase(ctx context.Context, sel ast.SelectionSet, v *model.SectionTitleCase) graphql.Marshaler {
+	if v == nil {
+		return graphql.Null
+	}
+	return v
 }
 
 func (ec *executionContext) unmarshalOSectionType2ᚖgithubᚗcomᚋleoᚋaiᚑweekendᚋbackendᚋgraphᚋmodelᚐSectionType(ctx context.Context, v any) (*model.SectionType, error) {
