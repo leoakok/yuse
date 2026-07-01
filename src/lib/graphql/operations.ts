@@ -43,7 +43,7 @@ const RESUME_SETTINGS_FIELDS = `
         sectionTitleFontWeight
         lineHeight
         headingLetterSpacing
-        sectionTitleSmallCaps
+        sectionTitleCase
         textPrimaryColor
         textMutedColor
         pageBackground

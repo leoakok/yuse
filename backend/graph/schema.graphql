@@ -140,6 +140,11 @@ enum LetterSpacingDensity {
   NORMAL
 }
 
+enum SectionTitleCase {
+  UPPERCASE
+  CAPITALIZE
+}
+
 enum PageBackground {
   WHITE
   OFF_WHITE
@@ -457,7 +462,7 @@ type ResumeSettings {
   sectionTitleFontWeight: FontWeightRole!
   lineHeight: LineHeightDensity!
   headingLetterSpacing: LetterSpacingDensity!
-  sectionTitleSmallCaps: Boolean!
+  sectionTitleCase: SectionTitleCase!
   textPrimaryColor: String!
   textMutedColor: String!
   pageBackground: PageBackground!
@@ -800,7 +805,7 @@ input UpdateResumeSettingsInput {
   sectionTitleFontWeight: FontWeightRole
   lineHeight: LineHeightDensity
   headingLetterSpacing: LetterSpacingDensity
-  sectionTitleSmallCaps: Boolean
+  sectionTitleCase: SectionTitleCase
   textPrimaryColor: String
   textMutedColor: String
   pageBackground: PageBackground

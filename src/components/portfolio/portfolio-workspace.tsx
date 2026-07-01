@@ -385,7 +385,6 @@ export function PortfolioWorkspace({
             <DialogDescription>This cannot be undone.</DialogDescription>
           </DialogHeader>
           <DialogFooter>
-            <Button variant="outline" onClick={() => setDeleteOpen(false)}>Cancel</Button>
             <Button
               variant="destructive"
               disabled={isDeleting}

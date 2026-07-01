@@ -11,6 +11,7 @@ import type {
   LetterSpacingDensity,
   LineHeightDensity,
   LocationDisplay,
+  SectionTitleCase,
   SkillsProficiency,
   SpacingDensity,
 } from "@/lib/types/cv";
@@ -92,6 +93,11 @@ const LINE_HEIGHT_OPTIONS: { id: LineHeightDensity; label: string }[] = [
 const LETTER_SPACING_OPTIONS: { id: LetterSpacingDensity; label: string }[] = [
   { id: "TIGHT", label: "Tight" },
   { id: "NORMAL", label: "Normal" },
+];
+
+const SECTION_TITLE_CASE_OPTIONS: { id: SectionTitleCase; label: string }[] = [
+  { id: "UPPERCASE", label: "Uppercase" },
+  { id: "CAPITALIZE", label: "Capitalize" },
 ];
 
 const SKILLS_PROF_OPTIONS: { id: SkillsProficiency; label: string }[] = [
@@ -254,15 +260,14 @@ export function ResumeTypeDepthSettings({
           onChange={(headingLetterSpacing) => onChange({ headingLetterSpacing })}
         />
       </div>
-      <label className="flex items-center gap-2 text-xs">
-        <input
-          type="checkbox"
-          checked={values.sectionTitleSmallCaps}
-          onChange={(e) => onChange({ sectionTitleSmallCaps: e.target.checked })}
-          className="size-3.5 rounded border"
+      <div className="space-y-1.5">
+        <p className="text-xs text-muted-foreground">Section title case</p>
+        <OptionPills
+          options={SECTION_TITLE_CASE_OPTIONS}
+          value={values.sectionTitleCase}
+          onChange={(sectionTitleCase) => onChange({ sectionTitleCase })}
         />
-        Section titles in small caps
-      </label>
+      </div>
     </div>
   );
 }

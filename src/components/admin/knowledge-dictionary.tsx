@@ -257,9 +257,6 @@ export function KnowledgeDictionary() {
             </DialogDescription>
           </DialogHeader>
           <DialogFooter>
-            <Button variant="outline" onClick={() => setDeleteTarget(null)} disabled={deleting}>
-              Cancel
-            </Button>
             <Button variant="destructive" onClick={() => void handleDelete()} disabled={deleting}>
               {deleting ? "Deleting…" : "Delete"}
             </Button>

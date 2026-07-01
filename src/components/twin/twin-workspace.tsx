@@ -175,14 +175,6 @@ export function TwinWorkspace({ addOpen = false, onAddOpenChange }: TwinWorkspac
           <DialogFooter>
             <Button
               type="button"
-              variant="outline"
-              disabled={isDeleting}
-              onClick={() => setDeleteTarget(null)}
-            >
-              Cancel
-            </Button>
-            <Button
-              type="button"
               variant="warning"
               disabled={!deleteTarget || isDeleting}
               onClick={() => {

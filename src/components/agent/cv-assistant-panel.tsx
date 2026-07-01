@@ -2,15 +2,30 @@
 
 import { useCallback, useEffect, useState } from "react";
 import { usePathname } from "next/navigation";
-import { ArrowLeft, History, Plus, X } from "lucide-react";
+import { ArrowLeft, History, PanelRightClose, Plus } from "lucide-react";
 import { YuseLogo } from "@/components/brand/yuse-logo";
 import { toast } from "sonner";
 import { AssistantComposer } from "@/components/agent/assistant-composer";
-import {
-  AssistantMessageBubble,
-} from "@/components/agent/assistant-message";
+import { AssistantMessageBubble } from "@/components/agent/assistant-message";
 import { AssistantThreadHistory } from "@/components/agent/assistant-thread-picker";
 import { useCvAssistant } from "@/components/agent/cv-assistant-provider";
+import { WELCOME_PATH } from "@/components/agent/cv-assistant-shell";
+import {
+  ASSISTANT_DEFAULT,
+  ASSISTANT_KEY,
+  ASSISTANT_MAX,
+  ASSISTANT_MIN,
+  ResizeHandle,
+  clamp,
+  useStoredWidth,
+} from "@/components/layout/resize-handle";
+import {
+  ShellAside,
+  WorkspacePanel,
+  WorkspacePanelBody,
+  WorkspacePanelFloatingFooter,
+  WorkspacePanelHeader,
+} from "@/components/layout/workspace-panel";
 import { STARTER_PROMPTS } from "@/lib/cv/constants";
 import { Button } from "@/components/ui/button";
 import {
@@ -21,14 +36,34 @@ import {
   DialogHeader,
   DialogTitle,
 } from "@/components/ui/dialog";
-import { ScrollArea } from "@/components/ui/scroll-area";
+import { Sheet, SheetContent } from "@/components/ui/sheet";
 import type { ComposerAttachment } from "@/lib/types/assistant";
+import {
+  floatingChipIconButtonClassName,
+  floatingChipTextButtonClassName,
+} from "@/lib/ui/floating-chip";
+import { motionTransitionColors } from "@/lib/ui/motion";
 import { cn } from "@/lib/utils";
 
-const WELCOME_PATH = "/welcome";
+function AssistantCollapsedRail({ onOpen }: { onOpen: () => void }) {
+  return (
+    <aside className="flex h-full w-12 shrink-0 flex-col items-center border-l bg-muted/10 py-3">
+      <Button
+        variant="ghost"
+        size="icon"
+        className="size-9"
+        onClick={onOpen}
+        aria-label="Open Yuse"
+      >
+        <YuseLogo className="size-5" />
+      </Button>
+    </aside>
+  );
+}
 
 export function CvAssistantPanel() {
-  const pathname = usePathname();
+  const pathname = usePathname() ?? "";
+  const [assistantWidth, setAssistantWidth] = useStoredWidth(ASSISTANT_KEY, ASSISTANT_DEFAULT);
   const {
     messages,
     threads,
@@ -38,7 +73,6 @@ export function CvAssistantPanel() {
     isThreadsLoading,
     isOpen,
     setOpen,
-    toggleOpen,
     sendMessage,
     editAndResendMessage,
     startNewChat,
@@ -53,6 +87,15 @@ export function CvAssistantPanel() {
   const [deleteConfirmThreadId, setDeleteConfirmThreadId] = useState<string | null>(null);
   const [editingMessageId, setEditingMessageId] = useState<string | null>(null);
   const [editingText, setEditingText] = useState("");
+  const [isLargeScreen, setIsLargeScreen] = useState(false);
+
+  useEffect(() => {
+    const query = window.matchMedia("(min-width: 1024px)");
+    const update = () => setIsLargeScreen(query.matches);
+    update();
+    query.addEventListener("change", update);
+    return () => query.removeEventListener("change", update);
+  }, []);
 
   const cancelEdit = useCallback(() => {
     setEditingMessageId(null);
@@ -137,72 +180,68 @@ export function CvAssistantPanel() {
     return null;
   }
 
-  return (
-    <div className="pointer-events-none fixed bottom-4 right-4 z-50 flex flex-col items-end gap-2">
-      {isOpen ? (
-        <div
-          className={cn(
-            "pointer-events-auto flex h-[min(640px,80dvh)] w-[min(480px,calc(100vw-2rem))] flex-col overflow-hidden rounded-2xl border bg-background shadow-xl"
-          )}
-        >
-          <div className="flex items-center justify-between gap-2 border-b px-3 py-3">
-            <div className="flex min-w-0 flex-1 items-center gap-2">
-              {historyOpen ? (
-                <Button
-                  variant="ghost"
-                  size="icon"
-                  className="size-8 shrink-0"
-                  onClick={() => setHistoryOpen(false)}
-                >
-                  <ArrowLeft className="size-4" />
-                  <span className="sr-only">Back to chat</span>
-                </Button>
-              ) : null}
-              <div className="flex min-w-0 flex-1 items-center gap-1.5">
-                {!historyOpen ? (
-                  <YuseLogo className="size-5 shrink-0" />
+  const panelContent = (
+    <WorkspacePanel>
+      <WorkspacePanelBody>
+        <div className="min-h-0 flex-1 overflow-y-auto">
+          <WorkspacePanelHeader
+            variant="floating"
+            scrollFog
+            className="px-3"
+            trailing={
+              <>
+                {historyOpen ? (
+                  <Button
+                    variant="ghost"
+                    size="icon"
+                    className={floatingChipIconButtonClassName}
+                    onClick={() => setHistoryOpen(false)}
+                  >
+                    <ArrowLeft className="size-4" />
+                    <span className="sr-only">Back to chat</span>
+                  </Button>
                 ) : null}
-                <p className="truncate text-sm font-semibold">
-                  {historyOpen ? "Past chats" : "Yuse"}
-                </p>
-              </div>
-            </div>
-            <div className="flex shrink-0 items-center gap-0.5">
-              <Button
-                variant="ghost"
-                size="sm"
-                className="h-8 gap-1.5 px-2 text-xs"
-                onClick={() => {
-                  void startNewChat();
-                  setHistoryOpen(false);
-                }}
-                disabled={chatActionsDisabled}
-              >
-                <Plus className="size-3.5" />
-                New chat
-              </Button>
-              {!historyOpen ? (
+                <Button
+                  variant="ghost"
+                  size="sm"
+                  className={floatingChipTextButtonClassName}
+                  onClick={() => {
+                    void startNewChat();
+                    setHistoryOpen(false);
+                  }}
+                  disabled={chatActionsDisabled}
+                >
+                  <Plus className="size-3.5" />
+                  New chat
+                </Button>
+                {!historyOpen ? (
+                  <Button
+                    variant="ghost"
+                    size="icon"
+                    className={floatingChipIconButtonClassName}
+                    disabled={isThreadsLoading}
+                    onClick={() => setHistoryOpen(true)}
+                  >
+                    <History className="size-4" />
+                    <span className="sr-only">Past chats</span>
+                  </Button>
+                ) : null}
                 <Button
                   variant="ghost"
                   size="icon"
-                  className="size-8"
-                  disabled={isThreadsLoading}
-                  onClick={() => setHistoryOpen(true)}
+                  className={floatingChipIconButtonClassName}
+                  onClick={() => setOpen(false)}
                 >
-                  <History className="size-4" />
-                  <span className="sr-only">Past chats</span>
+                  <PanelRightClose className="size-4" />
+                  <span className="sr-only">Hide assistant</span>
                 </Button>
-              ) : null}
-              <Button variant="ghost" size="icon" className="size-8" onClick={() => setOpen(false)}>
-                <X className="size-4" />
-                <span className="sr-only">Close Yuse</span>
-              </Button>
-            </div>
-          </div>
-
-          <ScrollArea className="flex-1 px-4">
+              </>
+            }
+          />
+          <div className={cn("w-full px-3", !historyOpen && "pb-32")}>
             {historyOpen ? (
               <div className="py-2">
+                <h2 className="mb-3 text-sm font-semibold">Past chats</h2>
                 {isThreadsLoading ? (
                   <p className="py-4 text-sm text-muted-foreground">Loading…</p>
                 ) : (
@@ -216,7 +255,7 @@ export function CvAssistantPanel() {
                 )}
               </div>
             ) : (
-              <div className="space-y-4 py-4">
+              <div className="space-y-4 py-2">
                 {isThreadsLoading ? (
                   <p className="text-sm text-muted-foreground">Loading…</p>
                 ) : messages.length === 0 ? (
@@ -231,7 +270,10 @@ export function CvAssistantPanel() {
                           type="button"
                           onClick={() => sendMessage(prompt)}
                           disabled={chatActionsDisabled}
-                          className="rounded-full border px-3 py-1 text-left text-xs text-muted-foreground transition-colors hover:bg-muted hover:text-foreground disabled:opacity-50"
+                          className={cn(
+                            "rounded-full border px-3 py-1 text-left text-xs text-muted-foreground hover:bg-muted hover:text-foreground disabled:opacity-50",
+                            motionTransitionColors
+                          )}
                         >
                           {prompt}
                         </button>
@@ -263,10 +305,10 @@ export function CvAssistantPanel() {
                 )}
               </div>
             )}
-          </ScrollArea>
+          </div>
 
           {!historyOpen ? (
-            <div className="border-t p-3">
+            <WorkspacePanelFloatingFooter scrollFog>
               <AssistantComposer
                 key={editingMessageId ?? "compose"}
                 onSubmit={handleComposerSubmit}
@@ -276,10 +318,42 @@ export function CvAssistantPanel() {
                 isEditing={Boolean(editingMessageId)}
                 onCancelEdit={cancelEdit}
               />
-            </div>
+            </WorkspacePanelFloatingFooter>
           ) : null}
         </div>
+      </WorkspacePanelBody>
+    </WorkspacePanel>
+  );
+
+  return (
+    <>
+      {!isOpen ? <AssistantCollapsedRail onOpen={() => setOpen(true)} /> : null}
+
+      {isOpen ? (
+        <ResizeHandle
+          label="Resize assistant"
+          className="hidden lg:block"
+          onResize={(delta) =>
+            setAssistantWidth((width) => clamp(width - delta, ASSISTANT_MIN, ASSISTANT_MAX))
+          }
+        />
       ) : null}
+
+      {isOpen ? (
+        <ShellAside width={assistantWidth} className="h-full">
+          {panelContent}
+        </ShellAside>
+      ) : null}
+
+      <Sheet open={isOpen && !isLargeScreen} onOpenChange={setOpen}>
+        <SheetContent
+          side="right"
+          showCloseButton={false}
+          className="flex h-full w-[min(480px,calc(100vw-3rem))] max-w-[480px] flex-col gap-0 p-0 sm:max-w-[480px] lg:hidden"
+        >
+          {panelContent}
+        </SheetContent>
+      </Sheet>
 
       <Dialog
         open={deleteConfirmThreadId !== null}
@@ -299,16 +373,8 @@ export function CvAssistantPanel() {
           <DialogFooter>
             <Button
               type="button"
-              variant="outline"
-              disabled={Boolean(deletingThreadId)}
-              onClick={() => setDeleteConfirmThreadId(null)}
-            >
-              Cancel
-            </Button>
-            <Button
-              type="button"
               variant="warning"
-              disabled={!deleteConfirmThreadId || Boolean(deletingThreadId)}
+              disabled={Boolean(deletingThreadId)}
               onClick={() => {
                 if (deleteConfirmThreadId) void handleDeleteThread(deleteConfirmThreadId);
               }}
@@ -318,14 +384,6 @@ export function CvAssistantPanel() {
           </DialogFooter>
         </DialogContent>
       </Dialog>
-
-      <Button
-        className="pointer-events-auto size-12 rounded-full shadow-lg"
-        onClick={toggleOpen}
-        aria-label={isOpen ? "Close Yuse" : "Open Yuse"}
-      >
-        <YuseLogo className="size-6" />
-      </Button>
-    </div>
+    </>
   );
 }

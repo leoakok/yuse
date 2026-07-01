@@ -61,7 +61,7 @@ func TestUpdateResumeSettingsDesignFieldsRoundTrip(t *testing.T) {
 		SectionTitleFontWeight: ptr(model.FontWeightRoleMedium),
 		LineHeight:             ptr(model.LineHeightDensityRelaxed),
 		HeadingLetterSpacing:   ptr(model.LetterSpacingDensityTight),
-		SectionTitleSmallCaps:  ptr(false),
+		SectionTitleCase:       ptr(model.SectionTitleCaseUppercase),
 		TextPrimaryColor:       ptr("#111111"),
 		TextMutedColor:         ptr("#666666"),
 		PageBackground:         ptr(model.PageBackgroundOffWhite),

@@ -284,8 +284,8 @@ func (s *Service) UpdateResumeSettings(input model.UpdateResumeSettingsInput) (*
 		if input.HeadingLetterSpacing != nil {
 			settings.HeadingLetterSpacing = *input.HeadingLetterSpacing
 		}
-		if input.SectionTitleSmallCaps != nil {
-			settings.SectionTitleSmallCaps = *input.SectionTitleSmallCaps
+		if input.SectionTitleCase != nil {
+			settings.SectionTitleCase = *input.SectionTitleCase
 		}
 		if input.TextPrimaryColor != nil {
 			settings.TextPrimaryColor = *input.TextPrimaryColor

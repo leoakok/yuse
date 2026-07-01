@@ -330,7 +330,7 @@ type ResumeSettings struct {
 	SectionTitleFontWeight  FontWeightRole       `json:"sectionTitleFontWeight"`
 	LineHeight              LineHeightDensity    `json:"lineHeight"`
 	HeadingLetterSpacing    LetterSpacingDensity `json:"headingLetterSpacing"`
-	SectionTitleSmallCaps   bool                 `json:"sectionTitleSmallCaps"`
+	SectionTitleCase        SectionTitleCase     `json:"sectionTitleCase"`
 	TextPrimaryColor        string               `json:"textPrimaryColor"`
 	TextMutedColor          string               `json:"textMutedColor"`
 	PageBackground          PageBackground       `json:"pageBackground"`
@@ -591,7 +591,7 @@ type UpdateResumeSettingsInput struct {
 	SectionTitleFontWeight  *FontWeightRole       `json:"sectionTitleFontWeight,omitempty"`
 	LineHeight              *LineHeightDensity    `json:"lineHeight,omitempty"`
 	HeadingLetterSpacing    *LetterSpacingDensity `json:"headingLetterSpacing,omitempty"`
-	SectionTitleSmallCaps   *bool                 `json:"sectionTitleSmallCaps,omitempty"`
+	SectionTitleCase        *SectionTitleCase     `json:"sectionTitleCase,omitempty"`
 	TextPrimaryColor        *string               `json:"textPrimaryColor,omitempty"`
 	TextMutedColor          *string               `json:"textMutedColor,omitempty"`
 	PageBackground          *PageBackground       `json:"pageBackground,omitempty"`
@@ -2921,6 +2921,61 @@ func (e *SectionDividerStyle) UnmarshalJSON(b []byte) error {
 }
 
 func (e SectionDividerStyle) MarshalJSON() ([]byte, error) {
+	var buf bytes.Buffer
+	e.MarshalGQL(&buf)
+	return buf.Bytes(), nil
+}
+
+type SectionTitleCase string
+
+const (
+	SectionTitleCaseUppercase  SectionTitleCase = "UPPERCASE"
+	SectionTitleCaseCapitalize SectionTitleCase = "CAPITALIZE"
+)
+
+var AllSectionTitleCase = []SectionTitleCase{
+	SectionTitleCaseUppercase,
+	SectionTitleCaseCapitalize,
+}
+
+func (e SectionTitleCase) IsValid() bool {
+	switch e {
+	case SectionTitleCaseUppercase, SectionTitleCaseCapitalize:
+		return true
+	}
+	return false
+}
+
+func (e SectionTitleCase) String() string {
+	return string(e)
+}
+
+func (e *SectionTitleCase) UnmarshalGQL(v any) error {
+	str, ok := v.(string)
+	if !ok {
+		return fmt.Errorf("enums must be strings")
+	}
+
+	*e = SectionTitleCase(str)
+	if !e.IsValid() {
+		return fmt.Errorf("%s is not a valid SectionTitleCase", str)
+	}
+	return nil
+}
+
+func (e SectionTitleCase) MarshalGQL(w io.Writer) {
+	fmt.Fprint(w, strconv.Quote(e.String()))
+}
+
+func (e *SectionTitleCase) UnmarshalJSON(b []byte) error {
+	s, err := strconv.Unquote(string(b))
+	if err != nil {
+		return err
+	}
+	return e.UnmarshalGQL(s)
+}
+
+func (e SectionTitleCase) MarshalJSON() ([]byte, error) {
 	var buf bytes.Buffer
 	e.MarshalGQL(&buf)
 	return buf.Bytes(), nil

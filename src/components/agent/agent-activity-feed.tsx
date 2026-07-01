@@ -5,6 +5,7 @@ import { Check, ChevronDown, LoaderCircle, X } from "lucide-react";
 import type { AgentActivity } from "@/lib/types/assistant";
 import { humanizeStatusLabel, isThinkingStatusLabel } from "@/lib/assistant/status-labels";
 import { DotmSquare4 } from "@/components/ui/dotm-square-4";
+import { motionEnterFadeUp, motionTransitionTransform } from "@/lib/ui/motion";
 import { cn } from "@/lib/utils";
 
 function ThinkingIndicator() {
@@ -172,11 +173,10 @@ function ActivityStepRow({ slot }: ActivityStepRowProps) {
   return (
     <li
       className={cn(
-        "flex items-start gap-2.5 text-xs transition-all duration-300 ease-out motion-reduce:transition-none",
-        phase === "enter" &&
-          "motion-safe:animate-in motion-safe:fade-in motion-safe:slide-in-from-bottom-1 motion-safe:duration-300",
+        "flex items-start gap-2.5 text-xs motion-safe:transition-opacity motion-safe:duration-default motion-safe:ease-motion-out motion-reduce:transition-none",
+        phase === "enter" && motionEnterFadeUp,
         phase === "exit" &&
-          "pointer-events-none motion-safe:animate-out motion-safe:fade-out motion-safe:duration-300 motion-reduce:opacity-0",
+          "pointer-events-none motion-safe:animate-out motion-safe:fade-out motion-safe:duration-default motion-reduce:opacity-0",
         phase === "visible" && "opacity-100",
         activity.status === "active" && "font-medium text-foreground",
         activity.status === "complete" && "text-muted-foreground",
@@ -300,7 +300,8 @@ export function ThinkingCollapsible({
       >
         <ChevronDown
           className={cn(
-            "size-3.5 shrink-0 text-muted-foreground transition-transform",
+            "size-3.5 shrink-0 text-muted-foreground",
+            motionTransitionTransform,
             open && "rotate-180"
           )}
         />

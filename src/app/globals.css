@@ -59,6 +59,13 @@
   --shadow-2xl: 0 1px 3px 0px hsl(0 0% 0% / 0.25);
   --tracking-normal: 0em;
   --spacing: 0.25rem;
+
+  /* Motion tokens: snappy defaults (150ms fast, 200ms default, 300ms slow) */
+  --motion-duration-fast: 150ms;
+  --motion-duration-default: 200ms;
+  --motion-duration-slow: 300ms;
+  --motion-ease-out: cubic-bezier(0.16, 1, 0.3, 1);
+  --motion-ease-in-out: cubic-bezier(0.45, 0, 0.55, 1);
 }
 
 .dark {
@@ -169,9 +176,27 @@
   --shadow-lg: var(--shadow-lg);
   --shadow-xl: var(--shadow-xl);
   --shadow-2xl: var(--shadow-2xl);
+
+  --duration-fast: var(--motion-duration-fast);
+  --duration-default: var(--motion-duration-default);
+  --duration-slow: var(--motion-duration-slow);
+  --ease-motion-out: var(--motion-ease-out);
+  --ease-motion-in-out: var(--motion-ease-in-out);
 }
 
 @layer base {
+  @media (prefers-reduced-motion: reduce) {
+    :root {
+      --motion-duration-fast: 0.01ms;
+      --motion-duration-default: 0.01ms;
+      --motion-duration-slow: 0.01ms;
+    }
+
+    html {
+      scroll-behavior: auto;
+    }
+  }
+
   * {
     @apply border-border outline-ring/50;
   }
@@ -180,6 +205,7 @@
   }
   html {
     @apply font-sans;
+    scroll-behavior: smooth;
   }
 
   .agent-workspace {

@@ -34,7 +34,7 @@ func buildAgentSystemPrompt(assistantContext model.AssistantContextInput, twinCo
 	case model.AssistantViewPortfolioDetail:
 		if assistantContext.PortfolioID != nil && *assistantContext.PortfolioID != "" {
 			b.WriteString(fmt.Sprintf(
-				"Open in editor: portfolio %q (UI context). Use this id only when they mean this/current portfolio without naming another. If they name a site or person → list_portfolios and match by title first. Hero/contact → update_portfolio_contact_profile; tagline/about → update_portfolio; projects → add_portfolio_project / update_portfolio_project; skills → add_portfolio_skill.\n",
+				"Open in editor: portfolio %q (UI context). Use this id only when they mean this/current portfolio without naming another. If they name a site or person → list_portfolios and match by title first. Hero/contact → update_portfolio_contact_profile; tagline/about → update_portfolio; projects → add_portfolio_project / update_portfolio_project; skills → add_portfolio_skill; design → update_portfolio_settings.\n",
 				*assistantContext.PortfolioID,
 			))
 		} else {
@@ -45,7 +45,7 @@ func buildAgentSystemPrompt(assistantContext model.AssistantContextInput, twinCo
 	case model.AssistantViewResumeDetail:
 		if assistantContext.ResumeID != nil && *assistantContext.ResumeID != "" {
 			b.WriteString(fmt.Sprintf(
-				"Open in editor: resume %q (UI context). Use this id only when they mean this/current resume without naming another. If they name a CV or person → list_resumes and match by title first. Profile header → update_contact_profile; sections below → section tools.\n",
+				"Open in editor: resume %q (UI context). Use this id only when they mean this/current resume without naming another. If they name a CV or person → list_resumes and match by title first. Profile header → update_contact_profile; sections below → section tools; design panel → update_resume_settings, reorder_resume_sections, set_section_visibility.\n",
 				*assistantContext.ResumeID,
 			))
 		} else {

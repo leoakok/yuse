@@ -104,7 +104,7 @@ function deriveContext(pathname: string): AssistantContext {
 }
 
 export function CvAssistantProvider({ children }: { children: ReactNode }) {
-  const pathname = usePathname();
+  const pathname = usePathname() ?? "";
   const router = useRouter();
   const { user } = useWorkspace();
   const [messages, setMessages] = useState<AssistantMessage[]>([]);
@@ -468,8 +468,12 @@ export function CvAssistantProvider({ children }: { children: ReactNode }) {
   );
 }
 
+export function useCvAssistantOptional() {
+  return useContext(CvAssistantContext);
+}
+
 export function useCvAssistant() {
-  const ctx = useContext(CvAssistantContext);
+  const ctx = useCvAssistantOptional();
   if (!ctx) {
     throw new Error("useCvAssistant must be used within CvAssistantProvider");
   }

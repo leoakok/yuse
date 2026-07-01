@@ -35,6 +35,156 @@ func itemTitleLayoutEnum() map[string]any {
 	return enumProp("Section item title layout: STACKED = title above subtitle, INLINE = same line", model.AllItemTitleLayout...)
 }
 
+func itemTitleSeparatorEnum() map[string]any {
+	return enumProp("Separator between title and company when itemTitleLayout is INLINE", model.AllItemTitleSeparator...)
+}
+
+func itemTitleOrderEnum() map[string]any {
+	return enumProp("Order of title and company when INLINE", model.AllItemTitleOrder...)
+}
+
+func fontFamilyEnum() map[string]any {
+	return enumProp("Font family", model.AllFontFamily...)
+}
+
+func sectionDividerStyleEnum() map[string]any {
+	return enumProp("Section heading underline style", model.AllSectionDividerStyle...)
+}
+
+func dateFormatEnum() map[string]any {
+	return enumProp("Date display format", model.AllDateFormat...)
+}
+
+func datePositionEnum() map[string]any {
+	return enumProp("Where dates appear on entries", model.AllDatePosition...)
+}
+
+func skillsLayoutEnum() map[string]any {
+	return enumProp("Skills section layout", model.AllSkillsLayout...)
+}
+
+func columnLayoutEnum() map[string]any {
+	return enumProp("Page column layout", model.AllColumnLayout...)
+}
+
+func sidebarPositionEnum() map[string]any {
+	return enumProp("Sidebar side when columnLayout is TWO_COLUMN", model.AllSidebarPosition...)
+}
+
+func sidebarWidthEnum() map[string]any {
+	return enumProp("Sidebar width when TWO_COLUMN", model.AllSidebarWidth...)
+}
+
+func designPresetEnum() map[string]any {
+	return enumProp("Design theme preset (also sets themeId)", model.AllDesignPresetID...)
+}
+
+func photoPositionEnum() map[string]any {
+	return enumProp("Profile photo placement", model.AllPhotoPosition...)
+}
+
+func photoSizeEnum() map[string]any {
+	return enumProp("Profile photo size", model.AllPhotoSize...)
+}
+
+func contactLayoutEnum() map[string]any {
+	return enumProp("Contact details layout in header", model.AllContactLayout...)
+}
+
+func contactFieldEnum() map[string]any {
+	return enumProp("Contact field to show in header", model.AllContactField...)
+}
+
+func spacingDensityEnum() map[string]any {
+	return enumProp("Spacing density", model.AllSpacingDensity...)
+}
+
+func descriptionStyleEnum() map[string]any {
+	return enumProp("Entry body style", model.AllDescriptionStyle...)
+}
+
+func bulletCharEnum() map[string]any {
+	return enumProp("Bullet character for lists", model.AllBulletChar...)
+}
+
+func itemTitleEmphasisEnum() map[string]any {
+	return enumProp("Which part is emphasized in entry headers", model.AllItemTitleEmphasis...)
+}
+
+func locationDisplayEnum() map[string]any {
+	return enumProp("How location appears on entries", model.AllLocationDisplay...)
+}
+
+func fontWeightRoleEnum() map[string]any {
+	return enumProp("Font weight", model.AllFontWeightRole...)
+}
+
+func lineHeightEnum() map[string]any {
+	return enumProp("Line height density", model.AllLineHeightDensity...)
+}
+
+func letterSpacingEnum() map[string]any {
+	return enumProp("Heading letter spacing", model.AllLetterSpacingDensity...)
+}
+
+func sectionTitleCaseEnum() map[string]any {
+	return enumProp("Section title capitalization", model.AllSectionTitleCase...)
+}
+
+func pageBackgroundEnum() map[string]any {
+	return enumProp("Page background color preset", model.AllPageBackground...)
+}
+
+func skillsProficiencyEnum() map[string]any {
+	return enumProp("Skills proficiency display style", model.AllSkillsProficiency...)
+}
+
+func languagesLayoutEnum() map[string]any {
+	return enumProp("Languages section layout", model.AllLanguagesLayout...)
+}
+
+func certificationsLayoutEnum() map[string]any {
+	return enumProp("Certifications section layout", model.AllCertificationsLayout...)
+}
+
+func footerStyleEnum() map[string]any {
+	return enumProp("PDF footer style", model.AllFooterStyle...)
+}
+
+func resumeDesignExtensionProps(
+	str func(desc string, examples ...string) map[string]any,
+	boolProp func(desc string) map[string]any,
+	intProp func(desc string, min, max int) map[string]any,
+) map[string]any {
+	return map[string]any{
+		"sectionSpacing":         spacingDensityEnum(),
+		"itemSpacing":            spacingDensityEnum(),
+		"descriptionStyle":       descriptionStyleEnum(),
+		"bulletChar":             bulletCharEnum(),
+		"itemTitleEmphasis":      itemTitleEmphasisEnum(),
+		"highlightCurrentRole":   boolProp("Emphasize the current role in experience entries."),
+		"locationDisplay":        locationDisplayEnum(),
+		"headingFontFamily":      fontFamilyEnum(),
+		"bodyFontFamily":         fontFamilyEnum(),
+		"nameFontWeight":         fontWeightRoleEnum(),
+		"sectionTitleFontWeight": fontWeightRoleEnum(),
+		"lineHeight":             lineHeightEnum(),
+		"headingLetterSpacing":   letterSpacingEnum(),
+		"sectionTitleCase":       sectionTitleCaseEnum(),
+		"textPrimaryColor":       str("Primary text hex color.", "#111111"),
+		"textMutedColor":         str("Muted text hex color.", "#666666"),
+		"pageBackground":         pageBackgroundEnum(),
+		"linkColor":              str("Link hex color.", "#2563eb"),
+		"skillsProficiency":      skillsProficiencyEnum(),
+		"languagesLayout":        languagesLayoutEnum(),
+		"certificationsLayout":   certificationsLayoutEnum(),
+		"keepSectionsTogether":   boolProp("Try to keep section blocks on one page when exporting."),
+		"maxItemsBeforeBreak":    intProp("Max items in a section before a page break hint.", 1, 20),
+		"footerStyle":            footerStyleEnum(),
+		"exportFilenameTemplate": str("PDF export filename template.", "{name}-resume"),
+	}
+}
+
 func portfolioLayoutEnum() map[string]any {
 	return enumProp("Portfolio page layout", model.AllPortfolioLayout...)
 }
@@ -166,7 +316,7 @@ func toolDefinitions() []toolDef {
 		},
 		{
 			Name:        "get_resume_content",
-			Description: "Get resume for editing: contactProfile, sections with ids/types/items (flat metadata fields promoted), and structured fieldGuide per section (required, recommended, goodExample, badExample). Call before add_section_item or update_section_item to learn section ids and field rules.",
+			Description: "Get resume for editing: contactProfile, designSettings, sections with ids/types/items (flat metadata fields promoted), section showInPreview and displayTitle, and structured fieldGuide per section (required, recommended, goodExample, badExample). Call before add_section_item or update_section_item to learn section ids and field rules.",
 			Parameters:  object(map[string]any{"id": str("Resume id.")}, "id"),
 		},
 		{
@@ -217,25 +367,92 @@ Returns fieldHints when key profile fields were omitted.`,
 			}, "resumeId", "sectionId", "sectionItemId", "showInPreview"),
 		},
 		{
-			Name:        "update_resume_settings",
-			Description: "Update resume design: page format, margins, font, theme, locale, item title layout.",
+			Name:        "reorder_resume_sections",
+			Description: "Reorder resume sections in the preview. Pass sectionIds in the desired top-to-bottom order from get_resume_content.",
 			Parameters: object(map[string]any{
-				"resumeId":           str("Resume id."),
-				"pageFormat":         pageFormatEnum(),
-				"fontSize":                fontSizeEnum(),
-				"contactNameFontSize":     fontSizeEnum(),
-				"contactHeadlineFontSize": fontSizeEnum(),
-				"contactDetailsFontSize":  fontSizeEnum(),
-				"sectionTitleFontSize":    fontSizeEnum(),
-				"itemTitleFontSize":       fontSizeEnum(),
-				"itemMetaFontSize":        fontSizeEnum(),
-				"marginHorizontalMm": map[string]any{"type": "number", "description": "Horizontal page margin in millimeters."},
-				"marginVerticalMm":   map[string]any{"type": "number", "description": "Vertical page margin in millimeters."},
-				"themeId":            str("Theme id from list_cv_themes."),
-				"showPhoto":          boolProp("Whether to show the profile photo in the CV preview (uses uploaded photo, then LinkedIn, then GitHub fallback)."),
-				"itemTitleLayout":    itemTitleLayoutEnum(),
-				"locale":             str("BCP-47 locale.", "en-US"),
-			}, "resumeId"),
+				"resumeId": str("Resume id."),
+				"sectionIds": map[string]any{
+					"type":        "array",
+					"description": "Ordered section ids.",
+					"items":       map[string]any{"type": "string"},
+				},
+			}, "resumeId", "sectionIds"),
+		},
+		{
+			Name:        "set_section_visibility",
+			Description: "Show or hide an entire section on the resume preview (not individual items).",
+			Parameters: object(map[string]any{
+				"resumeId":      str("Resume id."),
+				"sectionId":     str("Section id from get_resume_content."),
+				"showInPreview": boolProp("true = section visible, false = hidden."),
+			}, "resumeId", "sectionId", "showInPreview"),
+		},
+		{
+			Name:        "update_section_display_title",
+			Description: "Set a per-resume display name for a section heading. Omit displayTitle or pass empty string to reset to the default section title.",
+			Parameters: object(map[string]any{
+				"resumeId":     str("Resume id."),
+				"sectionId":    str("Section id."),
+				"displayTitle": str("Custom heading shown in preview.", "Selected Projects"),
+			}, "resumeId", "sectionId"),
+		},
+		{
+			Name:        "delete_section_item",
+			Description: "Permanently delete a section item from the workspace library (removes it from all resumes).",
+			Parameters: object(map[string]any{
+				"resumeId":      str("Resume id."),
+				"sectionItemId": str("Section item id."),
+			}, "resumeId", "sectionItemId"),
+		},
+		{
+			Name: "update_resume_settings",
+			Description: `Update resume design and export settings. Matches the Design panel in the editor: theme preset, typography, margins, layout, dates, skills, ATS mode, spacing, and colors.
+
+Call list_cv_themes for theme ids. Use designPresetId for bundled presets (MODERN, CLASSIC, etc.). get_resume_content returns designSettings for current values.
+
+For ATS-friendly output set atsMode=true. For photo visibility also set showPhoto and optionally photoPosition/photoSize.`,
+			Parameters: mergeProps(
+				mergeProps(object(map[string]any{
+					"resumeId": str("Resume id."),
+				}, "resumeId"), map[string]any{
+					"pageFormat":              pageFormatEnum(),
+					"fontSize":                fontSizeEnum(),
+					"contactNameFontSize":     fontSizeEnum(),
+					"contactHeadlineFontSize": fontSizeEnum(),
+					"contactDetailsFontSize":  fontSizeEnum(),
+					"sectionTitleFontSize":    fontSizeEnum(),
+					"itemTitleFontSize":       fontSizeEnum(),
+					"itemMetaFontSize":        fontSizeEnum(),
+					"marginHorizontalMm":      map[string]any{"type": "number", "description": "Horizontal page margin in millimeters."},
+					"marginVerticalMm":        map[string]any{"type": "number", "description": "Vertical page margin in millimeters."},
+					"themeId":                 str("Theme id from list_cv_themes."),
+					"designPresetId":          designPresetEnum(),
+					"showPhoto":               boolProp("Show profile photo in preview (uses uploaded, LinkedIn, then GitHub fallback)."),
+					"photoPosition":           photoPositionEnum(),
+					"photoSize":               photoSizeEnum(),
+					"itemTitleLayout":         itemTitleLayoutEnum(),
+					"itemTitleSeparator":      itemTitleSeparatorEnum(),
+					"itemTitleOrder":          itemTitleOrderEnum(),
+					"fontFamily":              fontFamilyEnum(),
+					"accentColor":             str("Accent hex color.", "#2563eb"),
+					"sectionDividerStyle":     sectionDividerStyleEnum(),
+					"dateFormat":              dateFormatEnum(),
+					"datePosition":            datePositionEnum(),
+					"skillsLayout":            skillsLayoutEnum(),
+					"atsMode":                 boolProp("ATS-friendly simplified layout for export."),
+					"columnLayout":            columnLayoutEnum(),
+					"sidebarPosition":         sidebarPositionEnum(),
+					"sidebarWidth":            sidebarWidthEnum(),
+					"contactLayout":           contactLayoutEnum(),
+					"contactFields": map[string]any{
+						"type":        "array",
+						"description": "Contact fields to show in header.",
+						"items":       contactFieldEnum(),
+					},
+					"locale": str("BCP-47 locale.", "en-US"),
+				}),
+				resumeDesignExtensionProps(str, boolProp, intProp),
+			),
 		},
 		{
 			Name:        "list_portfolios",
@@ -315,8 +532,17 @@ Returns fieldHints when key profile fields were omitted.`,
 				"techStack":     map[string]any{"type": "array", "items": map[string]any{"type": "string"}},
 				"liveUrl":       urlStr("Live demo URL."),
 				"repoUrl":       urlStr("Repo URL."),
+				"imageUrl":      urlStr("Screenshot or cover image URL."),
 				"showInPreview": boolProp("Show on the public portfolio preview."),
 				"featured":      boolProp("Hero project."),
+			}, "portfolioId", "projectId"),
+		},
+		{
+			Name:        "delete_portfolio_project",
+			Description: "Permanently delete a project from the portfolio.",
+			Parameters: object(map[string]any{
+				"portfolioId": str("Portfolio id."),
+				"projectId":   str("Project id."),
 			}, "portfolioId", "projectId"),
 		},
 		{
@@ -340,6 +566,14 @@ Returns fieldHints when key profile fields were omitted.`,
 			}, "portfolioId", "skillId"),
 		},
 		{
+			Name:        "delete_portfolio_skill",
+			Description: "Permanently delete a skill from the portfolio.",
+			Parameters: object(map[string]any{
+				"portfolioId": str("Portfolio id."),
+				"skillId":     str("Skill id."),
+			}, "portfolioId", "skillId"),
+		},
+		{
 			Name:        "add_portfolio_testimonial",
 			Description: "Add a testimonial quote (only real quotes the user provided).",
 			Parameters: object(map[string]any{
@@ -348,6 +582,26 @@ Returns fieldHints when key profile fields were omitted.`,
 				"author":      str("Person's name."),
 				"role":        str("Their title or relationship."),
 			}, "portfolioId", "quote"),
+		},
+		{
+			Name:        "update_portfolio_testimonial",
+			Description: "Update a testimonial by testimonialId from get_portfolio_content.",
+			Parameters: object(map[string]any{
+				"portfolioId":   str("Portfolio id."),
+				"testimonialId": str("Testimonial id."),
+				"quote":         str("Testimonial text."),
+				"author":        str("Person's name."),
+				"role":          str("Their title or relationship."),
+				"showInPreview": boolProp("Show on preview."),
+			}, "portfolioId", "testimonialId"),
+		},
+		{
+			Name:        "delete_portfolio_testimonial",
+			Description: "Permanently delete a testimonial from the portfolio.",
+			Parameters: object(map[string]any{
+				"portfolioId":   str("Portfolio id."),
+				"testimonialId": str("Testimonial id."),
+			}, "portfolioId", "testimonialId"),
 		},
 		{
 			Name:        "update_portfolio_settings",
@@ -465,6 +719,13 @@ Call after each user answer to fill gaps. Returns fieldHints and missingSTARorPA
 			Parameters:  object(map[string]any{}),
 		},
 		{
+			Name:        "create_tracked_job",
+			Description: "Add a job posting to the tracker from a URL.",
+			Parameters: object(map[string]any{
+				"url": urlStr("Job posting URL."),
+			}, "url"),
+		},
+		{
 			Name:        "get_tracked_job",
 			Description: "Get one tracked job by id, including cover letter.",
 			Parameters:  object(map[string]any{"id": str("Tracked job id.")}, "id"),
@@ -491,6 +752,11 @@ Set title, company, status (SAVED|APPLIED|INTERVIEW|OFFER|REJECTED|WITHDRAWN), l
 				"remote":      boolProp("true if remote or hybrid remote."),
 				"metadata":    legacyMeta,
 			}, "id"),
+		},
+		{
+			Name:        "delete_tracked_job",
+			Description: "Permanently delete a tracked job application.",
+			Parameters:  object(map[string]any{"id": str("Tracked job id.")}, "id"),
 		},
 		{
 			Name:        "web_search",

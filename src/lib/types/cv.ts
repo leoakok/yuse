@@ -125,6 +125,7 @@ export type FontWeightRole = "LIGHT" | "REGULAR" | "MEDIUM" | "SEMIBOLD";
 export type LineHeightDensity = "TIGHT" | "NORMAL" | "RELAXED";
 
 export type LetterSpacingDensity = "TIGHT" | "NORMAL";
+export type SectionTitleCase = "UPPERCASE" | "CAPITALIZE";
 
 export type PageBackground = "WHITE" | "OFF_WHITE" | "LIGHT_GRAY";
 
@@ -215,7 +216,7 @@ export interface ResumeSettings {
   sectionTitleFontWeight: FontWeightRole;
   lineHeight: LineHeightDensity;
   headingLetterSpacing: LetterSpacingDensity;
-  sectionTitleSmallCaps: boolean;
+  sectionTitleCase: SectionTitleCase;
   textPrimaryColor: string;
   textMutedColor: string;
   pageBackground: PageBackground;

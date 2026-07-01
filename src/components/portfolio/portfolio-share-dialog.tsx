@@ -171,9 +171,6 @@ export function PortfolioShareDialog({
         </div>
 
         <DialogFooter>
-          <Button type="button" variant="outline" onClick={() => onOpenChange(false)}>
-            Close
-          </Button>
           <Button type="button" onClick={() => void handleCopy()} disabled={!previewUrl && !shareUrl}>
             {copied ? <Check className="mr-1.5 size-4" /> : <Copy className="mr-1.5 size-4" />}
             Copy link

@@ -21,6 +21,8 @@ var highImpactTools = map[string]bool{
 	"crawl_site":             true,
 	"crawl_github_profile":   true,
 	"delete_twin_entry":      true,
+	"delete_section_item":  true,
+	"delete_tracked_job":   true,
 }
 
 func userAskedLinkedInImport(text string) bool {

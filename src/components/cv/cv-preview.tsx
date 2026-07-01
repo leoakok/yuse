@@ -161,13 +161,13 @@ function CvPreviewSectionTitle({
       className={cn(
         "mb-2",
         sectionDividerStyle === "FULL" && "border-b pb-0.5",
-        !designTokens.sectionTitleSmallCaps && "uppercase tracking-wider"
+        designTokens.sectionTitleCase === "UPPERCASE" && "uppercase tracking-wider",
+        designTokens.sectionTitleCase === "CAPITALIZE" && "capitalize"
       )}
       style={{
         fontSize: `${typography.sectionTitlePx}px`,
         fontWeight: designTokens.sectionTitleFontWeight,
         letterSpacing: designTokens.headingLetterSpacing,
-        fontVariant: designTokens.sectionTitleSmallCaps ? "small-caps" : undefined,
         color: designTokens.textPrimary,
         ...(sectionDividerStyle === "FULL" ? borderStyle : {}),
         ...(sectionDividerStyle === "TEXT_WIDTH" ? borderStyle : {}),

@@ -18,7 +18,7 @@ const resumeSettingsSelectSQL = `
 		section_spacing, item_spacing, description_style, bullet_char, item_title_emphasis,
 		highlight_current_role, location_display, heading_font_family, body_font_family,
 		name_font_weight, section_title_font_weight, line_height, heading_letter_spacing,
-		section_title_small_caps, text_primary_color, text_muted_color, page_background, link_color,
+		section_title_case, text_primary_color, text_muted_color, page_background, link_color,
 		skills_proficiency, languages_layout, certifications_layout, keep_sections_together,
 		max_items_before_break, footer_style, export_filename_template, locale
 	FROM resume_settings WHERE resume_id = $1`
@@ -34,7 +34,7 @@ const resumeSettingsUpsertSQL = `
 		section_spacing, item_spacing, description_style, bullet_char, item_title_emphasis,
 		highlight_current_role, location_display, heading_font_family, body_font_family,
 		name_font_weight, section_title_font_weight, line_height, heading_letter_spacing,
-		section_title_small_caps, text_primary_color, text_muted_color, page_background, link_color,
+		section_title_case, text_primary_color, text_muted_color, page_background, link_color,
 		skills_proficiency, languages_layout, certifications_layout, keep_sections_together,
 		max_items_before_break, footer_style, export_filename_template, locale
 	)
@@ -88,7 +88,7 @@ const resumeSettingsUpsertSQL = `
 		section_title_font_weight = EXCLUDED.section_title_font_weight,
 		line_height = EXCLUDED.line_height,
 		heading_letter_spacing = EXCLUDED.heading_letter_spacing,
-		section_title_small_caps = EXCLUDED.section_title_small_caps,
+		section_title_case = EXCLUDED.section_title_case,
 		text_primary_color = EXCLUDED.text_primary_color,
 		text_muted_color = EXCLUDED.text_muted_color,
 		page_background = EXCLUDED.page_background,
@@ -122,7 +122,7 @@ func resumeSettingsArgs(settings *model.ResumeSettings) []any {
 		string(settings.HeadingFontFamily), string(settings.BodyFontFamily),
 		string(settings.NameFontWeight), string(settings.SectionTitleFontWeight),
 		string(settings.LineHeight), string(settings.HeadingLetterSpacing),
-		settings.SectionTitleSmallCaps, settings.TextPrimaryColor, settings.TextMutedColor,
+		string(settings.SectionTitleCase), settings.TextPrimaryColor, settings.TextMutedColor,
 		string(settings.PageBackground), settings.LinkColor,
 		string(settings.SkillsProficiency), string(settings.LanguagesLayout), string(settings.CertificationsLayout),
 		settings.KeepSectionsTogether, settings.MaxItemsBeforeBreak,
@@ -141,7 +141,7 @@ func scanResumeSettings(row scannable) (*model.ResumeSettings, error) {
 	var contactFieldsJSON []byte
 	var sectionSpacing, itemSpacing, descriptionStyle, bulletChar, itemTitleEmphasis string
 	var locationDisplay, headingFontFamily, bodyFontFamily string
-	var nameFontWeight, sectionTitleFontWeight, lineHeight, headingLetterSpacing string
+	var nameFontWeight, sectionTitleFontWeight, lineHeight, headingLetterSpacing, sectionTitleCase string
 	var pageBackground, skillsProficiency, languagesLayout, certificationsLayout, footerStyle string
 
 	if err := row.Scan(
@@ -155,7 +155,7 @@ func scanResumeSettings(row scannable) (*model.ResumeSettings, error) {
 		&sectionSpacing, &itemSpacing, &descriptionStyle, &bulletChar, &itemTitleEmphasis,
 		&s.HighlightCurrentRole, &locationDisplay, &headingFontFamily, &bodyFontFamily,
 		&nameFontWeight, &sectionTitleFontWeight, &lineHeight, &headingLetterSpacing,
-		&s.SectionTitleSmallCaps, &s.TextPrimaryColor, &s.TextMutedColor, &pageBackground, &s.LinkColor,
+		&sectionTitleCase, &s.TextPrimaryColor, &s.TextMutedColor, &pageBackground, &s.LinkColor,
 		&skillsProficiency, &languagesLayout, &certificationsLayout, &s.KeepSectionsTogether,
 		&s.MaxItemsBeforeBreak, &footerStyle, &s.ExportFilenameTemplate, &s.Locale,
 	); err != nil {
@@ -201,6 +201,7 @@ func scanResumeSettings(row scannable) (*model.ResumeSettings, error) {
 	s.SectionTitleFontWeight = normalizeFontWeightRole(sectionTitleFontWeight)
 	s.LineHeight = normalizeLineHeightDensity(lineHeight)
 	s.HeadingLetterSpacing = normalizeLetterSpacingDensity(headingLetterSpacing)
+	s.SectionTitleCase = normalizeSectionTitleCase(sectionTitleCase)
 	s.PageBackground = normalizePageBackground(pageBackground)
 	s.SkillsProficiency = normalizeSkillsProficiency(skillsProficiency)
 	s.LanguagesLayout = normalizeLanguagesLayout(languagesLayout)
@@ -453,6 +454,14 @@ func normalizeCertificationsLayout(raw string) model.CertificationsLayout {
 		return v
 	}
 	return model.CertificationsLayoutList
+}
+
+func normalizeSectionTitleCase(raw string) model.SectionTitleCase {
+	v := model.SectionTitleCase(strings.ToUpper(strings.TrimSpace(raw)))
+	if v.IsValid() {
+		return v
+	}
+	return model.SectionTitleCaseCapitalize
 }
 
 func normalizeFooterStyle(raw string) model.FooterStyle {

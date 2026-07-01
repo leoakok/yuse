@@ -1,7 +1,7 @@
 "use client";
 
 import { useCallback, useEffect, useRef, useState, type DragEvent } from "react";
-import { FileUp, Link2, Loader2 } from "lucide-react";
+import { FileUp, Loader2 } from "lucide-react";
 import { toast } from "sonner";
 import { useCvAssistant } from "@/components/agent/cv-assistant-provider";
 import {
@@ -32,8 +32,6 @@ const RESUME_MIME_TYPES = [
   "application/vnd.openxmlformats-officedocument.wordprocessingml.document",
 ] as const;
 
-type ImportStep = "choose" | "linkedin";
-
 interface ResumeImportDialogProps {
   open: boolean;
   onOpenChange: (open: boolean) => void;
@@ -60,7 +58,6 @@ function validateResumeFile(file: File): string | null {
 export function ResumeImportDialog({ open, onOpenChange }: ResumeImportDialogProps) {
   const { startNewChat, sendMessage, setOpen: setAssistantOpen } = useCvAssistant();
   const fileInputRef = useRef<HTMLInputElement>(null);
-  const [step, setStep] = useState<ImportStep>("choose");
   const [selectedFile, setSelectedFile] = useState<ComposerAttachment | null>(null);
   const [linkedInUsername, setLinkedInUsername] = useState("");
   const [error, setError] = useState<string | null>(null);
@@ -69,7 +66,6 @@ export function ResumeImportDialog({ open, onOpenChange }: ResumeImportDialogPro
   const dragDepthRef = useRef(0);
 
   const resetState = useCallback(() => {
-    setStep("choose");
     setLinkedInUsername("");
     setError(null);
     setIsDragOver(false);
@@ -155,6 +151,17 @@ export function ResumeImportDialog({ open, onOpenChange }: ResumeImportDialogPro
     );
   };
 
+  const handleImport = () => {
+    if (selectedFile) {
+      void handleFileImport();
+      return;
+    }
+    void handleLinkedInImport();
+  };
+
+  const canImport =
+    Boolean(selectedFile) || Boolean(normalizeLinkedInProfileUrl(linkedInUsername));
+
   const onDragEnter = (event: DragEvent<HTMLDivElement>) => {
     if (!event.dataTransfer.types.includes("Files")) return;
     event.preventDefault();
@@ -192,182 +199,118 @@ export function ResumeImportDialog({ open, onOpenChange }: ResumeImportDialogPro
         <DialogHeader>
           <DialogTitle>Import a resume</DialogTitle>
           <DialogDescription>
-            {step === "choose"
-              ? "Upload an existing resume or pull your profile from LinkedIn."
-              : "Enter your public LinkedIn username."}
+            Upload an existing resume or enter your LinkedIn username.
           </DialogDescription>
         </DialogHeader>
 
-        {step === "choose" ? (
-          <div className="grid gap-4">
-            <div
-              className={cn(
-                "rounded-lg border border-dashed p-6 text-center transition-colors",
-                isDragOver && "border-primary bg-primary/5",
-                selectedFile && "border-solid"
-              )}
-              onDragEnter={onDragEnter}
-              onDragLeave={onDragLeave}
-              onDragOver={onDragOver}
-              onDrop={onDrop}
-            >
-              <input
-                ref={fileInputRef}
-                type="file"
-                accept={RESUME_FILE_ACCEPT}
-                className="sr-only"
-                disabled={isImporting}
-                onChange={(event) => void selectFile(event.target.files?.[0])}
-              />
-              <div className="mx-auto flex size-10 items-center justify-center rounded-full bg-muted">
-                <FileUp className="size-5 text-muted-foreground" aria-hidden />
+        <div className="grid gap-4">
+          <div
+            className={cn(
+              "rounded-lg border border-dashed p-6 text-center transition-colors",
+              isDragOver && "border-primary bg-primary/5",
+              selectedFile && "border-solid"
+            )}
+            onDragEnter={onDragEnter}
+            onDragLeave={onDragLeave}
+            onDragOver={onDragOver}
+            onDrop={onDrop}
+          >
+            <input
+              ref={fileInputRef}
+              type="file"
+              accept={RESUME_FILE_ACCEPT}
+              className="sr-only"
+              disabled={isImporting}
+              onChange={(event) => void selectFile(event.target.files?.[0])}
+            />
+            <div className="mx-auto flex size-10 items-center justify-center rounded-full bg-muted">
+              <FileUp className="size-5 text-muted-foreground" aria-hidden />
+            </div>
+            {selectedFile ? (
+              <div className="mt-3 space-y-1">
+                <p className="text-sm font-medium">{selectedFile.name}</p>
+                <p className="text-xs text-muted-foreground">
+                  {formatFileSize(selectedFile.size)}
+                </p>
+                <Button
+                  type="button"
+                  variant="link"
+                  size="sm"
+                  className="h-auto p-0"
+                  disabled={isImporting}
+                  onClick={() => fileInputRef.current?.click()}
+                >
+                  Choose a different file
+                </Button>
               </div>
-              {selectedFile ? (
-                <div className="mt-3 space-y-1">
-                  <p className="text-sm font-medium">{selectedFile.name}</p>
-                  <p className="text-xs text-muted-foreground">
-                    {formatFileSize(selectedFile.size)}
-                  </p>
-                  <Button
+            ) : (
+              <div className="mt-3 space-y-2">
+                <p className="text-sm">
+                  Drag a PDF or Word file here, or{" "}
+                  <button
                     type="button"
-                    variant="link"
-                    size="sm"
-                    className="h-auto p-0"
+                    className="font-medium text-primary underline-offset-4 hover:underline"
                     disabled={isImporting}
                     onClick={() => fileInputRef.current?.click()}
                   >
-                    Choose a different file
-                  </Button>
-                </div>
-              ) : (
-                <div className="mt-3 space-y-2">
-                  <p className="text-sm">
-                    Drag a PDF or Word file here, or{" "}
-                    <button
-                      type="button"
-                      className="font-medium text-primary underline-offset-4 hover:underline"
-                      disabled={isImporting}
-                      onClick={() => fileInputRef.current?.click()}
-                    >
-                      browse
-                    </button>
-                  </p>
-                  <p className="text-xs text-muted-foreground">
-                    PDF or Word, up to {formatFileSize(MAX_ATTACHMENT_SIZE_BYTES)}
-                  </p>
-                </div>
-              )}
-            </div>
-
-            {error ? (
-              <p className="text-sm text-destructive" role="alert">
-                {error}
-              </p>
-            ) : null}
-
-            <div className="relative">
-              <Separator />
-              <span className="absolute left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2 bg-background px-2 text-xs text-muted-foreground">
-                or
-              </span>
-            </div>
-
-            <Button
-              type="button"
-              variant="outline"
-              disabled={isImporting}
-              onClick={() => {
-                setError(null);
-                setStep("linkedin");
-              }}
-            >
-              <Link2 className="size-4" />
-              Import from LinkedIn
-            </Button>
+                    browse
+                  </button>
+                </p>
+                <p className="text-xs text-muted-foreground">
+                  PDF or Word, up to {formatFileSize(MAX_ATTACHMENT_SIZE_BYTES)}
+                </p>
+              </div>
+            )}
           </div>
-        ) : (
-          <div className="grid gap-3">
-            <div className="grid gap-2">
-              <label htmlFor="linkedin-username" className="text-sm font-medium">
-                LinkedIn username
-              </label>
-              <Input
-                id="linkedin-username"
-                value={linkedInUsername}
-                onChange={(event) => {
-                  setLinkedInUsername(event.target.value);
-                  setError(null);
-                }}
-                placeholder="janedoe"
-                disabled={isImporting}
-                autoFocus
-              />
-              <p className="text-xs text-muted-foreground">
-                From linkedin.com/in/<span className="font-medium">username</span>
-              </p>
-            </div>
-            {error ? (
-              <p className="text-sm text-destructive" role="alert">
-                {error}
-              </p>
-            ) : null}
-          </div>
-        )}
 
-        <DialogFooter className="gap-2 sm:gap-0">
-          {step === "linkedin" ? (
-            <Button
-              type="button"
-              variant="outline"
-              disabled={isImporting}
-              onClick={() => {
-                setStep("choose");
+          <div className="relative">
+            <Separator />
+            <span className="absolute left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2 bg-background px-2 text-xs text-muted-foreground">
+              or
+            </span>
+          </div>
+
+          <div className="grid gap-2">
+            <label htmlFor="linkedin-username" className="text-sm font-medium">
+              LinkedIn username
+            </label>
+            <Input
+              id="linkedin-username"
+              value={linkedInUsername}
+              onChange={(event) => {
+                setLinkedInUsername(event.target.value);
                 setError(null);
               }}
-            >
-              Back
-            </Button>
-          ) : (
-            <Button
-              type="button"
-              variant="outline"
+              placeholder="janedoe"
               disabled={isImporting}
-              onClick={() => handleOpenChange(false)}
-            >
-              Cancel
-            </Button>
-          )}
-          {step === "choose" ? (
-            <Button
-              type="button"
-              disabled={isImporting || !selectedFile}
-              onClick={() => void handleFileImport()}
-            >
-              {isImporting ? (
-                <>
-                  <Loader2 className="animate-spin" />
-                  Importing…
-                </>
-              ) : (
-                "Import resume"
-              )}
-            </Button>
-          ) : (
-            <Button
-              type="button"
-              disabled={isImporting || !linkedInUsername.trim()}
-              onClick={() => void handleLinkedInImport()}
-            >
-              {isImporting ? (
-                <>
-                  <Loader2 className="animate-spin" />
-                  Importing…
-                </>
-              ) : (
-                "Import from LinkedIn"
-              )}
-            </Button>
-          )}
+            />
+            <p className="text-xs text-muted-foreground">
+              From linkedin.com/in/<span className="font-medium">username</span>
+            </p>
+          </div>
+
+          {error ? (
+            <p className="text-sm text-destructive" role="alert">
+              {error}
+            </p>
+          ) : null}
+        </div>
+
+        <DialogFooter>
+          <Button
+            type="button"
+            disabled={isImporting || !canImport}
+            onClick={handleImport}
+          >
+            {isImporting ? (
+              <>
+                <Loader2 className="animate-spin" />
+                Importing…
+              </>
+            ) : (
+              "Import resume"
+            )}
+          </Button>
         </DialogFooter>
       </DialogContent>
     </Dialog>

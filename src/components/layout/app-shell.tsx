@@ -1,50 +1,71 @@
 "use client";
 
 import type { ReactNode } from "react";
+import { WorkspaceBody } from "@/components/agent/cv-assistant-shell";
+import { useEditorPanel } from "@/components/layout/editor-panel-provider";
+import { FloatingAppChrome } from "@/components/layout/floating-app-chrome";
+import {
+  EditorCollapsedRail,
+  ShellAside,
+} from "@/components/layout/workspace-panel";
 import {
   ResizeHandle,
   useStoredWidth,
   clamp,
-  PREVIEW_KEY,
-  PREVIEW_DEFAULT,
-  PREVIEW_MIN,
-  PREVIEW_MAX,
+  EDITOR_KEY,
+  EDITOR_DEFAULT,
+  EDITOR_MIN,
+  EDITOR_MAX,
 } from "@/components/layout/resize-handle";
+import { cn } from "@/lib/utils";
 
 interface AppShellProps {
   children: ReactNode;
   preview?: ReactNode;
-  header?: ReactNode;
+  chromeActions?: ReactNode;
 }
 
-export function AppShell({ children, preview, header }: AppShellProps) {
-  const [previewWidth, setPreviewWidth] = useStoredWidth(PREVIEW_KEY, PREVIEW_DEFAULT);
+export function AppShell({ children, preview, chromeActions }: AppShellProps) {
+  const [editorWidth, setEditorWidth] = useStoredWidth(EDITOR_KEY, EDITOR_DEFAULT);
+  const { isOpen: isEditorOpen, setOpen: setEditorOpen } = useEditorPanel();
 
   return (
     <div className="flex h-dvh flex-col bg-background">
-      {header}
-      <div className="flex min-h-0 flex-1">
-        <main className="agent-workspace flex min-w-0 flex-1 flex-col overflow-hidden">
-          {children}
-        </main>
-        {preview ? (
-          <>
+      <FloatingAppChrome actions={chromeActions} />
+      <WorkspaceBody>
+        <div className="flex min-h-0 flex-1">
+          {!isEditorOpen ? (
+            <EditorCollapsedRail
+              className="hidden lg:flex"
+              onOpen={() => setEditorOpen(true)}
+            />
+          ) : null}
+
+          <ShellAside
+            side="left"
+            width={editorWidth}
+            className={cn("agent-workspace", !isEditorOpen && "lg:hidden")}
+          >
+            {children}
+          </ShellAside>
+
+          {isEditorOpen ? (
             <ResizeHandle
-              label="Resize preview"
+              label="Resize editor"
               className="hidden lg:block"
               onResize={(delta) =>
-                setPreviewWidth((w) => clamp(w - delta, PREVIEW_MIN, PREVIEW_MAX))
+                setEditorWidth((width) => clamp(width + delta, EDITOR_MIN, EDITOR_MAX))
               }
             />
-            <aside
-              className="resume-print-panel hidden min-h-0 shrink-0 flex-col overflow-hidden border-l bg-muted/10 lg:flex"
-              style={{ width: previewWidth }}
-            >
+          ) : null}
+
+          {preview ? (
+            <aside className="resume-print-panel hidden min-h-0 min-w-0 flex-1 flex-col overflow-hidden border-l bg-muted/10 lg:flex">
               {preview}
             </aside>
-          </>
-        ) : null}
-      </div>
+          ) : null}
+        </div>
+      </WorkspaceBody>
     </div>
   );
 }

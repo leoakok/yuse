@@ -2,6 +2,7 @@
 
 import type { ReactNode } from "react";
 import { Button } from "@/components/ui/button";
+import { motionTransitionInteractive } from "@/lib/ui/motion";
 import { cn } from "@/lib/utils";
 
 interface OnboardingShellProps {
@@ -45,7 +46,8 @@ export function OnboardingShell({
             <span
               key={index}
               className={cn(
-                "h-1.5 rounded-full transition-all",
+                "h-1.5 rounded-full",
+                motionTransitionInteractive,
                 index === stepIndex ? "w-6 bg-primary" : "w-1.5 bg-muted-foreground/25"
               )}
             />

@@ -3,6 +3,7 @@
 import {
   useCallback,
   useEffect,
+  useLayoutEffect,
   useRef,
   useState,
   type DragEvent,
@@ -19,9 +20,21 @@ import {
   validateIncomingFiles,
 } from "@/lib/assistant/attachments";
 import type { ComposerAttachment } from "@/lib/types/assistant";
+import { floatingChipFogSurfaceClassName } from "@/lib/ui/floating-chip";
+import { motionTransitionColors } from "@/lib/ui/motion";
 import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
 import { cn } from "@/lib/utils";
+
+const composerPillClassName = floatingChipFogSurfaceClassName;
+
+const composerIconButtonClassName = cn(
+  composerPillClassName,
+  "size-10 shrink-0 rounded-full"
+);
+
+/** ~5 lines at text-sm / leading-5 plus vertical padding. */
+const COMPOSER_TEXTAREA_MAX_HEIGHT_PX = 120;
 
 interface AssistantComposerProps {
   onSubmit: (text: string, attachments: ComposerAttachment[]) => Promise<void> | void;
@@ -32,6 +45,7 @@ interface AssistantComposerProps {
   onValueChange?: (value: string) => void;
   isEditing?: boolean;
   onCancelEdit?: () => void;
+  className?: string;
 }
 
 export function AssistantComposer({
@@ -43,6 +57,7 @@ export function AssistantComposer({
   onValueChange,
   isEditing = false,
   onCancelEdit,
+  className,
 }: AssistantComposerProps) {
   const [internalValue, setInternalValue] = useState("");
   const [attachments, setAttachments] = useState<ComposerAttachment[]>([]);
@@ -77,6 +92,21 @@ export function AssistantComposer({
       textareaRef.current?.focus();
     }
   }, [isEditing]);
+
+  const syncTextareaHeight = useCallback(() => {
+    const textarea = textareaRef.current;
+    if (!textarea) return;
+
+    textarea.style.height = "auto";
+    const nextHeight = Math.min(textarea.scrollHeight, COMPOSER_TEXTAREA_MAX_HEIGHT_PX);
+    textarea.style.height = `${nextHeight}px`;
+    textarea.style.overflowY =
+      textarea.scrollHeight > COMPOSER_TEXTAREA_MAX_HEIGHT_PX ? "auto" : "hidden";
+  }, []);
+
+  useLayoutEffect(() => {
+    syncTextareaHeight();
+  }, [value, syncTextareaHeight]);
 
   const addFiles = useCallback(
     async (incoming: FileList | File[]) => {
@@ -187,104 +217,106 @@ export function AssistantComposer({
   };
 
   return (
-    <form onSubmit={onFormSubmit} className="relative w-full">
-      <div
-        className={cn(
-          "rounded-xl border bg-card p-2 transition-colors",
-          isEditing && "border-primary/40 ring-1 ring-primary/20",
-          isDragOver && "border-primary bg-primary/5 ring-2 ring-primary/20"
-        )}
-        onDragEnter={onDragEnter}
-        onDragLeave={onDragLeave}
-        onDragOver={onDragOver}
-        onDrop={onDrop}
-      >
+    <form
+      onSubmit={onFormSubmit}
+      className={cn("relative w-full", className)}
+      onDragEnter={onDragEnter}
+      onDragLeave={onDragLeave}
+      onDragOver={onDragOver}
+      onDrop={onDrop}
+    >
+      {isEditing ? (
+        <p className="pb-2 text-xs text-muted-foreground">Editing message</p>
+      ) : null}
+
+      {isDragOver ? (
+        <p className="pointer-events-none pb-2 text-xs text-primary">Drop files to attach</p>
+      ) : null}
+
+      {!isEditing ? (
+        <AssistantAttachmentChips
+          attachments={attachments}
+          onRemove={removeAttachment}
+          disabled={isBusy}
+          className="pb-2"
+        />
+      ) : null}
+
+      {error ? (
+        <p className="pb-2 text-xs text-destructive" role="alert">
+          {error}
+        </p>
+      ) : null}
+
+      <div className="flex w-full items-end gap-2">
         {isEditing ? (
-          <p className="px-1 pb-2 text-xs text-muted-foreground">Editing message</p>
-        ) : null}
-
-        {isDragOver ? (
-          <p className="pointer-events-none px-2 pb-2 text-xs text-primary">
-            Drop files to attach
-          </p>
-        ) : null}
-
-        {!isEditing ? (
-          <AssistantAttachmentChips
-            attachments={attachments}
-            onRemove={removeAttachment}
+          <Button
+            type="button"
+            variant="outline"
+            size="icon"
+            className={composerIconButtonClassName}
             disabled={isBusy}
-            className="px-1 pb-2"
-          />
-        ) : null}
-
-        {error ? (
-          <p className="px-1 pb-2 text-xs text-destructive" role="alert">
-            {error}
-          </p>
-        ) : null}
-
-        <div className="flex items-center gap-2">
-          {isEditing ? (
+            onClick={onCancelEdit}
+            aria-label="Cancel edit"
+          >
+            <X className="size-4" />
+          </Button>
+        ) : (
+          <>
+            <input
+              ref={fileInputRef}
+              type="file"
+              multiple
+              accept={FILE_INPUT_ACCEPT}
+              className="sr-only"
+              disabled={isBusy}
+              onChange={(event) => {
+                const { files } = event.target;
+                if (files) void addFiles(files);
+                event.target.value = "";
+              }}
+            />
             <Button
               type="button"
-              variant="ghost"
+              variant="outline"
               size="icon"
-              className="size-9 shrink-0"
-              disabled={isBusy}
-              onClick={onCancelEdit}
-              aria-label="Cancel edit"
+              className={cn(
+                composerIconButtonClassName,
+                isDragOver && "border-primary ring-2 ring-primary/20"
+              )}
+              disabled={isBusy || attachments.length >= MAX_ATTACHMENT_COUNT}
+              onClick={() => fileInputRef.current?.click()}
+              aria-label="Attach file"
             >
-              <X className="size-4" />
+              <Paperclip className="size-4" />
             </Button>
-          ) : (
-            <>
-              <input
-                ref={fileInputRef}
-                type="file"
-                multiple
-                accept={FILE_INPUT_ACCEPT}
-                className="sr-only"
-                disabled={isBusy}
-                onChange={(event) => {
-                  const { files } = event.target;
-                  if (files) void addFiles(files);
-                  event.target.value = "";
-                }}
-              />
-              <Button
-                type="button"
-                variant="ghost"
-                size="icon"
-                className="size-9 shrink-0"
-                disabled={isBusy || attachments.length >= MAX_ATTACHMENT_COUNT}
-                onClick={() => fileInputRef.current?.click()}
-                aria-label="Attach file"
-              >
-                <Paperclip className="size-4" />
-              </Button>
-            </>
+          </>
+        )}
+        <Textarea
+          ref={textareaRef}
+          value={value}
+          onChange={(event) => setValue(event.target.value)}
+          onKeyDown={onKeyDown}
+          placeholder={isEditing ? "Edit your message…" : placeholder}
+          disabled={isBusy}
+          rows={1}
+          className={cn(
+            composerPillClassName,
+            "min-h-10 max-h-[120px] flex-1 resize-none overflow-y-auto rounded-2xl px-4 py-2 text-sm leading-5 shadow-none focus-visible:border-ring focus-visible:ring-3 focus-visible:ring-ring/50 disabled:opacity-50",
+            motionTransitionColors,
+            isEditing && "border-primary/40 ring-1 ring-primary/20",
+            isDragOver && "border-primary ring-2 ring-primary/20"
           )}
-          <Textarea
-            ref={textareaRef}
-            value={value}
-            onChange={(event) => setValue(event.target.value)}
-            onKeyDown={onKeyDown}
-            placeholder={isEditing ? "Edit your message…" : placeholder}
-            disabled={isBusy}
-            rows={1}
-            className="min-h-9 resize-none border-0 bg-transparent px-0 py-1.5 text-sm leading-5 shadow-none focus-visible:ring-0"
-          />
-          <Button
-            type="submit"
-            size="icon"
-            className="size-9 shrink-0"
-            disabled={!canSend}
-            aria-label={isEditing ? "Save and resend" : "Send message"}
-          >
-            <SendHorizontal className="size-4" />
-          </Button>
-        </div>
+        />
+        <Button
+          type="submit"
+          size="icon"
+          className="size-10 shrink-0 rounded-full"
+          disabled={!canSend}
+          aria-label={isEditing ? "Save and resend" : "Send message"}
+        >
+          <SendHorizontal className="size-4" />
+        </Button>
       </div>
     </form>
   );

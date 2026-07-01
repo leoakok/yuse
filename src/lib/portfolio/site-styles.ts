@@ -5,6 +5,10 @@ import type {
   PortfolioProjectCardStyle,
   PortfolioProjectGridColumns,
 } from "@/lib/types/portfolio";
+import {
+  motionEnterFadeUp,
+  motionTransitionOpacity,
+} from "@/lib/ui/motion";
 import { cn } from "@/lib/utils";
 
 export function projectGridClass(columns: PortfolioProjectGridColumns | undefined): string {
@@ -74,9 +78,9 @@ export function navigationClass(style: PortfolioNavigationStyle | undefined): st
 export function animationEnterClass(level: PortfolioAnimationLevel | undefined): string {
   switch (level) {
     case "FULL":
-      return "motion-safe:animate-in motion-safe:fade-in motion-safe:slide-in-from-bottom-2 motion-safe:duration-500";
+      return motionEnterFadeUp;
     case "SUBTLE":
-      return "motion-safe:transition-opacity motion-safe:duration-300";
+      return motionTransitionOpacity;
     case "NONE":
     default:
       return "";
@@ -86,9 +90,9 @@ export function animationEnterClass(level: PortfolioAnimationLevel | undefined):
 export function animationHoverClass(level: PortfolioAnimationLevel | undefined): string {
   switch (level) {
     case "FULL":
-      return "motion-safe:transition-transform motion-safe:duration-200 motion-safe:hover:-translate-y-0.5";
+      return "motion-safe:transition-transform motion-safe:duration-default motion-safe:ease-motion-out motion-safe:hover:-translate-y-0.5 motion-reduce:transition-none";
     case "SUBTLE":
-      return "motion-safe:transition-shadow motion-safe:duration-200 motion-safe:hover:shadow-md";
+      return "motion-safe:transition-shadow motion-safe:duration-default motion-safe:ease-motion-out motion-safe:hover:shadow-md motion-reduce:transition-none";
     case "NONE":
     default:
       return "";
