@@ -8,15 +8,16 @@ import { JobKanbanPanel } from "@/components/jobs/job-kanban-panel";
 import { JobTrackDialog } from "@/components/jobs/job-track-dialog";
 import { JobTable } from "@/components/jobs/job-table";
 import { useCvAssistant } from "@/components/agent/cv-assistant-provider";
+import { useWorkspace } from "@/components/layout/workspace-provider";
 import { Button } from "@/components/ui/button";
 import {
-  Dialog,
-  DialogContent,
-  DialogDescription,
-  DialogFooter,
-  DialogHeader,
-  DialogTitle,
-} from "@/components/ui/dialog";
+  ResponsiveDialog,
+  ResponsiveDialogContent,
+  ResponsiveDialogDescription,
+  ResponsiveDialogFooter,
+  ResponsiveDialogHeader,
+  ResponsiveDialogTitle,
+} from "@/components/ui/responsive-dialog";
 import { cn } from "@/lib/utils";
 import {
   deleteTrackedJob,
@@ -24,6 +25,8 @@ import {
   listTrackedJobs,
   updateTrackedJob,
 } from "@/lib/api/cv-api";
+import { getCachedJobs, setCachedJobs } from "@/lib/cache/workspace-cache";
+import { useStaleWhileRevalidate } from "@/lib/hooks/use-stale-while-revalidate";
 import { getJobDescription } from "@/lib/types/job";
 import type { Resume } from "@/lib/types/cv";
 import type { JobStatus, TrackedJob, UpdateTrackedJobInput } from "@/lib/types/job";
@@ -39,8 +42,21 @@ export function JobTrackerWorkspace({
   trackDialogOpen = false,
   onTrackDialogOpenChange,
 }: JobTrackerWorkspaceProps) {
+  const { user } = useWorkspace();
   const { refreshKey, startNewChat, sendMessage, setOpen } = useCvAssistant();
-  const [jobs, setJobs] = useState<TrackedJob[]>([]);
+  const {
+    data: jobsData,
+    isLoading,
+    setData: setJobs,
+  } = useStaleWhileRevalidate(
+    () => listTrackedJobs(),
+    [user.id, refreshKey],
+    {
+      getCached: () => getCachedJobs(user.id),
+      setCached: (items) => setCachedJobs(user.id, items),
+    }
+  );
+  const jobs = jobsData ?? [];
   const [resumes, setResumes] = useState<Resume[]>([]);
   const [viewMode, setViewMode] = useState<ViewMode>("kanban");
   const [deleteTarget, setDeleteTarget] = useState<TrackedJob | null>(null);
@@ -53,30 +69,27 @@ export function JobTrackerWorkspace({
     [jobs, selectedJobId]
   );
 
-  const loadJobs = useCallback(() => {
-    void listTrackedJobs().then(setJobs);
-  }, []);
-
   const loadResumes = useCallback(() => {
     void listResumes().then(setResumes);
   }, []);
 
   useEffect(() => {
-    loadJobs();
     loadResumes();
-  }, [loadJobs, loadResumes, refreshKey]);
+  }, [loadResumes, refreshKey]);
 
   async function handleStatusChange(job: TrackedJob, status: JobStatus) {
     if (job.status === status) return;
 
     const previous = jobs;
     setJobs((current) =>
-      current.map((item) => (item.id === job.id ? { ...item, status } : item))
+      (current ?? []).map((item) => (item.id === job.id ? { ...item, status } : item))
     );
 
     try {
       const updated = await updateTrackedJob({ id: job.id, status });
-      setJobs((current) => current.map((item) => (item.id === updated.id ? updated : item)));
+      setJobs((current) =>
+        (current ?? []).map((item) => (item.id === updated.id ? updated : item))
+      );
     } catch (error) {
       setJobs(previous);
       toast.error(error instanceof Error ? error.message : "Could not update status.");
@@ -85,7 +98,9 @@ export function JobTrackerWorkspace({
 
   async function handleSaveJob(input: UpdateTrackedJobInput) {
     const updated = await updateTrackedJob(input);
-    setJobs((current) => current.map((item) => (item.id === updated.id ? updated : item)));
+    setJobs((current) =>
+      (current ?? []).map((item) => (item.id === updated.id ? updated : item))
+    );
     return updated;
   }
 
@@ -123,7 +138,7 @@ export function JobTrackerWorkspace({
         toast.error("Could not delete that application.");
         return;
       }
-      setJobs((current) => current.filter((job) => job.id !== deleteTarget.id));
+      setJobs((current) => (current ?? []).filter((job) => job.id !== deleteTarget.id));
       if (selectedJobId === deleteTarget.id) {
         setSelectedJobId(null);
       }
@@ -172,6 +187,7 @@ export function JobTrackerWorkspace({
       {viewMode === "kanban" ? (
         <JobKanbanPanel
           jobs={jobs}
+          loading={isLoading}
           onStatusChange={handleStatusChange}
           onSelect={(job) => setSelectedJobId(job.id)}
           selectedJobId={selectedJobId}
@@ -180,6 +196,7 @@ export function JobTrackerWorkspace({
         <div className="min-h-0 min-w-0 w-full flex-1 overflow-y-auto">
           <JobTable
             jobs={jobs}
+            loading={isLoading}
             onDelete={setDeleteTarget}
             onSelect={(job) => setSelectedJobId(job.id)}
             selectedJobId={selectedJobId}
@@ -204,29 +221,29 @@ export function JobTrackerWorkspace({
         <JobTrackDialog
           open={trackDialogOpen}
           onOpenChange={onTrackDialogOpenChange}
-          onTracked={(job) => setJobs((current) => [job, ...current])}
+          onTracked={(job) => setJobs((current) => [job, ...(current ?? [])])}
         />
       ) : null}
 
-      <Dialog open={deleteTarget != null} onOpenChange={(open) => !open && setDeleteTarget(null)}>
-        <DialogContent>
-          <DialogHeader>
-            <DialogTitle>Delete application?</DialogTitle>
-            <DialogDescription>
+      <ResponsiveDialog open={deleteTarget != null} onOpenChange={(open) => !open && setDeleteTarget(null)}>
+        <ResponsiveDialogContent>
+          <ResponsiveDialogHeader>
+            <ResponsiveDialogTitle>Delete application?</ResponsiveDialogTitle>
+            <ResponsiveDialogDescription>
               This removes the tracked job
               {deleteTarget?.title || deleteTarget?.company
                 ? ` for ${[deleteTarget?.title, deleteTarget?.company].filter(Boolean).join(" at ")}`
                 : ""}
               . Your tailored resume and cover letter stay in your workspace.
-            </DialogDescription>
-          </DialogHeader>
-          <DialogFooter>
+            </ResponsiveDialogDescription>
+          </ResponsiveDialogHeader>
+          <ResponsiveDialogFooter>
             <Button variant="destructive" onClick={handleDelete} disabled={isDeleting}>
               {isDeleting ? "Deleting…" : "Delete"}
             </Button>
-          </DialogFooter>
-        </DialogContent>
-      </Dialog>
+          </ResponsiveDialogFooter>
+        </ResponsiveDialogContent>
+      </ResponsiveDialog>
     </div>
   );
 }

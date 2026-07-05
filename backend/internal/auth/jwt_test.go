@@ -61,6 +61,13 @@ func TestParseBearerBootstrap(t *testing.T) {
 	}
 }
 
+func TestParseBearerMissingToken(t *testing.T) {
+	_, err := ParseBearer("", "secret")
+	if !IsMissingBearer(err) {
+		t.Fatalf("expected ErrMissingBearer, got %v", err)
+	}
+}
+
 func TestParseBearerEmailUser(t *testing.T) {
 	secret := "test-secret"
 	token := jwt.NewWithClaims(jwt.SigningMethodHS256, jwtClaims{

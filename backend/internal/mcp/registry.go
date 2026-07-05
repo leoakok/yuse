@@ -375,6 +375,30 @@ func (r *Registry) ExecuteWithProgress(toolName string, argsJSON []byte, progres
 		exec.Result = resumeContentSummary(content)
 		exec.AffectedResumeIDs = []string{resumeID}
 
+	case "delete_all_section_items":
+		var sectionID *string
+		if v, ok := optionalString(args, "sectionId"); ok && strings.TrimSpace(v) != "" {
+			trimmed := strings.TrimSpace(v)
+			sectionID = &trimmed
+		}
+		var sectionType *model.SectionType
+		if v, ok := optionalEnum(args, "type"); ok && v != "" {
+			st := model.SectionType(v)
+			if st.IsValid() {
+				sectionType = &st
+			}
+		}
+		count, err := r.exec.DeleteAllSectionItems(sectionID, sectionType)
+		if err != nil {
+			exec.Error = err.Error()
+			return exec
+		}
+		exec.Result = map[string]any{
+			"deletedCount": count,
+			"sectionId":    sectionID,
+			"type":         sectionType,
+		}
+
 	case "set_item_visibility":
 		resumeID, err := requireString(args, "resumeId")
 		if err != nil {

@@ -1,22 +1,32 @@
-import type { Metadata } from "next";
+import { notFound } from "next/navigation";
+import { PublicResumeView } from "@/components/cv/public-resume-view";
 import { PublicPortfolioView } from "@/components/portfolio/public-portfolio-view";
-import { fetchPublicPortfolio } from "@/lib/portfolio/public-api";
+import { fetchPublicContent } from "@/lib/portfolio/public-api";
 import { buildPublicPortfolioMetadata } from "@/lib/portfolio/public-metadata";
 
-interface PublicPortfolioSlugPageProps {
+interface PublicSlugPageProps {
   params: Promise<{ username: string; slug: string }>;
 }
 
-export async function generateMetadata({ params }: PublicPortfolioSlugPageProps): Promise<Metadata> {
+export async function generateMetadata({ params }: PublicSlugPageProps) {
   const { username, slug } = await params;
-  const content = await fetchPublicPortfolio(username, slug);
+  const content = await fetchPublicContent(username, slug);
   if (!content) {
-    return { title: "Portfolio not found" };
+    return { title: "Not found" };
   }
-  return buildPublicPortfolioMetadata(content);
+  if (content.kind === "portfolio") {
+    return buildPublicPortfolioMetadata(content.portfolio);
+  }
+  const name = content.resume.contactProfile?.fullName || content.resume.resume.title;
+  return { title: `${name} | Resume` };
 }
 
-export default async function PublicPortfolioSlugPage({ params }: PublicPortfolioSlugPageProps) {
+export default async function PublicSlugPage({ params }: PublicSlugPageProps) {
   const { username, slug } = await params;
-  return <PublicPortfolioView username={username} slug={slug} />;
+  const content = await fetchPublicContent(username, slug);
+  if (!content) notFound();
+  if (content.kind === "resume") {
+    return <PublicResumeView content={content.resume} />;
+  }
+  return <PublicPortfolioView username={username} slug={slug} initialContent={content.portfolio} />;
 }

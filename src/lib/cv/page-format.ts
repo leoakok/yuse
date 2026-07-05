@@ -91,9 +91,6 @@ export function getPageSizeMm(format: PageFormat): { width: number; height: numb
   return { width: 210, height: 297 };
 }
 
-/** @deprecated Use getPageMargins, kept for legacy callers. */
-export const PAGE_PADDING_MM = DEFAULT_PAGE_MARGIN_MM;
-
 /** Content area height inside page margins, in CSS pixels. */
 export function getUsablePageHeightPx(
   format: PageFormat,

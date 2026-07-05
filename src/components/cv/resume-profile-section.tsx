@@ -7,6 +7,11 @@ import { effectiveContactPhotoUrl } from "@/lib/cv/contact-photo";
 import { ResumeProfileEditDialog } from "@/components/cv/resume-profile-edit-dialog";
 import { Button } from "@/components/ui/button";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
+import {
+  workspaceRowClassName,
+  workspaceSectionHeaderClassName,
+  workspaceSectionTitleClassName,
+} from "@/lib/ui/workspace-section";
 import { cn } from "@/lib/utils";
 import type { ResumeWithContent } from "@/lib/types/cv";
 
@@ -49,8 +54,8 @@ export function ResumeProfileSection({
   return (
     <>
       <section>
-        <div className="flex items-center justify-between gap-2 px-4 py-3 lg:px-5">
-          <h2 className="min-w-0 text-sm font-semibold">Profile</h2>
+        <div className={workspaceSectionHeaderClassName}>
+          <h2 className={workspaceSectionTitleClassName}>Profile</h2>
           <Button
             type="button"
             variant="ghost"
@@ -64,7 +69,8 @@ export function ResumeProfileSection({
         </div>
         <div
           className={cn(
-            "group/profile relative cursor-pointer px-4 py-2.5 text-sm transition-colors hover:bg-muted/40 lg:px-5",
+            "group/profile relative cursor-pointer text-sm transition-colors",
+            workspaceRowClassName,
             !hasContent && "text-muted-foreground"
           )}
           onClick={openEdit}

@@ -116,9 +116,55 @@ export function measureCvBlocks(container: HTMLElement): CvBlockMetrics[] {
   }));
 }
 
+function isSectionContentBlock(
+  block: CvBlock
+): block is CvBlock & { kind: "item" | "skills" | "languages" | "certifications" } {
+  return (
+    block.kind === "item" ||
+    block.kind === "skills" ||
+    block.kind === "languages" ||
+    block.kind === "certifications"
+  );
+}
+
+function firstSectionContentBlockIndex(blocks: CvBlock[], titleBlockIndex: number): number | null {
+  for (let j = titleBlockIndex + 1; j < blocks.length; j++) {
+    const block = blocks[j];
+    if (block?.kind === "section-title") return null;
+    if (block && isSectionContentBlock(block)) return j;
+  }
+  return null;
+}
+
+function metricForBlockIndex(
+  metrics: CvBlockMetrics[],
+  blockIndex: number
+): CvBlockMetrics | undefined {
+  return metrics.find((metric) => metric.blockIndex === blockIndex);
+}
+
+/** Minimum height to start a section: title plus at least one content block. */
+function minSectionStartHeight(
+  metrics: CvBlockMetrics[],
+  titleMetricIndex: number,
+  firstContentBlockIndex: number,
+  gapBeforeTitle: number
+): number {
+  const titleMetric = metrics[titleMetricIndex];
+  const contentMetric = metricForBlockIndex(metrics, firstContentBlockIndex);
+  if (!titleMetric || !contentMetric) return gapBeforeTitle + titleMetric.height;
+  return (
+    gapBeforeTitle +
+    titleMetric.height +
+    titleMetric.gapAfter +
+    contentMetric.height
+  );
+}
+
 export function paginateCvBlocks(
   metrics: CvBlockMetrics[],
-  maxHeight: number
+  maxHeight: number,
+  blocks: CvBlock[] = []
 ): number[][] {
   if (metrics.length === 0) return [[]];
 
@@ -127,17 +173,32 @@ export function paginateCvBlocks(
   let used = 0;
 
   for (let i = 0; i < metrics.length; i++) {
-    const { height } = metrics[i];
+    const { height, blockIndex } = metrics[i];
     const gap = current.length > 0 ? metrics[i - 1].gapAfter : 0;
     const needed = gap + height;
 
+    const block = blocks[blockIndex];
+    if (block?.kind === "section-title") {
+      const firstContentIndex = firstSectionContentBlockIndex(blocks, blockIndex);
+      if (firstContentIndex != null) {
+        const minStart = minSectionStartHeight(metrics, i, firstContentIndex, gap);
+        const remaining = maxHeight - used;
+        if (current.length > 0 && minStart > remaining) {
+          pages.push(current);
+          current = [blockIndex];
+          used = height;
+          continue;
+        }
+      }
+    }
+
     if (current.length > 0 && used + needed > maxHeight) {
       pages.push(current);
-      current = [metrics[i].blockIndex];
+      current = [blockIndex];
       used = height;
     } else {
       used += needed;
-      current.push(metrics[i].blockIndex);
+      current.push(blockIndex);
     }
   }
 
@@ -201,15 +262,6 @@ export function shouldShowSectionTitleForContent(
   return true;
 }
 
-/** @deprecated Use shouldShowSectionTitleForContent */
-export function shouldShowSectionTitleForItem(
-  itemBlock: CvBlock & { kind: "item" },
-  prevOnPage: CvBlock | null,
-  prevGlobal: CvBlock | null
-): boolean {
-  return shouldShowSectionTitleForContent(itemBlock, prevOnPage, prevGlobal);
-}
-
 export function resolvePageBlocks(
   pageIndices: number[],
   blocks: CvBlock[],
@@ -250,13 +302,4 @@ export function resolvePageBlocks(
   }
 
   return result;
-}
-
-/** @deprecated Use resolvePageBlocks */
-export function expandPageBlocks(
-  pageIndices: number[],
-  blocks: CvBlock[],
-  prevPageLastIndex: number | null = null
-): CvBlock[] {
-  return resolvePageBlocks(pageIndices, blocks, prevPageLastIndex);
 }

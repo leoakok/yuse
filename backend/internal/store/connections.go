@@ -6,15 +6,48 @@ import (
 	"errors"
 	"fmt"
 	"strings"
+	"sync"
 	"time"
 
 	"github.com/google/uuid"
 	"github.com/jackc/pgx/v5"
 	"github.com/jackc/pgx/v5/pgxpool"
 	"github.com/leo/ai-weekend/backend/graph/model"
+	"github.com/leo/ai-weekend/backend/internal/crypto"
 )
 
 const ProviderGitHub = "github"
+
+var (
+	tokenCipher     *crypto.TokenCipher
+	tokenCipherOnce sync.Once
+)
+
+func loadTokenCipher() *crypto.TokenCipher {
+	tokenCipherOnce.Do(func() {
+		cipher, err := crypto.NewTokenCipherFromEnv()
+		if err == nil {
+			tokenCipher = cipher
+		}
+	})
+	return tokenCipher
+}
+
+func encryptToken(plaintext string) (string, error) {
+	cipher := loadTokenCipher()
+	if cipher == nil {
+		return plaintext, nil
+	}
+	return cipher.Encrypt(plaintext)
+}
+
+func decryptToken(stored string) (string, error) {
+	cipher := loadTokenCipher()
+	if cipher == nil {
+		return stored, nil
+	}
+	return cipher.Decrypt(stored)
+}
 
 type UserConnection struct {
 	ID             string
@@ -101,8 +134,17 @@ func GetUserConnection(ctx context.Context, pool *pgxpool.Pool, userID, provider
 		}
 		return nil, fmt.Errorf("get user connection: %w", err)
 	}
+	plainAccess, err := decryptToken(conn.AccessToken)
+	if err != nil {
+		return nil, fmt.Errorf("decrypt access token: %w", err)
+	}
+	conn.AccessToken = plainAccess
 	if refresh != nil {
-		conn.RefreshToken = *refresh
+		plainRefresh, err := decryptToken(*refresh)
+		if err != nil {
+			return nil, fmt.Errorf("decrypt refresh token: %w", err)
+		}
+		conn.RefreshToken = plainRefresh
 	}
 	conn.TokenExpiresAt = expires
 	conn.Metadata = parseJSONMap(metadataRaw)
@@ -120,10 +162,17 @@ func UpsertUserConnection(
 	now := time.Now().UTC()
 	id := "conn-" + uuid.NewString()[:12]
 
-	var refreshPtr *string
+	encAccess, err := encryptToken(accessToken)
+	if err != nil {
+		return nil, fmt.Errorf("encrypt access token: %w", err)
+	}
+	var encRefreshPtr *string
 	if strings.TrimSpace(refreshToken) != "" {
-		v := strings.TrimSpace(refreshToken)
-		refreshPtr = &v
+		encRefresh, err := encryptToken(refreshToken)
+		if err != nil {
+			return nil, fmt.Errorf("encrypt refresh token: %w", err)
+		}
+		encRefreshPtr = &encRefresh
 	}
 
 	row := pool.QueryRow(ctx, `
@@ -136,7 +185,7 @@ func UpsertUserConnection(
 			metadata = EXCLUDED.metadata,
 			updated_at = EXCLUDED.updated_at
 		RETURNING id, user_id, provider, access_token, refresh_token, token_expires_at, metadata, connected_at, updated_at
-	`, id, userID, provider, accessToken, refreshPtr, tokenExpiresAt, jsonBytes(metadata), now)
+	`, id, userID, provider, encAccess, encRefreshPtr, tokenExpiresAt, jsonBytes(metadata), now)
 
 	var (
 		conn       UserConnection
@@ -150,8 +199,17 @@ func UpsertUserConnection(
 	); err != nil {
 		return nil, fmt.Errorf("upsert user connection: %w", err)
 	}
+	plainAccess, err := decryptToken(conn.AccessToken)
+	if err != nil {
+		return nil, fmt.Errorf("decrypt access token: %w", err)
+	}
+	conn.AccessToken = plainAccess
 	if refresh != nil {
-		conn.RefreshToken = *refresh
+		plainRefresh, err := decryptToken(*refresh)
+		if err != nil {
+			return nil, fmt.Errorf("decrypt refresh token: %w", err)
+		}
+		conn.RefreshToken = plainRefresh
 	}
 	conn.TokenExpiresAt = expires
 	conn.Metadata = parseJSONMap(metadataRaw)

@@ -5,7 +5,7 @@ import {
   buildCvBlocks,
   paginateCvBlocks,
   resolvePageBlocks,
-  shouldShowSectionTitleForItem,
+  shouldShowSectionTitleForContent,
   type CvBlock,
 } from "./cv-pagination";
 
@@ -36,23 +36,23 @@ function item(id: string, sectionType: Section["type"] = "SKILLS"): SectionItem 
   };
 }
 
-describe("shouldShowSectionTitleForItem", () => {
+describe("shouldShowSectionTitleForContent", () => {
   const skillSection = section("sec-skill", "Skills");
   const skillItem = { kind: "item" as const, section: skillSection, item: item("s1") };
 
   it("does not repeat title when section continues on a new page", () => {
     const prevItem: CvBlock = { kind: "item", section: skillSection, item: item("s2") };
-    assert.equal(shouldShowSectionTitleForItem(skillItem, null, prevItem), false);
+    assert.equal(shouldShowSectionTitleForContent(skillItem, null, prevItem), false);
   });
 
   it("shows title when orphaned on the previous page", () => {
     const prevTitle: CvBlock = { kind: "section-title", section: skillSection };
-    assert.equal(shouldShowSectionTitleForItem(skillItem, null, prevTitle), true);
+    assert.equal(shouldShowSectionTitleForContent(skillItem, null, prevTitle), true);
   });
 
   it("does not repeat title when title block is already on the page", () => {
     const prevTitle: CvBlock = { kind: "section-title", section: skillSection };
-    assert.equal(shouldShowSectionTitleForItem(skillItem, prevTitle, null), false);
+    assert.equal(shouldShowSectionTitleForContent(skillItem, prevTitle, null), false);
   });
 });
 
@@ -89,6 +89,34 @@ describe("paginateCvBlocks", () => {
 
     const pages = paginateCvBlocks(metrics, 78);
     assert.deepEqual(pages, [[0, 1], [2]]);
+  });
+
+  it("moves section title to next page when title plus first item do not fit", () => {
+    const skillSection = section("sec-skill", "Skills");
+    const langSection = section("sec-lang", "Languages");
+    const blocks: CvBlock[] = [
+      { kind: "section-title", section: skillSection },
+      { kind: "item", section: skillSection, item: item("s1") },
+      { kind: "section-title", section: langSection },
+      { kind: "item", section: langSection, item: item("l1", "LANGUAGES") },
+      { kind: "item", section: langSection, item: item("l2", "LANGUAGES") },
+    ];
+
+    const metrics = [
+      { blockIndex: 0, height: 20, gapAfter: 4 },
+      { blockIndex: 1, height: 90, gapAfter: 4 },
+      { blockIndex: 2, height: 20, gapAfter: 4 },
+      { blockIndex: 3, height: 30, gapAfter: 4 },
+      { blockIndex: 4, height: 30, gapAfter: 0 },
+    ];
+
+    const pages = paginateCvBlocks(metrics, 130, blocks);
+    assert.deepEqual(pages, [[0, 1], [2, 3, 4]]);
+
+    const page2 = resolvePageBlocks(pages[1] ?? [], blocks, 1);
+    assert.equal(page2.filter((b) => b.kind === "section-title").length, 1);
+    assert.equal(page2[0]?.kind, "section-title");
+    assert.equal(page2[1]?.kind, "item");
   });
 
   it("header-only metrics drop sections from the rendered page", () => {

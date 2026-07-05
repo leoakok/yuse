@@ -7,14 +7,15 @@ import { TwinEntryCard } from "@/components/twin/twin-entry-card";
 import { TwinEntryDialog } from "@/components/twin/twin-entry-dialog";
 import { useCvAssistant } from "@/components/agent/cv-assistant-provider";
 import { Button } from "@/components/ui/button";
+import { workspaceIntroClassName } from "@/lib/ui/workspace-section";
 import {
-  Dialog,
-  DialogContent,
-  DialogDescription,
-  DialogFooter,
-  DialogHeader,
-  DialogTitle,
-} from "@/components/ui/dialog";
+  ResponsiveDialog,
+  ResponsiveDialogContent,
+  ResponsiveDialogDescription,
+  ResponsiveDialogFooter,
+  ResponsiveDialogHeader,
+  ResponsiveDialogTitle,
+} from "@/components/ui/responsive-dialog";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import {
   createTwinEntry,
@@ -98,8 +99,8 @@ export function TwinWorkspace({ addOpen = false, onAddOpenChange }: TwinWorkspac
   }
 
   return (
-    <div className="space-y-6">
-      <div className="rounded-lg border bg-muted/30 px-4 py-4 sm:px-5">
+    <div className="space-y-4">
+      <div className={workspaceIntroClassName}>
         <div className="flex items-start gap-3">
           <Sparkles className="mt-0.5 size-4 shrink-0 text-primary" aria-hidden />
           <div className="space-y-1">
@@ -157,22 +158,22 @@ export function TwinWorkspace({ addOpen = false, onAddOpenChange }: TwinWorkspac
         onSave={handleSave}
       />
 
-      <Dialog
+      <ResponsiveDialog
         open={deleteTarget !== null}
         onOpenChange={(open) => {
           if (!open && !isDeleting) setDeleteTarget(null);
         }}
       >
-        <DialogContent showCloseButton={!isDeleting}>
-          <DialogHeader>
-            <DialogTitle>Delete this entry?</DialogTitle>
-            <DialogDescription>
+        <ResponsiveDialogContent showCloseButton={!isDeleting}>
+          <ResponsiveDialogHeader>
+            <ResponsiveDialogTitle>Delete this entry?</ResponsiveDialogTitle>
+            <ResponsiveDialogDescription>
               {deleteTarget
                 ? `"${deleteTarget.title}" will be removed from your Digital Twin permanently. This cannot be undone.`
                 : "This entry will be removed permanently. This cannot be undone."}
-            </DialogDescription>
-          </DialogHeader>
-          <DialogFooter>
+            </ResponsiveDialogDescription>
+          </ResponsiveDialogHeader>
+          <ResponsiveDialogFooter>
             <Button
               type="button"
               variant="warning"
@@ -183,9 +184,9 @@ export function TwinWorkspace({ addOpen = false, onAddOpenChange }: TwinWorkspac
             >
               {isDeleting ? "Deleting…" : "Delete"}
             </Button>
-          </DialogFooter>
-        </DialogContent>
-      </Dialog>
+          </ResponsiveDialogFooter>
+        </ResponsiveDialogContent>
+      </ResponsiveDialog>
     </div>
   );
 }

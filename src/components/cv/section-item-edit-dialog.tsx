@@ -6,13 +6,13 @@ import { levelsForSectionType } from "@/lib/cv/levels";
 import { addResumeSectionItem, updateResumeSectionItem } from "@/lib/api/cv-api";
 import { Button } from "@/components/ui/button";
 import {
-  Dialog,
-  DialogContent,
-  DialogDescription,
-  DialogFooter,
-  DialogHeader,
-  DialogTitle,
-} from "@/components/ui/dialog";
+  ResponsiveDialog,
+  ResponsiveDialogContent,
+  ResponsiveDialogDescription,
+  ResponsiveDialogFooter,
+  ResponsiveDialogHeader,
+  ResponsiveDialogTitle,
+} from "@/components/ui/responsive-dialog";
 import { Input } from "@/components/ui/input";
 import { RichTextEditor } from "@/components/cv/rich-text-editor";
 import {
@@ -209,16 +209,16 @@ export function SectionItemEditDialog({
       : "Edit item";
 
   return (
-    <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="max-h-[90vh] overflow-y-auto">
-        <DialogHeader>
-          <DialogTitle>{title}</DialogTitle>
-          <DialogDescription>
+    <ResponsiveDialog open={open} onOpenChange={onOpenChange}>
+      <ResponsiveDialogContent className="max-h-[90vh] overflow-y-auto">
+        <ResponsiveDialogHeader>
+          <ResponsiveDialogTitle>{title}</ResponsiveDialogTitle>
+          <ResponsiveDialogDescription>
             {dialog?.mode === "create"
               ? "Fill in the details, then save to add this item."
               : "Update the details below."}
-          </DialogDescription>
-        </DialogHeader>
+          </ResponsiveDialogDescription>
+        </ResponsiveDialogHeader>
 
         <div className="grid gap-4 py-1">
           {sectionType === "SUMMARY" ? (
@@ -447,12 +447,12 @@ export function SectionItemEditDialog({
           ) : null}
         </div>
 
-        <DialogFooter>
+        <ResponsiveDialogFooter>
           <Button type="button" disabled={isSaving} onClick={() => void handleSave()}>
             {isSaving ? "Saving…" : "Save"}
           </Button>
-        </DialogFooter>
-      </DialogContent>
-    </Dialog>
+        </ResponsiveDialogFooter>
+      </ResponsiveDialogContent>
+    </ResponsiveDialog>
   );
 }

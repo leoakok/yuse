@@ -20,6 +20,16 @@ export function storePrintContent(resumeId: string, content: ResumeWithContent):
   }
 }
 
+export function clearPrintCache(): void {
+  if (typeof window === "undefined") return;
+  for (let i = sessionStorage.length - 1; i >= 0; i -= 1) {
+    const key = sessionStorage.key(i);
+    if (key?.startsWith(STORAGE_PREFIX)) {
+      sessionStorage.removeItem(key);
+    }
+  }
+}
+
 export function readPrintContent(resumeId: string): ResumeWithContent | null {
   if (typeof window === "undefined") return null;
   try {

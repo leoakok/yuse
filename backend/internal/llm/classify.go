@@ -189,6 +189,15 @@ func obviousOutOfScopeClassification(lower, source string) (Classification, bool
 }
 
 func fastPathActionableInfo(trimmed string) (Classification, bool) {
+	if userAskedDeleteCVData(trimmed) {
+		return Classification{
+			Category:   model.AssistantCategoryUpdateCv,
+			Confidence: 0.9,
+			Source:     "fast-path",
+			Tags:       []string{"delete", "cv-best-practices"},
+			Reason:     "delete CV/portfolio content",
+		}, true
+	}
 	if userAskedAccountInfo(trimmed) {
 		return Classification{
 			Category:   model.AssistantCategoryAdvice,
@@ -247,6 +256,8 @@ func heuristicClassify(trimmed string, assistantContext model.AssistantContextIn
 	}
 
 	switch {
+	case userAskedDeleteCVData(trimmed):
+		return Classification{Category: model.AssistantCategoryUpdateCv, Confidence: 0.85, Source: "fallback", Tags: []string{"delete", "cv-best-practices"}, Reason: "delete CV/portfolio content"}
 	case userAskedAccountInfo(trimmed):
 		return Classification{Category: model.AssistantCategoryAdvice, Confidence: 0.85, Source: "fallback", Tags: []string{"account-info", "advice"}, Reason: "account/document info question"}
 	case userAskedCapabilities(trimmed):
@@ -286,7 +297,7 @@ func heuristicClassify(trimmed string, assistantContext model.AssistantContextIn
 const classifierSystemPrompt = `You are the intent router for Yuse, an assistant that ONLY helps with CVs/resumes, portfolios, job applications, and career/CV advice.
 
 Classify the user's latest message into exactly one category:
-- UPDATE_CV: edit/improve an existing CV (add/fix experience, skills, summary, formatting on a resume).
+- UPDATE_CV: edit/improve an existing CV (add/fix experience, skills, summary, formatting on a resume). Also delete/remove/clear CV content: resumes, section items, portfolios, portfolio projects/skills/testimonials when the user explicitly asks (NOT account deletion).
 - CREATE_CV: make a new CV/resume, including from a LinkedIn/website/GitHub import or for a public figure. Also "create/build a CV for [role title]" when the focus is building a new document (still run role research and fit assessment).
 - PORTFOLIO: anything about a portfolio site (projects/case studies, hero, skills, testimonials).
 - JOB_APPLICATION: tailor to a specific job or role type, cover letters, tracking an application, skill-gap for a posting, or "create a CV for [role]" when tailoring to a target role (tags: role-tailor, job-application).
@@ -296,8 +307,9 @@ Classify the user's latest message into exactly one category:
 - UNCLEAR: too short or vague when there is NO prior assistant message to anchor it (e.g. lone "ad", "hm"), not real in-scope questions.
 
 Routing rules:
+- "delete all my data", "remove all section items", "clear my CVs" → UPDATE_CV (tags: delete), NOT OUT_OF_SCOPE/UNCLEAR, NOT account deletion.
 - "how many CVs/resumes do I have", "list my resumes", etc. → ADVICE (account-info), NOT CHITCHAT/UNCLEAR/OUT_OF_SCOPE.
-- Follow-ups to your previous reply ("rank them", "compare those", "which is stronger") → ADVICE when the assistant just discussed their CVs/portfolios/jobs, NOT UNCLEAR.
+- Follow-ups to your previous reply ("rank them", "compare those", "which is stronger", "yes go ahead" after you proposed a delete) → ADVICE or UPDATE_CV when continuing CV/portfolio work, NOT UNCLEAR.
 - "create a CV for [role]", "resume for forward deployed engineer", "tailor for staff PM role" → JOB_APPLICATION (tags: role-tailor, job-application, skill-gap), NOT generic ADVICE.
 - "what can you do", "help" (alone), "how can you help" → ADVICE (capabilities), NOT CHITCHAT.
 - CHITCHAT canned welcome is only for bare greetings with no ask.

@@ -6,15 +6,15 @@ import { Check, Copy, Loader2 } from "lucide-react";
 import { toast } from "sonner";
 import { Button, buttonVariants } from "@/components/ui/button";
 import {
-  Dialog,
-  DialogContent,
-  DialogFooter,
-  DialogHeader,
-  DialogTitle,
-} from "@/components/ui/dialog";
+  ResponsiveDialog,
+  ResponsiveDialogContent,
+  ResponsiveDialogFooter,
+  ResponsiveDialogHeader,
+  ResponsiveDialogTitle,
+} from "@/components/ui/responsive-dialog";
 import { Input } from "@/components/ui/input";
 import { setPortfolioSlug } from "@/lib/api/portfolio-api";
-import { buildPortfolioShareUrl } from "@/lib/portfolio/share-url";
+import { buildShareUrl } from "@/lib/portfolio/share-url";
 import { slugFromTitle, validateSlug } from "@/lib/portfolio/slug";
 import { cn } from "@/lib/utils";
 
@@ -49,13 +49,13 @@ export function PortfolioShareDialog({
 
   const shareUrl = useMemo(() => {
     if (!username?.trim()) return "";
-    return buildPortfolioShareUrl(username, portfolioSlug);
+    return buildShareUrl(username, portfolioSlug);
   }, [username, portfolioSlug]);
 
   const previewUrl = useMemo(() => {
     if (!username?.trim()) return "";
     const slug = slugInput.trim() || portfolioSlug?.trim();
-    return buildPortfolioShareUrl(username, slug);
+    return buildShareUrl(username, slug);
   }, [username, slugInput, portfolioSlug]);
 
   async function handleSaveSlug() {
@@ -97,11 +97,11 @@ export function PortfolioShareDialog({
   const hasUsername = Boolean(username?.trim());
 
   return (
-    <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="sm:max-w-lg">
-        <DialogHeader>
-          <DialogTitle>Share portfolio</DialogTitle>
-        </DialogHeader>
+    <ResponsiveDialog open={open} onOpenChange={onOpenChange}>
+      <ResponsiveDialogContent className="sm:max-w-lg">
+        <ResponsiveDialogHeader>
+          <ResponsiveDialogTitle>Share portfolio</ResponsiveDialogTitle>
+        </ResponsiveDialogHeader>
 
         <div className="space-y-5">
           {hasUsername ? (
@@ -170,13 +170,13 @@ export function PortfolioShareDialog({
           </div>
         </div>
 
-        <DialogFooter>
+        <ResponsiveDialogFooter>
           <Button type="button" onClick={() => void handleCopy()} disabled={!previewUrl && !shareUrl}>
             {copied ? <Check className="mr-1.5 size-4" /> : <Copy className="mr-1.5 size-4" />}
             Copy link
           </Button>
-        </DialogFooter>
-      </DialogContent>
-    </Dialog>
+        </ResponsiveDialogFooter>
+      </ResponsiveDialogContent>
+    </ResponsiveDialog>
   );
 }

@@ -52,6 +52,7 @@ export interface Resume {
   id: string;
   workspaceId: string;
   title: string;
+  slug?: string | null;
   contactProfileId?: string;
   createdBy: string;
   createdAt: string;

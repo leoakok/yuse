@@ -10,20 +10,16 @@ import {
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import {
-  Card,
-  CardContent,
-  CardDescription,
-  CardHeader,
-  CardTitle,
-} from "@/components/ui/card";
+  WorkspaceSection,
+} from "@/components/layout/workspace-section";
 import {
-  Dialog,
-  DialogContent,
-  DialogDescription,
-  DialogFooter,
-  DialogHeader,
-  DialogTitle,
-} from "@/components/ui/dialog";
+  ResponsiveDialog,
+  ResponsiveDialogContent,
+  ResponsiveDialogDescription,
+  ResponsiveDialogFooter,
+  ResponsiveDialogHeader,
+  ResponsiveDialogTitle,
+} from "@/components/ui/responsive-dialog";
 import {
   createKnowledgeEntry,
   deleteKnowledgeEntry,
@@ -125,17 +121,15 @@ export function KnowledgeDictionary() {
 
   return (
     <>
-      <Card>
-        <CardHeader className="flex flex-row items-start justify-between gap-4 space-y-0">
-          <div className="space-y-1.5">
-            <CardTitle className="flex items-center gap-2 text-base">
-              <BookOpen className="size-4" />
-              Knowledge dictionary
-            </CardTitle>
-            <CardDescription>
-              Curated guidance Yuse can pull in when a message matches an entry.
-            </CardDescription>
-          </div>
+      <WorkspaceSection
+        title={
+          <span className="flex items-center gap-2">
+            <BookOpen className="size-4" />
+            Knowledge dictionary
+          </span>
+        }
+        description="Curated guidance Yuse can pull in when a message matches an entry."
+        actions={
           <Button
             type="button"
             size="sm"
@@ -144,8 +138,9 @@ export function KnowledgeDictionary() {
             <Plus className="size-4" />
             Add entry
           </Button>
-        </CardHeader>
-        <CardContent>
+        }
+        bodyClassName="pb-0"
+      >
           {loading ? (
             <div className="flex items-center justify-center py-12 text-sm text-muted-foreground">
               <Loader2 className="mr-2 size-4 animate-spin" aria-hidden />
@@ -159,10 +154,9 @@ export function KnowledgeDictionary() {
               </p>
             </div>
           ) : (
-            <div className="overflow-hidden rounded-xl border shadow-sm">
-              <div className="overflow-x-auto">
+            <div className="-mx-4 overflow-x-auto lg:-mx-5">
                 <table className="w-full min-w-[760px] text-sm">
-                  <thead className="border-b bg-muted/40 text-left text-xs uppercase tracking-wide text-muted-foreground">
+                  <thead className="border-b border-border/60 bg-muted/30 text-left text-xs uppercase tracking-wide text-muted-foreground">
                     <tr>
                       <th className="px-4 py-3 font-medium">Title</th>
                       <th className="px-4 py-3 font-medium">Slug</th>
@@ -235,11 +229,9 @@ export function KnowledgeDictionary() {
                     ))}
                   </tbody>
                 </table>
-              </div>
             </div>
           )}
-        </CardContent>
-      </Card>
+      </WorkspaceSection>
 
       <KnowledgeEntryDialog
         state={dialogState}
@@ -247,22 +239,22 @@ export function KnowledgeDictionary() {
         onSave={handleSave}
       />
 
-      <Dialog open={deleteTarget != null} onOpenChange={(open) => !open && setDeleteTarget(null)}>
-        <DialogContent>
-          <DialogHeader>
-            <DialogTitle>Delete entry?</DialogTitle>
-            <DialogDescription>
+      <ResponsiveDialog open={deleteTarget != null} onOpenChange={(open) => !open && setDeleteTarget(null)}>
+        <ResponsiveDialogContent>
+          <ResponsiveDialogHeader>
+            <ResponsiveDialogTitle>Delete entry?</ResponsiveDialogTitle>
+            <ResponsiveDialogDescription>
               This removes &ldquo;{deleteTarget?.title}&rdquo; from the knowledge dictionary. The
               assistant will no longer use this guidance.
-            </DialogDescription>
-          </DialogHeader>
-          <DialogFooter>
+            </ResponsiveDialogDescription>
+          </ResponsiveDialogHeader>
+          <ResponsiveDialogFooter>
             <Button variant="destructive" onClick={() => void handleDelete()} disabled={deleting}>
               {deleting ? "Deleting…" : "Delete"}
             </Button>
-          </DialogFooter>
-        </DialogContent>
-      </Dialog>
+          </ResponsiveDialogFooter>
+        </ResponsiveDialogContent>
+      </ResponsiveDialog>
     </>
   );
 }

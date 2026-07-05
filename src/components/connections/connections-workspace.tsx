@@ -8,12 +8,10 @@ import { toast } from "sonner";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Button } from "@/components/ui/button";
 import {
-  Card,
-  CardContent,
-  CardDescription,
-  CardHeader,
-  CardTitle,
-} from "@/components/ui/card";
+  WorkspaceSection,
+} from "@/components/layout/workspace-section";
+import { workspaceRowClassName } from "@/lib/ui/workspace-section";
+import { cn } from "@/lib/utils";
 import { graphqlRequest } from "@/lib/graphql/client";
 import {
   CONNECTION_STATUS_QUERY,
@@ -83,68 +81,67 @@ export function ConnectionsWorkspace() {
   }
 
   return (
-    <Card>
-      <CardHeader>
-        <CardTitle className="flex items-center gap-2 text-base">
+    <WorkspaceSection
+      title={
+        <span className="flex items-center gap-2">
           <GitHubMark className="size-6" />
           GitHub
-        </CardTitle>
-        <CardDescription>
-          Connect GitHub to let the assistant search your repos, including private ones, when
-          building your CV. Without a connection, public pages still work via web explore.
-        </CardDescription>
-      </CardHeader>
-      <CardContent className="space-y-4">
-        {loading ? (
-          <div className="flex items-center gap-2 py-2 text-sm text-muted-foreground">
-            <Loader2 className="size-4 animate-spin" aria-hidden />
-            Checking connection…
-          </div>
-        ) : status?.connected ? (
-          <>
-            <div className="flex items-center gap-3 rounded-md border bg-muted/30 px-3 py-3">
-              <Avatar size="sm">
-                {status.avatarUrl ? (
-                  <AvatarImage src={status.avatarUrl} alt="" />
-                ) : null}
-                <AvatarFallback>
-                  <GitHubMark className="size-3.5" />
-                </AvatarFallback>
-              </Avatar>
-              <div className="min-w-0">
-                <p className="text-sm font-medium text-foreground">
-                  Connected as @{status.username ?? "github-user"}
+        </span>
+      }
+      description="Connect GitHub to let the assistant search your repos, including private ones, when building your CV. Without a connection, public pages still work via web explore."
+    >
+      {loading ? (
+        <p className="py-2 text-sm text-muted-foreground" aria-busy="true">
+          Checking connection…
+        </p>
+      ) : status?.connected ? (
+        <>
+          <div className={cn("flex items-center gap-3", workspaceRowClassName)}>
+            <Avatar size="sm">
+              {status.avatarUrl ? (
+                <AvatarImage src={status.avatarUrl} alt="" />
+              ) : null}
+              <AvatarFallback>
+                <GitHubMark className="size-3.5" />
+              </AvatarFallback>
+            </Avatar>
+            <div className="min-w-0">
+              <p className="text-sm font-medium text-foreground">
+                Connected as @{status.username ?? "github-user"}
+              </p>
+              {status.connectedAt ? (
+                <p className="text-xs text-muted-foreground">
+                  Connected {new Date(status.connectedAt).toLocaleDateString()}
                 </p>
-                {status.connectedAt ? (
-                  <p className="text-xs text-muted-foreground">
-                    Connected {new Date(status.connectedAt).toLocaleDateString()}
-                  </p>
-                ) : null}
-              </div>
+              ) : null}
             </div>
-            <Button
-              type="button"
-              variant="outline"
-              disabled={disconnecting}
-              onClick={() => void handleDisconnect()}
-            >
-              <Unlink />
-              Disconnect
-            </Button>
-          </>
-        ) : (
-          <>
-            <p className="text-sm text-muted-foreground">
-              Not connected. You can still import public GitHub profiles, connecting unlocks your
-              private repos and higher API limits.
-            </p>
-            <Button nativeButton={false} render={<a href="/api/auth/github/start" />}>
-              <Link2 />
-              Connect GitHub
-            </Button>
-          </>
-        )}
-      </CardContent>
-    </Card>
+          </div>
+          <Button
+            type="button"
+            variant="outline"
+            disabled={disconnecting}
+            onClick={() => void handleDisconnect()}
+          >
+            <Unlink />
+            Disconnect
+          </Button>
+        </>
+      ) : (
+        <>
+          <p className="text-sm text-muted-foreground">
+            Not connected. You can still import public GitHub profiles, connecting unlocks your
+            private repos and higher API limits.
+          </p>
+          <Button
+            onClick={() => {
+              window.location.assign("/api/auth/github/start");
+            }}
+          >
+            <Link2 />
+            Connect GitHub
+          </Button>
+        </>
+      )}
+    </WorkspaceSection>
   );
 }

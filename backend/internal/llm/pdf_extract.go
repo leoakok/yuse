@@ -11,6 +11,7 @@ import (
 )
 
 const maxExtractedPDFChars = 8000
+const maxPDFBytes = 10 << 20 // 10 MiB
 
 func extractPDFTextFromBase64(contentBase64 string) (string, error) {
 	encoded := strings.TrimSpace(contentBase64)
@@ -24,6 +25,9 @@ func extractPDFTextFromBase64(contentBase64 string) (string, error) {
 	}
 	if len(data) == 0 {
 		return "", fmt.Errorf("empty pdf bytes")
+	}
+	if len(data) > maxPDFBytes {
+		return "", fmt.Errorf("pdf exceeds maximum size")
 	}
 
 	reader := bytes.NewReader(data)

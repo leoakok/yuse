@@ -4,6 +4,18 @@
 
 @custom-variant dark (&:is(.dark *));
 
+@custom-variant data-starting-style {
+  &:where([data-starting-style]:not([data-starting-style="false"])) {
+    @slot;
+  }
+}
+
+@custom-variant data-ending-style {
+  &:where([data-ending-style]:not([data-ending-style="false"])) {
+    @slot;
+  }
+}
+
 :root {
   --background: oklch(0.9818 0.0054 95.0986);
   --foreground: oklch(0.3438 0.0269 95.7226);
@@ -59,6 +71,7 @@
   --shadow-2xl: 0 1px 3px 0px hsl(0 0% 0% / 0.25);
   --tracking-normal: 0em;
   --spacing: 0.25rem;
+  --workspace-safe-area-bottom: env(safe-area-inset-bottom, 0px);
 
   /* Motion tokens: snappy defaults (150ms fast, 200ms default, 300ms slow) */
   --motion-duration-fast: 150ms;

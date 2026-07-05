@@ -10,19 +10,20 @@ import {
   type ReactNode,
 } from "react";
 import { useSession } from "next-auth/react";
+import type { Session } from "next-auth";
 import type { User, Workspace } from "@/lib/types/user";
 import { bootstrapWorkspace } from "@/lib/api/cv-api";
 import {
   handleWorkspaceLoadFailure,
   isSigningOut,
 } from "@/lib/auth/session-invalid";
-import { AppShellSkeleton } from "@/components/layout/app-shell-skeleton";
+import { getCachedBootstrap, setCachedBootstrap } from "@/lib/cache/workspace-cache";
 import { clearLegacyLastOpenedResumePreference } from "@/lib/cv/preferences";
 
 interface WorkspaceContextValue {
   user: User;
-  workspace: Workspace;
-  loading: boolean;
+  workspace: Workspace | null;
+  bootstrapping: boolean;
   updateUser: (patch: Partial<User>) => void;
 }
 
@@ -50,16 +51,49 @@ function isBootstrapResultValid(result: { user: User; workspace: Workspace }): b
   return Boolean(result.user?.id && result.workspace?.id);
 }
 
+function userFromSession(session: Session | null): User | null {
+  const sessionUser = session?.user;
+  if (!sessionUser?.id || !sessionUser.email) {
+    return null;
+  }
+
+  return {
+    id: sessionUser.id,
+    email: sessionUser.email,
+    displayName: sessionUser.name?.trim() || sessionUser.email,
+    avatarUrl: sessionUser.image ?? undefined,
+    role: "USER",
+    hasPasswordCredential: sessionUser.id.startsWith("email-"),
+    canChangeEmail: sessionUser.id.startsWith("email-"),
+    emailVerified: !sessionUser.id.startsWith("email-"),
+    createdAt: "",
+    updatedAt: "",
+  };
+}
+
 export function WorkspaceProvider({ children }: { children: ReactNode }) {
   const { status, data: session, update } = useSession();
   const updateRef = useRef(update);
   updateRef.current = update;
   const bootstrappedRef = useRef(false);
+  const fetchStartedRef = useRef(false);
   const clearBootstrapSentRef = useRef(false);
 
-  const [user, setUser] = useState<User | null>(null);
-  const [workspace, setWorkspace] = useState<Workspace | null>(null);
-  const [loading, setLoading] = useState(true);
+  const sessionUserId = session?.user?.id;
+  const cachedBootstrap =
+    sessionUserId && status === "authenticated"
+      ? getCachedBootstrap(sessionUserId)
+      : null;
+
+  const [user, setUser] = useState<User | null>(
+    () => cachedBootstrap?.user ?? userFromSession(session)
+  );
+  const [workspace, setWorkspace] = useState<Workspace | null>(
+    () => cachedBootstrap?.workspace ?? null
+  );
+  const [bootstrapping, setBootstrapping] = useState(
+    () => !cachedBootstrap || !isBootstrapResultValid(cachedBootstrap)
+  );
   const [bootstrapError, setBootstrapError] = useState<string | null>(null);
 
   const updateUser = useCallback((patch: Partial<User>) => {
@@ -73,17 +107,34 @@ export function WorkspaceProvider({ children }: { children: ReactNode }) {
   useEffect(() => {
     if (status === "unauthenticated") {
       bootstrappedRef.current = false;
+      fetchStartedRef.current = false;
       clearBootstrapSentRef.current = false;
+      setUser(null);
+      setWorkspace(null);
+      setBootstrapping(false);
       return;
     }
 
-    if (status !== "authenticated" || isSigningOut() || bootstrappedRef.current) {
+    if (status !== "authenticated" || isSigningOut() || !sessionUserId) {
       return;
     }
+
+    if (fetchStartedRef.current) {
+      return;
+    }
+    fetchStartedRef.current = true;
 
     let cancelled = false;
-    setLoading(true);
     setBootstrapError(null);
+
+    const cached = getCachedBootstrap(sessionUserId);
+    if (cached && isBootstrapResultValid(cached)) {
+      setUser(cached.user);
+      setWorkspace(cached.workspace);
+      setBootstrapping(false);
+    } else {
+      setBootstrapping(true);
+    }
 
     void loadWorkspaceWithRetry()
       .then(async (result) => {
@@ -95,15 +146,16 @@ export function WorkspaceProvider({ children }: { children: ReactNode }) {
           const handled = await handleWorkspaceLoadFailure();
           if (!handled) {
             setBootstrapError("Could not load your workspace. Try again in a moment.");
-            setLoading(false);
+            setBootstrapping(false);
           }
           return;
         }
 
         bootstrappedRef.current = true;
+        setCachedBootstrap(sessionUserId, result);
         setUser(result.user);
         setWorkspace(result.workspace);
-        setLoading(false);
+        setBootstrapping(false);
 
         if (session?.sessionBootstrap && !clearBootstrapSentRef.current) {
           clearBootstrapSentRef.current = true;
@@ -123,29 +175,40 @@ export function WorkspaceProvider({ children }: { children: ReactNode }) {
             ? error.message
             : "Could not load your workspace. Try again in a moment.";
         setBootstrapError(message);
-        setLoading(false);
+        setBootstrapping(false);
       });
 
     return () => {
       cancelled = true;
     };
-  }, [status, session?.sessionBootstrap]);
+  }, [status, sessionUserId, session?.sessionBootstrap]);
 
-  if (status === "loading" || loading || !user || !workspace) {
-    if (bootstrapError) {
-      return (
-        <div className="flex min-h-full flex-1 flex-col items-center justify-center gap-2 p-6 text-sm text-muted-foreground">
-          <p className="text-center text-destructive">{bootstrapError}</p>
-          <p className="text-center">Run `npm run start` to launch Postgres and the backend.</p>
-        </div>
-      );
-    }
+  if (status === "loading") {
+    return null;
+  }
 
-    return <AppShellSkeleton />;
+  if (bootstrapError) {
+    return (
+      <div className="flex min-h-full flex-1 flex-col items-center justify-center gap-2 p-6 text-sm text-muted-foreground">
+        <p className="text-center text-destructive">{bootstrapError}</p>
+        <p className="text-center">Run `npm run start` to launch Postgres and the backend.</p>
+      </div>
+    );
+  }
+
+  if (!user) {
+    return null;
   }
 
   return (
-    <WorkspaceContext.Provider value={{ user, workspace, loading, updateUser }}>
+    <WorkspaceContext.Provider
+      value={{
+        user,
+        workspace,
+        bootstrapping,
+        updateUser,
+      }}
+    >
       {children}
     </WorkspaceContext.Provider>
   );

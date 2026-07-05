@@ -5,7 +5,7 @@ export default function AdminPage() {
   return (
     <CatalogShell
       title="Admin"
-      description="Tune how Yuse understands messages and what guidance it pulls in."
+      description="Manage beta access, users, and agent tuning."
     >
       <AdminWorkspace />
     </CatalogShell>

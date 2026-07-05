@@ -6,11 +6,18 @@ import (
 	"net/http"
 	"strings"
 
+	"github.com/leo/ai-weekend/backend/graph/model"
 	"github.com/leo/ai-weekend/backend/internal/store"
 )
 
-// PublicPortfolio serves portfolio JSON for public pages without authentication.
-func PublicPortfolio(pg *store.Postgres) http.Handler {
+type publicContentResponse struct {
+	Kind      string                     `json:"kind"`
+	Portfolio *model.PortfolioWithContent `json:"portfolio,omitempty"`
+	Resume    *model.ResumeWithContent    `json:"resume,omitempty"`
+}
+
+// PublicContent serves portfolio or resume JSON for public pages without authentication.
+func PublicContent(pg *store.Postgres) http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		if r.Method != http.MethodGet {
 			http.Error(w, "method not allowed", http.StatusMethodNotAllowed)
@@ -28,18 +35,39 @@ func PublicPortfolio(pg *store.Postgres) http.Handler {
 			slug = &s
 		}
 
-		content, err := pg.PublicPortfolioWithContent(username, slug)
-		if errors.Is(err, store.ErrNotFound) || content == nil {
-			http.NotFound(w, r)
-			return
-		}
-		if err != nil {
+		portfolio, err := pg.PublicPortfolioWithContent(username, slug)
+		if err != nil && !errors.Is(err, store.ErrNotFound) {
 			http.Error(w, "server error", http.StatusInternalServerError)
 			return
 		}
+		if portfolio != nil {
+			writePublicJSON(w, publicContentResponse{Kind: "portfolio", Portfolio: portfolio})
+			return
+		}
 
-		w.Header().Set("Content-Type", "application/json")
-		w.Header().Set("Cache-Control", "public, max-age=60")
-		_ = json.NewEncoder(w).Encode(content)
+		if slug != nil {
+			resume, err := pg.PublicResumeWithContent(username, slug)
+			if err != nil && !errors.Is(err, store.ErrNotFound) {
+				http.Error(w, "server error", http.StatusInternalServerError)
+				return
+			}
+			if resume != nil {
+				writePublicJSON(w, publicContentResponse{Kind: "resume", Resume: resume})
+				return
+			}
+		}
+
+		http.NotFound(w, r)
 	})
+}
+
+func writePublicJSON(w http.ResponseWriter, payload publicContentResponse) {
+	w.Header().Set("Content-Type", "application/json")
+	w.Header().Set("Cache-Control", "public, max-age=60")
+	_ = json.NewEncoder(w).Encode(payload)
+}
+
+// PublicPortfolio serves portfolio JSON for public pages without authentication.
+func PublicPortfolio(pg *store.Postgres) http.Handler {
+	return PublicContent(pg)
 }

@@ -66,6 +66,7 @@ export const RESUMES_QUERY = `
       id
       workspaceId
       title
+      slug
       contactProfileId
       createdBy
       createdAt
@@ -269,6 +270,7 @@ export const RESUMES_FOR_SECTION_QUERY = `
       id
       workspaceId
       title
+      slug
       contactProfileId
       createdBy
       createdAt
@@ -286,6 +288,9 @@ export const ME_QUERY = `
       username
       avatarUrl
       role
+      hasPasswordCredential
+      canChangeEmail
+      emailVerified
       createdAt
       updatedAt
     }
@@ -301,6 +306,9 @@ export const WORKSPACE_BOOTSTRAP_QUERY = `
       username
       avatarUrl
       role
+      hasPasswordCredential
+      canChangeEmail
+      emailVerified
       createdAt
       updatedAt
     }
@@ -1456,6 +1464,23 @@ export const SET_USERNAME_MUTATION = `
   }
 `;
 
+export const CHANGE_PASSWORD_MUTATION = `
+  mutation ChangePassword($currentPassword: String!, $newPassword: String!) {
+    changePassword(currentPassword: $currentPassword, newPassword: $newPassword)
+  }
+`;
+
+export const CHANGE_EMAIL_MUTATION = `
+  mutation ChangeEmail($currentPassword: String!, $email: String!) {
+    changeEmail(currentPassword: $currentPassword, email: $email) {
+      id
+      email
+      emailVerified
+      updatedAt
+    }
+  }
+`;
+
 export const SET_PORTFOLIO_SLUG_MUTATION = `
   mutation SetPortfolioSlug($portfolioId: ID!, $slug: String!) {
     setPortfolioSlug(portfolioId: $portfolioId, slug: $slug) {
@@ -1463,6 +1488,22 @@ export const SET_PORTFOLIO_SLUG_MUTATION = `
       slug
       updatedAt
     }
+  }
+`;
+
+export const SET_RESUME_SLUG_MUTATION = `
+  mutation SetResumeSlug($resumeId: ID!, $slug: String!) {
+    setResumeSlug(resumeId: $resumeId, slug: $slug) {
+      id
+      slug
+      updatedAt
+    }
+  }
+`;
+
+export const RESEND_VERIFICATION_EMAIL_MUTATION = `
+  mutation ResendVerificationEmail {
+    resendVerificationEmail
   }
 `;
 
@@ -1523,5 +1564,100 @@ export const UPDATE_KNOWLEDGE_ENTRY_MUTATION = `
 export const DELETE_KNOWLEDGE_ENTRY_MUTATION = `
   mutation DeleteKnowledgeEntry($id: ID!) {
     deleteKnowledgeEntry(id: $id)
+  }
+`;
+
+const ADMIN_USER_FIELDS = `
+  id
+  email
+  displayName
+  role
+  isActive
+  createdAt
+  updatedAt
+`;
+
+const WAITLIST_ENTRY_FIELDS = `
+  id
+  email
+  status
+  submittedAt
+  reviewedAt
+  reviewedBy
+`;
+
+const ADMIN_AUDIT_FIELDS = `
+  id
+  actorId
+  actorEmail
+  action
+  targetType
+  targetId
+  metadata
+  createdAt
+`;
+
+export const ADMIN_USERS_QUERY = `
+  query AdminUsers {
+    adminUsers {
+      ${ADMIN_USER_FIELDS}
+    }
+  }
+`;
+
+export const ADMIN_WAITLIST_QUERY = `
+  query AdminWaitlist($status: WaitlistStatus) {
+    adminWaitlist(status: $status) {
+      ${WAITLIST_ENTRY_FIELDS}
+    }
+  }
+`;
+
+export const ADMIN_AUDIT_LOG_QUERY = `
+  query AdminAuditLog($limit: Int, $offset: Int) {
+    adminAuditLog(limit: $limit, offset: $offset) {
+      ${ADMIN_AUDIT_FIELDS}
+    }
+  }
+`;
+
+export const APPROVE_WAITLIST_ENTRY_MUTATION = `
+  mutation ApproveWaitlistEntry($id: ID!) {
+    approveWaitlistEntry(id: $id) {
+      ${WAITLIST_ENTRY_FIELDS}
+    }
+  }
+`;
+
+export const REJECT_WAITLIST_ENTRY_MUTATION = `
+  mutation RejectWaitlistEntry($id: ID!) {
+    rejectWaitlistEntry(id: $id) {
+      ${WAITLIST_ENTRY_FIELDS}
+    }
+  }
+`;
+
+export const SET_USER_ACTIVE_MUTATION = `
+  mutation SetUserActive($userId: ID!, $active: Boolean!) {
+    setUserActive(userId: $userId, active: $active) {
+      ${ADMIN_USER_FIELDS}
+    }
+  }
+`;
+
+export const SET_USER_ROLE_MUTATION = `
+  mutation SetUserRole($userId: ID!, $role: UserRole!) {
+    setUserRole(userId: $userId, role: $role) {
+      ${ADMIN_USER_FIELDS}
+    }
+  }
+`;
+
+export const SEND_TEST_EMAIL_MUTATION = `
+  mutation SendTestEmail($type: TestEmailType!, $recipientEmail: String!) {
+    sendTestEmail(type: $type, recipientEmail: $recipientEmail) {
+      success
+      message
+    }
   }
 `;

@@ -1,6 +1,11 @@
 import { auth } from "@/auth";
 import { resolveBackendGraphqlUrl } from "@/lib/auth/backend-url";
 import { AuthConfigError, signProxyJwt } from "@/lib/auth/proxy-jwt";
+import {
+  MAX_GRAPHQL_BODY_BYTES,
+  enforceRateLimit,
+  readBodyWithLimit,
+} from "@/lib/security/rate-limit";
 
 function graphqlError(message: string, status: number) {
   return Response.json(
@@ -28,22 +33,27 @@ export async function POST(request: Request) {
     return graphqlError("Unauthorized", 401);
   }
 
+  const limited = enforceRateLimit(request, `graphql:${session.user.id}`, 120, 60 * 1000);
+  if (limited) {
+    return graphqlError("Too many requests", 429);
+  }
+
   let token: string;
   try {
     token = await signProxyJwt(session);
   } catch (error) {
     if (error instanceof AuthConfigError) {
       console.error("[graphql proxy]", error.message);
-      return graphqlError(
-        "Server auth is not configured. Set AUTH_SECRET in .env (must match backend/.env).",
-        503,
-      );
+      return graphqlError("Server auth is not configured", 503);
     }
     throw error;
   }
 
   const backendUrl = resolveBackendGraphqlUrl();
-  const body = await request.text();
+  const body = await readBodyWithLimit(request, MAX_GRAPHQL_BODY_BYTES);
+  if (body instanceof Response) {
+    return graphqlError("Request body too large", 413);
+  }
 
   let upstream: Response;
   try {
@@ -59,10 +69,7 @@ export async function POST(request: Request) {
   } catch (error) {
     if (isBackendUnreachable(error)) {
       console.error("[graphql proxy] backend unreachable at", backendUrl, error);
-      return graphqlError(
-        "Backend is unavailable. Start it with: npm run start (or docker compose up -d).",
-        503,
-      );
+      return graphqlError("Backend is unavailable", 503);
     }
     throw error;
   }

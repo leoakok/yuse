@@ -1,17 +1,12 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState, useEffect, useMemo } from "react";
 import { useRouter } from "next/navigation";
 import {
-  Copy,
   Eye,
   EyeOff,
-  LayoutTemplate,
-  List,
   Loader2,
-  MoreHorizontal,
   Plus,
-  Share2,
   Star,
   Trash2,
 } from "lucide-react";
@@ -22,7 +17,7 @@ import {
   portfolioDesignSnapshotFromSettings,
   type PortfolioDesignSnapshot,
 } from "@/components/portfolio/portfolio-design-settings";
-import { PortfolioShareDialog } from "@/components/portfolio/portfolio-share-dialog";
+import { PortfolioWorkspaceToolbar, type PortfolioWorkspaceMode } from "@/components/portfolio/portfolio-workspace-toolbar";
 import { PortfolioProfileSection } from "@/components/portfolio/portfolio-profile-section";
 import {
   PortfolioProjectEditDialog,
@@ -30,19 +25,15 @@ import {
 } from "@/components/portfolio/portfolio-project-edit-dialog";
 import { Button } from "@/components/ui/button";
 import {
-  Dialog,
-  DialogContent,
-  DialogDescription,
-  DialogFooter,
-  DialogHeader,
-  DialogTitle,
-} from "@/components/ui/dialog";
-import {
-  DropdownMenu,
-  DropdownMenuContent,
-  DropdownMenuItem,
-  DropdownMenuTrigger,
-} from "@/components/ui/dropdown-menu";
+  ResponsiveDialog,
+  ResponsiveDialogContent,
+  ResponsiveDialogDescription,
+  ResponsiveDialogFooter,
+  ResponsiveDialogHeader,
+  ResponsiveDialogTitle,
+} from "@/components/ui/responsive-dialog";
+import { PortfolioShareDialog } from "@/components/portfolio/portfolio-share-dialog";
+import { EditableFieldRow } from "@/components/settings/editable-field-row";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { ScrollArea } from "@/components/ui/scroll-area";
@@ -59,9 +50,18 @@ import {
 } from "@/lib/api/portfolio-api";
 import { portfolioPath } from "@/lib/portfolio/routes";
 import { useWorkspace } from "@/components/layout/workspace-provider";
+import { useRegisterPreviewDrawerActions } from "@/components/layout/workspace-preview-registration";
+import {
+  WorkspaceSection,
+  WorkspaceSections,
+  workspaceRowActionButtonClassName,
+  workspaceRowClassName,
+  workspaceRowHiddenClassName,
+  workspaceRowListClassName,
+} from "@/components/layout/workspace-section";
 import { cn } from "@/lib/utils";
 
-type WorkspaceMode = "content" | "design";
+type WorkspaceMode = PortfolioWorkspaceMode;
 
 interface PortfolioWorkspaceProps {
   content: PortfolioWithContent;
@@ -99,6 +99,15 @@ export function PortfolioWorkspace({
   useEffect(() => {
     setPublicUsername(user.username ?? null);
   }, [user.username]);
+
+  const previewDrawerActions = useMemo(
+    () => ({
+      onShare: () => setShareOpen(true),
+      shareLabel: "Share portfolio",
+    }),
+    []
+  );
+  useRegisterPreviewDrawerActions(previewDrawerActions);
 
   async function handleSaveAbout() {
     setSavingAbout(true);
@@ -158,70 +167,22 @@ export function PortfolioWorkspace({
 
   return (
     <div className="flex min-h-0 flex-1 flex-col">
-      <div className="flex items-center justify-between border-b px-4 py-3">
-        <div className="flex items-center gap-2">
-          <Button
-            variant={mode === "content" ? "secondary" : "ghost"}
-            size="sm"
-            onClick={() => setMode("content")}
-          >
-            <List className="mr-1.5 size-4" /> Content
-          </Button>
-          <Button
-            variant={mode === "design" ? "secondary" : "ghost"}
-            size="sm"
-            onClick={() => setMode("design")}
-          >
-            <LayoutTemplate className="mr-1.5 size-4" /> Design
-          </Button>
-        </div>
-        <div className="flex items-center gap-1">
-          <Button
-            type="button"
-            variant="ghost"
-            size="icon"
-            className="size-8 text-muted-foreground"
-            aria-label="Share portfolio"
-            onClick={() => setShareOpen(true)}
-          >
-            <Share2 className="size-4" />
-          </Button>
-          <DropdownMenu>
-            <DropdownMenuTrigger
-              render={
-                <Button
-                  type="button"
-                  variant="ghost"
-                  size="icon"
-                  className="size-8 text-muted-foreground"
-                  aria-label="Portfolio actions"
-                >
-                  <MoreHorizontal className="size-4" />
-                </Button>
-              }
-            />
-            <DropdownMenuContent align="end">
-              <DropdownMenuItem
-                disabled={isDuplicating}
-                onClick={() => {
-                  setIsDuplicating(true);
-                  void duplicatePortfolio(portfolioId)
-                    .then((p) => {
-                      toast.success("Portfolio duplicated.");
-                      router.push(portfolioPath(p.id));
-                    })
-                    .finally(() => setIsDuplicating(false));
-                }}
-              >
-                <Copy className="mr-2 size-4" /> Duplicate
-              </DropdownMenuItem>
-              <DropdownMenuItem className="text-destructive" onClick={() => setDeleteOpen(true)}>
-                <Trash2 className="mr-2 size-4" /> Delete
-              </DropdownMenuItem>
-            </DropdownMenuContent>
-          </DropdownMenu>
-        </div>
-      </div>
+      <PortfolioWorkspaceToolbar
+        mode={mode}
+        onModeChange={setMode}
+        onShare={() => setShareOpen(true)}
+        onDuplicate={() => {
+          setIsDuplicating(true);
+          void duplicatePortfolio(portfolioId)
+            .then((p) => {
+              toast.success("Portfolio duplicated.");
+              router.push(portfolioPath(p.id));
+            })
+            .finally(() => setIsDuplicating(false));
+        }}
+        onDeleteRequest={() => setDeleteOpen(true)}
+        isDuplicating={isDuplicating}
+      />
 
       <PortfolioShareDialog
         open={shareOpen}
@@ -239,7 +200,7 @@ export function PortfolioWorkspace({
       />
 
       <ScrollArea className="min-h-0 flex-1">
-        <div className="space-y-6 p-4">
+        <WorkspaceSections>
           {mode === "design" ? (
             <PortfolioDesignSettings
               portfolioId={portfolioId}
@@ -260,46 +221,55 @@ export function PortfolioWorkspace({
                 onSaved={onContentChange}
               />
 
-              <section className="rounded-lg border bg-card p-4">
-                <h2 className="text-sm font-medium">About</h2>
-                <div className="mt-4 space-y-3">
-                  <Input
-                    value={tagline}
-                    onChange={(e) => setTagline(e.target.value)}
-                    placeholder="One-line value proposition"
-                  />
-                  <Textarea
-                    value={about}
-                    onChange={(e) => setAbout(e.target.value)}
-                    placeholder="2–4 sentences about who you are and what you build."
-                    rows={4}
-                  />
-                  <Button size="sm" onClick={() => void handleSaveAbout()} disabled={savingAbout}>
-                    {savingAbout ? "Saving…" : "Save about"}
-                  </Button>
-                </div>
-              </section>
+              <WorkspaceSection title="About">
+                <EditableFieldRow
+                  label="Tagline"
+                  value={tagline}
+                  placeholder="One-line value proposition"
+                  emptyValueLabel="Add a tagline"
+                  onSave={async (next) => {
+                    await updatePortfolio(portfolioId, { tagline: next, about });
+                    setTagline(next);
+                    onContentChange({
+                      ...content,
+                      portfolio: { ...content.portfolio, tagline: next },
+                    });
+                    toast.success("Tagline saved.");
+                  }}
+                />
+                <Textarea
+                  value={about}
+                  onChange={(e) => setAbout(e.target.value)}
+                  placeholder="2–4 sentences about who you are and what you build."
+                  rows={4}
+                />
+                <Button size="sm" onClick={() => void handleSaveAbout()} disabled={savingAbout}>
+                  {savingAbout ? "Saving…" : "Save about"}
+                </Button>
+              </WorkspaceSection>
 
-              <section className="rounded-lg border bg-card p-4">
-                <div className="flex items-center justify-between">
-                  <h2 className="text-sm font-medium">Projects</h2>
+              <WorkspaceSection
+                title="Projects"
+                actions={
                   <Button size="sm" onClick={() => setProjectDialog({ mode: "create" })}>
                     <Plus className="mr-1 size-4" /> Add
                   </Button>
-                </div>
-                <ul className="mt-4 space-y-2">
+                }
+                bodyClassName="pb-2"
+              >
+                <ul className={workspaceRowListClassName}>
                   {content.projects.map((project) => (
                     <li
                       key={project.id}
-                      className={cn(
-                        "flex items-center gap-2 rounded-lg border px-3 py-2",
-                        !project.showInPreview && "opacity-60"
-                      )}
+                      className={cn("flex items-center gap-2", workspaceRowClassName)}
                     >
                       {project.featured ? <Star className="size-3.5 shrink-0 text-amber-500" /> : null}
                       <button
                         type="button"
-                        className="min-w-0 flex-1 text-left"
+                        className={cn(
+                          "min-w-0 flex-1 text-left",
+                          !project.showInPreview && workspaceRowHiddenClassName
+                        )}
                         onClick={() => setProjectDialog({ mode: "edit", project })}
                       >
                         <p className="truncate text-sm font-medium">{project.title}</p>
@@ -310,7 +280,7 @@ export function PortfolioWorkspace({
                       <Button
                         variant="ghost"
                         size="sm"
-                        className="h-8 shrink-0 px-2"
+                        className={cn("h-8 shrink-0 px-2", workspaceRowActionButtonClassName)}
                         onClick={() => void handleToggleProject(project.id, !project.showInPreview)}
                       >
                         {project.showInPreview ? (
@@ -323,7 +293,7 @@ export function PortfolioWorkspace({
                       <Button
                         variant="ghost"
                         size="sm"
-                        className="h-8 shrink-0 px-2 text-destructive"
+                        className="h-8 shrink-0 px-2 text-destructive hover:text-destructive"
                         onClick={() => void handleDeleteProject(project.id)}
                       >
                         <Trash2 className="mr-1 size-3.5" />
@@ -332,14 +302,15 @@ export function PortfolioWorkspace({
                     </li>
                   ))}
                   {content.projects.length === 0 ? (
-                    <p className="py-4 text-center text-xs text-muted-foreground">No projects yet, add 3–5 strong case studies.</p>
+                    <li className="px-4 py-6 text-center text-xs text-muted-foreground lg:px-5">
+                      No projects yet, add 3–5 strong case studies.
+                    </li>
                   ) : null}
                 </ul>
-              </section>
+              </WorkspaceSection>
 
-              <section className="rounded-lg border bg-card p-4">
-                <h2 className="text-sm font-medium">Skills</h2>
-                <div className="mt-3 flex flex-wrap gap-2">
+              <WorkspaceSection title="Skills">
+                <div className="flex flex-wrap gap-2">
                   {content.skills.map((skill) => (
                     <span
                       key={skill.id}
@@ -357,7 +328,7 @@ export function PortfolioWorkspace({
                     </span>
                   ))}
                 </div>
-                <div className="mt-3 flex gap-2">
+                <div className="flex gap-2">
                   <Input
                     value={newSkill}
                     onChange={(e) => setNewSkill(e.target.value)}
@@ -366,10 +337,10 @@ export function PortfolioWorkspace({
                   />
                   <Button size="sm" variant="outline" onClick={() => void handleAddSkill()}>Add</Button>
                 </div>
-              </section>
+              </WorkspaceSection>
             </>
           )}
-        </div>
+        </WorkspaceSections>
       </ScrollArea>
 
       <PortfolioProjectEditDialog
@@ -378,13 +349,13 @@ export function PortfolioWorkspace({
         onSave={handleProjectSave}
       />
 
-      <Dialog open={deleteOpen} onOpenChange={setDeleteOpen}>
-        <DialogContent>
-          <DialogHeader>
-            <DialogTitle>Delete portfolio?</DialogTitle>
-            <DialogDescription>This cannot be undone.</DialogDescription>
-          </DialogHeader>
-          <DialogFooter>
+      <ResponsiveDialog open={deleteOpen} onOpenChange={setDeleteOpen}>
+        <ResponsiveDialogContent showCloseButton={!isDeleting}>
+          <ResponsiveDialogHeader>
+            <ResponsiveDialogTitle>Delete portfolio?</ResponsiveDialogTitle>
+            <ResponsiveDialogDescription>This cannot be undone.</ResponsiveDialogDescription>
+          </ResponsiveDialogHeader>
+          <ResponsiveDialogFooter>
             <Button
               variant="destructive"
               disabled={isDeleting}
@@ -400,9 +371,9 @@ export function PortfolioWorkspace({
             >
               {isDeleting ? <Loader2 className="size-4 animate-spin" /> : "Delete"}
             </Button>
-          </DialogFooter>
-        </DialogContent>
-      </Dialog>
+          </ResponsiveDialogFooter>
+        </ResponsiveDialogContent>
+      </ResponsiveDialog>
     </div>
   );
 }

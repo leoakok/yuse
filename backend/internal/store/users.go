@@ -4,6 +4,7 @@ import (
 	"context"
 	"errors"
 	"fmt"
+	"os"
 	"strings"
 	"time"
 
@@ -21,15 +22,31 @@ type SessionScope struct {
 	ThreadID    string
 }
 
-// adminEmails are granted the ADMIN role on sign-in/registration. The role
-// migration also promotes any matching row that already exists.
-var adminEmails = map[string]bool{
-	"dev@yuse.ahmetkok.dev": true,
+// defaultAdminEmail is always granted ADMIN on register/OAuth bootstrap.
+const defaultAdminEmail = "leo@yuse.one"
+
+// adminEmails are granted the ADMIN role on sign-in/registration.
+// defaultAdminEmail is always included; ADMIN_EMAILS adds more (comma-separated).
+func adminEmails() map[string]bool {
+	out := make(map[string]bool)
+	out[defaultAdminEmail] = true
+
+	raw := strings.TrimSpace(os.Getenv("ADMIN_EMAILS"))
+	if raw == "" {
+		raw = defaultAdminEmail
+	}
+	for _, email := range strings.Split(raw, ",") {
+		normalized := strings.ToLower(strings.TrimSpace(email))
+		if normalized != "" {
+			out[normalized] = true
+		}
+	}
+	return out
 }
 
 // RoleForEmail returns the platform role for an email address.
 func RoleForEmail(email string) string {
-	if adminEmails[strings.ToLower(strings.TrimSpace(email))] {
+	if adminEmails()[strings.ToLower(strings.TrimSpace(email))] {
 		return "ADMIN"
 	}
 	return "USER"
@@ -38,6 +55,9 @@ func RoleForEmail(email string) string {
 // ErrSessionInvalid is returned when a valid JWT refers to a user that no longer exists
 // and the request is not an explicit OAuth bootstrap.
 var ErrSessionInvalid = errors.New("session invalid")
+
+// ErrNotApproved is returned when beta invite-only mode blocks OAuth bootstrap.
+var ErrNotApproved = errors.New("not approved")
 
 // EnsureSession validates the authenticated user and ensures a personal workspace + assistant thread exist.
 // New users are created only when claims.Bootstrap is true (fresh OAuth sign-in).
@@ -67,11 +87,26 @@ func EnsureSession(ctx context.Context, pool *pgxpool.Pool, claims auth.Claims) 
 		if !claims.Bootstrap {
 			return SessionScope{}, ErrSessionInvalid
 		}
+		if err := RequireSignupAccess(ctx, pool, claims.Email); err != nil {
+			if errors.Is(err, ErrInviteRequired) {
+				return SessionScope{}, ErrNotApproved
+			}
+			return SessionScope{}, err
+		}
 		if err := createUserFromClaims(ctx, tx, claims, userID, now); err != nil {
 			return SessionScope{}, err
 		}
-	} else if err := syncUserFromClaims(ctx, tx, claims, userID, now); err != nil {
-		return SessionScope{}, err
+	} else {
+		var isActive bool
+		if err := tx.QueryRow(ctx, `SELECT is_active FROM users WHERE id = $1`, userID).Scan(&isActive); err != nil {
+			return SessionScope{}, fmt.Errorf("check user active: %w", err)
+		}
+		if !isActive {
+			return SessionScope{}, ErrUserDeactivated
+		}
+		if err := syncUserFromClaims(ctx, tx, claims, userID, now); err != nil {
+			return SessionScope{}, err
+		}
 	}
 
 	threadID, err := ensureWorkspaceAndThread(ctx, tx, claims, userID, workspaceID, now)
@@ -102,8 +137,8 @@ func createUserFromClaims(ctx context.Context, tx pgx.Tx, claims auth.Claims, us
 	}
 
 	_, err = tx.Exec(ctx, `
-		INSERT INTO users (id, email, display_name, avatar_url, google_id, role, created_at, updated_at)
-		VALUES ($1, $2, $3, $4, NULLIF($5, ''), $6, $7, $7)
+		INSERT INTO users (id, email, display_name, avatar_url, google_id, role, created_at, updated_at, email_verified_at)
+		VALUES ($1, $2, $3, $4, NULLIF($5, ''), $6, $7, $7, $7)
 	`, userID, strings.TrimSpace(claims.Email), strings.TrimSpace(claims.Name),
 		strings.TrimSpace(claims.Picture), googleID, RoleForEmail(claims.Email), now)
 	if err != nil {
@@ -174,6 +209,9 @@ func RegisterEmailUser(ctx context.Context, pool *pgxpool.Pool, email, password,
 	}
 
 	normalizedEmail := auth.NormalizeEmail(email)
+	if err := RequireSignupAccess(ctx, pool, normalizedEmail); err != nil {
+		return SessionScope{}, err
+	}
 	name := strings.TrimSpace(displayName)
 	if name == "" {
 		name = displayNameFromEmail(normalizedEmail)
@@ -198,15 +236,15 @@ func RegisterEmailUser(ctx context.Context, pool *pgxpool.Pool, email, password,
 	var existingID string
 	err = tx.QueryRow(ctx, `SELECT id FROM users WHERE LOWER(email) = $1`, normalizedEmail).Scan(&existingID)
 	if err == nil {
-		return SessionScope{}, fmt.Errorf("email already registered")
+		return SessionScope{}, fmt.Errorf("could not create account")
 	}
 	if !errors.Is(err, pgx.ErrNoRows) {
 		return SessionScope{}, fmt.Errorf("check email: %w", err)
 	}
 
 	_, err = tx.Exec(ctx, `
-		INSERT INTO users (id, email, display_name, password_hash, role, created_at, updated_at)
-		VALUES ($1, $2, $3, $4, $5, $6, $6)
+		INSERT INTO users (id, email, display_name, password_hash, role, created_at, updated_at, email_verified_at)
+		VALUES ($1, $2, $3, $4, $5, $6, $6, NULL)
 	`, userID, normalizedEmail, name, hash, RoleForEmail(normalizedEmail), now)
 	if err != nil {
 		return SessionScope{}, fmt.Errorf("create user: %w", err)
@@ -252,15 +290,16 @@ func AuthenticateEmailUser(ctx context.Context, pool *pgxpool.Pool, email, passw
 
 	normalizedEmail := auth.NormalizeEmail(email)
 	var (
-		userID      string
-		displayName string
+		userID       string
+		displayName  string
 		passwordHash string
+		isActive     bool
 	)
 	err := pool.QueryRow(ctx, `
-		SELECT id, display_name, COALESCE(password_hash, '')
+		SELECT id, display_name, COALESCE(password_hash, ''), is_active
 		FROM users
 		WHERE LOWER(email) = $1
-	`, normalizedEmail).Scan(&userID, &displayName, &passwordHash)
+	`, normalizedEmail).Scan(&userID, &displayName, &passwordHash, &isActive)
 	if err != nil {
 		if errors.Is(err, pgx.ErrNoRows) {
 			return auth.Claims{}, fmt.Errorf("invalid credentials")
@@ -269,6 +308,9 @@ func AuthenticateEmailUser(ctx context.Context, pool *pgxpool.Pool, email, passw
 	}
 	if !strings.HasPrefix(userID, "email-") {
 		return auth.Claims{}, fmt.Errorf("invalid credentials")
+	}
+	if !isActive {
+		return auth.Claims{}, ErrUserDeactivated
 	}
 	if !auth.VerifyPassword(passwordHash, password) {
 		return auth.Claims{}, fmt.Errorf("invalid credentials")
@@ -317,7 +359,8 @@ func personalWorkspaceName(displayName string) string {
 // UserByID loads a user row for the me query.
 func UserByID(ctx context.Context, pool *pgxpool.Pool, userID string) (*model.User, error) {
 	row := pool.QueryRow(ctx, `
-		SELECT id, email, display_name, username, avatar_url, role, created_at, updated_at
+		SELECT id, email, display_name, username, avatar_url, role, created_at, updated_at,
+			(email_verified_at IS NOT NULL)
 		FROM users WHERE id = $1
 	`, userID)
 	return scanUser(row)

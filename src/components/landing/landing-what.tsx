@@ -42,10 +42,10 @@ export function LandingWhat({ isSignedIn = false }: LandingWhatProps) {
             ) : (
               <>
                 <Link
-                  href="/login"
+                  href="/#waitlist"
                   className={cn(buttonVariants({ size: "lg" }), "px-5")}
                 >
-                  Get started
+                  Join the beta
                   <ArrowRight />
                 </Link>
                 <Link

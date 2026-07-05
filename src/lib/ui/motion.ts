@@ -32,9 +32,23 @@ export const motionOverlay =
 export const motionDialogContent =
   "motion-safe:transition-[opacity,transform] motion-safe:duration-default motion-safe:ease-motion-out motion-reduce:transition-none motion-reduce:data-ending-style:scale-100 motion-reduce:data-starting-style:scale-100 motion-reduce:data-ending-style:opacity-100 motion-reduce:data-starting-style:opacity-100";
 
-/** Sheet panel slide and opacity. */
+/** Sheet panel slide and opacity (transition fallback). */
 export const motionSheetContent =
   "motion-safe:transition-[opacity,transform] motion-safe:duration-default motion-safe:ease-motion-out motion-reduce:transition-none motion-reduce:data-ending-style:translate-x-0 motion-reduce:data-starting-style:translate-x-0 motion-reduce:data-ending-style:translate-y-0 motion-reduce:data-starting-style:translate-y-0 motion-reduce:data-ending-style:opacity-100 motion-reduce:data-starting-style:opacity-100";
+
+/** Sheet overlay fade via data-open enter/exit. */
+export const motionSheetOverlayEnter =
+  "motion-safe:data-open:animate-in motion-safe:data-open:fade-in-0 motion-safe:data-closed:animate-out motion-safe:data-closed:fade-out-0 motion-safe:duration-fast motion-safe:ease-motion-out motion-reduce:animate-none";
+
+/** Sheet panel enter/exit per edge (data-open animate-in). */
+export const motionSheetSideEnter = {
+  top: "motion-safe:data-open:animate-in motion-safe:data-open:fade-in-0 motion-safe:data-open:slide-in-from-top motion-safe:data-closed:animate-out motion-safe:data-closed:fade-out-0 motion-safe:data-closed:slide-out-to-top motion-safe:duration-default motion-safe:ease-motion-out motion-reduce:animate-none",
+  bottom:
+    "motion-safe:data-open:animate-in motion-safe:data-open:fade-in-0 motion-safe:data-open:slide-in-from-bottom motion-safe:data-closed:animate-out motion-safe:data-closed:fade-out-0 motion-safe:data-closed:slide-out-to-bottom motion-safe:duration-default motion-safe:ease-motion-out motion-reduce:animate-none",
+  left: "motion-safe:data-open:animate-in motion-safe:data-open:fade-in-0 motion-safe:data-open:slide-in-from-left motion-safe:data-closed:animate-out motion-safe:data-closed:fade-out-0 motion-safe:data-closed:slide-out-to-left motion-safe:duration-default motion-safe:ease-motion-out motion-reduce:animate-none",
+  right:
+    "motion-safe:data-open:animate-in motion-safe:data-open:fade-in-0 motion-safe:data-open:slide-in-from-right motion-safe:data-closed:animate-out motion-safe:data-closed:fade-out-0 motion-safe:data-closed:slide-out-to-right motion-safe:duration-default motion-safe:ease-motion-out motion-reduce:animate-none",
+} as const;
 
 /** Dropdown and select popup enter/exit. */
 export const motionPopupEnter =
@@ -72,10 +86,6 @@ export const motionPanelWidth =
 /** Accordion chevron rotation. */
 export const motionAccordionChevron =
   "motion-safe:transition-transform motion-safe:duration-default motion-safe:ease-motion-out group-data-[panel-open]:rotate-180 motion-reduce:transition-none";
-
-/** Skeleton loading pulse. */
-export const motionSkeleton =
-  "motion-safe:animate-pulse motion-reduce:animate-none";
 
 /** Status indicator ping. */
 export const motionPing =

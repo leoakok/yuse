@@ -13,13 +13,13 @@ import {
 import type { ComposerAttachment } from "@/lib/types/assistant";
 import { Button } from "@/components/ui/button";
 import {
-  Dialog,
-  DialogContent,
-  DialogDescription,
-  DialogFooter,
-  DialogHeader,
-  DialogTitle,
-} from "@/components/ui/dialog";
+  ResponsiveDialog,
+  ResponsiveDialogContent,
+  ResponsiveDialogDescription,
+  ResponsiveDialogFooter,
+  ResponsiveDialogHeader,
+  ResponsiveDialogTitle,
+} from "@/components/ui/responsive-dialog";
 import { Input } from "@/components/ui/input";
 import { Separator } from "@/components/ui/separator";
 import { normalizeLinkedInProfileUrl } from "@/lib/cv/linkedin-profile-url";
@@ -194,14 +194,14 @@ export function ResumeImportDialog({ open, onOpenChange }: ResumeImportDialogPro
   };
 
   return (
-    <Dialog open={open} onOpenChange={handleOpenChange}>
-      <DialogContent className="sm:max-w-md" showCloseButton={!isImporting}>
-        <DialogHeader>
-          <DialogTitle>Import a resume</DialogTitle>
-          <DialogDescription>
+    <ResponsiveDialog open={open} onOpenChange={handleOpenChange}>
+      <ResponsiveDialogContent className="sm:max-w-md" showCloseButton={!isImporting}>
+        <ResponsiveDialogHeader>
+          <ResponsiveDialogTitle>Import a resume</ResponsiveDialogTitle>
+          <ResponsiveDialogDescription>
             Upload an existing resume or enter your LinkedIn username.
-          </DialogDescription>
-        </DialogHeader>
+          </ResponsiveDialogDescription>
+        </ResponsiveDialogHeader>
 
         <div className="grid gap-4">
           <div
@@ -296,7 +296,7 @@ export function ResumeImportDialog({ open, onOpenChange }: ResumeImportDialogPro
           ) : null}
         </div>
 
-        <DialogFooter>
+        <ResponsiveDialogFooter>
           <Button
             type="button"
             disabled={isImporting || !canImport}
@@ -311,8 +311,8 @@ export function ResumeImportDialog({ open, onOpenChange }: ResumeImportDialogPro
               "Import resume"
             )}
           </Button>
-        </DialogFooter>
-      </DialogContent>
-    </Dialog>
+        </ResponsiveDialogFooter>
+      </ResponsiveDialogContent>
+    </ResponsiveDialog>
   );
 }

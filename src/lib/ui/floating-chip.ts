@@ -1,3 +1,5 @@
+import { cn } from "@/lib/utils";
+
 /** Frosted glass pill used in nav, account menu, workspace panel headers, and composer. */
 export const floatingChipClassName =
   "flex h-10 items-center rounded-full border border-border/50 bg-background/80 px-3 shadow-sm backdrop-blur-md supports-[backdrop-filter]:bg-background/60 motion-safe:transition-[background-color,border-color,box-shadow,color] motion-safe:duration-fast motion-safe:ease-motion-out";
@@ -6,13 +8,9 @@ export const floatingChipClassName =
 export const floatingChipGroupClassName =
   "flex items-center gap-1 rounded-full border border-border/50 bg-background/80 p-1 shadow-sm backdrop-blur-md supports-[backdrop-filter]:bg-background/60 motion-safe:transition-[background-color,border-color,box-shadow] motion-safe:duration-fast motion-safe:ease-motion-out";
 
-/** Opaque pill for fog headers: no backdrop blur, content fades underneath instead. */
-export const floatingChipFogClassName =
-  "flex h-10 items-center rounded-full border border-border/50 bg-background px-3 shadow-sm";
-
-/** Opaque grouped pill for fog headers: p-1 gutter with gap-1 between inner controls. */
-export const floatingChipFogGroupClassName =
-  "flex items-center gap-1 rounded-full border border-border/50 bg-background p-1 shadow-sm";
+/** Square frosted chip for a single icon control. Uniform p-1 inset, not h-10 + px-3. */
+export const floatingChipIconOnlyClassName =
+  "flex size-10 shrink-0 items-center justify-center rounded-full border border-border/50 bg-background/80 p-1 shadow-sm backdrop-blur-md supports-[backdrop-filter]:bg-background/60 motion-safe:transition-[background-color,border-color,box-shadow,color] motion-safe:duration-fast motion-safe:ease-motion-out";
 
 /** Icon button inside a floating chip: circular hover, inset within h-10 pill. */
 export const floatingChipIconButtonClassName =
@@ -30,6 +28,30 @@ export const floatingChipNavLinkClassName =
 export const floatingChipSurfaceClassName =
   "border border-border/50 bg-background/80 shadow-sm backdrop-blur-md supports-[backdrop-filter]:bg-background/60";
 
-/** Opaque surface for fog footers: no backdrop blur, content fades underneath instead. */
-export const floatingChipFogSurfaceClassName =
-  "border border-border/50 bg-background shadow-sm";
+/**
+ * Workspace z-index scale (compact mobile view):
+ * - 10: sticky panel headers, scroll content; FAB row inside bottom chrome
+ * - 40: workspace bottom chrome (fog z-0, FAB row z-10 within isolate)
+ * - 50: composer footer with scroll fade, sheets, dialogs, dropdowns
+ */
+
+/** Compact workspace FABs (Preview, Yuse). Light surface; bottom fog provides the frosted zone. */
+export const workspaceFabBaseClassName =
+  "flex h-10 items-center rounded-full border border-border/60 bg-background/80 shadow-sm backdrop-blur-md supports-[backdrop-filter]:bg-background/65 motion-safe:transition-[background-color,border-color,box-shadow,color] motion-safe:duration-fast motion-safe:ease-motion-out";
+
+export function workspaceFabClassName(isActive: boolean) {
+  return cn(
+    workspaceFabBaseClassName,
+    isActive
+      ? "border-border/80 bg-muted/70 text-foreground"
+      : "text-foreground hover:border-border/70 hover:bg-background/90"
+  );
+}
+
+/** CSS class for the fixed bottom fog strip (see workspace-fab-fog.css). */
+export const workspaceFabFogClassName = "workspace-fab-fog";
+
+/** Bottom offset for compact workspace FABs from the viewport edge. */
+export const workspaceFabBottomClassName =
+  "bottom-[env(safe-area-inset-bottom,0px)]";
+

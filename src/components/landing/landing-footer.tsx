@@ -32,10 +32,10 @@ export function LandingFooter({ isSignedIn = false }: LandingFooterProps) {
                 Sign in
               </Link>
               <Link
-                href="/login"
+                href="/#waitlist"
                 className="rounded-md outline-none hover:text-foreground focus-visible:ring-2 focus-visible:ring-ring"
               >
-                Get started
+                Join the beta
               </Link>
             </>
           )}

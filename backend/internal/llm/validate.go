@@ -16,6 +16,7 @@ var writeTools = map[string]bool{
 	"add_section_item":            true,
 	"update_section_item":         true,
 	"delete_section_item":         true,
+	"delete_all_section_items":    true,
 	"set_item_visibility":         true,
 	"reorder_resume_sections":     true,
 	"set_section_visibility":      true,

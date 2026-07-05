@@ -1121,7 +1121,7 @@ export function CvPreview({
 
     const metrics = measureCvBlocks(root);
     const maxHeight = getUsablePageHeightPx(pageFormat, margins.vertical);
-    const next = paginateCvBlocks(metrics, maxHeight);
+    const next = paginateCvBlocks(metrics, maxHeight, blocks);
     setPageIndices((prev) => (pageIndicesEqual(prev, next) ? prev : next));
   }, [
     blocks,

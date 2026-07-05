@@ -44,6 +44,29 @@ type AddResumeSectionItemInput struct {
 	Metadata  map[string]any `json:"metadata,omitempty"`
 }
 
+// Admin action audit trail entry.
+type AdminAuditLogEntry struct {
+	ID         string         `json:"id"`
+	ActorID    string         `json:"actorId"`
+	ActorEmail string         `json:"actorEmail"`
+	Action     string         `json:"action"`
+	TargetType string         `json:"targetType"`
+	TargetID   *string        `json:"targetId,omitempty"`
+	Metadata   map[string]any `json:"metadata,omitempty"`
+	CreatedAt  string         `json:"createdAt"`
+}
+
+// Platform user row for the admin panel.
+type AdminUser struct {
+	ID          string   `json:"id"`
+	Email       string   `json:"email"`
+	DisplayName string   `json:"displayName"`
+	Role        UserRole `json:"role"`
+	IsActive    bool     `json:"isActive"`
+	CreatedAt   string   `json:"createdAt"`
+	UpdatedAt   string   `json:"updatedAt"`
+}
+
 type AssistantActionLog struct {
 	ID        string         `json:"id"`
 	MessageID string         `json:"messageId"`
@@ -180,6 +203,16 @@ type KnowledgeEntry struct {
 	UpdatedAt string            `json:"updatedAt"`
 }
 
+// LinkedIn job search result (admin tooling).
+type LinkedInJobCard struct {
+	JobID    string  `json:"jobId"`
+	Title    string  `json:"title"`
+	Company  *string `json:"company,omitempty"`
+	Location *string `json:"location,omitempty"`
+	ListedAt *string `json:"listedAt,omitempty"`
+	URL      string  `json:"url"`
+}
+
 type Mutation struct {
 }
 
@@ -276,9 +309,11 @@ type ReorderResumeSectionsInput struct {
 }
 
 type Resume struct {
-	ID               string  `json:"id"`
-	WorkspaceID      string  `json:"workspaceId"`
-	Title            string  `json:"title"`
+	ID          string `json:"id"`
+	WorkspaceID string `json:"workspaceId"`
+	Title       string `json:"title"`
+	// Per-resume URL segment under the owner's username
+	Slug             *string `json:"slug,omitempty"`
 	ContactProfileID *string `json:"contactProfileId,omitempty"`
 	CreatedBy        string  `json:"createdBy"`
 	CreatedAt        string  `json:"createdAt"`
@@ -390,6 +425,12 @@ type SectionWithItems struct {
 	DisplayTitle  *string        `json:"displayTitle,omitempty"`
 	Items         []*SectionItem `json:"items"`
 	ShowInPreview bool           `json:"showInPreview"`
+}
+
+// Result of an admin test email send.
+type SendTestEmailResult struct {
+	Success bool    `json:"success"`
+	Message *string `json:"message,omitempty"`
 }
 
 type SetPortfolioProjectVisibilityInput struct {
@@ -634,8 +675,24 @@ type User struct {
 	Username  *string  `json:"username,omitempty"`
 	AvatarURL *string  `json:"avatarUrl,omitempty"`
 	Role      UserRole `json:"role"`
-	CreatedAt string   `json:"createdAt"`
-	UpdatedAt string   `json:"updatedAt"`
+	// True when the account has a local password (email sign-in).
+	HasPasswordCredential bool `json:"hasPasswordCredential"`
+	// True when the signed-in user may change their login email in settings.
+	CanChangeEmail bool `json:"canChangeEmail"`
+	// True when the account email address has been verified.
+	EmailVerified bool   `json:"emailVerified"`
+	CreatedAt     string `json:"createdAt"`
+	UpdatedAt     string `json:"updatedAt"`
+}
+
+// Beta waitlist entry.
+type WaitlistEntry struct {
+	ID          string         `json:"id"`
+	Email       string         `json:"email"`
+	Status      WaitlistStatus `json:"status"`
+	SubmittedAt string         `json:"submittedAt"`
+	ReviewedAt  *string        `json:"reviewedAt,omitempty"`
+	ReviewedBy  *string        `json:"reviewedBy,omitempty"`
 }
 
 type Workspace struct {
@@ -3403,6 +3460,66 @@ func (e SpacingDensity) MarshalJSON() ([]byte, error) {
 	return buf.Bytes(), nil
 }
 
+// Transactional email template for admin preview sends.
+type TestEmailType string
+
+const (
+	TestEmailTypeWelcome           TestEmailType = "WELCOME"
+	TestEmailTypeBetaApproval      TestEmailType = "BETA_APPROVAL"
+	TestEmailTypeEmailVerification TestEmailType = "EMAIL_VERIFICATION"
+	TestEmailTypePasswordReset     TestEmailType = "PASSWORD_RESET"
+)
+
+var AllTestEmailType = []TestEmailType{
+	TestEmailTypeWelcome,
+	TestEmailTypeBetaApproval,
+	TestEmailTypeEmailVerification,
+	TestEmailTypePasswordReset,
+}
+
+func (e TestEmailType) IsValid() bool {
+	switch e {
+	case TestEmailTypeWelcome, TestEmailTypeBetaApproval, TestEmailTypeEmailVerification, TestEmailTypePasswordReset:
+		return true
+	}
+	return false
+}
+
+func (e TestEmailType) String() string {
+	return string(e)
+}
+
+func (e *TestEmailType) UnmarshalGQL(v any) error {
+	str, ok := v.(string)
+	if !ok {
+		return fmt.Errorf("enums must be strings")
+	}
+
+	*e = TestEmailType(str)
+	if !e.IsValid() {
+		return fmt.Errorf("%s is not a valid TestEmailType", str)
+	}
+	return nil
+}
+
+func (e TestEmailType) MarshalGQL(w io.Writer) {
+	fmt.Fprint(w, strconv.Quote(e.String()))
+}
+
+func (e *TestEmailType) UnmarshalJSON(b []byte) error {
+	s, err := strconv.Unquote(string(b))
+	if err != nil {
+		return err
+	}
+	return e.UnmarshalGQL(s)
+}
+
+func (e TestEmailType) MarshalJSON() ([]byte, error) {
+	var buf bytes.Buffer
+	e.MarshalGQL(&buf)
+	return buf.Bytes(), nil
+}
+
 type TwinEntryType string
 
 const (
@@ -3515,6 +3632,64 @@ func (e *UserRole) UnmarshalJSON(b []byte) error {
 }
 
 func (e UserRole) MarshalJSON() ([]byte, error) {
+	var buf bytes.Buffer
+	e.MarshalGQL(&buf)
+	return buf.Bytes(), nil
+}
+
+// Beta waitlist review status.
+type WaitlistStatus string
+
+const (
+	WaitlistStatusPending  WaitlistStatus = "PENDING"
+	WaitlistStatusApproved WaitlistStatus = "APPROVED"
+	WaitlistStatusRejected WaitlistStatus = "REJECTED"
+)
+
+var AllWaitlistStatus = []WaitlistStatus{
+	WaitlistStatusPending,
+	WaitlistStatusApproved,
+	WaitlistStatusRejected,
+}
+
+func (e WaitlistStatus) IsValid() bool {
+	switch e {
+	case WaitlistStatusPending, WaitlistStatusApproved, WaitlistStatusRejected:
+		return true
+	}
+	return false
+}
+
+func (e WaitlistStatus) String() string {
+	return string(e)
+}
+
+func (e *WaitlistStatus) UnmarshalGQL(v any) error {
+	str, ok := v.(string)
+	if !ok {
+		return fmt.Errorf("enums must be strings")
+	}
+
+	*e = WaitlistStatus(str)
+	if !e.IsValid() {
+		return fmt.Errorf("%s is not a valid WaitlistStatus", str)
+	}
+	return nil
+}
+
+func (e WaitlistStatus) MarshalGQL(w io.Writer) {
+	fmt.Fprint(w, strconv.Quote(e.String()))
+}
+
+func (e *WaitlistStatus) UnmarshalJSON(b []byte) error {
+	s, err := strconv.Unquote(string(b))
+	if err != nil {
+		return err
+	}
+	return e.UnmarshalGQL(s)
+}
+
+func (e WaitlistStatus) MarshalJSON() ([]byte, error) {
 	var buf bytes.Buffer
 	e.MarshalGQL(&buf)
 	return buf.Bytes(), nil

@@ -1,0 +1,35 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>{{.Title}}</title>
+</head>
+<body style="margin:0;padding:0;background-color:#f9f8f6;font-family:ui-sans-serif,system-ui,-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,'Helvetica Neue',Arial,sans-serif;">
+  <span style="display:none;max-height:0;overflow:hidden;color:#f9f8f6;">{{.Preheader}}</span>
+  <table role="presentation" width="100%" cellspacing="0" cellpadding="0" style="background-color:#f9f8f6;padding:32px 16px;">
+    <tr>
+      <td align="center">
+        <table role="presentation" width="100%" cellspacing="0" cellpadding="0" style="max-width:560px;background:#ffffff;border-radius:12px;border:1px solid #e8e4df;overflow:hidden;">
+          <tr>
+            <td style="padding:28px 32px 20px;text-align:center;background:linear-gradient(180deg,#fff9f2 0%,#ffffff 100%);">
+              <div style="display:inline-block;width:44px;height:44px;border-radius:50%;background:radial-gradient(circle at 35% 35%,#f5d78e 0%,#d4a853 45%,#c45c2a 100%);margin-bottom:12px;"></div>
+              <div style="font-size:22px;font-weight:600;letter-spacing:-0.02em;color:#3d3a36;">Yuse</div>
+            </td>
+          </tr>
+          <tr>
+            <td style="padding:8px 32px 32px;">
+              {{.ContentHTML}}
+            </td>
+          </tr>
+          <tr>
+            <td style="padding:0 32px 28px;font-size:12px;line-height:1.5;color:#6b6560;text-align:center;">
+              Yuse helps you build resumes and portfolios that feel like you.
+            </td>
+          </tr>
+        </table>
+      </td>
+    </tr>
+  </table>
+</body>
+</html>

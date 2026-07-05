@@ -165,6 +165,9 @@ func (githubTokenExecutor) UpdateResumeSectionVisibility(model.UpdateResumeSecti
 func (githubTokenExecutor) DeleteSectionItem(string, string) (*model.ResumeWithContent, error) {
 	return nil, nil
 }
+func (githubTokenExecutor) DeleteAllSectionItems(*string, *model.SectionType) (int, error) {
+	return 0, nil
+}
 func (githubTokenExecutor) UpdateResumeSettings(model.UpdateResumeSettingsInput) (*model.ResumeSettings, error) {
 	return nil, nil
 }

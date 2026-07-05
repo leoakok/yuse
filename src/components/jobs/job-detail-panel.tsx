@@ -2,7 +2,7 @@
 
 import { useEffect, useMemo, useState } from "react";
 import Link from "next/link";
-import { ExternalLink, Loader2, Recycle } from "lucide-react";
+import { ExternalLink, Loader2, Sparkles } from "lucide-react";
 import { toast } from "sonner";
 import { JobLinkButton } from "@/components/jobs/job-link-button";
 import { Button } from "@/components/ui/button";
@@ -280,7 +280,7 @@ export function JobDetailPanel({
                       {isRegenerating ? (
                         <Loader2 className="size-4 animate-spin" />
                       ) : (
-                        <Recycle className="size-4" />
+                        <Sparkles className="size-4" />
                       )}
                     </Button>
                   </div>

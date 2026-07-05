@@ -20,13 +20,13 @@ import {
   validateIncomingFiles,
 } from "@/lib/assistant/attachments";
 import type { ComposerAttachment } from "@/lib/types/assistant";
-import { floatingChipFogSurfaceClassName } from "@/lib/ui/floating-chip";
+import { floatingChipSurfaceClassName } from "@/lib/ui/floating-chip";
 import { motionTransitionColors } from "@/lib/ui/motion";
 import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
 import { cn } from "@/lib/utils";
 
-const composerPillClassName = floatingChipFogSurfaceClassName;
+const composerPillClassName = floatingChipSurfaceClassName;
 
 const composerIconButtonClassName = cn(
   composerPillClassName,
@@ -67,7 +67,10 @@ export function AssistantComposer({
   const textareaRef = useRef<HTMLTextAreaElement>(null);
   const dragDepthRef = useRef(0);
   const attachmentsRef = useRef(attachments);
-  attachmentsRef.current = attachments;
+
+  useEffect(() => {
+    attachmentsRef.current = attachments;
+  }, [attachments]);
 
   const isControlled = controlledValue !== undefined;
   const value = isControlled ? controlledValue : internalValue;
@@ -185,14 +188,14 @@ export function AssistantComposer({
     }
   };
 
-  const onDragEnter = (event: DragEvent<HTMLDivElement>) => {
+  const onDragEnter = (event: DragEvent<HTMLFormElement>) => {
     if (isEditing || !event.dataTransfer.types.includes("Files")) return;
     event.preventDefault();
     dragDepthRef.current += 1;
     setIsDragOver(true);
   };
 
-  const onDragLeave = (event: DragEvent<HTMLDivElement>) => {
+  const onDragLeave = (event: DragEvent<HTMLFormElement>) => {
     if (isEditing || !event.dataTransfer.types.includes("Files")) return;
     event.preventDefault();
     dragDepthRef.current = Math.max(0, dragDepthRef.current - 1);
@@ -201,13 +204,13 @@ export function AssistantComposer({
     }
   };
 
-  const onDragOver = (event: DragEvent<HTMLDivElement>) => {
+  const onDragOver = (event: DragEvent<HTMLFormElement>) => {
     if (isEditing || !event.dataTransfer.types.includes("Files")) return;
     event.preventDefault();
     event.dataTransfer.dropEffect = "copy";
   };
 
-  const onDrop = (event: DragEvent<HTMLDivElement>) => {
+  const onDrop = (event: DragEvent<HTMLFormElement>) => {
     if (isEditing || !event.dataTransfer.types.includes("Files")) return;
     event.preventDefault();
     dragDepthRef.current = 0;
@@ -219,7 +222,7 @@ export function AssistantComposer({
   return (
     <form
       onSubmit={onFormSubmit}
-      className={cn("relative w-full", className)}
+      className={cn("relative z-20 w-full", className)}
       onDragEnter={onDragEnter}
       onDragLeave={onDragLeave}
       onDragOver={onDragOver}

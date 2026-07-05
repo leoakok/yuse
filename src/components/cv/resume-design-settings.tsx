@@ -515,7 +515,9 @@ export function ResumeDesignSettings({
     designExtension
   );
   const snapshotRef = useRef(snapshot);
-  snapshotRef.current = snapshot;
+  useEffect(() => {
+    snapshotRef.current = snapshot;
+  }, [snapshot]);
 
   const persist = useCallback(async () => {
     const current = snapshotRef.current;

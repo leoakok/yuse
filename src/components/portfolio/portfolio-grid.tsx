@@ -14,6 +14,11 @@ import {
 } from "@/lib/api/portfolio-api";
 import { PortfolioSitePreview } from "@/components/portfolio/portfolio-site-preview";
 import { Button } from "@/components/ui/button";
+import { cn } from "@/lib/utils";
+import {
+  catalogCardPreviewClassName,
+  catalogCardShellClassName,
+} from "@/lib/ui/catalog-card";
 import {
   Card,
   CardAction,
@@ -22,19 +27,19 @@ import {
   CardTitle,
 } from "@/components/ui/card";
 import {
-  Dialog,
-  DialogContent,
-  DialogDescription,
-  DialogFooter,
-  DialogHeader,
-  DialogTitle,
-} from "@/components/ui/dialog";
+  ResponsiveDialog,
+  ResponsiveDialogContent,
+  ResponsiveDialogDescription,
+  ResponsiveDialogFooter,
+  ResponsiveDialogHeader,
+  ResponsiveDialogTitle,
+} from "@/components/ui/responsive-dialog";
 import {
-  DropdownMenu,
-  DropdownMenuContent,
-  DropdownMenuItem,
-  DropdownMenuTrigger,
-} from "@/components/ui/dropdown-menu";
+  ResponsiveDropdownMenu,
+  ResponsiveDropdownMenuContent,
+  ResponsiveDropdownMenuItem,
+  ResponsiveDropdownMenuTrigger,
+} from "@/components/ui/responsive-dropdown-menu";
 
 interface PortfolioCardProps {
   portfolio: Portfolio;
@@ -101,14 +106,10 @@ function PortfolioCard({ portfolio, onDeleted }: PortfolioCardProps) {
 
   return (
     <>
-      <Card className="group flex h-full flex-col overflow-hidden transition-colors hover:bg-muted/40">
-        <Link
-          href={portfolioPath(portfolio.id)}
-          className="relative block h-52 overflow-hidden border-b bg-muted/30"
-        >
+      <Card className={catalogCardShellClassName}>
+        <Link href={portfolioPath(portfolio.id)} className={catalogCardPreviewClassName}>
           {loading ? (
-            <div className="flex h-full items-center justify-center">
-              <Loader2 className="size-5 animate-spin text-muted-foreground" aria-hidden />
+            <div className="flex h-full items-center justify-center bg-muted/30">
               <span className="sr-only">Loading preview</span>
             </div>
           ) : content ? (
@@ -137,8 +138,8 @@ function PortfolioCard({ portfolio, onDeleted }: PortfolioCardProps) {
               </Link>
             </CardTitle>
             <CardAction>
-              <DropdownMenu>
-                <DropdownMenuTrigger
+              <ResponsiveDropdownMenu>
+                <ResponsiveDropdownMenuTrigger
                   render={
                     <Button
                       type="button"
@@ -151,23 +152,23 @@ function PortfolioCard({ portfolio, onDeleted }: PortfolioCardProps) {
                     </Button>
                   }
                 />
-                <DropdownMenuContent align="end" className="min-w-40">
-                  <DropdownMenuItem
+                <ResponsiveDropdownMenuContent align="end" className="min-w-40">
+                  <ResponsiveDropdownMenuItem
                     disabled={isDuplicating}
                     onClick={() => void handleDuplicate()}
                   >
                     <Copy />
                     Duplicate
-                  </DropdownMenuItem>
-                  <DropdownMenuItem
+                  </ResponsiveDropdownMenuItem>
+                  <ResponsiveDropdownMenuItem
                     variant="warning"
                     onClick={() => setDeleteOpen(true)}
                   >
                     <Trash2 />
                     Delete
-                  </DropdownMenuItem>
-                </DropdownMenuContent>
-              </DropdownMenu>
+                  </ResponsiveDropdownMenuItem>
+                </ResponsiveDropdownMenuContent>
+              </ResponsiveDropdownMenu>
             </CardAction>
           </CardHeader>
           <CardContent className="mt-auto">
@@ -179,16 +180,16 @@ function PortfolioCard({ portfolio, onDeleted }: PortfolioCardProps) {
           </CardContent>
         </div>
       </Card>
-      <Dialog open={deleteOpen} onOpenChange={setDeleteOpen}>
-        <DialogContent showCloseButton={!isDeleting}>
-          <DialogHeader>
-            <DialogTitle>Delete this portfolio?</DialogTitle>
-            <DialogDescription>
+      <ResponsiveDialog open={deleteOpen} onOpenChange={setDeleteOpen}>
+        <ResponsiveDialogContent showCloseButton={!isDeleting}>
+          <ResponsiveDialogHeader>
+            <ResponsiveDialogTitle>Delete this portfolio?</ResponsiveDialogTitle>
+            <ResponsiveDialogDescription>
               &ldquo;{portfolio.title}&rdquo; will be removed permanently. This cannot be
               undone.
-            </DialogDescription>
-          </DialogHeader>
-          <DialogFooter>
+            </ResponsiveDialogDescription>
+          </ResponsiveDialogHeader>
+          <ResponsiveDialogFooter>
             <Button
               type="button"
               variant="warning"
@@ -197,24 +198,39 @@ function PortfolioCard({ portfolio, onDeleted }: PortfolioCardProps) {
             >
               {isDeleting ? "Deleting…" : "Delete"}
             </Button>
-          </DialogFooter>
-        </DialogContent>
-      </Dialog>
+          </ResponsiveDialogFooter>
+        </ResponsiveDialogContent>
+      </ResponsiveDialog>
     </>
   );
 }
 
 interface PortfolioGridProps {
   portfolios: Portfolio[];
+  isLoading?: boolean;
+  isRevalidating?: boolean;
   onCreatePortfolio?: () => void;
   onPortfolioDeleted?: (id: string) => void;
 }
 
 export function PortfolioGrid({
   portfolios,
+  isLoading = false,
+  isRevalidating = false,
   onCreatePortfolio,
   onPortfolioDeleted,
 }: PortfolioGridProps) {
+  if (isLoading && portfolios.length === 0) {
+    return (
+      <div
+        className="flex min-h-[12rem] items-center justify-center rounded-lg border border-dashed px-6 py-16 text-center"
+        aria-busy="true"
+      >
+        <p className="text-sm text-muted-foreground">Loading portfolios…</p>
+      </div>
+    );
+  }
+
   if (portfolios.length === 0) {
     return (
       <div className="flex flex-col items-center justify-center gap-4 rounded-lg border border-dashed px-6 py-16 text-center">
@@ -234,14 +250,27 @@ export function PortfolioGrid({
   }
 
   return (
-    <div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-3">
-      {portfolios.map((portfolio) => (
-        <PortfolioCard
-          key={portfolio.id}
-          portfolio={portfolio}
-          onDeleted={(id) => onPortfolioDeleted?.(id)}
+    <div className="relative">
+      {isRevalidating ? (
+        <div
+          className="pointer-events-none absolute inset-x-0 top-0 z-10 h-0.5 animate-pulse bg-primary/40"
+          aria-hidden
         />
-      ))}
+      ) : null}
+      <div
+        className={cn(
+          "grid gap-4 sm:grid-cols-2 xl:grid-cols-3 transition-opacity duration-300",
+          isRevalidating && "opacity-80"
+        )}
+      >
+        {portfolios.map((portfolio) => (
+          <PortfolioCard
+            key={portfolio.id}
+            portfolio={portfolio}
+            onDeleted={(id) => onPortfolioDeleted?.(id)}
+          />
+        ))}
+      </div>
     </div>
   );
 }

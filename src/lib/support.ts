@@ -1,3 +1,3 @@
-export const SUPPORT_EMAIL = "support@cvbuilder.app";
+export const SUPPORT_EMAIL = "leo@yuse.one";
 
-export const SUPPORT_MAILTO = `mailto:${SUPPORT_EMAIL}?subject=CV%20Builder%20support`;
+export const SUPPORT_MAILTO = `mailto:${SUPPORT_EMAIL}?subject=Yuse%20support`;

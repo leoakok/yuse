@@ -9,13 +9,13 @@ import {
 } from "@/lib/types/twin";
 import { Button } from "@/components/ui/button";
 import {
-  Dialog,
-  DialogContent,
-  DialogDescription,
-  DialogFooter,
-  DialogHeader,
-  DialogTitle,
-} from "@/components/ui/dialog";
+  ResponsiveDialog,
+  ResponsiveDialogContent,
+  ResponsiveDialogDescription,
+  ResponsiveDialogFooter,
+  ResponsiveDialogHeader,
+  ResponsiveDialogTitle,
+} from "@/components/ui/responsive-dialog";
 import { Input } from "@/components/ui/input";
 import {
   Select,
@@ -75,16 +75,16 @@ export function TwinEntryDialog({
   }
 
   return (
-    <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="sm:max-w-lg">
-        <DialogHeader>
-          <DialogTitle>{isEditing ? "Edit entry" : "Add entry"}</DialogTitle>
-          <DialogDescription>
+    <ResponsiveDialog open={open} onOpenChange={onOpenChange}>
+      <ResponsiveDialogContent className="sm:max-w-lg">
+        <ResponsiveDialogHeader>
+          <ResponsiveDialogTitle>{isEditing ? "Edit entry" : "Add entry"}</ResponsiveDialogTitle>
+          <ResponsiveDialogDescription>
             {isEditing
               ? "Update the details stored in your Digital Twin."
               : "Capture a full story, roles, education, projects, or skills, with as much detail as you like."}
-          </DialogDescription>
-        </DialogHeader>
+          </ResponsiveDialogDescription>
+        </ResponsiveDialogHeader>
 
         <div className="space-y-4 py-2">
           <div className="space-y-1.5">
@@ -137,12 +137,12 @@ export function TwinEntryDialog({
           </div>
         </div>
 
-        <DialogFooter>
+        <ResponsiveDialogFooter>
           <Button onClick={() => void handleSave()} disabled={isSaving || !title.trim()}>
             {isSaving ? "Saving…" : isEditing ? "Save changes" : "Add entry"}
           </Button>
-        </DialogFooter>
-      </DialogContent>
-    </Dialog>
+        </ResponsiveDialogFooter>
+      </ResponsiveDialogContent>
+    </ResponsiveDialog>
   );
 }

@@ -1,6 +1,6 @@
 "use client";
 
-import { useCallback, useEffect, useState } from "react";
+import { useCallback, useEffect, useMemo, useState } from "react";
 import { usePathname } from "next/navigation";
 import { ArrowLeft, History, PanelRightClose, Plus } from "lucide-react";
 import { YuseLogo } from "@/components/brand/yuse-logo";
@@ -19,24 +19,32 @@ import {
   clamp,
   useStoredWidth,
 } from "@/components/layout/resize-handle";
+import { WorkspaceFloatingHeader } from "@/components/layout/workspace-floating-header";
+import { useWorkspaceMobileDrawerOptional } from "@/components/layout/workspace-mobile-drawer";
+import { WorkspacePanelComposerChrome } from "@/components/layout/workspace-bottom-chrome";
 import {
   ShellAside,
   WorkspacePanel,
   WorkspacePanelBody,
-  WorkspacePanelFloatingFooter,
-  WorkspacePanelHeader,
+  WorkspacePanelScrollAreaFrame,
+  workspacePanelScrollUnderFooterClassName,
 } from "@/components/layout/workspace-panel";
+import { ScrollArea } from "@/components/ui/scroll-area";
+import { useWorkspaceLayoutMode } from "@/components/layout/workspace-view-provider";
 import { STARTER_PROMPTS } from "@/lib/cv/constants";
 import { Button } from "@/components/ui/button";
 import {
-  Dialog,
-  DialogContent,
-  DialogDescription,
-  DialogFooter,
-  DialogHeader,
-  DialogTitle,
-} from "@/components/ui/dialog";
-import { Sheet, SheetContent } from "@/components/ui/sheet";
+  useRegisterDrawerShellHeader,
+  useWorkspacePanelSurfaceClassName,
+} from "@/components/ui/drawer-shell";
+import {
+  ResponsiveDialog,
+  ResponsiveDialogContent,
+  ResponsiveDialogDescription,
+  ResponsiveDialogFooter,
+  ResponsiveDialogHeader,
+  ResponsiveDialogTitle,
+} from "@/components/ui/responsive-dialog";
 import type { ComposerAttachment } from "@/lib/types/assistant";
 import {
   floatingChipIconButtonClassName,
@@ -47,7 +55,7 @@ import { cn } from "@/lib/utils";
 
 function AssistantCollapsedRail({ onOpen }: { onOpen: () => void }) {
   return (
-    <aside className="flex h-full w-12 shrink-0 flex-col items-center border-l bg-muted/10 py-3">
+    <aside className="hidden h-full w-12 shrink-0 flex-col items-center border-l bg-muted/10 py-3 lg:flex">
       <Button
         variant="ghost"
         size="icon"
@@ -61,9 +69,35 @@ function AssistantCollapsedRail({ onOpen }: { onOpen: () => void }) {
   );
 }
 
-export function CvAssistantPanel() {
+/** Static collapsed rail shown while workspace or assistant context is bootstrapping. */
+export function CvAssistantPanelPlaceholder() {
+  const { isLargeScreen } = useWorkspaceLayoutMode();
+
+  if (!isLargeScreen) {
+    return null;
+  }
+
+  return (
+    <aside
+      className="hidden h-full w-12 shrink-0 flex-col items-center border-l bg-muted/10 py-3 lg:flex"
+      aria-hidden="true"
+    >
+      <div className="flex size-9 items-center justify-center">
+        <YuseLogo className="size-5 text-muted-foreground/60" />
+      </div>
+    </aside>
+  );
+}
+
+export function CvAssistantPanel({
+  variant = "sidebar",
+}: {
+  variant?: "sidebar" | "inline" | "drawer";
+}) {
   const pathname = usePathname() ?? "";
   const [assistantWidth, setAssistantWidth] = useStoredWidth(ASSISTANT_KEY, ASSISTANT_DEFAULT);
+  const { isLargeScreen, hasWorkspaceView } = useWorkspaceLayoutMode();
+  const mobileDrawer = useWorkspaceMobileDrawerOptional();
   const {
     messages,
     threads,
@@ -82,20 +116,21 @@ export function CvAssistantPanel() {
     lastAffectedResumeIds,
   } = useCvAssistant();
 
+  const panelSurfaceClassName = useWorkspacePanelSurfaceClassName();
   const [historyOpen, setHistoryOpen] = useState(false);
   const [deletingThreadId, setDeletingThreadId] = useState<string | null>(null);
   const [deleteConfirmThreadId, setDeleteConfirmThreadId] = useState<string | null>(null);
   const [editingMessageId, setEditingMessageId] = useState<string | null>(null);
   const [editingText, setEditingText] = useState("");
-  const [isLargeScreen, setIsLargeScreen] = useState(false);
 
-  useEffect(() => {
-    const query = window.matchMedia("(min-width: 1024px)");
-    const update = () => setIsLargeScreen(query.matches);
-    update();
-    query.addEventListener("change", update);
-    return () => query.removeEventListener("change", update);
-  }, []);
+  const handleCloseAssistant = useCallback(() => {
+    if (isLargeScreen) {
+      setOpen(false);
+      return;
+    }
+    mobileDrawer?.closeDrawer();
+    setOpen(false);
+  }, [isLargeScreen, mobileDrawer, setOpen]);
 
   const cancelEdit = useCallback(() => {
     setEditingMessageId(null);
@@ -176,158 +211,298 @@ export function CvAssistantPanel() {
     }
   }, [isOpen, pathname, setOpen]);
 
-  if (pathname === WELCOME_PATH) {
+  const shouldHide =
+    pathname === WELCOME_PATH ||
+    (variant === "inline" && isLargeScreen) ||
+    (variant === "drawer" && isLargeScreen) ||
+    (variant === "sidebar" && !isLargeScreen);
+
+  const isDrawer = variant === "drawer";
+
+  const drawerHeaderActions = useMemo(
+    () =>
+      isDrawer ? (
+        <>
+          {historyOpen ? (
+            <Button
+              variant="ghost"
+              size="icon-sm"
+              onClick={() => setHistoryOpen(false)}
+            >
+              <ArrowLeft className="size-4" />
+              <span className="sr-only">Back to chat</span>
+            </Button>
+          ) : null}
+          <Button
+            variant="ghost"
+            size="sm"
+            className="h-8 px-2.5"
+            onClick={() => {
+              void startNewChat();
+              setHistoryOpen(false);
+            }}
+            disabled={chatActionsDisabled}
+          >
+            <Plus className="size-3.5" />
+            New chat
+          </Button>
+          {!historyOpen ? (
+            <Button
+              variant="ghost"
+              size="icon-sm"
+              disabled={isThreadsLoading}
+              onClick={() => setHistoryOpen(true)}
+            >
+              <History className="size-4" />
+              <span className="sr-only">Past chats</span>
+            </Button>
+          ) : null}
+        </>
+      ) : null,
+    [
+      chatActionsDisabled,
+      historyOpen,
+      isDrawer,
+      isThreadsLoading,
+      startNewChat,
+    ]
+  );
+
+  const drawerShellHeader = useMemo(
+    () =>
+      isDrawer
+        ? {
+            title: "Yuse",
+            actions: drawerHeaderActions,
+          }
+        : null,
+    [drawerHeaderActions, isDrawer]
+  );
+
+  useRegisterDrawerShellHeader(shouldHide ? null : drawerShellHeader);
+
+  if (shouldHide) {
     return null;
   }
+
+  const showHideAssistantButton = variant === "sidebar";
+  const compactInlineWithFabs =
+    variant === "inline" && hasWorkspaceView && !isLargeScreen;
 
   const panelContent = (
     <WorkspacePanel>
       <WorkspacePanelBody>
-        <div className="min-h-0 flex-1 overflow-y-auto">
-          <WorkspacePanelHeader
-            variant="floating"
-            scrollFog
-            className="px-3"
-            trailing={
-              <>
-                {historyOpen ? (
+        <WorkspacePanelScrollAreaFrame scrollFade={false}>
+          <ScrollArea className="min-h-0 flex-1">
+            {!isDrawer ? (
+              <WorkspaceFloatingHeader
+                className="px-3"
+                onBack={compactInlineWithFabs ? handleCloseAssistant : undefined}
+                backLabel="Back to editor"
+                trailing={
+                <>
+                  {historyOpen ? (
+                    <Button
+                      variant="ghost"
+                      size="icon"
+                      className={floatingChipIconButtonClassName}
+                      onClick={() => setHistoryOpen(false)}
+                    >
+                      <ArrowLeft className="size-4" />
+                      <span className="sr-only">Back to chat</span>
+                    </Button>
+                  ) : null}
                   <Button
                     variant="ghost"
-                    size="icon"
-                    className={floatingChipIconButtonClassName}
-                    onClick={() => setHistoryOpen(false)}
+                    size="sm"
+                    className={floatingChipTextButtonClassName}
+                    onClick={() => {
+                      void startNewChat();
+                      setHistoryOpen(false);
+                    }}
+                    disabled={chatActionsDisabled}
                   >
-                    <ArrowLeft className="size-4" />
-                    <span className="sr-only">Back to chat</span>
+                    <Plus className="size-3.5" />
+                    New chat
                   </Button>
-                ) : null}
-                <Button
-                  variant="ghost"
-                  size="sm"
-                  className={floatingChipTextButtonClassName}
-                  onClick={() => {
-                    void startNewChat();
-                    setHistoryOpen(false);
-                  }}
-                  disabled={chatActionsDisabled}
-                >
-                  <Plus className="size-3.5" />
-                  New chat
-                </Button>
-                {!historyOpen ? (
-                  <Button
-                    variant="ghost"
-                    size="icon"
-                    className={floatingChipIconButtonClassName}
-                    disabled={isThreadsLoading}
-                    onClick={() => setHistoryOpen(true)}
-                  >
-                    <History className="size-4" />
-                    <span className="sr-only">Past chats</span>
-                  </Button>
-                ) : null}
-                <Button
-                  variant="ghost"
-                  size="icon"
-                  className={floatingChipIconButtonClassName}
-                  onClick={() => setOpen(false)}
-                >
-                  <PanelRightClose className="size-4" />
-                  <span className="sr-only">Hide assistant</span>
-                </Button>
-              </>
-            }
-          />
-          <div className={cn("w-full px-3", !historyOpen && "pb-32")}>
-            {historyOpen ? (
-              <div className="py-2">
-                <h2 className="mb-3 text-sm font-semibold">Past chats</h2>
-                {isThreadsLoading ? (
-                  <p className="py-4 text-sm text-muted-foreground">Loading…</p>
-                ) : (
-                  <AssistantThreadHistory
-                    threads={threads}
-                    activeThreadId={activeThreadId}
-                    onSelectThread={(threadId) => void handleSelectThread(threadId)}
-                    onDeleteRequest={setDeleteConfirmThreadId}
-                    deletingThreadId={deletingThreadId}
-                  />
-                )}
-              </div>
-            ) : (
-              <div className="space-y-4 py-2">
-                {isThreadsLoading ? (
-                  <p className="text-sm text-muted-foreground">Loading…</p>
-                ) : messages.length === 0 ? (
-                  <div className="space-y-3">
-                    <p className="text-sm text-muted-foreground">
-                      Create or edit a CV, tailor for a role, or update your twin.
-                    </p>
-                    <div className="flex flex-wrap gap-2">
-                      {STARTER_PROMPTS.map((prompt) => (
-                        <button
-                          key={prompt}
-                          type="button"
-                          onClick={() => sendMessage(prompt)}
-                          disabled={chatActionsDisabled}
-                          className={cn(
-                            "rounded-full border px-3 py-1 text-left text-xs text-muted-foreground hover:bg-muted hover:text-foreground disabled:opacity-50",
-                            motionTransitionColors
-                          )}
-                        >
-                          {prompt}
-                        </button>
-                      ))}
+                  {!historyOpen ? (
+                    <Button
+                      variant="ghost"
+                      size="icon"
+                      className={floatingChipIconButtonClassName}
+                      disabled={isThreadsLoading}
+                      onClick={() => setHistoryOpen(true)}
+                    >
+                      <History className="size-4" />
+                      <span className="sr-only">Past chats</span>
+                    </Button>
+                  ) : null}
+                  {showHideAssistantButton ? (
+                    <Button
+                      variant="ghost"
+                      size="icon"
+                      className={floatingChipIconButtonClassName}
+                      onClick={handleCloseAssistant}
+                    >
+                      <PanelRightClose className="size-4" />
+                      <span className="sr-only">Hide assistant</span>
+                    </Button>
+                  ) : null}
+                </>
+              }
+            />
+            ) : null}
+            <div className={cn(!historyOpen && workspacePanelScrollUnderFooterClassName)}>
+              {historyOpen ? (
+                <AssistantThreadHistory
+                  threads={threads}
+                  activeThreadId={activeThreadId}
+                  onSelectThread={(threadId) => void handleSelectThread(threadId)}
+                  onDeleteRequest={setDeleteConfirmThreadId}
+                  deletingThreadId={deletingThreadId}
+                  isLoading={isThreadsLoading}
+                />
+              ) : (
+                <div className="space-y-4 px-3 py-2">
+                  {isThreadsLoading ? (
+                    <p className="text-sm text-muted-foreground">Loading…</p>
+                  ) : messages.length === 0 ? (
+                    <div className="space-y-3">
+                      <p className="text-sm text-muted-foreground">
+                        Create or edit a CV, tailor for a role, or update your twin.
+                      </p>
+                      <div className="flex flex-wrap gap-2">
+                        {STARTER_PROMPTS.map((prompt) => (
+                          <button
+                            key={prompt}
+                            type="button"
+                            onClick={() => sendMessage(prompt)}
+                            disabled={chatActionsDisabled}
+                            className={cn(
+                              "rounded-full border px-3 py-1 text-left text-xs text-muted-foreground hover:bg-muted hover:text-foreground disabled:opacity-50",
+                              motionTransitionColors
+                            )}
+                          >
+                            {prompt}
+                          </button>
+                        ))}
+                      </div>
                     </div>
-                  </div>
-                ) : (
-                  messages.map((message) => (
-                    <AssistantMessageBubble
-                      key={message.id}
-                      message={message}
-                      actionsDisabled={chatActionsDisabled}
-                      isBeingEdited={message.id === editingMessageId}
-                      onEditStart={handleEditStart}
-                      liveActivities={
-                        message.id === streamingMessageId ? agentState.activities : undefined
-                      }
-                      liveStatusLabel={
-                        message.id === streamingMessageId ? agentState.label : undefined
-                      }
-                      createdResumeId={
-                        message.id === lastAssistantMessageId && typeof createdResumeId === "string"
-                          ? createdResumeId
-                          : undefined
-                      }
-                      isStreaming={message.id === streamingMessageId && isLoading}
-                    />
-                  ))
-                )}
-              </div>
-            )}
-          </div>
+                  ) : (
+                    messages.map((message) => (
+                      <AssistantMessageBubble
+                        key={message.id}
+                        message={message}
+                        actionsDisabled={chatActionsDisabled}
+                        isBeingEdited={message.id === editingMessageId}
+                        onEditStart={handleEditStart}
+                        liveActivities={
+                          message.id === streamingMessageId ? agentState.activities : undefined
+                        }
+                        liveStatusLabel={
+                          message.id === streamingMessageId ? agentState.label : undefined
+                        }
+                        createdResumeId={
+                          message.id === lastAssistantMessageId && typeof createdResumeId === "string"
+                            ? createdResumeId
+                            : undefined
+                        }
+                        isStreaming={message.id === streamingMessageId && isLoading}
+                      />
+                    ))
+                  )}
+                </div>
+              )}
+            </div>
+          </ScrollArea>
+        </WorkspacePanelScrollAreaFrame>
 
-          {!historyOpen ? (
-            <WorkspacePanelFloatingFooter scrollFog>
-              <AssistantComposer
-                key={editingMessageId ?? "compose"}
-                onSubmit={handleComposerSubmit}
-                isLoading={isLoading || isThreadsLoading || !activeThreadId}
-                value={editingMessageId ? editingText : undefined}
-                onValueChange={editingMessageId ? setEditingText : undefined}
-                isEditing={Boolean(editingMessageId)}
-                onCancelEdit={cancelEdit}
-              />
-            </WorkspacePanelFloatingFooter>
-          ) : null}
-        </div>
+        {!historyOpen ? (
+          <WorkspacePanelComposerChrome>
+            <AssistantComposer
+              key={editingMessageId ?? "compose"}
+              onSubmit={handleComposerSubmit}
+              isLoading={isLoading || isThreadsLoading || !activeThreadId}
+              value={editingMessageId ? editingText : undefined}
+              onValueChange={editingMessageId ? setEditingText : undefined}
+              isEditing={Boolean(editingMessageId)}
+              onCancelEdit={cancelEdit}
+            />
+          </WorkspacePanelComposerChrome>
+        ) : null}
       </WorkspacePanelBody>
     </WorkspacePanel>
   );
 
+  const deleteDialog = (
+    <ResponsiveDialog
+      open={deleteConfirmThreadId !== null}
+      onOpenChange={(open) => {
+        if (!open && !deletingThreadId) setDeleteConfirmThreadId(null);
+      }}
+    >
+      <ResponsiveDialogContent showCloseButton={!deletingThreadId}>
+        <ResponsiveDialogHeader>
+          <ResponsiveDialogTitle>Delete this chat?</ResponsiveDialogTitle>
+          <ResponsiveDialogDescription>
+            {deleteConfirmThread
+              ? `"${threadDeleteTitle(deleteConfirmThread)}" will be removed permanently. This cannot be undone.`
+              : "This chat will be removed permanently. This cannot be undone."}
+          </ResponsiveDialogDescription>
+        </ResponsiveDialogHeader>
+        <ResponsiveDialogFooter>
+          <Button
+            type="button"
+            variant="warning"
+            disabled={Boolean(deletingThreadId)}
+            onClick={() => {
+              if (deleteConfirmThreadId) void handleDeleteThread(deleteConfirmThreadId);
+            }}
+          >
+            {deletingThreadId ? "Deleting…" : "Delete"}
+          </Button>
+        </ResponsiveDialogFooter>
+      </ResponsiveDialogContent>
+    </ResponsiveDialog>
+  );
+
+  if (variant === "inline") {
+    return (
+      <>
+        <div
+          className={cn(
+            "flex min-h-0 min-w-0 flex-1 flex-col overflow-hidden",
+            panelSurfaceClassName
+          )}
+        >
+          {panelContent}
+        </div>
+        {deleteDialog}
+      </>
+    );
+  }
+
+  if (variant === "drawer") {
+    return (
+      <>
+        <div
+          className={cn(
+            "flex min-h-0 min-w-0 flex-1 flex-col overflow-hidden",
+            panelSurfaceClassName
+          )}
+        >
+          {panelContent}
+        </div>
+        {deleteDialog}
+      </>
+    );
+  }
+
   return (
     <>
-      {!isOpen ? <AssistantCollapsedRail onOpen={() => setOpen(true)} /> : null}
+      {!isOpen && isLargeScreen ? (
+        <AssistantCollapsedRail onOpen={() => setOpen(true)} />
+      ) : null}
 
       {isOpen ? (
         <ResizeHandle
@@ -339,51 +514,13 @@ export function CvAssistantPanel() {
         />
       ) : null}
 
-      {isOpen ? (
+      {isOpen && isLargeScreen ? (
         <ShellAside width={assistantWidth} className="h-full">
           {panelContent}
         </ShellAside>
       ) : null}
 
-      <Sheet open={isOpen && !isLargeScreen} onOpenChange={setOpen}>
-        <SheetContent
-          side="right"
-          showCloseButton={false}
-          className="flex h-full w-[min(480px,calc(100vw-3rem))] max-w-[480px] flex-col gap-0 p-0 sm:max-w-[480px] lg:hidden"
-        >
-          {panelContent}
-        </SheetContent>
-      </Sheet>
-
-      <Dialog
-        open={deleteConfirmThreadId !== null}
-        onOpenChange={(open) => {
-          if (!open && !deletingThreadId) setDeleteConfirmThreadId(null);
-        }}
-      >
-        <DialogContent showCloseButton={!deletingThreadId}>
-          <DialogHeader>
-            <DialogTitle>Delete this chat?</DialogTitle>
-            <DialogDescription>
-              {deleteConfirmThread
-                ? `"${threadDeleteTitle(deleteConfirmThread)}" will be removed permanently. This cannot be undone.`
-                : "This chat will be removed permanently. This cannot be undone."}
-            </DialogDescription>
-          </DialogHeader>
-          <DialogFooter>
-            <Button
-              type="button"
-              variant="warning"
-              disabled={Boolean(deletingThreadId)}
-              onClick={() => {
-                if (deleteConfirmThreadId) void handleDeleteThread(deleteConfirmThreadId);
-              }}
-            >
-              {deletingThreadId ? "Deleting…" : "Delete"}
-            </Button>
-          </DialogFooter>
-        </DialogContent>
-      </Dialog>
+      {deleteDialog}
     </>
   );
 }

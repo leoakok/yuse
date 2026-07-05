@@ -33,6 +33,28 @@ Extract when:
 - **`PageTitle`**: page heading plus optional **page actions** (e.g. Import a resume) aligned top-right of the title row.
 - **`AppWorkspace` toolbar**: in-editor actions for the open document (download, duplicate, etc.), not catalog-level create/import.
 
+## Workspace editors: flat sections, not nested cards
+
+At app level, **never** wrap workspace editor sections in `rounded-lg border bg-card` boxes or nested `Card` components.
+
+Use the shared layout from `src/lib/ui/workspace-section.ts` and `src/components/layout/workspace-section.tsx`:
+
+- **`WorkspaceSections`**: vertical stack with `divide-y divide-border/60`
+- **`WorkspaceSection`**: title row + body, one padding layer (`px-4 lg:px-5`)
+- **List rows**: `workspaceRowClassName` with `workspaceRowListClassName`, not bordered item cards
+
+Keep `Card` for marketing/landing, dialogs, and catalog grid tiles. Preview panels represent documents and may keep their own framing.
+
+```tsx
+// BAD: boxed section inside scroll area
+<section className="rounded-lg border bg-card p-4">...</section>
+
+// GOOD: flat divider section
+<WorkspaceSections>
+  <WorkspaceSection title="About">...</WorkspaceSection>
+</WorkspaceSections>
+```
+
 ```tsx
 // BAD: import lives in the global header
 <CatalogShell actions={<Button>Import a resume</Button>} /> // if passed to PageHeader

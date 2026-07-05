@@ -13,13 +13,12 @@ import { buildThemePreviewContent } from "@/lib/cv/theme-preview-content";
 import { getPageSizePx } from "@/lib/cv/page-format";
 import { CvPreview } from "@/components/cv/cv-preview";
 import {
-  Dialog,
-  DialogContent,
-  DialogDescription,
-  DialogHeader,
-  DialogTitle,
-  DialogTrigger,
-} from "@/components/ui/dialog";
+  ResponsiveDialog,
+  ResponsiveDialogContent,
+  ResponsiveDialogDescription,
+  ResponsiveDialogHeader,
+  ResponsiveDialogTitle,
+} from "@/components/ui/responsive-dialog";
 import { cn } from "@/lib/utils";
 
 interface ResumeThemePickerProps extends DesignPresetChangeHandlers {
@@ -117,46 +116,45 @@ export function ResumeThemePicker({
   }
 
   return (
-    <Dialog open={open} onOpenChange={setOpen}>
-      <DialogTrigger
-        render={
-          <button
-            type="button"
-            className="flex w-full items-center justify-between gap-3 rounded-lg border bg-background px-3 py-2.5 text-left transition-colors hover:bg-muted/40"
-          >
-            <span className="min-w-0">
-              <span className="block text-sm font-medium">{currentLabel}</span>
-              <span className="block truncate text-xs text-muted-foreground">
-                {currentDescription}
-              </span>
-            </span>
-            <ChevronsUpDown className="size-4 shrink-0 text-muted-foreground" aria-hidden />
-          </button>
-        }
-      />
-      <DialogContent
-        showCloseButton
-        className="flex h-[90dvh] w-[90vw] max-w-[90vw] flex-col gap-0 overflow-hidden p-0 sm:max-w-[90vw]"
+    <>
+      <button
+        type="button"
+        onClick={() => setOpen(true)}
+        className="flex w-full items-center justify-between gap-3 rounded-lg border bg-background px-3 py-2.5 text-left transition-colors hover:bg-muted/40"
       >
-        <DialogHeader className="shrink-0 border-b px-4 py-4 sm:px-6">
-          <DialogTitle>Choose a theme</DialogTitle>
-          <DialogDescription>
-            Pick a starting look. You can fine tune fonts, colors, and layout afterward.
-          </DialogDescription>
-        </DialogHeader>
-        <div className="min-h-0 flex-1 overflow-y-auto px-4 py-4 sm:px-6 sm:py-6">
-          <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
-            {DESIGN_PRESET_OPTIONS.map((option) => (
-              <ThemePreviewCard
-                key={option.id}
-                presetId={option.id}
-                selected={designPresetId === option.id}
-                onSelect={() => handleSelect(option.id)}
-              />
-            ))}
+        <span className="min-w-0">
+          <span className="block text-sm font-medium">{currentLabel}</span>
+          <span className="block truncate text-xs text-muted-foreground">
+            {currentDescription}
+          </span>
+        </span>
+        <ChevronsUpDown className="size-4 shrink-0 text-muted-foreground" aria-hidden />
+      </button>
+      <ResponsiveDialog open={open} onOpenChange={setOpen}>
+        <ResponsiveDialogContent
+          showCloseButton
+          className="flex h-[90dvh] flex-col gap-0 overflow-hidden p-0"
+        >
+          <ResponsiveDialogHeader className="shrink-0 border-b px-4 py-4 sm:px-6">
+            <ResponsiveDialogTitle>Choose a theme</ResponsiveDialogTitle>
+            <ResponsiveDialogDescription>
+              Pick a starting look. You can fine tune fonts, colors, and layout afterward.
+            </ResponsiveDialogDescription>
+          </ResponsiveDialogHeader>
+          <div className="min-h-0 flex-1 overflow-y-auto px-4 py-4 sm:px-6 sm:py-6">
+            <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
+              {DESIGN_PRESET_OPTIONS.map((option) => (
+                <ThemePreviewCard
+                  key={option.id}
+                  presetId={option.id}
+                  selected={designPresetId === option.id}
+                  onSelect={() => handleSelect(option.id)}
+                />
+              ))}
+            </div>
           </div>
-        </div>
-      </DialogContent>
-    </Dialog>
+        </ResponsiveDialogContent>
+      </ResponsiveDialog>
+    </>
   );
 }

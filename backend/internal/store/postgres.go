@@ -73,7 +73,8 @@ func jsonBytes(m map[string]any) []byte {
 
 func (p *Postgres) User() *model.User {
 	row := p.pool.QueryRow(p.ctx(), `
-		SELECT id, email, display_name, username, avatar_url, role, created_at, updated_at
+		SELECT id, email, display_name, username, avatar_url, role, created_at, updated_at,
+			(email_verified_at IS NOT NULL)
 		FROM users WHERE id = $1
 	`, p.activeUserID())
 	u, err := scanUser(row)
@@ -244,7 +245,7 @@ func (p *Postgres) GetTheme(id string) (*model.CvTheme, error) {
 
 func (p *Postgres) ListResumes() []*model.Resume {
 	rows, err := p.pool.Query(p.ctx(), `
-		SELECT id, workspace_id, title, contact_profile_id, created_by, created_at, updated_at
+		SELECT id, workspace_id, title, slug, contact_profile_id, created_by, created_at, updated_at
 		FROM resumes WHERE workspace_id = $1
 		ORDER BY updated_at DESC
 	`, p.activeWorkspaceID())
@@ -257,7 +258,7 @@ func (p *Postgres) ListResumes() []*model.Resume {
 
 func (p *Postgres) GetResume(id string) (*model.Resume, error) {
 	row := p.pool.QueryRow(p.ctx(), `
-		SELECT id, workspace_id, title, contact_profile_id, created_by, created_at, updated_at
+		SELECT id, workspace_id, title, slug, contact_profile_id, created_by, created_at, updated_at
 		FROM resumes WHERE id = $1 AND workspace_id = $2
 	`, id, p.activeWorkspaceID())
 	r, err := scanResume(row)
@@ -1405,7 +1406,7 @@ func scanUser(row scannable) (*model.User, error) {
 	var username *string
 	var role string
 	var createdAt, updatedAt time.Time
-	if err := row.Scan(&u.ID, &u.Email, &u.DisplayName, &username, &avatarURL, &role, &createdAt, &updatedAt); err != nil {
+	if err := row.Scan(&u.ID, &u.Email, &u.DisplayName, &username, &avatarURL, &role, &createdAt, &updatedAt, &u.EmailVerified); err != nil {
 		return nil, err
 	}
 	u.Username = username
@@ -1498,10 +1499,12 @@ func scanThemes(rows pgx.Rows) []*model.CvTheme {
 
 func scanResume(row scannable) (*model.Resume, error) {
 	var r model.Resume
+	var slug *string
 	var createdAt, updatedAt time.Time
-	if err := row.Scan(&r.ID, &r.WorkspaceID, &r.Title, &r.ContactProfileID, &r.CreatedBy, &createdAt, &updatedAt); err != nil {
+	if err := row.Scan(&r.ID, &r.WorkspaceID, &r.Title, &slug, &r.ContactProfileID, &r.CreatedBy, &createdAt, &updatedAt); err != nil {
 		return nil, err
 	}
+	r.Slug = slug
 	r.CreatedAt = formatTime(createdAt)
 	r.UpdatedAt = formatTime(updatedAt)
 	return cloneResume(&r), nil
@@ -1511,10 +1514,12 @@ func scanResumes(rows pgx.Rows) []*model.Resume {
 	out := make([]*model.Resume, 0)
 	for rows.Next() {
 		var r model.Resume
+		var slug *string
 		var createdAt, updatedAt time.Time
-		if err := rows.Scan(&r.ID, &r.WorkspaceID, &r.Title, &r.ContactProfileID, &r.CreatedBy, &createdAt, &updatedAt); err != nil {
+		if err := rows.Scan(&r.ID, &r.WorkspaceID, &r.Title, &slug, &r.ContactProfileID, &r.CreatedBy, &createdAt, &updatedAt); err != nil {
 			continue
 		}
+		r.Slug = slug
 		r.CreatedAt = formatTime(createdAt)
 		r.UpdatedAt = formatTime(updatedAt)
 		out = append(out, cloneResume(&r))

@@ -35,12 +35,6 @@ export function LandingNav({ isSignedIn = false }: LandingNavProps) {
               >
                 Sign in
               </Link>
-              <Link
-                href="/login"
-                className={cn(buttonVariants({ size: "lg" }))}
-              >
-                Get started
-              </Link>
             </>
           )}
         </nav>

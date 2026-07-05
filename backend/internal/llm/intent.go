@@ -22,7 +22,11 @@ var highImpactTools = map[string]bool{
 	"crawl_github_profile":   true,
 	"delete_twin_entry":      true,
 	"delete_section_item":  true,
+	"delete_all_section_items": true,
 	"delete_tracked_job":   true,
+	"delete_portfolio_project":    true,
+	"delete_portfolio_skill":      true,
+	"delete_portfolio_testimonial": true,
 }
 
 func userAskedLinkedInImport(text string) bool {
@@ -100,11 +104,51 @@ func userAskedCapabilities(text string) bool {
 
 func userAskedDelete(text string) bool {
 	lower := strings.ToLower(text)
-	return strings.Contains(lower, "delete ") ||
+	if strings.Contains(lower, "delete ") ||
 		strings.Contains(lower, "remove my cv") ||
 		strings.Contains(lower, "remove my resume") ||
 		strings.Contains(lower, "remove that cv") ||
-		strings.Contains(lower, "remove that resume")
+		strings.Contains(lower, "remove that resume") {
+		return true
+	}
+	return userAskedDeleteCVData(text)
+}
+
+// userAskedDeleteCVData reports explicit asks to remove CV/portfolio/workspace content.
+// Returns false for account/auth deletion requests.
+func userAskedDeleteCVData(text string) bool {
+	lower := strings.ToLower(strings.TrimSpace(text))
+	if lower == "" {
+		return false
+	}
+	hasDeleteVerb := strings.Contains(lower, "delete") ||
+		strings.Contains(lower, "remove") ||
+		strings.Contains(lower, "clear") ||
+		strings.Contains(lower, "wipe") ||
+		strings.Contains(lower, "erase")
+	if !hasDeleteVerb {
+		return false
+	}
+	accountSignals := []string{
+		"my account", "the account", "deactivate", "deactivation",
+		"oauth", "github connection", "linkedin connection", "sign out", "log out", "logout",
+	}
+	for _, phrase := range accountSignals {
+		if strings.Contains(lower, phrase) {
+			return false
+		}
+	}
+	contentSignals := []string{
+		"cv", "resume", "résumé", "portfolio", "section", "experience", "skill",
+		"data", "everything", "all my", "workspace", "entry", "entries", "item", "items",
+		"project", "testimonial", "twin", "job tracker", "tracked job",
+	}
+	for _, phrase := range contentSignals {
+		if strings.Contains(lower, phrase) {
+			return true
+		}
+	}
+	return strings.Contains(lower, "delete all") || strings.Contains(lower, "remove all")
 }
 
 func userExplicitlyRequestedHighImpactAction(text string) bool {

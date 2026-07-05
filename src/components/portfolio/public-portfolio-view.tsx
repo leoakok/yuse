@@ -1,14 +1,26 @@
 import { notFound } from "next/navigation";
 import { PortfolioSitePreview } from "@/components/portfolio/portfolio-site-preview";
-import { fetchPublicPortfolio } from "@/lib/portfolio/public-api";
+import { fetchPublicContent } from "@/lib/portfolio/public-api";
+import type { PortfolioWithContent } from "@/lib/types/portfolio";
 
 interface PublicPortfolioViewProps {
   username: string;
   slug?: string;
+  initialContent?: PortfolioWithContent;
 }
 
-export async function PublicPortfolioView({ username, slug }: PublicPortfolioViewProps) {
-  const content = await fetchPublicPortfolio(username, slug);
+export async function PublicPortfolioView({
+  username,
+  slug,
+  initialContent,
+}: PublicPortfolioViewProps) {
+  let content = initialContent;
+  if (!content) {
+    const result = await fetchPublicContent(username, slug);
+    if (result?.kind === "portfolio") {
+      content = result.portfolio;
+    }
+  }
   if (!content) notFound();
 
   const name = content.contactProfile?.fullName || content.portfolio.title;

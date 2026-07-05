@@ -3,6 +3,15 @@
 import { Trash2 } from "lucide-react";
 import type { AssistantThread } from "@/lib/types/assistant";
 import { Button } from "@/components/ui/button";
+import {
+  WorkspaceSection,
+  WorkspaceSections,
+  workspaceRowActionButtonClassName,
+  workspaceRowActionsClassName,
+  workspaceRowClassName,
+  workspaceRowListClassName,
+} from "@/components/layout/workspace-section";
+import { motionTransitionColors } from "@/lib/ui/motion";
 import { cn } from "@/lib/utils";
 
 function threadTitle(thread: AssistantThread): string {
@@ -41,6 +50,7 @@ interface AssistantThreadHistoryProps {
   onSelectThread: (threadId: string) => void;
   onDeleteRequest: (threadId: string) => void;
   deletingThreadId?: string | null;
+  isLoading?: boolean;
 }
 
 export function AssistantThreadHistory({
@@ -49,60 +59,71 @@ export function AssistantThreadHistory({
   onSelectThread,
   onDeleteRequest,
   deletingThreadId = null,
+  isLoading = false,
 }: AssistantThreadHistoryProps) {
-  if (threads.length === 0) {
-    return (
-      <div className="flex flex-col items-center justify-center px-4 py-12 text-center">
-        <p className="text-sm font-medium">No past chats yet</p>
-        <p className="mt-1 text-sm text-muted-foreground">
-          Start a conversation and it will show up here.
-        </p>
-      </div>
-    );
-  }
-
   return (
-    <ul className="divide-y">
-      {threads.map((thread) => {
-        const isActive = thread.id === activeThreadId;
-        const isDeleting = deletingThreadId === thread.id;
+    <WorkspaceSections>
+      <WorkspaceSection title="Past chats" bodyClassName="px-0 pb-0 lg:px-0">
+        {isLoading ? (
+          <p className="px-4 py-4 text-sm text-muted-foreground lg:px-5">Loading…</p>
+        ) : threads.length === 0 ? (
+          <div className="px-4 py-8 text-center lg:px-5">
+            <p className="text-sm font-medium">No past chats yet</p>
+            <p className="mt-1 text-xs text-muted-foreground">
+              Start a conversation and it will show up here.
+            </p>
+          </div>
+        ) : (
+          <ul className={workspaceRowListClassName}>
+            {threads.map((thread) => {
+              const isActive = thread.id === activeThreadId;
+              const isDeleting = deletingThreadId === thread.id;
 
-        return (
-          <li key={thread.id}>
-            <div
-              className={cn(
-                "group flex items-start gap-2 px-1 py-3 transition-colors",
-                isActive && "bg-muted/50"
-              )}
-            >
-              <button
-                type="button"
-                onClick={() => onSelectThread(thread.id)}
-                disabled={isDeleting}
-                className="min-w-0 flex-1 rounded-md px-2 py-1 text-left transition-colors hover:bg-muted disabled:opacity-50"
-              >
-                <p className="line-clamp-2 text-sm font-medium leading-snug">
-                  {threadTitle(thread)}
-                </p>
-                <p className="mt-1 text-xs text-muted-foreground">
-                  {formatLastUsed(thread.updatedAt)}
-                </p>
-              </button>
-              <Button
-                type="button"
-                variant="ghost"
-                size="icon"
-                className="size-8 shrink-0 text-muted-foreground opacity-0 transition-opacity hover:text-destructive group-hover:opacity-100 focus-visible:opacity-100"
-                disabled={isDeleting}
-                onClick={() => onDeleteRequest(thread.id)}
-                aria-label="Delete chat"
-              >
-                <Trash2 className="size-3.5" />
-              </Button>
-            </div>
-          </li>
-        );
-      })}
-    </ul>
+              return (
+                <li
+                  key={thread.id}
+                  className={cn(
+                    "group flex items-start gap-2",
+                    workspaceRowClassName,
+                    motionTransitionColors,
+                    isActive && "bg-muted/50 hover:bg-muted/50"
+                  )}
+                >
+                  <button
+                    type="button"
+                    onClick={() => onSelectThread(thread.id)}
+                    disabled={isDeleting}
+                    className="min-w-0 flex-1 text-left disabled:opacity-50"
+                  >
+                    <p className="truncate font-medium leading-snug">{threadTitle(thread)}</p>
+                    <p className="mt-0.5 text-xs text-muted-foreground">
+                      {formatLastUsed(thread.updatedAt)}
+                    </p>
+                  </button>
+                  <div
+                    className={cn(
+                      workspaceRowActionsClassName,
+                      "opacity-0 transition-opacity group-hover:opacity-100 group-focus-within:opacity-100 focus-within:opacity-100 motion-reduce:opacity-100"
+                    )}
+                  >
+                    <Button
+                      type="button"
+                      variant="ghost"
+                      size="icon"
+                      className={cn("size-8", workspaceRowActionButtonClassName)}
+                      disabled={isDeleting}
+                      onClick={() => onDeleteRequest(thread.id)}
+                      aria-label="Delete chat"
+                    >
+                      <Trash2 className="size-3.5" />
+                    </Button>
+                  </div>
+                </li>
+              );
+            })}
+          </ul>
+        )}
+      </WorkspaceSection>
+    </WorkspaceSections>
   );
 }

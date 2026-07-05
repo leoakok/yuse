@@ -15,6 +15,7 @@ import {
   projectGridClass,
 } from "@/lib/portfolio/site-styles";
 import { resolvePortfolioTypography } from "@/lib/portfolio/typography";
+import { sanitizeExternalUrl } from "@/lib/security/safe-url";
 import { cn } from "@/lib/utils";
 
 interface PortfolioSitePreviewProps {
@@ -270,20 +271,23 @@ function ContactLinks({
   interactive?: boolean;
 }) {
   const linkClass = muted ? "text-muted-foreground hover:text-foreground" : "underline-offset-2 hover:underline";
+  const website = sanitizeExternalUrl(contactProfile?.website);
+  const github = sanitizeExternalUrl(contactProfile?.github);
+  const linkedIn = sanitizeExternalUrl(contactProfile?.linkedIn);
   return (
     <div className={cn("mt-4 flex flex-wrap gap-3", muted ? "text-sm" : "text-sm")} style={{ fontSize: "var(--site-meta)" }}>
-      {contactProfile?.website ? (
+      {website ? (
         interactive ? (
-          <a href={contactProfile.website} className={linkClass}>
+          <a href={website} className={linkClass} rel="noopener noreferrer" target="_blank">
             Website
           </a>
         ) : (
           <span className={linkClass}>Website</span>
         )
       ) : null}
-      {contactProfile?.github ? (
+      {github ? (
         interactive ? (
-          <a href={contactProfile.github} className={cn("inline-flex items-center gap-1", linkClass)}>
+          <a href={github} className={cn("inline-flex items-center gap-1", linkClass)} rel="noopener noreferrer" target="_blank">
             <GitHubMark className="size-3.5" /> GitHub
           </a>
         ) : (
@@ -292,9 +296,9 @@ function ContactLinks({
           </span>
         )
       ) : null}
-      {contactProfile?.linkedIn ? (
+      {linkedIn ? (
         interactive ? (
-          <a href={contactProfile.linkedIn} className={linkClass}>
+          <a href={linkedIn} className={linkClass} rel="noopener noreferrer" target="_blank">
             LinkedIn
           </a>
         ) : (
@@ -497,9 +501,15 @@ function ProjectCard({
             ) : null}
           </div>
           <div className="flex shrink-0 gap-2">
-            {project.liveUrl ? (
+            {sanitizeExternalUrl(project.liveUrl) ? (
               interactive ? (
-                <a href={project.liveUrl} className="text-muted-foreground hover:text-foreground" aria-label="Live demo">
+                <a
+                  href={sanitizeExternalUrl(project.liveUrl) ?? undefined}
+                  className="text-muted-foreground hover:text-foreground"
+                  aria-label="Live demo"
+                  rel="noopener noreferrer"
+                  target="_blank"
+                >
                   <ExternalLink className="size-4" />
                 </a>
               ) : (
@@ -508,9 +518,15 @@ function ProjectCard({
                 </span>
               )
             ) : null}
-            {project.repoUrl ? (
+            {sanitizeExternalUrl(project.repoUrl) ? (
               interactive ? (
-                <a href={project.repoUrl} className="text-muted-foreground hover:text-foreground" aria-label="Source code">
+                <a
+                  href={sanitizeExternalUrl(project.repoUrl) ?? undefined}
+                  className="text-muted-foreground hover:text-foreground"
+                  aria-label="Source code"
+                  rel="noopener noreferrer"
+                  target="_blank"
+                >
                   <GitHubMark className="size-4" />
                 </a>
               ) : (

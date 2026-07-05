@@ -6,6 +6,7 @@ import type { JobStatus, TrackedJob } from "@/lib/types/job";
 
 type JobKanbanPanelProps = {
   jobs: TrackedJob[];
+  loading?: boolean;
   onStatusChange?: (job: TrackedJob, status: JobStatus) => void;
   onSelect?: (job: TrackedJob) => void;
   selectedJobId?: string | null;
@@ -14,6 +15,7 @@ type JobKanbanPanelProps = {
 
 export function JobKanbanPanel({
   jobs,
+  loading,
   onStatusChange,
   onSelect,
   selectedJobId,
@@ -29,6 +31,7 @@ export function JobKanbanPanel({
       <JobKanban
         className="h-full min-h-0 w-full"
         jobs={jobs}
+        loading={loading}
         onStatusChange={onStatusChange}
         onSelect={onSelect}
         selectedJobId={selectedJobId}

@@ -1,13 +1,19 @@
 "use client";
 
-import { useEffect, useMemo, useState } from "react";
+import { useCallback, useEffect, useMemo, useState } from "react";
 import { use } from "react";
-import { Loader2 } from "lucide-react";
 import { toast } from "sonner";
+import {
+  ResumeEditorLoadingShell,
+} from "@/components/layout/app-workspace-skeleton";
 import { AppWorkspace } from "@/components/layout/app-workspace";
 import { ResumeWorkspace } from "@/components/cv/resume-workspace";
 import { CvLivePreview } from "@/components/cv/cv-live-preview";
 import { getResumeWithContent } from "@/lib/api/cv-api";
+import {
+  getCachedResumeContent,
+  setCachedResumeContent,
+} from "@/lib/cache/workspace-cache";
 import { exportResumePdf } from "@/lib/cv/export-pdf";
 import { resolveExportFilename } from "@/lib/cv/export-filename";
 import { DEFAULT_PAGE_MARGIN_MM } from "@/lib/cv/page-format";
@@ -40,8 +46,14 @@ export default function ResumePage({ params }: ResumePageProps) {
   const { id } = use(params);
   const { user } = useWorkspace();
   const { refreshKey, resumeContentPatch } = useCvAssistant();
-  const [content, setContent] = useState<ResumeWithContent | null>(null);
-  const [loading, setLoading] = useState(true);
+  const [fetched, setFetched] = useState<{
+    id: string;
+    refreshKey: number;
+    data: ResumeWithContent | null;
+  } | null>(() => {
+    const cached = getCachedResumeContent(user.id, id);
+    return cached ? { id, refreshKey, data: cached } : null;
+  });
   const [previewPageFormat, setPreviewPageFormat] = useState<PageFormat | null>(null);
   const [previewMarginHorizontalMm, setPreviewMarginHorizontalMm] = useState<number | null>(null);
   const [previewMarginVerticalMm, setPreviewMarginVerticalMm] = useState<number | null>(null);
@@ -61,23 +73,38 @@ export default function ResumePage({ params }: ResumePageProps) {
   const [isDownloading, setIsDownloading] = useState(false);
   const [downloadError, setDownloadError] = useState<string | null>(null);
 
+  const handleContentChange = useCallback(
+    (next: ResumeWithContent) => {
+      setCachedResumeContent(user.id, id, next);
+      setFetched({ id, refreshKey, data: next });
+    },
+    [id, refreshKey, user.id]
+  );
+
   useEffect(() => {
     setLastOpenedResumeId(user.id, id);
   }, [id, user.id]);
 
-  useEffect(() => {
-    if (resumeContentPatch?.resume.id === id) {
-      setContent(resumeContentPatch);
-      setLoading(false);
-    }
-  }, [resumeContentPatch, id]);
+  const hasPatch = resumeContentPatch?.resume.id === id;
+  const content = hasPatch
+    ? resumeContentPatch
+    : fetched && fetched.id === id && fetched.refreshKey === refreshKey
+      ? fetched.data
+      : null;
+  const loading = !hasPatch && (!fetched || fetched.id !== id || fetched.refreshKey !== refreshKey);
 
   useEffect(() => {
     let cancelled = false;
-    setLoading(true);
+    const cached = getCachedResumeContent(user.id, id);
+    if (cached) {
+      setFetched({ id, refreshKey, data: cached });
+    }
     void getResumeWithContent(id).then((result) => {
       if (!cancelled) {
-        setContent(result ?? null);
+        if (result) {
+          setCachedResumeContent(user.id, id, result);
+        }
+        setFetched({ id, refreshKey, data: result ?? null });
         setPreviewPageFormat(null);
         setPreviewMarginHorizontalMm(null);
         setPreviewMarginVerticalMm(null);
@@ -94,13 +121,12 @@ export default function ResumePage({ params }: ResumePageProps) {
         setPreviewAtsMode(null);
         setPreviewDesignSettings({});
         setPreviewTypography(null);
-        setLoading(false);
       }
     });
     return () => {
       cancelled = true;
     };
-  }, [id, refreshKey]);
+  }, [id, refreshKey, user.id]);
 
   const previewContent = useMemo(() => {
     if (!content) return null;
@@ -208,17 +234,6 @@ export default function ResumePage({ params }: ResumePageProps) {
     return null;
   }
 
-  if (loading || !content) {
-    return (
-      <AppWorkspace>
-        <div className="flex flex-1 items-center justify-center p-8">
-          <Loader2 className="size-6 animate-spin text-muted-foreground" aria-hidden />
-          <span className="sr-only">Loading resume</span>
-        </div>
-      </AppWorkspace>
-    );
-  }
-
   async function handleDownload() {
     if (!content || isDownloading) return;
     setDownloadError(null);
@@ -247,35 +262,41 @@ export default function ResumePage({ params }: ResumePageProps) {
   return (
     <AppWorkspace
       preview={
-        previewContent ? <CvLivePreview content={previewContent} /> : null
+        previewContent ? (
+          <CvLivePreview content={previewContent} />
+        ) : null
       }
     >
-      <ResumeWorkspace
-        content={content}
-        onContentChange={setContent}
-        onPageFormatPreviewChange={setPreviewPageFormat}
-        onShowPhotoPreviewChange={setPreviewShowPhoto}
-        onItemTitleLayoutPreviewChange={setPreviewItemTitleLayout}
-        onItemTitleSeparatorPreviewChange={setPreviewItemTitleSeparator}
-        onItemTitleOrderPreviewChange={setPreviewItemTitleOrder}
-        onFontFamilyPreviewChange={setPreviewFontFamily}
-        onAccentColorPreviewChange={setPreviewAccentColor}
-        onSectionDividerStylePreviewChange={setPreviewSectionDividerStyle}
-        onDateFormatPreviewChange={setPreviewDateFormat}
-        onDatePositionPreviewChange={setPreviewDatePosition}
-        onSkillsLayoutPreviewChange={setPreviewSkillsLayout}
-        onAtsModePreviewChange={setPreviewAtsMode}
-        onDesignSettingsPreviewChange={(patch) =>
-          setPreviewDesignSettings((current) => ({ ...current, ...patch }))
-        }
-        onTypographyPreviewChange={setPreviewTypography}
-        onMarginHorizontalPreviewChange={setPreviewMarginHorizontalMm}
-        onMarginVerticalPreviewChange={setPreviewMarginVerticalMm}
-        onDownload={handleDownload}
-        isDownloading={isDownloading}
-        downloadError={downloadError}
-        onDismissDownloadError={() => setDownloadError(null)}
-      />
+      {content ? (
+        <ResumeWorkspace
+          content={content}
+          onContentChange={handleContentChange}
+          onPageFormatPreviewChange={setPreviewPageFormat}
+          onShowPhotoPreviewChange={setPreviewShowPhoto}
+          onItemTitleLayoutPreviewChange={setPreviewItemTitleLayout}
+          onItemTitleSeparatorPreviewChange={setPreviewItemTitleSeparator}
+          onItemTitleOrderPreviewChange={setPreviewItemTitleOrder}
+          onFontFamilyPreviewChange={setPreviewFontFamily}
+          onAccentColorPreviewChange={setPreviewAccentColor}
+          onSectionDividerStylePreviewChange={setPreviewSectionDividerStyle}
+          onDateFormatPreviewChange={setPreviewDateFormat}
+          onDatePositionPreviewChange={setPreviewDatePosition}
+          onSkillsLayoutPreviewChange={setPreviewSkillsLayout}
+          onAtsModePreviewChange={setPreviewAtsMode}
+          onDesignSettingsPreviewChange={(patch) =>
+            setPreviewDesignSettings((current) => ({ ...current, ...patch }))
+          }
+          onTypographyPreviewChange={setPreviewTypography}
+          onMarginHorizontalPreviewChange={setPreviewMarginHorizontalMm}
+          onMarginVerticalPreviewChange={setPreviewMarginVerticalMm}
+          onDownload={handleDownload}
+          isDownloading={isDownloading}
+          downloadError={downloadError}
+          onDismissDownloadError={() => setDownloadError(null)}
+        />
+      ) : (
+        <ResumeEditorLoadingShell resumeId={id} />
+      )}
     </AppWorkspace>
   );
 }

@@ -1,15 +1,8 @@
 "use client";
 
-import { useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { useRouter } from "next/navigation";
 import {
-  Copy,
-  Download,
-  LayoutTemplate,
-  List,
-  Loader2,
-  MoreHorizontal,
-  PanelLeftClose,
   Plus,
   Trash2,
 } from "lucide-react";
@@ -49,27 +42,25 @@ import {
 import { DEFAULT_CV_TYPOGRAPHY_SETTINGS, type CvTypographySettings } from "@/lib/cv/typography";
 import type { ResumeDesignSnapshot } from "@/components/cv/resume-design-settings";
 import { ResumeDesignSettings } from "@/components/cv/resume-design-settings";
+import { ResumeWorkspaceToolbar, type ResumeWorkspaceMode } from "@/components/cv/resume-workspace-toolbar";
+import { ResumeShareDialog } from "@/components/cv/resume-share-dialog";
 import { ResumeProfileSection } from "@/components/cv/resume-profile-section";
 import { ResumeSectionItemRow } from "@/components/cv/resume-section-item-row";
+import { ResumeSectionTitleEditor } from "@/components/cv/resume-section-title-editor";
+import { sectionDisplayTitle } from "@/lib/cv/resume-design";
 import {
   SectionItemEditDialog,
   type SectionItemDialogState,
 } from "@/components/cv/section-item-edit-dialog";
 import { Button } from "@/components/ui/button";
 import {
-  Dialog,
-  DialogContent,
-  DialogDescription,
-  DialogFooter,
-  DialogHeader,
-  DialogTitle,
-} from "@/components/ui/dialog";
-import {
-  DropdownMenu,
-  DropdownMenuContent,
-  DropdownMenuItem,
-  DropdownMenuTrigger,
-} from "@/components/ui/dropdown-menu";
+  ResponsiveDialog,
+  ResponsiveDialogContent,
+  ResponsiveDialogDescription,
+  ResponsiveDialogFooter,
+  ResponsiveDialogHeader,
+  ResponsiveDialogTitle,
+} from "@/components/ui/responsive-dialog";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import {
   deleteResume,
@@ -80,13 +71,15 @@ import {
 } from "@/lib/api/cv-api";
 import { resumePath } from "@/lib/cv/routes";
 import { DEFAULT_PAGE_MARGIN_MM } from "@/lib/cv/page-format";
-import { cn } from "@/lib/utils";
 import {
   WorkspacePanel,
   WorkspacePanelBody,
-  WorkspacePanelHeader,
+  WorkspacePanelScrollAreaFrame,
 } from "@/components/layout/workspace-panel";
-import { useEditorPanel } from "@/components/layout/editor-panel-provider";
+import { useWorkspace } from "@/components/layout/workspace-provider";
+import { useRegisterPreviewDrawerActions } from "@/components/layout/workspace-preview-registration";
+import { WorkspaceSections } from "@/components/layout/workspace-section";
+import { workspaceSectionHeaderClassName, workspaceRowListClassName } from "@/lib/ui/workspace-section";
 
 function initialMargin(value: number | undefined): number {
   return value ?? DEFAULT_PAGE_MARGIN_MM;
@@ -110,7 +103,7 @@ function pickTypography(settings: ResumeWithContent["settings"]): CvTypographySe
   };
 }
 
-type WorkspaceMode = "sections" | "design";
+type WorkspaceMode = ResumeWorkspaceMode;
 
 const MAX_LISTED_RESUMES = 5;
 
@@ -164,7 +157,9 @@ export function ResumeWorkspace({
   onDismissDownloadError,
 }: ResumeWorkspaceProps) {
   const router = useRouter();
-  const { setOpen: setEditorOpen } = useEditorPanel();
+  const { user } = useWorkspace();
+  const [shareOpen, setShareOpen] = useState(false);
+  const [publicUsername, setPublicUsername] = useState<string | null>(user.username ?? null);
   const [mode, setMode] = useState<WorkspaceMode>("sections");
   const [pageFormat, setPageFormat] = useState<PageFormat>(
     content.settings.pageFormat ?? "A4"
@@ -184,6 +179,22 @@ export function ResumeWorkspace({
   const [savedMarginVerticalMm, setSavedMarginVerticalMm] = useState(
     initialMargin(content.settings.marginVerticalMm)
   );
+
+  useEffect(() => {
+    setPublicUsername(user.username ?? null);
+  }, [user.username]);
+
+  const previewDrawerActions = useMemo(
+    () => ({
+      onShare: () => setShareOpen(true),
+      onDownload,
+      isDownloading,
+      shareLabel: "Share resume",
+    }),
+    [onDownload, isDownloading]
+  );
+  useRegisterPreviewDrawerActions(previewDrawerActions);
+
   const [showPhoto, setShowPhoto] = useState(content.settings.showPhoto);
   const [savedShowPhoto, setSavedShowPhoto] = useState(content.settings.showPhoto);
   const [itemTitleLayout, setItemTitleLayout] = useState<ItemTitleLayout>(
@@ -654,110 +665,19 @@ export function ResumeWorkspace({
   return (
     <WorkspacePanel>
       <WorkspacePanelBody>
+      <WorkspacePanelScrollAreaFrame>
       <ScrollArea className="min-h-0 flex-1">
-      <WorkspacePanelHeader
-        leading={
-          <div className="flex min-w-0 items-center gap-2">
-            <Button
-              type="button"
-              variant="ghost"
-              size="icon"
-              className="hidden size-8 shrink-0 lg:inline-flex"
-              onClick={() => setEditorOpen(false)}
-            >
-              <PanelLeftClose className="size-4" />
-              <span className="sr-only">Hide editor</span>
-            </Button>
-            <div className="flex min-w-0 rounded-lg border p-0.5">
-              <Button
-                type="button"
-                variant="ghost"
-                size="sm"
-                className={cn("h-7 gap-1.5 px-2.5", mode === "sections" && "bg-muted")}
-                aria-pressed={mode === "sections"}
-                onClick={() => setMode("sections")}
-              >
-                <List className="size-3.5" />
-                Sections
-              </Button>
-              <Button
-                type="button"
-                variant="ghost"
-                size="sm"
-                className={cn("h-7 gap-1.5 px-2.5", mode === "design" && "bg-muted")}
-                aria-pressed={mode === "design"}
-                onClick={() => setMode("design")}
-              >
-                <LayoutTemplate className="size-3.5" />
-                Design
-              </Button>
-            </div>
-          </div>
-        }
-        trailing={
-          <div className="flex shrink-0 items-center gap-2">
-            {downloadError ? (
-              <p
-                className="max-w-48 truncate text-xs text-destructive"
-                role="alert"
-                title={downloadError}
-              >
-                {downloadError}
-                {onDismissDownloadError ? (
-                  <button
-                    type="button"
-                    className="ml-1 underline"
-                    onClick={onDismissDownloadError}
-                  >
-                    Dismiss
-                  </button>
-                ) : null}
-              </p>
-            ) : null}
-            <Button
-              type="button"
-              variant="ghost"
-              size="icon-xs"
-              className="text-muted-foreground"
-              onClick={() => void onDownload?.()}
-              disabled={!onDownload || isDownloading}
-              aria-label={isDownloading ? "Opening print view" : "Print or save as PDF"}
-            >
-              {isDownloading ? <Loader2 className="animate-spin" /> : <Download />}
-            </Button>
-            <DropdownMenu>
-              <DropdownMenuTrigger
-                render={
-                  <Button
-                    type="button"
-                    variant="ghost"
-                    size="icon-xs"
-                    className="text-muted-foreground"
-                    aria-label="More actions"
-                  >
-                    <MoreHorizontal />
-                  </Button>
-                }
-              />
-              <DropdownMenuContent align="end" className="min-w-40">
-                <DropdownMenuItem
-                  disabled={isDuplicating}
-                  onClick={() => void handleDuplicate()}
-                >
-                  <Copy />
-                  Duplicate
-                </DropdownMenuItem>
-                <DropdownMenuItem
-                  variant="warning"
-                  onClick={() => setDeleteOpen(true)}
-                >
-                  <Trash2 />
-                  Delete
-                </DropdownMenuItem>
-              </DropdownMenuContent>
-            </DropdownMenu>
-          </div>
-        }
+      <ResumeWorkspaceToolbar
+        mode={mode}
+        onModeChange={setMode}
+        onShare={() => setShareOpen(true)}
+        onDownload={onDownload}
+        isDownloading={isDownloading}
+        downloadError={downloadError}
+        onDismissDownloadError={onDismissDownloadError}
+        onDuplicate={() => void handleDuplicate()}
+        onDeleteRequest={() => setDeleteOpen(true)}
+        isDuplicating={isDuplicating}
       />
         <div>
           {mode === "design" ? (
@@ -859,29 +779,36 @@ export function ResumeWorkspace({
               onSaved={handleDesignSaved}
             />
           ) : (
-            <div className="divide-y">
+            <WorkspaceSections>
               <ResumeProfileSection
                 resumeId={content.resume.id}
                 contactProfile={content.contactProfile}
                 onSaved={onContentChange}
               />
-              {content.sections.map(({ section, items }) => (
+              {content.sections.map(({ section, items, displayTitle }) => {
+                const shownTitle = sectionDisplayTitle(section, displayTitle);
+                return (
                 <section key={section.id}>
                   {section.type !== "SUMMARY" ? (
-                    <div className="flex items-center justify-between gap-2 px-4 py-3 lg:px-5">
-                      <h2 className="min-w-0 text-sm font-semibold">{section.title}</h2>
+                    <div className={workspaceSectionHeaderClassName}>
+                      <ResumeSectionTitleEditor
+                        resumeId={content.resume.id}
+                        section={section}
+                        displayTitle={displayTitle}
+                        onSaved={onContentChange}
+                      />
                       <Button
                         type="button"
                         variant="ghost"
                         size="icon-xs"
                         className="shrink-0 text-muted-foreground"
-                        aria-label={`Add item to ${section.title}`}
+                        aria-label={`Add item to ${shownTitle}`}
                         onClick={() =>
                           setItemDialog({
                             mode: "create",
                             sectionId: section.id,
                             sectionType: section.type,
-                            sectionTitle: section.title,
+                            sectionTitle: shownTitle,
                           })
                         }
                       >
@@ -889,7 +816,7 @@ export function ResumeWorkspace({
                       </Button>
                     </div>
                   ) : null}
-                  <ul className="divide-y">
+                  <ul className={workspaceRowListClassName}>
                     {items.map((item) => (
                       <ResumeSectionItemRow
                         key={item.id}
@@ -910,11 +837,13 @@ export function ResumeWorkspace({
                     ))}
                   </ul>
                 </section>
-              ))}
-            </div>
+              );
+              })}
+            </WorkspaceSections>
           )}
         </div>
       </ScrollArea>
+      </WorkspacePanelScrollAreaFrame>
       </WorkspacePanelBody>
       <SectionItemEditDialog
         resumeId={content.resume.id}
@@ -924,7 +853,7 @@ export function ResumeWorkspace({
         }}
         onSaved={onContentChange}
       />
-      <Dialog
+      <ResponsiveDialog
         open={deleteItemTarget !== null}
         onOpenChange={(open) => {
           if (!open && !isDeletingItem) {
@@ -933,12 +862,12 @@ export function ResumeWorkspace({
           }
         }}
       >
-        <DialogContent showCloseButton={!isDeletingItem}>
-          <DialogHeader>
-            <DialogTitle>Delete this item?</DialogTitle>
-            <DialogDescription>{renderDeleteItemDescription()}</DialogDescription>
-          </DialogHeader>
-          <DialogFooter>
+        <ResponsiveDialogContent showCloseButton={!isDeletingItem}>
+          <ResponsiveDialogHeader>
+            <ResponsiveDialogTitle>Delete this item?</ResponsiveDialogTitle>
+            <ResponsiveDialogDescription>{renderDeleteItemDescription()}</ResponsiveDialogDescription>
+          </ResponsiveDialogHeader>
+          <ResponsiveDialogFooter>
             <Button
               type="button"
               variant="warning"
@@ -947,19 +876,19 @@ export function ResumeWorkspace({
             >
               {isDeletingItem ? "Deleting…" : "Delete"}
             </Button>
-          </DialogFooter>
-        </DialogContent>
-      </Dialog>
-      <Dialog open={deleteOpen} onOpenChange={setDeleteOpen}>
-        <DialogContent showCloseButton={!isDeleting}>
-          <DialogHeader>
-            <DialogTitle>Delete this resume?</DialogTitle>
-            <DialogDescription>
+          </ResponsiveDialogFooter>
+        </ResponsiveDialogContent>
+      </ResponsiveDialog>
+      <ResponsiveDialog open={deleteOpen} onOpenChange={setDeleteOpen}>
+        <ResponsiveDialogContent showCloseButton={!isDeleting}>
+          <ResponsiveDialogHeader>
+            <ResponsiveDialogTitle>Delete this resume?</ResponsiveDialogTitle>
+            <ResponsiveDialogDescription>
               &ldquo;{content.resume.title}&rdquo; will be removed permanently. This cannot be
               undone.
-            </DialogDescription>
-          </DialogHeader>
-          <DialogFooter>
+            </ResponsiveDialogDescription>
+          </ResponsiveDialogHeader>
+          <ResponsiveDialogFooter>
             <Button
               type="button"
               variant="warning"
@@ -968,9 +897,23 @@ export function ResumeWorkspace({
             >
               {isDeleting ? "Deleting…" : "Delete"}
             </Button>
-          </DialogFooter>
-        </DialogContent>
-      </Dialog>
+          </ResponsiveDialogFooter>
+        </ResponsiveDialogContent>
+      </ResponsiveDialog>
+      <ResumeShareDialog
+        open={shareOpen}
+        onOpenChange={setShareOpen}
+        resumeId={content.resume.id}
+        resumeTitle={content.resume.title}
+        resumeSlug={content.resume.slug}
+        username={publicUsername}
+        onResumeSlugChange={(slug) =>
+          onContentChange({
+            ...content,
+            resume: { ...content.resume, slug },
+          })
+        }
+      />
     </WorkspacePanel>
   );
 }

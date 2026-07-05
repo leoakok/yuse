@@ -68,7 +68,9 @@ type Store interface {
 	CreatePortfolio(title string) *model.Portfolio
 	SetUsername(userID, username string) (*model.User, error)
 	SetPortfolioSlug(userID, portfolioID, slug string) (*model.Portfolio, error)
+	SetResumeSlug(userID, resumeID, slug string) (*model.Resume, error)
 	PublicPortfolioWithContent(username string, slug *string) (*model.PortfolioWithContent, error)
+	PublicResumeWithContent(username string, slug *string) (*model.ResumeWithContent, error)
 	ListTwinEntries() []*model.TwinEntry
 	GetTwinEntry(id string) (*model.TwinEntry, error)
 	CreateTwinEntry(entry *model.TwinEntry) *model.TwinEntry
@@ -87,6 +89,15 @@ type Store interface {
 	CreateKnowledgeEntry(entry *model.KnowledgeEntry) (*model.KnowledgeEntry, error)
 	UpdateKnowledgeEntry(id string, update func(*model.KnowledgeEntry) error) (*model.KnowledgeEntry, error)
 	DeleteKnowledgeEntry(id string) error
+	ListAdminUsers() ([]*model.AdminUser, error)
+	ListWaitlistEntries(status *model.WaitlistStatus) ([]*model.WaitlistEntry, error)
+	ListAdminAuditLog(limit, offset int) ([]*model.AdminAuditLogEntry, error)
+	ApproveWaitlistEntry(actorID, id string) (*model.WaitlistEntry, error)
+	RejectWaitlistEntry(actorID, id string) (*model.WaitlistEntry, error)
+	SetUserActive(actorID, userID string, active bool) (*model.AdminUser, error)
+	SetUserRole(actorID, userID string, role model.UserRole) (*model.AdminUser, error)
+	ChangePassword(userID, currentPassword, newPassword string) error
+	ChangeEmail(userID, currentPassword, newEmail string, verificationRequired bool) (*model.User, error)
 }
 
 var (

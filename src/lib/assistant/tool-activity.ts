@@ -1,5 +1,3 @@
-import type { AssistantActionLog } from "@/lib/types/assistant";
-
 function truncate(value: string, max: number): string {
   const trimmed = value.trim();
   if (trimmed.length <= max) return trimmed;
@@ -58,6 +56,8 @@ const TOOL_START_LABELS: Record<string, (payload: Record<string, unknown>) => st
       : "Let me add something to your CV…";
   },
   update_section_item: () => "Let me update that CV entry…",
+  delete_section_item: () => "Let me remove that entry…",
+  delete_all_section_items: () => "Let me clear those section entries…",
   set_item_visibility: () => "Let me update what's visible…",
   update_contact_profile: () => "Let me update your contact details…",
   update_resume_settings: () => "Let me tweak the CV design…",
@@ -80,6 +80,7 @@ const TOOL_START_LABELS: Record<string, (payload: Record<string, unknown>) => st
       : "Let me add a project…";
   },
   update_portfolio_project: () => "Let me update that project…",
+  delete_portfolio_project: () => "Let me remove that project…",
   add_portfolio_skill: (p) => {
     const name = readString(p, "name");
     return name
@@ -87,7 +88,10 @@ const TOOL_START_LABELS: Record<string, (payload: Record<string, unknown>) => st
       : "Let me add a skill…";
   },
   update_portfolio_skill: () => "Let me update that skill…",
+  delete_portfolio_skill: () => "Let me remove that skill…",
   add_portfolio_testimonial: () => "Let me add a testimonial…",
+  update_portfolio_testimonial: () => "Let me update that testimonial…",
+  delete_portfolio_testimonial: () => "Let me remove that testimonial…",
   update_portfolio_contact_profile: () => "Let me update your profile…",
   update_portfolio_settings: () => "Let me tweak the portfolio design…",
   create_twin_entry: (p) => {
@@ -137,6 +141,8 @@ const TOOL_END_LABELS: Record<string, (payload: Record<string, unknown>) => stri
     return headline ? `Added ${truncate(headline, 40)} to your CV` : "Added something to your CV";
   },
   update_section_item: () => "Updated that CV entry",
+  delete_section_item: () => "Removed that entry",
+  delete_all_section_items: () => "Cleared section entries",
   set_item_visibility: (p) =>
     p.showInPreview === false ? "Hid that item" : "Made that item visible",
   update_contact_profile: () => "Updated your contact details",
@@ -158,12 +164,16 @@ const TOOL_END_LABELS: Record<string, (payload: Record<string, unknown>) => stri
     return title ? `Added the project "${truncate(title, 40)}"` : "Added a project";
   },
   update_portfolio_project: () => "Updated that project",
+  delete_portfolio_project: () => "Removed that project",
   add_portfolio_skill: (p) => {
     const name = readString(p, "name");
     return name ? `Added ${truncate(name, 40)} as a skill` : "Added a skill";
   },
   update_portfolio_skill: () => "Updated that skill",
+  delete_portfolio_skill: () => "Removed that skill",
   add_portfolio_testimonial: () => "Added a testimonial",
+  update_portfolio_testimonial: () => "Updated that testimonial",
+  delete_portfolio_testimonial: () => "Removed that testimonial",
   update_portfolio_contact_profile: () => "Updated your profile",
   update_portfolio_settings: () => "Updated the portfolio design",
   create_twin_entry: (p) => {
@@ -178,9 +188,6 @@ const TOOL_END_LABELS: Record<string, (payload: Record<string, unknown>) => stri
   get_tracked_job: () => "Pulled up that job application",
   update_tracked_job: () => "Saved that job application",
 };
-
-/** @deprecated Use describeToolEnd for completed tool steps. */
-const TOOL_LABELS = TOOL_END_LABELS;
 
 export function describeToolStart(tool: string, args: Record<string, unknown> = {}): string {
   const label = TOOL_START_LABELS[tool];
@@ -207,6 +214,8 @@ const TOOL_ERROR_LABELS: Record<string, string> = {
   create_resume: "Couldn't create the CV",
   duplicate_resume: "Couldn't duplicate the CV",
   delete_resume: "Couldn't delete the CV",
+  delete_section_item: "Couldn't remove that entry",
+  delete_all_section_items: "Couldn't clear those entries",
   create_portfolio: "Couldn't create the portfolio",
   set_item_visibility: "Couldn't update what's shown on the CV",
   add_section_item: "Couldn't add that to your CV",
@@ -234,13 +243,4 @@ export function describeToolError(
     return TOOL_ERROR_LABELS[tool];
   }
   return "That step didn't work";
-}
-
-export function describeToolActivity(log: AssistantActionLog): string {
-  const payload = log.payload ?? {};
-  const summary = readString(payload, "resultSummary");
-  if (summary) return summary;
-  const label = TOOL_END_LABELS[log.op];
-  if (label) return label(payload);
-  return log.op.replaceAll("_", " ");
 }

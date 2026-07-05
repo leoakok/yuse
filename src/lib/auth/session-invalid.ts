@@ -1,5 +1,7 @@
-import { SessionInvalidError } from "@/lib/graphql/client";
+import { clearAllWorkspaceCache } from "@/lib/cache/workspace-cache";
+import { SessionInvalidError, InviteRequiredError } from "@/lib/graphql/client";
 import { clearLegacyLastOpenedResumePreference } from "@/lib/cv/preferences";
+import { clearPrintCache } from "@/lib/cv/print";
 
 let signingOut = false;
 
@@ -10,6 +12,9 @@ const USER_SCOPED_STORAGE_PREFIXES = [
 
 function isSessionRelatedError(error: unknown): boolean {
   if (error instanceof SessionInvalidError) {
+    return true;
+  }
+  if (error instanceof InviteRequiredError) {
     return true;
   }
   if (error instanceof Error) {
@@ -37,6 +42,8 @@ function clearSessionCache(): void {
   }
 
   clearLegacyLastOpenedResumePreference();
+  clearPrintCache();
+  clearAllWorkspaceCache();
 
   for (let i = localStorage.length - 1; i >= 0; i -= 1) {
     const key = localStorage.key(i);
@@ -46,7 +53,7 @@ function clearSessionCache(): void {
   }
 }
 
-async function signOutOnSessionExpired(): Promise<void> {
+async function signOutOnSessionExpired(callbackUrl = "/login"): Promise<void> {
   if (signingOut || typeof window === "undefined") {
     return;
   }
@@ -55,14 +62,22 @@ async function signOutOnSessionExpired(): Promise<void> {
   clearSessionCache();
 
   const { toast } = await import("sonner");
-  toast.error("Session expired");
+  if (callbackUrl === "/login?error=InviteRequired") {
+    toast.error("This beta is invite only.");
+  } else {
+    toast.error("Session expired");
+  }
 
   const { signOut } = await import("next-auth/react");
-  void signOut({ callbackUrl: "/login" });
+  void signOut({ callbackUrl });
 }
 
 /** Signs out when a request fails due to an invalid or expired session. */
 export async function handleSessionInvalid(error: unknown): Promise<boolean> {
+  if (error instanceof InviteRequiredError) {
+    await signOutOnSessionExpired("/login?error=InviteRequired");
+    return true;
+  }
   if (!isSessionRelatedError(error)) {
     return false;
   }
@@ -73,6 +88,10 @@ export async function handleSessionInvalid(error: unknown): Promise<boolean> {
 
 /** Signs out after workspace bootstrap fails due to an invalid session. */
 export async function handleWorkspaceLoadFailure(error?: unknown): Promise<boolean> {
+  if (error instanceof InviteRequiredError) {
+    await signOutOnSessionExpired("/login?error=InviteRequired");
+    return true;
+  }
   if (!isSessionRelatedError(error)) {
     return false;
   }

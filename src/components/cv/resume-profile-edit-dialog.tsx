@@ -7,13 +7,13 @@ import { updateContactProfile } from "@/lib/api/cv-api";
 import { ProfilePhotoField } from "@/components/cv/profile-photo-field";
 import { Button } from "@/components/ui/button";
 import {
-  Dialog,
-  DialogContent,
-  DialogDescription,
-  DialogFooter,
-  DialogHeader,
-  DialogTitle,
-} from "@/components/ui/dialog";
+  ResponsiveDialog,
+  ResponsiveDialogContent,
+  ResponsiveDialogDescription,
+  ResponsiveDialogFooter,
+  ResponsiveDialogHeader,
+  ResponsiveDialogTitle,
+} from "@/components/ui/responsive-dialog";
 import { Input } from "@/components/ui/input";
 
 interface ProfileFormState {
@@ -128,14 +128,14 @@ export function ResumeProfileEditDialog({
   }
 
   return (
-    <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="max-h-[90vh] overflow-y-auto">
-        <DialogHeader>
-          <DialogTitle>Edit profile</DialogTitle>
-          <DialogDescription>
+    <ResponsiveDialog open={open} onOpenChange={onOpenChange}>
+      <ResponsiveDialogContent className="max-h-[90vh] overflow-y-auto">
+        <ResponsiveDialogHeader>
+          <ResponsiveDialogTitle>Edit profile</ResponsiveDialogTitle>
+          <ResponsiveDialogDescription>
             Your name and contact details appear at the top of the resume preview.
-          </DialogDescription>
-        </DialogHeader>
+          </ResponsiveDialogDescription>
+        </ResponsiveDialogHeader>
 
         <div className="grid gap-4 py-1">
           <ProfilePhotoField
@@ -203,12 +203,12 @@ export function ResumeProfileEditDialog({
           </FieldGroup>
         </div>
 
-        <DialogFooter>
+        <ResponsiveDialogFooter>
           <Button type="button" disabled={isSaving} onClick={() => void handleSave()}>
             {isSaving ? "Saving…" : "Save"}
           </Button>
-        </DialogFooter>
-      </DialogContent>
-    </Dialog>
+        </ResponsiveDialogFooter>
+      </ResponsiveDialogContent>
+    </ResponsiveDialog>
   );
 }

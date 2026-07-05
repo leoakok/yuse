@@ -1,6 +1,18 @@
 import type { NextAuthConfig } from "next-auth";
 
+import { backendBaseUrl } from "@/lib/auth/backend-url";
 import { isPublicPortfolioPath } from "@/lib/portfolio/slug";
+
+const PUBLIC_PATH_PREFIXES = [
+  "/llms.txt",
+  "/ai.txt",
+  "/robots.txt",
+  "/sitemap.xml",
+] as const;
+
+function isExplicitPublicPath(pathname: string): boolean {
+  return PUBLIC_PATH_PREFIXES.some((prefix) => pathname === prefix || pathname.startsWith(`${prefix}/`));
+}
 
 export const authConfig = {
   pages: {
@@ -12,6 +24,31 @@ export const authConfig = {
   },
   providers: [],
   callbacks: {
+    async signIn({ account, profile }) {
+      if (account?.provider !== "google" || !profile?.email) {
+        return true;
+      }
+
+      try {
+        const res = await fetch(`${backendBaseUrl()}/auth/access-check`, {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ email: profile.email }),
+          cache: "no-store",
+        });
+        if (!res.ok) {
+          return true;
+        }
+        const data = (await res.json()) as { status?: string };
+        if (data.status === "pending") {
+          return "/login?error=WaitlistPending";
+        }
+      } catch {
+        return "/login?error=OAuthCallbackError";
+      }
+
+      return true;
+    },
     jwt({ token, account, profile, user, trigger, session }) {
       if (trigger === "update" && session?.clearSessionBootstrap) {
         token.sessionBootstrap = false;
@@ -56,6 +93,7 @@ export const authConfig = {
       const isLogin = pathname.startsWith("/login");
       const isAuthApi = pathname.startsWith("/api/auth");
       const isRegisterApi = pathname.startsWith("/api/register");
+      const isWaitlistApi = pathname.startsWith("/api/waitlist");
       const isGraphqlProxy = pathname.startsWith("/api/graphql");
       const isGitHubOAuthCallback = pathname === "/api/auth/github/callback";
 
@@ -71,7 +109,7 @@ export const authConfig = {
         return true;
       }
 
-      if (isAuthApi || isRegisterApi) {
+      if (isAuthApi || isRegisterApi || isWaitlistApi) {
         return true;
       }
 
@@ -81,6 +119,10 @@ export const authConfig = {
 
       if (isGraphqlProxy) {
         return !!auth?.user;
+      }
+
+      if (isExplicitPublicPath(pathname)) {
+        return true;
       }
 
       if (isPublicPortfolioPath(pathname)) {

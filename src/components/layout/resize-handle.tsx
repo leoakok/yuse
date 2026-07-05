@@ -100,12 +100,6 @@ export const EDITOR_DEFAULT = 400;
 export const EDITOR_MIN = 300;
 export const EDITOR_MAX = 560;
 
-export const PREVIEW_KEY = "cv-shell-preview-width";
-
-export const PREVIEW_DEFAULT = 384;
-export const PREVIEW_MIN = 280;
-export const PREVIEW_MAX = 720;
-
 export const ASSISTANT_KEY = "cv-shell-assistant-width";
 
 export const ASSISTANT_DEFAULT = 440;

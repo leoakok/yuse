@@ -126,6 +126,12 @@ func AssistantStream() http.HandlerFunc {
 			http.Error(w, "unauthorized", http.StatusUnauthorized)
 			return
 		}
+		if err := scope.CheckAssistantAccess(r.Context()); err != nil {
+			http.Error(w, err.Error(), http.StatusTooManyRequests)
+			return
+		}
+
+		LimitRequestBody(w, r, MaxAssistantBodyBytes)
 
 		var req AssistantStreamRequest
 		if err := json.NewDecoder(r.Body).Decode(&req); err != nil {

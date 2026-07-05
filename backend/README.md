@@ -39,6 +39,10 @@ Requires a running Postgres instance. Migrations run automatically on server sta
 | `GITHUB_CLIENT_ID` | For Connections |, | GitHub OAuth app client ID |
 | `GITHUB_CLIENT_SECRET` | For Connections |, | GitHub OAuth app client secret |
 | `GITHUB_OAUTH_CALLBACK_URL` | No | `{CORS_ORIGIN}/api/auth/github/callback` | OAuth redirect URI registered with GitHub |
+| `EMAIL_PROVIDER` | No | | Set to `resend` to send waitlist and verification email |
+| `EMAIL_FROM` | For email | | Sender address verified in Resend |
+| `RESEND_API_KEY` | For email | | Resend API key (or use `EMAIL_API_KEY`) |
+| `EMAIL_VERIFICATION_REQUIRED` | No | `false` | Require verified email for assistant (auto on when email is configured) |
 
 ## Frontend wiring
 
@@ -87,3 +91,39 @@ The assistant uses OpenAI function calling with an in-process MCP tool registry 
 Without `OPENAI_API_KEY`, `sendAssistantMessage` returns an error.
 
 See [internal/mcp/README.md](internal/mcp/README.md) for the standalone stdio MCP server and Cursor configuration.
+
+## Production migrations (auto-run on backend start)
+
+Migrations apply in order on server boot. Before launch, ensure these are applied on production Postgres:
+
+| Migration | Purpose |
+|-----------|---------|
+| `000034_email_verification` | Email verification columns on `users` |
+| `000035_beta_access` | Waitlist, `is_active`, admin audit log |
+| `000036_resume_sharing` | Public resume `slug` column and unique index per owner |
+
+Security-related env (see `docs/SECURITY.md`): set `TRUSTED_PROXY=true` behind Vercel, configure rate limits, and `BETA_INVITE_ONLY` / `ADMIN_EMAILS` for beta gating.
+
+## Admin bootstrap
+
+`leo@yuse.one` is always granted the `ADMIN` role on email/password registration and OAuth bootstrap. Set `ADMIN_EMAILS` (comma-separated) for additional admins. Admins can promote other users via GraphQL `setUserRole` in `/admin`.
+
+## Transactional email
+
+Branded HTML templates live in `internal/email/templates/`. Configure Resend:
+
+| Variable | Purpose |
+|----------|---------|
+| `EMAIL_PROVIDER` | `resend` |
+| `EMAIL_FROM` | Verified sender in Resend |
+| `RESEND_API_KEY` | Resend API key |
+
+Emails: welcome (signup), waitlist approval, email verification, password reset.
+
+Password reset: `POST /auth/forgot-password`, `POST /auth/reset-password`. Frontend pages: `/forgot-password`, `/reset-password?token=…`.
+
+## Migrations (recent)
+
+| Migration | Purpose |
+|-----------|---------|
+| `000037_password_reset` | Password reset token columns on `users` |

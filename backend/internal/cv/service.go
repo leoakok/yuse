@@ -11,6 +11,7 @@ import (
 	"github.com/leo/ai-weekend/backend/graph/model"
 	"github.com/leo/ai-weekend/backend/internal/llm"
 	"github.com/leo/ai-weekend/backend/internal/mcp"
+	"github.com/leo/ai-weekend/backend/internal/security"
 	"github.com/leo/ai-weekend/backend/internal/storage"
 	"github.com/leo/ai-weekend/backend/internal/store"
 )
@@ -393,6 +394,33 @@ func (s *Service) DeleteSectionItem(resumeID, sectionItemID string) (*model.Resu
 	return s.store.ResumeWithContent(resumeID)
 }
 
+// DeleteAllSectionItems removes section items from the workspace library.
+// Pass sectionID to limit to one section, sectionType to limit by type, or neither for all items.
+func (s *Service) DeleteAllSectionItems(sectionID *string, sectionType *model.SectionType) (int, error) {
+	var itemIDs []string
+	if sectionID != nil && strings.TrimSpace(*sectionID) != "" {
+		items, err := s.store.SectionItemsForSection(strings.TrimSpace(*sectionID))
+		if err != nil {
+			return 0, err
+		}
+		for _, item := range items {
+			itemIDs = append(itemIDs, item.ID)
+		}
+	} else {
+		for _, item := range s.store.ListSectionItems(sectionType) {
+			itemIDs = append(itemIDs, item.ID)
+		}
+	}
+	deleted := 0
+	for _, id := range itemIDs {
+		if err := s.store.DeleteSectionItem(id); err != nil {
+			return deleted, err
+		}
+		deleted++
+	}
+	return deleted, nil
+}
+
 func (s *Service) UpdateContactProfile(
 	ctx context.Context,
 	input model.UpdateContactProfileInput,
@@ -532,12 +560,12 @@ func (s *Service) GetTrackedJob(id string) (*model.TrackedJob, error) {
 }
 
 func (s *Service) CreateTrackedJob(url string) (*model.TrackedJob, error) {
-	trimmed := strings.TrimSpace(url)
-	if trimmed == "" {
-		return nil, fmt.Errorf("url is required")
+	validated, err := security.ValidateTrackedJobURL(url)
+	if err != nil {
+		return nil, err
 	}
 	return s.store.CreateTrackedJob(&model.TrackedJob{
-		URL:    trimmed,
+		URL:    validated,
 		Status: model.JobStatusSaved,
 	}), nil
 }

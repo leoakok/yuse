@@ -7,7 +7,6 @@ import {
 } from "@/components/brand/yuse-logo-options";
 
 export type { YuseLogoVariant };
-export { YuseLogoA, YuseLogoB, YuseLogoC };
 
 export type YuseLogoProps = LogoBaseProps & {
   /** Logo concept variant, defaults to mascot mark (Option C). */

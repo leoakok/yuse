@@ -1,9 +1,16 @@
 import { ExternalLink } from "lucide-react";
 
+import { sanitizeExternalUrl } from "@/lib/security/safe-url";
+
 export function JobLinkButton({ url }: { url: string }) {
+  const safeUrl = sanitizeExternalUrl(url);
+  if (!safeUrl) {
+    return null;
+  }
+
   return (
     <a
-      href={url}
+      href={safeUrl}
       target="_blank"
       rel="noopener noreferrer"
       className="inline-flex items-center gap-1 text-xs text-muted-foreground hover:text-foreground"

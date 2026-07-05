@@ -4,7 +4,10 @@ import { useEffect, useRef, useState } from "react";
 import { createPortal } from "react-dom";
 import type { ResumeWithContent } from "@/lib/types/cv";
 import { CvPreview } from "@/components/cv/cv-preview";
+import { useRegisterPreviewDrawerShellHeader } from "@/components/layout/preview-drawer-header-actions";
+import { useWorkspacePreviewStageClassName } from "@/components/ui/drawer-shell";
 import { ScrollArea } from "@/components/ui/scroll-area";
+import { cn } from "@/lib/utils";
 
 interface CvLivePreviewProps {
   content: ResumeWithContent;
@@ -16,6 +19,9 @@ export function CvLivePreview({ content }: CvLivePreviewProps) {
   const [scale, setScale] = useState(1);
   const [stackHeight, setStackHeight] = useState<number | undefined>();
   const [mounted, setMounted] = useState(false);
+  const previewStageClassName = useWorkspacePreviewStageClassName();
+
+  useRegisterPreviewDrawerShellHeader();
 
   useEffect(() => {
     setMounted(true);
@@ -63,7 +69,7 @@ export function CvLivePreview({ content }: CvLivePreviewProps) {
   return (
     <div className="flex min-h-0 flex-1 flex-col overflow-hidden">
       {exportRoot}
-      <ScrollArea className="min-h-0 flex-1 bg-muted/40">
+      <ScrollArea className={cn("min-h-0 flex-1", previewStageClassName)}>
         <div className="min-h-full w-full">
           <div
             ref={containerRef}

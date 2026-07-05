@@ -5,13 +5,19 @@ import { Eye, EyeOff, MoreHorizontal, Pencil, Trash2 } from "lucide-react";
 import type { SectionItem } from "@/lib/types/cv";
 import { Button } from "@/components/ui/button";
 import {
-  DropdownMenu,
-  DropdownMenuContent,
-  DropdownMenuItem,
-  DropdownMenuSeparator,
-  DropdownMenuTrigger,
-} from "@/components/ui/dropdown-menu";
-import { motionHoverRevealGroup, motionTransitionColors } from "@/lib/ui/motion";
+  ResponsiveDropdownMenu,
+  ResponsiveDropdownMenuContent,
+  ResponsiveDropdownMenuItem,
+  ResponsiveDropdownMenuSeparator,
+  ResponsiveDropdownMenuTrigger,
+} from "@/components/ui/responsive-dropdown-menu";
+import { motionTransitionColors } from "@/lib/ui/motion";
+import {
+  workspaceRowActionButtonClassName,
+  workspaceRowActionsClassName,
+  workspaceRowClassName,
+  workspaceRowHiddenClassName,
+} from "@/lib/ui/workspace-section";
 import { stripMarkdown } from "@/lib/markdown/render";
 import { formatItemRowDetail } from "@/lib/cv/section-item-display";
 import { cn } from "@/lib/utils";
@@ -57,9 +63,9 @@ export function ResumeSectionItemRow({
   return (
     <li
       className={cn(
-        "group/item relative cursor-pointer px-4 py-2.5 text-sm hover:bg-muted/40 lg:px-5",
-        motionTransitionColors,
-        hidden && "opacity-50"
+        "relative cursor-pointer",
+        workspaceRowClassName,
+        motionTransitionColors
       )}
       onClick={onEdit}
       onKeyDown={(event) => {
@@ -74,7 +80,9 @@ export function ResumeSectionItemRow({
     >
       <div className="flex items-start gap-2">
         <div className="min-w-0 flex-1">
-          <p className={cn("font-medium", hidden && "text-muted-foreground")}>{item.headline}</p>
+          <p className={cn("font-medium", hidden && workspaceRowHiddenClassName)}>
+            {item.headline}
+          </p>
           {detail ? (
             <p className="mt-0.5 text-xs text-muted-foreground">{detail}</p>
           ) : null}
@@ -86,15 +94,15 @@ export function ResumeSectionItemRow({
         </div>
 
         <div
-          className={cn("flex shrink-0 items-center gap-0.5", motionHoverRevealGroup("item"))}
+          className={workspaceRowActionsClassName}
           onClick={(event) => event.stopPropagation()}
           onKeyDown={(event) => event.stopPropagation()}
         >
           <Button
             type="button"
             variant="ghost"
-            size="icon-xs"
-            className="text-muted-foreground"
+            size="icon-sm"
+            className={workspaceRowActionButtonClassName}
             disabled={isToggling}
             aria-label={hidden ? "Show in preview" : "Hide from preview"}
             onClick={(event) => void handleToggleVisibility(event)}
@@ -102,32 +110,32 @@ export function ResumeSectionItemRow({
             {hidden ? <EyeOff /> : <Eye />}
           </Button>
 
-          <DropdownMenu>
-            <DropdownMenuTrigger
+          <ResponsiveDropdownMenu>
+            <ResponsiveDropdownMenuTrigger
               render={
                 <Button
                   type="button"
                   variant="ghost"
-                  size="icon-xs"
-                  className="text-muted-foreground"
+                  size="icon-sm"
+                  className={workspaceRowActionButtonClassName}
                   aria-label="More actions"
                 >
                   <MoreHorizontal />
                 </Button>
               }
             />
-            <DropdownMenuContent align="end">
-              <DropdownMenuItem onClick={handleEdit}>
+            <ResponsiveDropdownMenuContent align="end">
+              <ResponsiveDropdownMenuItem onClick={handleEdit}>
                 <Pencil />
                 Edit
-              </DropdownMenuItem>
-              <DropdownMenuSeparator />
-              <DropdownMenuItem variant="warning" onClick={handleDelete}>
+              </ResponsiveDropdownMenuItem>
+              <ResponsiveDropdownMenuSeparator />
+              <ResponsiveDropdownMenuItem variant="warning" onClick={handleDelete}>
                 <Trash2 />
                 Delete
-              </DropdownMenuItem>
-            </DropdownMenuContent>
-          </DropdownMenu>
+              </ResponsiveDropdownMenuItem>
+            </ResponsiveDropdownMenuContent>
+          </ResponsiveDropdownMenu>
         </div>
       </div>
     </li>

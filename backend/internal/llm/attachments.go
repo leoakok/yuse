@@ -9,6 +9,8 @@ import (
 	openai "github.com/sashabaranov/go-openai"
 )
 
+const maxAttachmentBytes = 10 << 20 // 10 MiB
+
 // Attachment is a file the user attached to an assistant message.
 type Attachment struct {
 	Name          string
@@ -17,23 +19,52 @@ type Attachment struct {
 	ExtractedText string
 }
 
-func attachmentsFromInput(inputs []*model.AssistantAttachmentInput) []Attachment {
+func attachmentsFromInput(inputs []*model.AssistantAttachmentInput) ([]Attachment, error) {
 	if len(inputs) == 0 {
-		return nil
+		return nil, nil
 	}
 	out := make([]Attachment, 0, len(inputs))
 	for _, input := range inputs {
 		if input == nil {
 			continue
 		}
-		out = append(out, Attachment{
+		attachment := Attachment{
 			Name:          strings.TrimSpace(input.Name),
 			MimeType:      strings.TrimSpace(input.MimeType),
 			ContentBase64: strings.TrimSpace(ptrStr(input.ContentBase64)),
 			ExtractedText: strings.TrimSpace(ptrStr(input.ExtractedText)),
-		})
+		}
+		if err := attachment.validateSize(); err != nil {
+			return nil, err
+		}
+		out = append(out, attachment)
 	}
-	return out
+	return out, nil
+}
+
+func (a Attachment) validateSize() error {
+	if a.ContentBase64 == "" {
+		return nil
+	}
+	// Base64 expands payload size; reject obviously oversized encoded strings early.
+	if len(a.ContentBase64) > maxAttachmentBytes*2 {
+		return fmt.Errorf("attachment %q exceeds maximum size", a.Name)
+	}
+	decodedLen := base64DecodedLength(a.ContentBase64)
+	if decodedLen > maxAttachmentBytes {
+		return fmt.Errorf("attachment %q exceeds maximum size", a.Name)
+	}
+	return nil
+}
+
+func base64DecodedLength(encoded string) int {
+	padding := 0
+	if strings.HasSuffix(encoded, "==") {
+		padding = 2
+	} else if strings.HasSuffix(encoded, "=") {
+		padding = 1
+	}
+	return (len(encoded)*3)/4 - padding
 }
 
 func ptrStr(value *string) string {

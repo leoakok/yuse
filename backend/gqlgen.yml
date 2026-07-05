@@ -23,3 +23,9 @@ models:
     fields:
       effectivePhotoUrl:
         resolver: true
+  User:
+    fields:
+      hasPasswordCredential:
+        resolver: true
+      canChangeEmail:
+        resolver: true

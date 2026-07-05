@@ -3,6 +3,7 @@ import { ArrowRight } from "lucide-react";
 import { buttonVariants } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
 import { Reveal } from "@/components/landing/reveal";
+import { WaitlistForm } from "@/components/landing/waitlist-form";
 
 type LandingHeroProps = {
   isSignedIn?: boolean;
@@ -43,7 +44,7 @@ export function LandingHero({ isSignedIn = false }: LandingHeroProps) {
         </Reveal>
 
         <Reveal delay={240}>
-          <div className="mt-9 flex flex-col items-center gap-3 sm:flex-row">
+          <div id="waitlist" className="mt-9 flex w-full flex-col items-center gap-4">
             {isSignedIn ? (
               <Link
                 href="/home"
@@ -53,13 +54,18 @@ export function LandingHero({ isSignedIn = false }: LandingHeroProps) {
                 <ArrowRight />
               </Link>
             ) : (
-              <Link
-                href="/login"
-                className={cn(buttonVariants({ size: "lg" }), "px-5")}
-              >
-                Get started
-                <ArrowRight />
-              </Link>
+              <>
+                <WaitlistForm />
+                <Link
+                  href="/login"
+                  className={cn(
+                    buttonVariants({ variant: "ghost", size: "lg" }),
+                    "px-5",
+                  )}
+                >
+                  Already invited? Sign in
+                </Link>
+              </>
             )}
             <Link
               href="#how"
@@ -76,7 +82,7 @@ export function LandingHero({ isSignedIn = false }: LandingHeroProps) {
         {!isSignedIn ? (
           <Reveal delay={320}>
             <p className="mt-4 text-xs text-muted-foreground">
-              Free to start · Sign in with Google
+              Beta access is invite only. We review requests in order.
             </p>
           </Reveal>
         ) : null}

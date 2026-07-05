@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useState } from "react";
+import Link from "next/link";
 import { signIn } from "next-auth/react";
 import { resetSigningOutState } from "@/lib/auth/session-invalid";
 import { useRouter } from "next/navigation";
@@ -106,7 +107,16 @@ export function LoginForm({ authError }: { authError?: string | null }) {
         });
         const registerData = (await registerRes.json()) as { error?: string };
         if (!registerRes.ok) {
-          setFormError(registerData.error ?? "Could not create account.");
+          const message = registerData.error ?? "Could not create account.";
+          if (message === "invite required") {
+            setFormError(
+              "This beta is invite only. Join the waitlist on the homepage first.",
+            );
+          } else if (message.includes("waitlist")) {
+            setFormError("Your email is on the waitlist. We will email you when you are approved.");
+          } else {
+            setFormError(message);
+          }
           return;
         }
       }
@@ -240,6 +250,17 @@ export function LoginForm({ authError }: { authError?: string | null }) {
         {formError ? (
           <p className="text-sm text-destructive" role="alert">
             {formError}
+          </p>
+        ) : null}
+
+        {mode === "sign-in" ? (
+          <p className="text-right text-sm">
+            <Link
+              href="/forgot-password"
+              className="text-muted-foreground underline-offset-4 hover:text-foreground hover:underline"
+            >
+              Forgot password?
+            </Link>
           </p>
         ) : null}
 

@@ -1,23 +1,25 @@
 "use client";
 
-import { useEffect, useState } from "react";
-import { FileText, Loader2, LogOut, Mail, UserCircle } from "lucide-react";
+import { FileText, LogOut } from "lucide-react";
 import { YuseLogo } from "@/components/brand/yuse-logo";
 import { signOut } from "next-auth/react";
 import Link from "next/link";
 import { toast } from "sonner";
 import { useWorkspace } from "@/components/layout/workspace-provider";
+import {
+  WorkspaceSection,
+  WorkspaceSections,
+} from "@/components/layout/workspace-section";
+import { EditableFieldRow } from "@/components/settings/editable-field-row";
+import { EmailChangeRow } from "@/components/settings/email-change-sheet";
+import {
+  PasswordChangeRow,
+  type PasswordChangeValues,
+} from "@/components/settings/password-change-sheet";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Button, buttonVariants } from "@/components/ui/button";
-import {
-  Card,
-  CardContent,
-  CardDescription,
-  CardHeader,
-  CardTitle,
-} from "@/components/ui/card";
-import { Input } from "@/components/ui/input";
 import { Separator } from "@/components/ui/separator";
+import { changeEmail, changePassword, resendVerificationEmail } from "@/lib/api/settings-api";
 import { setUsername } from "@/lib/api/portfolio-api";
 import { portfolioSiteOrigin } from "@/lib/portfolio/share-url";
 import { validateSlug } from "@/lib/portfolio/slug";
@@ -43,57 +45,69 @@ function planLabel(plan: string) {
   return plan === "pro" ? "Pro" : "Free";
 }
 
+function accountDescription(user: { canChangeEmail: boolean; hasPasswordCredential: boolean }) {
+  if (user.canChangeEmail) {
+    return "Signed in with email";
+  }
+  if (!user.hasPasswordCredential) {
+    return "Signed in with Google";
+  }
+  return "Your account";
+}
+
 export function SettingsWorkspace() {
   const { user, workspace, updateUser } = useWorkspace();
-  const [usernameInput, setUsernameInput] = useState(user.username ?? "");
-  const [savingUsername, setSavingUsername] = useState(false);
+  const siteHost = portfolioSiteOrigin().replace(/^https?:\/\//, "");
 
-  useEffect(() => {
-    setUsernameInput(user.username ?? "");
-  }, [user.username]);
-
-  async function handleSaveUsername() {
-    const result = validateSlug(usernameInput);
-    if (!result.ok) {
-      toast.error(result.message);
-      return;
-    }
-    setSavingUsername(true);
-    try {
-      const updated = await setUsername(result.value);
-      if (updated.username) {
-        updateUser({ username: updated.username });
-        setUsernameInput(updated.username);
-        toast.success("Username saved.");
-      }
-    } catch (error) {
-      toast.error(error instanceof Error ? error.message : "Could not save username.");
-    } finally {
-      setSavingUsername(false);
+  async function handleSaveUsername(next: string) {
+    const updated = await setUsername(next);
+    if (updated.username) {
+      updateUser({ username: updated.username });
+      toast.success("Username saved.");
     }
   }
 
-  const siteHost = portfolioSiteOrigin().replace(/^https?:\/\//, "");
+  async function handleSaveEmail(values: { currentPassword: string; email: string }) {
+    try {
+      const updated = await changeEmail(values.currentPassword, values.email);
+      updateUser({ email: updated.email, emailVerified: updated.emailVerified });
+      if (!updated.emailVerified) {
+        toast.success("Email saved. Check your inbox for a verification link.");
+      } else {
+        toast.success("Email saved.");
+      }
+    } catch (error) {
+      toast.error(error instanceof Error ? error.message : "Could not update email.");
+    }
+  }
+
+  async function handleResendVerification() {
+    try {
+      await resendVerificationEmail();
+      toast.success("Verification email sent.");
+    } catch (error) {
+      toast.error(error instanceof Error ? error.message : "Could not send verification email.");
+    }
+  }
+
+  async function handlePasswordChange(values: PasswordChangeValues) {
+    await changePassword(values.currentPassword, values.newPassword);
+    toast.success("Password updated.");
+  }
 
   return (
-    <div className="space-y-6">
-      <Card>
-        <CardHeader>
-          <CardTitle className="flex items-center gap-2 text-base">
-            <UserCircle className="size-4" />
-            Account
-          </CardTitle>
-          <CardDescription>Signed in with Google</CardDescription>
-        </CardHeader>
-        <CardContent className="space-y-4">
-          <div className="flex items-center gap-3">
+    <WorkspaceSections>
+      <WorkspaceSection title="Account" description={accountDescription(user)}>
+        <div className="flex items-center gap-3">
             <Avatar size="lg">
               {user.avatarUrl ? <AvatarImage src={user.avatarUrl} alt="" /> : null}
               <AvatarFallback>{getInitials(user.displayName)}</AvatarFallback>
             </Avatar>
             <div className="min-w-0">
               <p className="font-medium">{user.displayName}</p>
-              <p className="truncate text-sm text-muted-foreground">{user.email}</p>
+              {!user.canChangeEmail ? (
+                <p className="truncate text-sm text-muted-foreground">{user.email}</p>
+              ) : null}
             </div>
           </div>
           <Separator />
@@ -104,53 +118,60 @@ export function SettingsWorkspace() {
             </div>
             <div>
               <dt className="text-muted-foreground">Workspace</dt>
-              <dd className="font-medium">{workspace.name}</dd>
+              <dd className="font-medium">
+                {workspace ? workspace.name : "Loading…"}
+              </dd>
             </div>
             <div>
               <dt className="text-muted-foreground">Plan</dt>
-              <dd className="font-medium">{planLabel(workspace.plan)}</dd>
+              <dd className="font-medium">
+                {workspace ? planLabel(workspace.plan) : "Loading…"}
+              </dd>
             </div>
           </dl>
           <Separator />
-          <div id="username" className="space-y-2 scroll-mt-6">
-            <label htmlFor="settings-username" className="text-sm font-medium">
-              Username
-            </label>
-            <div className="flex gap-2">
-              <Input
-                id="settings-username"
-                value={usernameInput}
-                onChange={(e) => setUsernameInput(e.target.value)}
-                placeholder="leo"
-                autoComplete="off"
-                spellCheck={false}
-              />
-              <Button
-                type="button"
-                variant="secondary"
-                onClick={() => void handleSaveUsername()}
-                disabled={savingUsername}
-              >
-                {savingUsername ? <Loader2 className="size-4 animate-spin" /> : "Save"}
+          {user.canChangeEmail ? (
+            <EmailChangeRow email={user.email} onSave={handleSaveEmail} />
+          ) : null}
+          {user.canChangeEmail && !user.emailVerified ? (
+            <div className="flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between">
+              <p className="text-sm text-muted-foreground">
+                Verify your email to use the assistant.
+              </p>
+              <Button type="button" variant="outline" size="sm" onClick={() => void handleResendVerification()}>
+                Resend verification email
               </Button>
             </div>
-            <p className="text-xs text-muted-foreground">
-              Your public portfolio URL: {siteHost}/{usernameInput.trim() || "username"}
+          ) : null}
+          <EditableFieldRow
+            id="username"
+            label="Username"
+            value={user.username ?? ""}
+            placeholder="leo"
+            emptyValueLabel="Set a username"
+            autoComplete="off"
+            spellCheck={false}
+            validate={(raw) => {
+              const result = validateSlug(raw);
+              if (!result.ok) return result;
+              return { ok: true, value: result.value };
+            }}
+            onSave={handleSaveUsername}
+            description={(draft) =>
+              `Your public portfolio URL: ${siteHost}/${draft.trim() || "username"}`
+            }
+          />
+          {user.hasPasswordCredential ? (
+            <PasswordChangeRow onSave={handlePasswordChange} />
+          ) : !user.canChangeEmail ? (
+            <p className="text-sm text-muted-foreground">
+              Sign in with Google. Your password is managed there.
             </p>
-          </div>
-        </CardContent>
-      </Card>
+          ) : null}
+      </WorkspaceSection>
 
-      <Card>
-        <CardHeader>
-          <CardTitle className="flex items-center gap-2 text-base">
-            <YuseLogo className="size-4" />
-            How Yuse works
-          </CardTitle>
-          <CardDescription>Main parts of the platform.</CardDescription>
-        </CardHeader>
-        <CardContent className="space-y-4 text-sm">
-          <div className="flex gap-3">
+      <WorkspaceSection title="How Yuse works" description="Main parts of the platform.">
+        <div className="flex gap-3 text-sm">
             <FileText className="mt-0.5 size-4 shrink-0 text-muted-foreground" />
             <div>
               <p className="font-medium">Resumes</p>
@@ -178,30 +199,23 @@ export function SettingsWorkspace() {
               </p>
             </div>
           </div>
-        </CardContent>
-      </Card>
+      </WorkspaceSection>
 
-      <Card id="support">
-        <CardHeader>
-          <CardTitle className="flex items-center gap-2 text-base">
-            <Mail className="size-4" />
-            Help &amp; support
-          </CardTitle>
-          <CardDescription>
-            Questions, bugs, or feedback, we are happy to help.
-          </CardDescription>
-        </CardHeader>
-        <CardContent className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+      <WorkspaceSection
+        title="Help and support"
+        description="Questions, bugs, or feedback, we are happy to help."
+      >
+        <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
           <p className="text-sm text-muted-foreground">
             Email us and include what you were trying to do. Screenshots help.
           </p>
           <a href={SUPPORT_MAILTO} className={buttonVariants({ variant: "outline" })}>
             Contact support
           </a>
-        </CardContent>
-      </Card>
+        </div>
+      </WorkspaceSection>
 
-      <div className="flex justify-end pt-2">
+      <div className="flex justify-end px-4 py-4 lg:px-5">
         <Button
           variant="outline"
           className="gap-2 text-destructive hover:text-destructive"
@@ -213,6 +227,6 @@ export function SettingsWorkspace() {
           Sign out
         </Button>
       </div>
-    </div>
+    </WorkspaceSections>
   );
 }

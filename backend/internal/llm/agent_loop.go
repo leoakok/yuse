@@ -50,7 +50,11 @@ func (s *Service) RunAgentStream(
 		sink = noopStreamSink{}
 	}
 
-	attachments := enrichAttachments(attachmentsFromInput(attachmentInputs))
+	attachments, err := attachmentsFromInput(attachmentInputs)
+	if err != nil {
+		return nil, err
+	}
+	attachments = enrichAttachments(attachments)
 
 	// Cheap pre-classification (one small structured-output call, not a second
 	// full agent). Attachments and workflow continuations are always actionable.

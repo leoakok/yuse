@@ -3,7 +3,9 @@ package config
 import (
 	"fmt"
 	"os"
+	"strconv"
 	"strings"
+	"time"
 )
 
 type Config struct {
@@ -28,6 +30,24 @@ type Config struct {
 	AzureStorageAccountKey     string
 	AzureStorageContainer      string
 	AzureStoragePublicURLPrefix string
+	EnableGraphQLPlayground    bool
+	EmailVerificationRequired  bool
+	AdminEmails                []string
+	RateLimitLoginPerIP        int
+	RateLimitLoginWindow       time.Duration
+	RateLimitRegisterPerIP     int
+	RateLimitRegisterWindow    time.Duration
+	RateLimitGraphQLPerIP      int
+	RateLimitGraphQLWindow     time.Duration
+	RateLimitAssistantPerUser  int
+	RateLimitAssistantWindow   time.Duration
+	RateLimitAccountPerUser    int
+	RateLimitAccountWindow     time.Duration
+	BetaInviteOnly             bool
+	RateLimitWaitlistPerIP     int
+	RateLimitWaitlistWindow    time.Duration
+	RateLimitAccessCheckPerIP  int
+	RateLimitAccessCheckWindow time.Duration
 }
 
 func Load() (Config, error) {
@@ -53,6 +73,24 @@ func Load() (Config, error) {
 		AzureStorageAccountKey:      strings.TrimSpace(os.Getenv("AZURE_STORAGE_ACCOUNT_KEY")),
 		AzureStorageContainer:       envOr("AZURE_STORAGE_CONTAINER", "profile-photos"),
 		AzureStoragePublicURLPrefix: strings.TrimSpace(os.Getenv("AZURE_STORAGE_PUBLIC_URL_PREFIX")),
+		EnableGraphQLPlayground:     envBool("ENABLE_GRAPHQL_PLAYGROUND", false),
+		EmailVerificationRequired:   envBool("EMAIL_VERIFICATION_REQUIRED", false),
+		AdminEmails:                 parseCSV(os.Getenv("ADMIN_EMAILS")),
+		RateLimitLoginPerIP:         envInt("RATE_LIMIT_LOGIN_PER_IP", 10),
+		RateLimitLoginWindow:        envDuration("RATE_LIMIT_LOGIN_WINDOW", 15*time.Minute),
+		RateLimitRegisterPerIP:      envInt("RATE_LIMIT_REGISTER_PER_IP", 5),
+		RateLimitRegisterWindow:     envDuration("RATE_LIMIT_REGISTER_WINDOW", time.Hour),
+		RateLimitGraphQLPerIP:       envInt("RATE_LIMIT_GRAPHQL_PER_IP", 120),
+		RateLimitGraphQLWindow:      envDuration("RATE_LIMIT_GRAPHQL_WINDOW", time.Minute),
+		RateLimitAssistantPerUser:   envInt("RATE_LIMIT_ASSISTANT_PER_USER", 20),
+		RateLimitAssistantWindow:    envDuration("RATE_LIMIT_ASSISTANT_WINDOW", time.Minute),
+		RateLimitAccountPerUser:     envInt("RATE_LIMIT_ACCOUNT_PER_USER", 5),
+		RateLimitAccountWindow:      envDuration("RATE_LIMIT_ACCOUNT_WINDOW", 15*time.Minute),
+		BetaInviteOnly:              envBool("BETA_INVITE_ONLY", false),
+		RateLimitWaitlistPerIP:      envInt("RATE_LIMIT_WAITLIST_PER_IP", 10),
+		RateLimitWaitlistWindow:     envDuration("RATE_LIMIT_WAITLIST_WINDOW", time.Hour),
+		RateLimitAccessCheckPerIP:   envInt("RATE_LIMIT_ACCESS_CHECK_PER_IP", 5),
+		RateLimitAccessCheckWindow: envDuration("RATE_LIMIT_ACCESS_CHECK_WINDOW", 15*time.Minute),
 	}
 
 	if cfg.GitHubOAuthCallbackURL == "" {
@@ -112,4 +150,52 @@ func envOr(key, fallback string) string {
 		return value
 	}
 	return fallback
+}
+
+func envBool(key string, fallback bool) bool {
+	value := strings.TrimSpace(os.Getenv(key))
+	if value == "" {
+		return fallback
+	}
+	parsed, err := strconv.ParseBool(value)
+	if err != nil {
+		return fallback
+	}
+	return parsed
+}
+
+func envInt(key string, fallback int) int {
+	value := strings.TrimSpace(os.Getenv(key))
+	if value == "" {
+		return fallback
+	}
+	parsed, err := strconv.Atoi(value)
+	if err != nil || parsed < 1 {
+		return fallback
+	}
+	return parsed
+}
+
+func envDuration(key string, fallback time.Duration) time.Duration {
+	value := strings.TrimSpace(os.Getenv(key))
+	if value == "" {
+		return fallback
+	}
+	parsed, err := time.ParseDuration(value)
+	if err != nil || parsed <= 0 {
+		return fallback
+	}
+	return parsed
+}
+
+func parseCSV(raw string) []string {
+	parts := strings.Split(raw, ",")
+	out := make([]string, 0, len(parts))
+	for _, part := range parts {
+		trimmed := strings.ToLower(strings.TrimSpace(part))
+		if trimmed != "" {
+			out = append(out, trimmed)
+		}
+	}
+	return out
 }

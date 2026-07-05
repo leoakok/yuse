@@ -20,7 +20,7 @@ type jwtClaims struct {
 func ParseBearer(tokenString, secret string) (Claims, error) {
 	tokenString = strings.TrimSpace(strings.TrimPrefix(tokenString, "Bearer "))
 	if tokenString == "" {
-		return Claims{}, fmt.Errorf("missing bearer token")
+		return Claims{}, ErrMissingBearer
 	}
 	if strings.TrimSpace(secret) == "" {
 		return Claims{}, fmt.Errorf("auth secret not configured")

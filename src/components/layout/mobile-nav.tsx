@@ -1,50 +1,33 @@
 "use client";
 
 import { Menu } from "lucide-react";
-import { useState } from "react";
-import { NavLinks } from "@/components/layout/app-nav";
-import { UserMenuButton } from "@/components/layout/user-menu-button";
+import { useWorkspaceMobileDrawer } from "@/components/layout/workspace-mobile-drawer";
 import { Button } from "@/components/ui/button";
-import { floatingChipSurfaceClassName } from "@/lib/ui/floating-chip";
+import { topbarIconSegmentClassName, topbarTrackClassName } from "@/lib/ui/topbar-nav";
 import { cn } from "@/lib/utils";
-import {
-  Sheet,
-  SheetContent,
-  SheetHeader,
-  SheetTitle,
-} from "@/components/ui/sheet";
 
-export function MobileNav() {
-  const [open, setOpen] = useState(false);
+interface MobileNavProps {
+  showAccount?: boolean;
+}
+
+export function MobileNav({ showAccount: _showAccount = true }: MobileNavProps) {
+  const { toggleDrawer, isDrawerOpen } = useWorkspaceMobileDrawer();
+  const navOpen = isDrawerOpen("nav");
 
   return (
-    <>
+    <div className={cn(topbarTrackClassName, "md:hidden")}>
       <Button
         type="button"
         variant="ghost"
-        size="icon-sm"
-        className={cn(
-          floatingChipSurfaceClassName,
-          "size-8 shrink-0 rounded-full p-0 md:hidden"
+        className={topbarIconSegmentClassName(
+          "border-transparent bg-transparent shadow-none"
         )}
-        aria-label="Open menu"
-        onClick={() => setOpen(true)}
+        aria-label={navOpen ? "Close menu" : "Open menu"}
+        aria-pressed={navOpen}
+        onClick={() => toggleDrawer("nav")}
       >
         <Menu />
       </Button>
-      <Sheet open={open} onOpenChange={setOpen}>
-        <SheetContent side="left" className="flex w-72 flex-col p-0">
-          <SheetHeader className="border-b">
-            <SheetTitle>Menu</SheetTitle>
-          </SheetHeader>
-          <div className="flex min-h-0 flex-1 flex-col">
-            <NavLinks orientation="vertical" onNavigate={() => setOpen(false)} />
-            <div className="mt-auto border-t p-4">
-              <UserMenuButton className="w-full justify-start" />
-            </div>
-          </div>
-        </SheetContent>
-      </Sheet>
-    </>
+    </div>
   );
 }

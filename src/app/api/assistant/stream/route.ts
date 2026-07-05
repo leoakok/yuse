@@ -1,6 +1,11 @@
 import { auth } from "@/auth";
 import { backendBaseUrl } from "@/lib/auth/backend-url";
 import { AuthConfigError, signProxyJwt } from "@/lib/auth/proxy-jwt";
+import {
+  MAX_ASSISTANT_BODY_BYTES,
+  enforceRateLimit,
+  readBodyWithLimit,
+} from "@/lib/security/rate-limit";
 
 function isBackendUnreachable(error: unknown): boolean {
   if (!(error instanceof TypeError)) {
@@ -21,21 +26,27 @@ export async function POST(request: Request) {
     return Response.json({ error: "Unauthorized" }, { status: 401 });
   }
 
+  const limited = enforceRateLimit(request, `assistant:${session.user.id}`, 20, 60 * 1000);
+  if (limited) {
+    return limited;
+  }
+
   let token: string;
   try {
     token = await signProxyJwt(session);
   } catch (error) {
     if (error instanceof AuthConfigError) {
       console.error("[assistant stream]", error.message);
-      return Response.json(
-        { error: "Server auth is not configured. Set AUTH_SECRET in .env." },
-        { status: 503 },
-      );
+      return Response.json({ error: "Server auth is not configured" }, { status: 503 });
     }
     throw error;
   }
 
-  const body = await request.text();
+  const body = await readBodyWithLimit(request, MAX_ASSISTANT_BODY_BYTES);
+  if (body instanceof Response) {
+    return body;
+  }
+
   let upstream: Response;
   try {
     upstream = await fetch(`${backendBaseUrl()}/assistant/stream`, {
@@ -50,10 +61,7 @@ export async function POST(request: Request) {
   } catch (error) {
     if (isBackendUnreachable(error)) {
       console.error("[assistant stream] backend unreachable", error);
-      return Response.json(
-        { error: "Backend is unavailable. Start it with: npm run start." },
-        { status: 503 },
-      );
+      return Response.json({ error: "Backend is unavailable" }, { status: 503 });
     }
     throw error;
   }

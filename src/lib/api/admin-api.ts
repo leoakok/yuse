@@ -5,12 +5,28 @@ import type {
   KnowledgeEntry,
   UpdateKnowledgeEntryInput,
 } from "@/lib/types/knowledge";
+import type {
+  AdminAuditLogEntry,
+  AdminUser,
+  SendTestEmailResult,
+  TestEmailType,
+  WaitlistEntry,
+  WaitlistStatus,
+} from "@/lib/types/admin";
 import { graphqlRequest } from "@/lib/graphql/client";
 import {
+  ADMIN_AUDIT_LOG_QUERY,
+  ADMIN_USERS_QUERY,
+  ADMIN_WAITLIST_QUERY,
+  APPROVE_WAITLIST_ENTRY_MUTATION,
   CLASSIFY_ASSISTANT_MESSAGE_QUERY,
   CREATE_KNOWLEDGE_ENTRY_MUTATION,
   DELETE_KNOWLEDGE_ENTRY_MUTATION,
   KNOWLEDGE_ENTRIES_QUERY,
+  REJECT_WAITLIST_ENTRY_MUTATION,
+  SET_USER_ACTIVE_MUTATION,
+  SET_USER_ROLE_MUTATION,
+  SEND_TEST_EMAIL_MUTATION,
   UPDATE_KNOWLEDGE_ENTRY_MUTATION,
 } from "@/lib/graphql/operations";
 
@@ -83,4 +99,70 @@ export async function deleteKnowledgeEntry(id: string): Promise<boolean> {
     { id }
   );
   return data.deleteKnowledgeEntry;
+}
+
+export async function listAdminUsers(): Promise<AdminUser[]> {
+  const data = await graphqlRequest<{ adminUsers: AdminUser[] }>(ADMIN_USERS_QUERY);
+  return data.adminUsers;
+}
+
+export async function listAdminWaitlist(status?: WaitlistStatus): Promise<WaitlistEntry[]> {
+  const data = await graphqlRequest<{ adminWaitlist: WaitlistEntry[] }>(ADMIN_WAITLIST_QUERY, {
+    status,
+  });
+  return data.adminWaitlist;
+}
+
+export async function listAdminAuditLog(limit = 50): Promise<AdminAuditLogEntry[]> {
+  const data = await graphqlRequest<{ adminAuditLog: AdminAuditLogEntry[] }>(
+    ADMIN_AUDIT_LOG_QUERY,
+    { limit }
+  );
+  return data.adminAuditLog;
+}
+
+export async function approveWaitlistEntry(id: string): Promise<WaitlistEntry> {
+  const data = await graphqlRequest<{ approveWaitlistEntry: WaitlistEntry }>(
+    APPROVE_WAITLIST_ENTRY_MUTATION,
+    { id }
+  );
+  return data.approveWaitlistEntry;
+}
+
+export async function rejectWaitlistEntry(id: string): Promise<WaitlistEntry> {
+  const data = await graphqlRequest<{ rejectWaitlistEntry: WaitlistEntry }>(
+    REJECT_WAITLIST_ENTRY_MUTATION,
+    { id }
+  );
+  return data.rejectWaitlistEntry;
+}
+
+export async function setUserActive(userId: string, active: boolean): Promise<AdminUser> {
+  const data = await graphqlRequest<{ setUserActive: AdminUser }>(SET_USER_ACTIVE_MUTATION, {
+    userId,
+    active,
+  });
+  return data.setUserActive;
+}
+
+export async function setUserRole(
+  userId: string,
+  role: AdminUser["role"],
+): Promise<AdminUser> {
+  const data = await graphqlRequest<{ setUserRole: AdminUser }>(SET_USER_ROLE_MUTATION, {
+    userId,
+    role,
+  });
+  return data.setUserRole;
+}
+
+export async function sendTestEmail(
+  type: TestEmailType,
+  recipientEmail: string,
+): Promise<SendTestEmailResult> {
+  const data = await graphqlRequest<{ sendTestEmail: SendTestEmailResult }>(
+    SEND_TEST_EMAIL_MUTATION,
+    { type, recipientEmail },
+  );
+  return data.sendTestEmail;
 }

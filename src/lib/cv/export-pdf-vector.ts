@@ -1,5 +1,5 @@
 import type { ContactProfile, PageFormat, ResumeWithContent, SectionItem } from "@/lib/types/cv";
-import { buildCvBlocks, shouldShowSectionTitleForItem, type CvBlock } from "@/lib/cv/cv-pagination";
+import { buildCvBlocks, shouldShowSectionTitleForContent, type CvBlock } from "@/lib/cv/cv-pagination";
 import {
   formatItemHeadline,
   getSectionItemSubtitle,
@@ -81,7 +81,7 @@ function shouldDrawSectionTitleBeforeItem(
 
   const prevOnPage = atPageTop ? null : lastBlock;
   const prevGlobal = lastBlock;
-  return shouldShowSectionTitleForItem(block, prevOnPage, prevGlobal);
+  return shouldShowSectionTitleForContent(block, prevOnPage, prevGlobal);
 }
 
 class VectorPdfLayout {

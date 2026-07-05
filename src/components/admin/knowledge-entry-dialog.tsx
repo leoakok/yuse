@@ -10,12 +10,12 @@ import {
 } from "@/lib/types/knowledge";
 import { Button } from "@/components/ui/button";
 import {
-  Dialog,
-  DialogContent,
-  DialogFooter,
-  DialogHeader,
-  DialogTitle,
-} from "@/components/ui/dialog";
+  ResponsiveDialog,
+  ResponsiveDialogContent,
+  ResponsiveDialogFooter,
+  ResponsiveDialogHeader,
+  ResponsiveDialogTitle,
+} from "@/components/ui/responsive-dialog";
 import { Input } from "@/components/ui/input";
 import {
   Select,
@@ -85,13 +85,13 @@ export function KnowledgeEntryDialog({ state, onClose, onSave }: KnowledgeEntryD
   }
 
   return (
-    <Dialog open onOpenChange={(open) => !open && onClose()}>
-      <DialogContent className="max-h-[90vh] overflow-y-auto sm:max-w-lg">
-        <DialogHeader>
-          <DialogTitle>
+    <ResponsiveDialog open onOpenChange={(open) => !open && onClose()}>
+      <ResponsiveDialogContent className="max-h-[90vh] overflow-y-auto sm:max-w-lg">
+        <ResponsiveDialogHeader>
+          <ResponsiveDialogTitle>
             {state.mode === "create" ? "Add knowledge entry" : "Edit knowledge entry"}
-          </DialogTitle>
-        </DialogHeader>
+          </ResponsiveDialogTitle>
+        </ResponsiveDialogHeader>
         <div className="space-y-4 py-2">
           <div className="space-y-1.5">
             <label htmlFor="knowledge-slug" className="text-sm font-medium">
@@ -164,12 +164,12 @@ export function KnowledgeEntryDialog({ state, onClose, onSave }: KnowledgeEntryD
             Enabled
           </label>
         </div>
-        <DialogFooter>
+        <ResponsiveDialogFooter>
           <Button type="button" onClick={() => void handleSubmit()} disabled={saving}>
             {saving ? "Saving…" : state.mode === "create" ? "Add entry" : "Save changes"}
           </Button>
-        </DialogFooter>
-      </DialogContent>
-    </Dialog>
+        </ResponsiveDialogFooter>
+      </ResponsiveDialogContent>
+    </ResponsiveDialog>
   );
 }

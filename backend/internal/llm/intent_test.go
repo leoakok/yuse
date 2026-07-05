@@ -178,6 +178,29 @@ func TestClassifyHelpWithTaskNotCapabilities(t *testing.T) {
 	}
 }
 
+func TestClassifyDeleteAllData(t *testing.T) {
+	class := classifyOffline("delete all my data", model.AssistantContextInput{})
+	if class.Category != model.AssistantCategoryUpdateCv {
+		t.Fatalf("expected UPDATE_CV for delete all data, got %s", class.Category)
+	}
+}
+
+func TestClassifyDeleteSectionItems(t *testing.T) {
+	class := classifyOffline("find all cvs and delete all section items", model.AssistantContextInput{})
+	if class.Category != model.AssistantCategoryUpdateCv {
+		t.Fatalf("expected UPDATE_CV for bulk section delete, got %s", class.Category)
+	}
+}
+
+func TestUserAskedDeleteCVDataRejectsAccount(t *testing.T) {
+	if userAskedDeleteCVData("delete my account") {
+		t.Fatal("account deletion should not match CV delete")
+	}
+	if !userAskedDeleteCVData("delete all my cv items") {
+		t.Fatal("expected cv item delete to match")
+	}
+}
+
 func TestShouldBlockHighImpactTool(t *testing.T) {
 	if !shouldBlockHighImpactTool(model.AssistantCategoryUnclear, "create_resume") {
 		t.Fatal("expected create_resume blocked when UNCLEAR")
@@ -190,6 +213,12 @@ func TestShouldBlockHighImpactTool(t *testing.T) {
 	}
 	if shouldBlockHighImpactTool(model.AssistantCategoryUnclear, "list_resumes") {
 		t.Fatal("read tools should never be blocked")
+	}
+	if shouldBlockHighImpactTool(model.AssistantCategoryUpdateCv, "delete_resume") {
+		t.Fatal("delete_resume should be allowed for UPDATE_CV")
+	}
+	if shouldBlockHighImpactTool(model.AssistantCategoryUpdateCv, "delete_all_section_items") {
+		t.Fatal("delete_all_section_items should be allowed for UPDATE_CV")
 	}
 }
 

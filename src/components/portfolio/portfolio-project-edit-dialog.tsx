@@ -3,12 +3,12 @@
 import { useEffect, useState } from "react";
 import type { PortfolioProject } from "@/lib/types/portfolio";
 import {
-  Dialog,
-  DialogContent,
-  DialogFooter,
-  DialogHeader,
-  DialogTitle,
-} from "@/components/ui/dialog";
+  ResponsiveDialog,
+  ResponsiveDialogContent,
+  ResponsiveDialogFooter,
+  ResponsiveDialogHeader,
+  ResponsiveDialogTitle,
+} from "@/components/ui/responsive-dialog";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
@@ -87,11 +87,11 @@ export function PortfolioProjectEditDialog({
   }
 
   return (
-    <Dialog open onOpenChange={(open) => !open && onClose()}>
-      <DialogContent className="max-h-[90vh] overflow-y-auto sm:max-w-lg">
-        <DialogHeader>
-          <DialogTitle>{state.mode === "create" ? "Add project" : "Edit project"}</DialogTitle>
-        </DialogHeader>
+    <ResponsiveDialog open onOpenChange={(open) => !open && onClose()}>
+      <ResponsiveDialogContent className="max-h-[90vh] overflow-y-auto sm:max-w-lg">
+        <ResponsiveDialogHeader>
+          <ResponsiveDialogTitle>{state.mode === "create" ? "Add project" : "Edit project"}</ResponsiveDialogTitle>
+        </ResponsiveDialogHeader>
         <div className="space-y-4 py-2">
           <div className="space-y-1.5">
             <label htmlFor="project-title" className="text-sm font-medium">Title</label>
@@ -132,12 +132,12 @@ export function PortfolioProjectEditDialog({
             Featured project (hero)
           </label>
         </div>
-        <DialogFooter>
+        <ResponsiveDialogFooter>
           <Button onClick={() => void handleSubmit()} disabled={saving || !title.trim()}>
             {saving ? "Saving…" : "Save"}
           </Button>
-        </DialogFooter>
-      </DialogContent>
-    </Dialog>
+        </ResponsiveDialogFooter>
+      </ResponsiveDialogContent>
+    </ResponsiveDialog>
   );
 }

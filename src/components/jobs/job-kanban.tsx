@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useEffect, useState, type ReactNode } from "react";
 import {
   DndContext,
   DragOverlay,
@@ -24,6 +24,7 @@ import type { JobStatus, TrackedJob } from "@/lib/types/job";
 
 interface JobKanbanProps {
   jobs: TrackedJob[];
+  loading?: boolean;
   onStatusChange?: (job: TrackedJob, status: JobStatus) => void;
   onSelect?: (job: TrackedJob) => void;
   selectedJobId?: string | null;
@@ -157,14 +158,49 @@ function DraggableJobCard({
   );
 }
 
+function KanbanColumnBody({
+  columnJobs,
+  loading,
+  isOver,
+  renderJob,
+}: {
+  columnJobs: TrackedJob[];
+  loading?: boolean;
+  isOver?: boolean;
+  renderJob: (job: TrackedJob) => ReactNode;
+}) {
+  if (columnJobs.length > 0) {
+    return <>{columnJobs.map((job) => renderJob(job))}</>;
+  }
+
+  if (loading) {
+    return <div className="min-h-[4rem] flex-1" aria-hidden />;
+  }
+
+  return (
+    <div
+      className={cn(
+        "flex flex-1 items-center justify-center rounded-lg border border-dashed border-transparent px-3 py-8 text-center",
+        isOver && "border-primary/30 bg-primary/5"
+      )}
+    >
+      <p className="text-xs text-muted-foreground">
+        {isOver ? "Release to move here" : "Drop applications here"}
+      </p>
+    </div>
+  );
+}
+
 function StaticKanbanColumn({
   status,
   jobs,
+  loading,
   onSelect,
   selectedJobId,
 }: {
   status: JobStatus;
   jobs: TrackedJob[];
+  loading?: boolean;
   onSelect?: (job: TrackedJob) => void;
   selectedJobId?: string | null;
 }) {
@@ -178,21 +214,22 @@ function StaticKanbanColumn({
           {columnJobs.length}
         </Badge>
       </div>
-      <div className="flex min-h-0 flex-1 flex-col gap-2 overflow-y-auto p-2">
-        {columnJobs.length === 0 ? (
-          <div className="flex flex-1 items-center justify-center rounded-lg border border-dashed border-transparent px-3 py-8 text-center">
-            <p className="text-xs text-muted-foreground">Drop applications here</p>
-          </div>
-        ) : (
-          columnJobs.map((job) => (
+      <div
+        className="flex min-h-0 flex-1 flex-col gap-2 overflow-y-auto p-2"
+        aria-busy={loading || undefined}
+      >
+        <KanbanColumnBody
+          columnJobs={columnJobs}
+          loading={loading}
+          renderJob={(job) => (
             <JobCardContent
               key={job.id}
               job={job}
               onSelect={onSelect}
               isSelected={job.id === selectedJobId}
             />
-          ))
-        )}
+          )}
+        />
       </div>
     </div>
   );
@@ -201,11 +238,13 @@ function StaticKanbanColumn({
 function KanbanColumn({
   status,
   jobs,
+  loading,
   onSelect,
   selectedJobId,
 }: {
   status: JobStatus;
   jobs: TrackedJob[];
+  loading?: boolean;
   onSelect?: (job: TrackedJob) => void;
   selectedJobId?: string | null;
 }) {
@@ -230,28 +269,23 @@ function KanbanColumn({
           {columnJobs.length}
         </Badge>
       </div>
-      <div className="flex min-h-0 flex-1 flex-col gap-2 overflow-y-auto p-2">
-        {columnJobs.length === 0 ? (
-          <div
-            className={cn(
-              "flex flex-1 items-center justify-center rounded-lg border border-dashed border-transparent px-3 py-8 text-center",
-              isOver && "border-primary/30 bg-primary/5"
-            )}
-          >
-            <p className="text-xs text-muted-foreground">
-              {isOver ? "Release to move here" : "Drop applications here"}
-            </p>
-          </div>
-        ) : (
-          columnJobs.map((job) => (
+      <div
+        className="flex min-h-0 flex-1 flex-col gap-2 overflow-y-auto p-2"
+        aria-busy={loading || undefined}
+      >
+        <KanbanColumnBody
+          columnJobs={columnJobs}
+          loading={loading}
+          isOver={isOver}
+          renderJob={(job) => (
             <DraggableJobCard
               key={job.id}
               job={job}
               onSelect={onSelect}
               isSelected={job.id === selectedJobId}
             />
-          ))
-        )}
+          )}
+        />
       </div>
     </div>
   );
@@ -259,6 +293,7 @@ function KanbanColumn({
 
 export function JobKanban({
   jobs,
+  loading = false,
   onStatusChange,
   onSelect,
   selectedJobId,
@@ -298,22 +333,6 @@ export function JobKanban({
     onStatusChange?.(job, newStatus);
   }
 
-  if (jobs.length === 0) {
-    return (
-      <div
-        className={cn(
-          "flex flex-1 items-center justify-center rounded-xl border border-dashed px-6 py-16 text-center",
-          className
-        )}
-      >
-        <p className="text-sm font-medium">No tracked jobs yet</p>
-        <p className="mt-1 text-sm text-muted-foreground">
-          Paste a job URL above and Yuse will tailor your application.
-        </p>
-      </div>
-    );
-  }
-
   const boardClassName = cn(
     "flex h-full min-h-0 w-full min-w-0 flex-1 items-stretch gap-3 overflow-x-auto pb-2",
     className
@@ -321,12 +340,13 @@ export function JobKanban({
 
   if (!mounted || readOnly) {
     return (
-      <div className={boardClassName} aria-hidden={!mounted}>
+      <div className={boardClassName} aria-hidden={!mounted} aria-busy={loading || undefined}>
         {JOB_STATUS_ORDER.map((status) => (
           <StaticKanbanColumn
             key={status}
             status={status}
             jobs={jobs}
+            loading={loading}
             onSelect={onSelect}
             selectedJobId={selectedJobId}
           />
@@ -343,12 +363,13 @@ export function JobKanban({
       onDragEnd={handleDragEnd}
       onDragCancel={() => setActiveJob(null)}
     >
-      <div className={boardClassName}>
+      <div className={boardClassName} aria-busy={loading || undefined}>
         {JOB_STATUS_ORDER.map((status) => (
           <KanbanColumn
             key={status}
             status={status}
             jobs={jobs}
+            loading={loading}
             onSelect={onSelect}
             selectedJobId={selectedJobId}
           />

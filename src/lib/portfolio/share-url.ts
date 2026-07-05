@@ -7,13 +7,16 @@ export function portfolioSiteOrigin() {
   return configured || DEFAULT_SITE_ORIGIN;
 }
 
-export function buildPortfolioShareUrl(username: string, portfolioSlug?: string | null) {
+export function buildShareUrl(username: string, slug?: string | null) {
   const origin = portfolioSiteOrigin();
   const user = normalizeSlug(username);
   if (!user) return origin;
-  if (portfolioSlug?.trim()) {
-    const slug = normalizeSlug(portfolioSlug);
-    if (slug) return `${origin}/${user}/${slug}`;
+  if (slug?.trim()) {
+    const segment = normalizeSlug(slug);
+    if (segment) return `${origin}/${user}/${segment}`;
   }
   return `${origin}/${user}`;
 }
+
+/** @deprecated Use buildShareUrl */
+export const buildPortfolioShareUrl = buildShareUrl;

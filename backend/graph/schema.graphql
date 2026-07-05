@@ -282,6 +282,21 @@ enum UserRole {
   ADMIN
 }
 
+"""Beta waitlist review status."""
+enum WaitlistStatus {
+  PENDING
+  APPROVED
+  REJECTED
+}
+
+"""Transactional email template for admin preview sends."""
+enum TestEmailType {
+  WELCOME
+  BETA_APPROVAL
+  EMAIL_VERIFICATION
+  PASSWORD_RESET
+}
+
 """Detected request category from the cheap intent layer that runs before the main agent."""
 enum AssistantCategory {
   UPDATE_CV
@@ -310,8 +325,63 @@ type User {
   username: String
   avatarUrl: String
   role: UserRole!
+  """True when the account has a local password (email sign-in)."""
+  hasPasswordCredential: Boolean!
+  """True when the signed-in user may change their login email in settings."""
+  canChangeEmail: Boolean!
+  """True when the account email address has been verified."""
+  emailVerified: Boolean!
   createdAt: DateTime!
   updatedAt: DateTime!
+}
+
+"""Platform user row for the admin panel."""
+type AdminUser {
+  id: ID!
+  email: String!
+  displayName: String!
+  role: UserRole!
+  isActive: Boolean!
+  createdAt: DateTime!
+  updatedAt: DateTime!
+}
+
+"""Beta waitlist entry."""
+type WaitlistEntry {
+  id: ID!
+  email: String!
+  status: WaitlistStatus!
+  submittedAt: DateTime!
+  reviewedAt: DateTime
+  reviewedBy: ID
+}
+
+"""Result of an admin test email send."""
+type SendTestEmailResult {
+  success: Boolean!
+  message: String
+}
+
+"""Admin action audit trail entry."""
+type AdminAuditLogEntry {
+  id: ID!
+  actorId: ID!
+  actorEmail: String!
+  action: String!
+  targetType: String!
+  targetId: String
+  metadata: JSON
+  createdAt: DateTime!
+}
+
+"""LinkedIn job search result (admin tooling)."""
+type LinkedInJobCard {
+  jobId: String!
+  title: String!
+  company: String
+  location: String
+  listedAt: String
+  url: String!
 }
 
 """A curated, tag-keyed guidance entry the agent injects into context based on the detected category."""
@@ -411,6 +481,8 @@ type Resume {
   id: ID!
   workspaceId: ID!
   title: String!
+  """Per-resume URL segment under the owner's username"""
+  slug: String
   contactProfileId: ID
   createdBy: ID!
   createdAt: DateTime!
@@ -725,6 +797,8 @@ type Query {
   portfolioWithContent(id: ID!): PortfolioWithContent
   """Public portfolio page, no auth required."""
   publicPortfolioWithContent(username: String!, slug: String): PortfolioWithContent
+  """Public resume page, no auth required."""
+  publicResumeWithContent(username: String!, slug: String): ResumeWithContent
   sectionItemUsage(id: ID!): SectionItemUsage
   sectionItemsForSection(sectionId: ID!): [SectionItem!]!
   resumesForSection(sectionId: ID!): [Resume!]!
@@ -739,6 +813,14 @@ type Query {
   knowledgeEntries(includeDisabled: Boolean = true): [KnowledgeEntry!]!
   """Admin only. Runs the cheap intent layer for a test message and returns the breakdown."""
   classifyAssistantMessage(text: String!, context: AssistantContextInput!): AssistantClassification!
+  """Admin only. Lists all platform users."""
+  adminUsers: [AdminUser!]!
+  """Admin only. Lists beta waitlist entries."""
+  adminWaitlist(status: WaitlistStatus): [WaitlistEntry!]!
+  """Admin only. Lists recent admin audit log entries."""
+  adminAuditLog(limit: Int = 50, offset: Int = 0): [AdminAuditLogEntry!]!
+  """Admin only. Search LinkedIn jobs via Voyager API (requires LINKEDIN_SESSION_COOKIE on backend)."""
+  adminLinkedInJobSearch(keywords: String!, geoId: String, timeFilter: String = "r7200"): [LinkedInJobCard!]!
 }
 
 input CreateKnowledgeEntryInput {
@@ -1028,7 +1110,14 @@ type Mutation {
   deletePortfolio(id: ID!): Boolean!
   updatePortfolio(id: ID!, title: String, tagline: String, about: String, contactProfileId: ID): Portfolio!
   setUsername(username: String!): User!
+  """Change password for email/password accounts."""
+  changePassword(currentPassword: String!, newPassword: String!): Boolean!
+  """Change login email for email/password accounts."""
+  changeEmail(currentPassword: String!, email: String!): User!
+  """Send a fresh email verification link to the signed-in user."""
+  resendVerificationEmail: Boolean!
   setPortfolioSlug(portfolioId: ID!, slug: String!): Portfolio!
+  setResumeSlug(resumeId: ID!, slug: String!): Resume!
   updatePortfolioSettings(input: UpdatePortfolioSettingsInput!): PortfolioSettings!
   updatePortfolioContactProfile(input: UpdatePortfolioContactProfileInput!): PortfolioWithContent!
   addPortfolioProject(input: AddPortfolioProjectInput!): PortfolioWithContent!
@@ -1060,4 +1149,14 @@ type Mutation {
   createKnowledgeEntry(input: CreateKnowledgeEntryInput!): KnowledgeEntry!
   updateKnowledgeEntry(input: UpdateKnowledgeEntryInput!): KnowledgeEntry!
   deleteKnowledgeEntry(id: ID!): Boolean!
+  """Admin only. Approve a waitlist entry."""
+  approveWaitlistEntry(id: ID!): WaitlistEntry!
+  """Admin only. Reject a waitlist entry."""
+  rejectWaitlistEntry(id: ID!): WaitlistEntry!
+  """Admin only. Activate or deactivate a user account."""
+  setUserActive(userId: ID!, active: Boolean!): AdminUser!
+  """Admin only. Set a user's platform role."""
+  setUserRole(userId: ID!, role: UserRole!): AdminUser!
+  """Admin only. Send a preview of a transactional email to a recipient inbox."""
+  sendTestEmail(type: TestEmailType!, recipientEmail: String!): SendTestEmailResult!
 }

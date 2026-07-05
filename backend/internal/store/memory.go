@@ -1258,3 +1258,31 @@ func (m *Memory) CreateResume(title string) *model.Resume {
 	return cloneResume(resume)
 }
 
+func (m *Memory) ListAdminUsers() ([]*model.AdminUser, error) {
+	return nil, nil
+}
+
+func (m *Memory) ListWaitlistEntries(_ *model.WaitlistStatus) ([]*model.WaitlistEntry, error) {
+	return nil, nil
+}
+
+func (m *Memory) ListAdminAuditLog(_, _ int) ([]*model.AdminAuditLogEntry, error) {
+	return nil, nil
+}
+
+func (m *Memory) ApproveWaitlistEntry(_, _ string) (*model.WaitlistEntry, error) {
+	return nil, fmt.Errorf("not supported in memory store")
+}
+
+func (m *Memory) RejectWaitlistEntry(_, _ string) (*model.WaitlistEntry, error) {
+	return nil, fmt.Errorf("not supported in memory store")
+}
+
+func (m *Memory) SetUserActive(_, _ string, _ bool) (*model.AdminUser, error) {
+	return nil, fmt.Errorf("not supported in memory store")
+}
+
+func (m *Memory) SetUserRole(_, _ string, _ model.UserRole) (*model.AdminUser, error) {
+	return nil, fmt.Errorf("not supported in memory store")
+}
+

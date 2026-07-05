@@ -24,6 +24,7 @@ type Executor interface {
 	ReorderResumeSections(input model.ReorderResumeSectionsInput) (*model.ResumeWithContent, error)
 	UpdateResumeSectionVisibility(input model.UpdateResumeSectionVisibilityInput) (*model.ResumeWithContent, error)
 	DeleteSectionItem(resumeID, sectionItemID string) (*model.ResumeWithContent, error)
+	DeleteAllSectionItems(sectionID *string, sectionType *model.SectionType) (int, error)
 	UpdateResumeSettings(input model.UpdateResumeSettingsInput) (*model.ResumeSettings, error)
 	ListPortfolios() []*model.Portfolio
 	GetPortfolio(id string) (*model.Portfolio, error)

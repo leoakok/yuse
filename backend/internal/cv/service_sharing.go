@@ -31,7 +31,22 @@ func (s *Service) SetPortfolioSlug(portfolioID, slug string) (*model.Portfolio, 
 	updated, err := s.store.SetPortfolioSlug(user.ID, portfolioID, slug)
 	if err != nil {
 		if errors.Is(err, store.ErrSlugTaken) {
-			return nil, fmt.Errorf("that portfolio URL is already used on your account")
+			return nil, fmt.Errorf("that URL is already used on your account")
+		}
+		return nil, err
+	}
+	return updated, nil
+}
+
+func (s *Service) SetResumeSlug(resumeID, slug string) (*model.Resume, error) {
+	user := s.store.User()
+	if user == nil {
+		return nil, fmt.Errorf("not signed in")
+	}
+	updated, err := s.store.SetResumeSlug(user.ID, resumeID, slug)
+	if err != nil {
+		if errors.Is(err, store.ErrSlugTaken) {
+			return nil, fmt.Errorf("that URL is already used on your account")
 		}
 		return nil, err
 	}
@@ -40,6 +55,14 @@ func (s *Service) SetPortfolioSlug(portfolioID, slug string) (*model.Portfolio, 
 
 func (s *Service) PublicPortfolioWithContent(username string, slug *string) (*model.PortfolioWithContent, error) {
 	content, err := s.store.PublicPortfolioWithContent(username, slug)
+	if errors.Is(err, store.ErrNotFound) {
+		return nil, nil
+	}
+	return content, err
+}
+
+func (s *Service) PublicResumeWithContent(username string, slug *string) (*model.ResumeWithContent, error) {
+	content, err := s.store.PublicResumeWithContent(username, slug)
 	if errors.Is(err, store.ErrNotFound) {
 		return nil, nil
 	}

@@ -68,7 +68,7 @@ export function OnboardingFlow({ displayName }: OnboardingFlowProps) {
     setStartPath(path);
     if (path === "GITHUB") {
       completeOnboarding(user.id, goal ?? undefined);
-      window.location.href = "/api/auth/github/start";
+      window.location.assign("/api/auth/github/start");
       return;
     }
     if (path === "EXPLORE") {

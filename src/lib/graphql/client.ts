@@ -7,6 +7,13 @@ export class SessionInvalidError extends Error {
   }
 }
 
+export class InviteRequiredError extends Error {
+  constructor() {
+    super("Invite required");
+    this.name = "InviteRequiredError";
+  }
+}
+
 export function getGraphqlUrl(): string {
   if (typeof window === "undefined") {
     const serverUrl = process.env.GRAPHQL_URL?.trim();
@@ -39,6 +46,14 @@ export async function graphqlRequest<T>(
 
   if (response.status === 401) {
     throw new SessionInvalidError();
+  }
+
+  if (response.status === 403) {
+    const forbiddenText = await response.text();
+    if (/not approved/i.test(forbiddenText)) {
+      throw new InviteRequiredError();
+    }
+    throw new Error(forbiddenText.trim() || "Forbidden");
   }
 
   if (response.status === 503) {

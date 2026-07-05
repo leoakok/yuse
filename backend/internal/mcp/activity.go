@@ -76,6 +76,8 @@ func ToolActivityStartLabel(toolName string, args map[string]any) string {
 		return "Let me rename that section…"
 	case "delete_section_item":
 		return "Let me remove that entry…"
+	case "delete_all_section_items":
+		return "Let me clear those section entries…"
 	case "update_contact_profile":
 		return "Let me update your contact details…"
 	case "update_resume_settings":
@@ -221,6 +223,8 @@ func ToolActivityEndLabel(exec Execution) string {
 		return "Updated the section heading"
 	case "delete_section_item":
 		return "Removed that entry"
+	case "delete_all_section_items":
+		return "Cleared section entries"
 	case "update_contact_profile":
 		return "Updated your contact details"
 	case "update_resume_settings":

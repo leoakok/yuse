@@ -398,11 +398,19 @@ Returns fieldHints when key profile fields were omitted.`,
 		},
 		{
 			Name:        "delete_section_item",
-			Description: "Permanently delete a section item from the workspace library (removes it from all resumes).",
+			Description: "Permanently delete one section item from the workspace library (removes it from all resumes). Use get_resume_content first for sectionItemId values.",
 			Parameters: object(map[string]any{
-				"resumeId":      str("Resume id."),
+				"resumeId":      str("Resume id (for refreshed content in the result)."),
 				"sectionItemId": str("Section item id."),
 			}, "resumeId", "sectionItemId"),
+		},
+		{
+			Name:        "delete_all_section_items",
+			Description: "Permanently delete many section items from the workspace library at once. Omit filters to delete every section item. Pass sectionId for one section, or type for all items of a section type (EXPERIENCE, SKILLS, etc.). Only call when the user explicitly asked to delete/clear/remove section content. Confirm scope first when deleting more than a few items.",
+			Parameters: object(map[string]any{
+				"sectionId": str("Optional section id from list_sections or get_resume_content."),
+				"type":      sectionTypeEnum(),
+			}),
 		},
 		{
 			Name: "update_resume_settings",

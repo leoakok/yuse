@@ -14,8 +14,15 @@ import {
   floatingChipGroupClassName,
   floatingChipNavLinkClassName,
 } from "@/lib/ui/floating-chip";
+import {
+  topbarSegmentClassName,
+  topbarTrackClassName,
+  topbarVerticalNavClassName,
+} from "@/lib/ui/topbar-nav";
 import { motionTransitionColors } from "@/lib/ui/motion";
 import { cn } from "@/lib/utils";
+
+export type NavVariant = "floating" | "topbar";
 
 function isNavItemActive(pathname: string, id: string) {
   return (
@@ -53,6 +60,7 @@ interface NavLinksProps {
   linkClassName?: string;
   orientation?: "horizontal" | "vertical";
   grouped?: boolean;
+  variant?: NavVariant;
   showAccount?: boolean;
   onNavigate?: () => void;
 }
@@ -62,20 +70,29 @@ export function NavLinks({
   linkClassName,
   orientation = "horizontal",
   grouped = false,
+  variant = "floating",
   showAccount = false,
   onNavigate,
 }: NavLinksProps) {
   const pathname = usePathname() ?? "";
   const isGroupedHorizontal = grouped && orientation === "horizontal";
+  const isTopbar = variant === "topbar";
+  const isTopbarVertical = isTopbar && orientation === "vertical";
+  const verticalNavItemClass =
+    orientation === "vertical" ? "w-full justify-start" : undefined;
 
   return (
     <nav
       className={cn(
-        isGroupedHorizontal
-          ? floatingChipGroupClassName
-          : orientation === "horizontal"
-            ? "flex items-center justify-center gap-2"
-            : "flex flex-col gap-2 p-4",
+        isGroupedHorizontal && isTopbar
+          ? topbarTrackClassName
+          : isGroupedHorizontal
+            ? floatingChipGroupClassName
+            : isTopbarVertical
+              ? topbarVerticalNavClassName
+              : orientation === "horizontal"
+                ? "flex items-center justify-center gap-2"
+                : "flex flex-col gap-2 p-4",
         className
       )}
     >
@@ -87,22 +104,32 @@ export function NavLinks({
             href={item.href}
             onClick={onNavigate}
             className={
-              isGroupedHorizontal
-                ? groupedNavLinkClassName(
+              isGroupedHorizontal && isTopbar
+                ? topbarSegmentClassName(
                     isActive,
-                    cn(orientation === "vertical" && "w-full justify-center", linkClassName)
+                    cn(verticalNavItemClass, linkClassName)
                   )
-                : standaloneNavLinkClassName(
-                    isActive,
-                    cn(orientation === "vertical" && "w-full justify-center", linkClassName)
-                  )
+                : isTopbarVertical
+                  ? topbarSegmentClassName(
+                      isActive,
+                      cn(verticalNavItemClass, linkClassName)
+                    )
+                  : isGroupedHorizontal
+                    ? groupedNavLinkClassName(
+                        isActive,
+                        cn(verticalNavItemClass, linkClassName)
+                      )
+                    : standaloneNavLinkClassName(
+                        isActive,
+                        cn(verticalNavItemClass, linkClassName)
+                      )
             }
           >
             {item.label}
           </Link>
         );
       })}
-      {isGroupedHorizontal && showAccount ? (
+      {isGroupedHorizontal && showAccount && !isTopbar ? (
         <>
           <div
             className="mx-0.5 h-5 w-px shrink-0 bg-border/60"
@@ -115,12 +142,6 @@ export function NavLinks({
   );
 }
 
-interface AppNavProps {
-  showAccount?: boolean;
-}
-
-export function AppNav({ showAccount = true }: AppNavProps) {
-  return (
-    <NavLinks grouped showAccount={showAccount} className="hidden md:flex" />
-  );
+export function AppNav() {
+  return <NavLinks grouped variant="topbar" className="hidden md:flex" />;
 }

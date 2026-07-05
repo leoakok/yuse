@@ -7,10 +7,13 @@ package graph
 import (
 	"context"
 	"fmt"
+	"strings"
 
 	"github.com/leo/ai-weekend/backend/graph/model"
 	"github.com/leo/ai-weekend/backend/internal/cv"
+	mailpkg "github.com/leo/ai-weekend/backend/internal/email"
 	"github.com/leo/ai-weekend/backend/internal/scope"
+	"github.com/leo/ai-weekend/backend/internal/store"
 )
 
 // EffectivePhotoURL is the resolver for the effectivePhotoUrl field.
@@ -112,6 +115,66 @@ func (r *mutationResolver) SetUsername(ctx context.Context, username string) (*m
 	return svc.SetUsername(username)
 }
 
+// ChangePassword is the resolver for the changePassword field.
+func (r *mutationResolver) ChangePassword(ctx context.Context, currentPassword string, newPassword string) (bool, error) {
+	if err := scope.CheckAccountSensitiveAction(ctx); err != nil {
+		return false, err
+	}
+	svc, err := requireCV(ctx)
+	if err != nil {
+		return false, err
+	}
+	if err := svc.ChangePassword(currentPassword, newPassword); err != nil {
+		return false, err
+	}
+	return true, nil
+}
+
+// ChangeEmail is the resolver for the changeEmail field.
+func (r *mutationResolver) ChangeEmail(ctx context.Context, currentPassword string, email string) (*model.User, error) {
+	if err := scope.CheckAccountSensitiveAction(ctx); err != nil {
+		return nil, err
+	}
+	svc, err := requireCV(ctx)
+	if err != nil {
+		return nil, err
+	}
+	value, ok := scope.From(ctx)
+	verificationRequired := ok && value.Security.EmailVerificationRequired
+	updated, err := svc.ChangeEmail(currentPassword, email, verificationRequired)
+	if err != nil {
+		return nil, err
+	}
+	if verificationRequired && ok && value.Security.Pool != nil {
+		if err := mailpkg.DeliverVerificationEmail(ctx, value.Security.Pool, value.Security.Email, value.Security.AppOrigin, updated.ID, updated.Email); err != nil {
+			return nil, fmt.Errorf("email updated but verification email could not be sent")
+		}
+	}
+	return updated, nil
+}
+
+// ResendVerificationEmail is the resolver for the resendVerificationEmail field.
+func (r *mutationResolver) ResendVerificationEmail(ctx context.Context) (bool, error) {
+	if err := scope.CheckAccountSensitiveAction(ctx); err != nil {
+		return false, err
+	}
+	value, ok := scope.From(ctx)
+	if !ok || value.CV == nil || value.Security.Pool == nil {
+		return false, fmt.Errorf("unauthorized")
+	}
+	user := value.CV.Me()
+	if user == nil {
+		return false, fmt.Errorf("not signed in")
+	}
+	if user.EmailVerified {
+		return true, nil
+	}
+	if err := mailpkg.DeliverVerificationEmail(ctx, value.Security.Pool, value.Security.Email, value.Security.AppOrigin, user.ID, user.Email); err != nil {
+		return false, fmt.Errorf("could not send verification email")
+	}
+	return true, nil
+}
+
 // SetPortfolioSlug is the resolver for the setPortfolioSlug field.
 func (r *mutationResolver) SetPortfolioSlug(ctx context.Context, portfolioID string, slug string) (*model.Portfolio, error) {
 	svc, err := requireCV(ctx)
@@ -119,6 +182,15 @@ func (r *mutationResolver) SetPortfolioSlug(ctx context.Context, portfolioID str
 		return nil, err
 	}
 	return svc.SetPortfolioSlug(portfolioID, slug)
+}
+
+// SetResumeSlug is the resolver for the setResumeSlug field.
+func (r *mutationResolver) SetResumeSlug(ctx context.Context, resumeID string, slug string) (*model.Resume, error) {
+	svc, err := requireCV(ctx)
+	if err != nil {
+		return nil, err
+	}
+	return svc.SetResumeSlug(resumeID, slug)
 }
 
 // UpdatePortfolioSettings is the resolver for the updatePortfolioSettings field.
@@ -228,6 +300,9 @@ func (r *mutationResolver) DeleteAssistantThread(ctx context.Context, id string)
 
 // SendAssistantMessage is the resolver for the sendAssistantMessage field.
 func (r *mutationResolver) SendAssistantMessage(ctx context.Context, threadID string, text string, context model.AssistantContextInput, attachments []*model.AssistantAttachmentInput) (*model.AssistantTurnResult, error) {
+	if err := scope.CheckAssistantAccess(ctx); err != nil {
+		return nil, err
+	}
 	return scope.CV(ctx).SendAssistantMessage(ctx, threadID, text, context, attachments)
 }
 
@@ -249,6 +324,60 @@ func (r *mutationResolver) UpdateKnowledgeEntry(ctx context.Context, input model
 // DeleteKnowledgeEntry is the resolver for the deleteKnowledgeEntry field.
 func (r *mutationResolver) DeleteKnowledgeEntry(ctx context.Context, id string) (bool, error) {
 	return scope.CV(ctx).DeleteKnowledgeEntry(id)
+}
+
+// ApproveWaitlistEntry is the resolver for the approveWaitlistEntry field.
+func (r *mutationResolver) ApproveWaitlistEntry(ctx context.Context, id string) (*model.WaitlistEntry, error) {
+	entry, err := scope.CV(ctx).ApproveWaitlistEntry(id)
+	if err != nil {
+		return nil, err
+	}
+	if value, ok := scope.From(ctx); ok && entry != nil {
+		loginURL := strings.TrimRight(value.Security.AppOrigin, "/") + "/login"
+		if err := mailpkg.SendWaitlistApprovalEmail(value.Security.Email, entry.Email, loginURL); err != nil {
+			return nil, fmt.Errorf("approved but approval email could not be sent")
+		}
+	}
+	return entry, nil
+}
+
+// RejectWaitlistEntry is the resolver for the rejectWaitlistEntry field.
+func (r *mutationResolver) RejectWaitlistEntry(ctx context.Context, id string) (*model.WaitlistEntry, error) {
+	return scope.CV(ctx).RejectWaitlistEntry(id)
+}
+
+// SetUserActive is the resolver for the setUserActive field.
+func (r *mutationResolver) SetUserActive(ctx context.Context, userID string, active bool) (*model.AdminUser, error) {
+	return scope.CV(ctx).SetUserActive(userID, active)
+}
+
+// SetUserRole is the resolver for the setUserRole field.
+func (r *mutationResolver) SetUserRole(ctx context.Context, userID string, role model.UserRole) (*model.AdminUser, error) {
+	return scope.CV(ctx).SetUserRole(userID, role)
+}
+
+// SendTestEmail is the resolver for the sendTestEmail field.
+func (r *mutationResolver) SendTestEmail(ctx context.Context, typeArg model.TestEmailType, recipientEmail string) (*model.SendTestEmailResult, error) {
+	if err := scope.CheckAdminTestEmail(ctx); err != nil {
+		return nil, err
+	}
+	value, ok := scope.From(ctx)
+	if !ok {
+		return nil, fmt.Errorf("unauthorized")
+	}
+	result, err := scope.CV(ctx).SendTestEmail(typeArg, recipientEmail, value.Security.Email, value.Security.AppOrigin)
+	if err != nil {
+		return nil, err
+	}
+	if result != nil && result.Success && value.Security.Pool != nil {
+		actor := scope.CV(ctx).Me()
+		if actor != nil {
+			_ = store.RecordAdminAudit(ctx, value.Security.Pool, actor.ID, "send_test_email", "email", strings.ToLower(strings.TrimSpace(recipientEmail)), map[string]any{
+				"type": typeArg.String(),
+			})
+		}
+	}
+	return result, nil
 }
 
 // Me is the resolver for the me field.
@@ -363,6 +492,19 @@ func (r *queryResolver) PublicPortfolioWithContent(ctx context.Context, username
 	return content, nil
 }
 
+// PublicResumeWithContent is the resolver for the publicResumeWithContent field.
+func (r *queryResolver) PublicResumeWithContent(ctx context.Context, username string, slug *string) (*model.ResumeWithContent, error) {
+	pg := scope.Postgres(ctx)
+	if pg == nil {
+		return nil, fmt.Errorf("not available")
+	}
+	content, err := pg.PublicResumeWithContent(username, slug)
+	if err != nil {
+		return nil, err
+	}
+	return content, nil
+}
+
 // SectionItemUsage is the resolver for the sectionItemUsage field.
 func (r *queryResolver) SectionItemUsage(ctx context.Context, id string) (*model.SectionItemUsage, error) {
 	usage, err := scope.CV(ctx).GetSectionItemUsage(id)
@@ -448,7 +590,62 @@ func (r *queryResolver) KnowledgeEntries(ctx context.Context, includeDisabled *b
 
 // ClassifyAssistantMessage is the resolver for the classifyAssistantMessage field.
 func (r *queryResolver) ClassifyAssistantMessage(ctx context.Context, text string, context model.AssistantContextInput) (*model.AssistantClassification, error) {
+	if err := scope.CheckAssistantAccess(ctx); err != nil {
+		return nil, err
+	}
 	return scope.CV(ctx).ClassifyAssistantMessage(ctx, text, context)
+}
+
+// AdminUsers is the resolver for the adminUsers field.
+func (r *queryResolver) AdminUsers(ctx context.Context) ([]*model.AdminUser, error) {
+	return scope.CV(ctx).ListAdminUsers()
+}
+
+// AdminWaitlist is the resolver for the adminWaitlist field.
+func (r *queryResolver) AdminWaitlist(ctx context.Context, status *model.WaitlistStatus) ([]*model.WaitlistEntry, error) {
+	return scope.CV(ctx).ListWaitlistEntries(status)
+}
+
+// AdminAuditLog is the resolver for the adminAuditLog field.
+func (r *queryResolver) AdminAuditLog(ctx context.Context, limit *int, offset *int) ([]*model.AdminAuditLogEntry, error) {
+	lim := 50
+	off := 0
+	if limit != nil {
+		lim = *limit
+	}
+	if offset != nil {
+		off = *offset
+	}
+	return scope.CV(ctx).ListAdminAuditLog(lim, off)
+}
+
+// AdminLinkedInJobSearch is the resolver for the adminLinkedInJobSearch field.
+func (r *queryResolver) AdminLinkedInJobSearch(ctx context.Context, keywords string, geoID *string, timeFilter *string) ([]*model.LinkedInJobCard, error) {
+	return scope.CV(ctx).AdminLinkedInJobSearch(ctx, keywords, geoID, timeFilter)
+}
+
+// HasPasswordCredential is the resolver for the hasPasswordCredential field.
+func (r *userResolver) HasPasswordCredential(ctx context.Context, obj *model.User) (bool, error) {
+	if obj == nil {
+		return false, nil
+	}
+	value, ok := scope.From(ctx)
+	if !ok || value.Security.Pool == nil {
+		return store.IsCredentialsAccount(obj.ID), nil
+	}
+	has, err := store.UserHasPasswordCredential(ctx, value.Security.Pool, obj.ID)
+	if err != nil {
+		return false, err
+	}
+	return has, nil
+}
+
+// CanChangeEmail is the resolver for the canChangeEmail field.
+func (r *userResolver) CanChangeEmail(ctx context.Context, obj *model.User) (bool, error) {
+	if obj == nil {
+		return false, nil
+	}
+	return store.UserCanChangeEmail(obj.ID), nil
 }
 
 // ContactProfile returns ContactProfileResolver implementation.
@@ -460,6 +657,10 @@ func (r *Resolver) Mutation() MutationResolver { return &mutationResolver{r} }
 // Query returns QueryResolver implementation.
 func (r *Resolver) Query() QueryResolver { return &queryResolver{r} }
 
+// User returns UserResolver implementation.
+func (r *Resolver) User() UserResolver { return &userResolver{r} }
+
 type contactProfileResolver struct{ *Resolver }
 type mutationResolver struct{ *Resolver }
 type queryResolver struct{ *Resolver }
+type userResolver struct{ *Resolver }

@@ -39,7 +39,7 @@ func TestEnsureSessionSyncExistingGoogleUser(t *testing.T) {
 		Sub:       userID,
 		Email:     email,
 		Name:      "Sync Test",
-		GoogleID:  "sync-test",
+		GoogleID:  userID + "-google",
 		Bootstrap: true,
 	}
 

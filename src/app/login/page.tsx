@@ -13,6 +13,10 @@ const AUTH_ERROR_MESSAGES: Record<string, string> = {
   OAuthSignInError:
     "Could not reach Google. Check your network connection and try again.",
   OAuthCallbackError: "Google sign-in failed. Try again or use email sign-in.",
+  InviteRequired:
+    "This beta is invite only. Join the waitlist on the homepage and we will email you when you are in.",
+  WaitlistPending:
+    "Your email is on the waitlist. We will email you when you are approved.",
 };
 
 function authErrorMessage(error?: string): string | null {
@@ -34,7 +38,7 @@ export default async function LoginPage({
         <YuseLogo className="size-12" aria-hidden={false} role="img" aria-label="Yuse" />
         <h1 className="text-3xl font-semibold tracking-tight">Yuse</h1>
         <p className="text-muted-foreground">
-          Sign in to create and manage your CVs.
+          Sign in after your beta invite is approved.
         </p>
       </div>
       <LoginForm authError={authError} />

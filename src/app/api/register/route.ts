@@ -1,7 +1,21 @@
 import { backendBaseUrl } from "@/lib/auth/backend-url";
+import {
+  MAX_REGISTER_BODY_BYTES,
+  enforceRateLimit,
+  readBodyWithLimit,
+} from "@/lib/security/rate-limit";
 
 export async function POST(request: Request) {
-  const body = await request.text();
+  const limited = enforceRateLimit(request, "register", 5, 60 * 60 * 1000);
+  if (limited) {
+    return limited;
+  }
+
+  const body = await readBodyWithLimit(request, MAX_REGISTER_BODY_BYTES);
+  if (body instanceof Response) {
+    return body;
+  }
+
   const upstream = await fetch(`${backendBaseUrl()}/auth/register`, {
     method: "POST",
     headers: { "Content-Type": "application/json" },

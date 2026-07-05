@@ -15,6 +15,11 @@ import {
 import { exportResumePdf } from "@/lib/cv/export-pdf";
 import { CvPreview } from "@/components/cv/cv-preview";
 import { Button } from "@/components/ui/button";
+import { cn } from "@/lib/utils";
+import {
+  catalogCardPreviewClassName,
+  catalogCardShellClassName,
+} from "@/lib/ui/catalog-card";
 import {
   Card,
   CardAction,
@@ -23,19 +28,19 @@ import {
   CardTitle,
 } from "@/components/ui/card";
 import {
-  Dialog,
-  DialogContent,
-  DialogDescription,
-  DialogFooter,
-  DialogHeader,
-  DialogTitle,
-} from "@/components/ui/dialog";
+  ResponsiveDialog,
+  ResponsiveDialogContent,
+  ResponsiveDialogDescription,
+  ResponsiveDialogFooter,
+  ResponsiveDialogHeader,
+  ResponsiveDialogTitle,
+} from "@/components/ui/responsive-dialog";
 import {
-  DropdownMenu,
-  DropdownMenuContent,
-  DropdownMenuItem,
-  DropdownMenuTrigger,
-} from "@/components/ui/dropdown-menu";
+  ResponsiveDropdownMenu,
+  ResponsiveDropdownMenuContent,
+  ResponsiveDropdownMenuItem,
+  ResponsiveDropdownMenuTrigger,
+} from "@/components/ui/responsive-dropdown-menu";
 
 interface ResumeCardProps {
   resume: Resume;
@@ -125,14 +130,10 @@ function ResumeCard({ resume, onDeleted }: ResumeCardProps) {
 
   return (
     <>
-      <Card className="group flex h-full flex-col overflow-hidden transition-colors hover:bg-muted/40">
-        <Link
-          href={resumePath(resume.id)}
-          className="relative block h-52 overflow-hidden border-b bg-muted/30"
-        >
+      <Card className={catalogCardShellClassName}>
+        <Link href={resumePath(resume.id)} className={catalogCardPreviewClassName}>
           {loading ? (
-            <div className="flex h-full items-center justify-center">
-              <Loader2 className="size-5 animate-spin text-muted-foreground" aria-hidden />
+            <div className="flex h-full items-center justify-center bg-muted/30">
               <span className="sr-only">Loading preview</span>
             </div>
           ) : content ? (
@@ -161,8 +162,8 @@ function ResumeCard({ resume, onDeleted }: ResumeCardProps) {
               </Link>
             </CardTitle>
             <CardAction>
-              <DropdownMenu>
-                <DropdownMenuTrigger
+              <ResponsiveDropdownMenu>
+                <ResponsiveDropdownMenuTrigger
                   render={
                     <Button
                       type="button"
@@ -175,30 +176,30 @@ function ResumeCard({ resume, onDeleted }: ResumeCardProps) {
                     </Button>
                   }
                 />
-                <DropdownMenuContent align="end" className="min-w-40">
-                  <DropdownMenuItem
+                <ResponsiveDropdownMenuContent align="end" className="min-w-40">
+                  <ResponsiveDropdownMenuItem
                     disabled={isDownloading}
                     onClick={() => void handleDownload()}
                   >
                     {isDownloading ? <Loader2 className="animate-spin" /> : <Download />}
                     Download
-                  </DropdownMenuItem>
-                  <DropdownMenuItem
+                  </ResponsiveDropdownMenuItem>
+                  <ResponsiveDropdownMenuItem
                     disabled={isDuplicating}
                     onClick={() => void handleDuplicate()}
                   >
                     <Copy />
                     Duplicate
-                  </DropdownMenuItem>
-                  <DropdownMenuItem
+                  </ResponsiveDropdownMenuItem>
+                  <ResponsiveDropdownMenuItem
                     variant="warning"
                     onClick={() => setDeleteOpen(true)}
                   >
                     <Trash2 />
                     Delete
-                  </DropdownMenuItem>
-                </DropdownMenuContent>
-              </DropdownMenu>
+                  </ResponsiveDropdownMenuItem>
+                </ResponsiveDropdownMenuContent>
+              </ResponsiveDropdownMenu>
             </CardAction>
           </CardHeader>
           <CardContent className="mt-auto">
@@ -210,16 +211,16 @@ function ResumeCard({ resume, onDeleted }: ResumeCardProps) {
           </CardContent>
         </div>
       </Card>
-      <Dialog open={deleteOpen} onOpenChange={setDeleteOpen}>
-        <DialogContent showCloseButton={!isDeleting}>
-          <DialogHeader>
-            <DialogTitle>Delete this resume?</DialogTitle>
-            <DialogDescription>
+      <ResponsiveDialog open={deleteOpen} onOpenChange={setDeleteOpen}>
+        <ResponsiveDialogContent showCloseButton={!isDeleting}>
+          <ResponsiveDialogHeader>
+            <ResponsiveDialogTitle>Delete this resume?</ResponsiveDialogTitle>
+            <ResponsiveDialogDescription>
               &ldquo;{resume.title}&rdquo; will be removed permanently. This cannot be
               undone.
-            </DialogDescription>
-          </DialogHeader>
-          <DialogFooter>
+            </ResponsiveDialogDescription>
+          </ResponsiveDialogHeader>
+          <ResponsiveDialogFooter>
             <Button
               type="button"
               variant="warning"
@@ -228,15 +229,17 @@ function ResumeCard({ resume, onDeleted }: ResumeCardProps) {
             >
               {isDeleting ? "Deleting…" : "Delete"}
             </Button>
-          </DialogFooter>
-        </DialogContent>
-      </Dialog>
+          </ResponsiveDialogFooter>
+        </ResponsiveDialogContent>
+      </ResponsiveDialog>
     </>
   );
 }
 
 interface ResumeGridProps {
   resumes: Resume[];
+  isLoading?: boolean;
+  isRevalidating?: boolean;
   onCreateResume?: () => void;
   onImportResume?: () => void;
   onResumeDeleted?: (id: string) => void;
@@ -244,10 +247,23 @@ interface ResumeGridProps {
 
 export function ResumeGrid({
   resumes,
+  isLoading = false,
+  isRevalidating = false,
   onCreateResume,
   onImportResume,
   onResumeDeleted,
 }: ResumeGridProps) {
+  if (isLoading && resumes.length === 0) {
+    return (
+      <div
+        className="flex min-h-[12rem] items-center justify-center rounded-lg border border-dashed px-6 py-16 text-center"
+        aria-busy="true"
+      >
+        <p className="text-sm text-muted-foreground">Loading resumes…</p>
+      </div>
+    );
+  }
+
   if (resumes.length === 0) {
     return (
       <div className="flex flex-col items-center justify-center gap-4 rounded-lg border border-dashed px-6 py-16 text-center">
@@ -276,14 +292,27 @@ export function ResumeGrid({
   }
 
   return (
-    <div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-3">
-      {resumes.map((resume) => (
-        <ResumeCard
-          key={resume.id}
-          resume={resume}
-          onDeleted={(id) => onResumeDeleted?.(id)}
+    <div className="relative">
+      {isRevalidating ? (
+        <div
+          className="pointer-events-none absolute inset-x-0 top-0 z-10 h-0.5 animate-pulse bg-primary/40"
+          aria-hidden
         />
-      ))}
+      ) : null}
+      <div
+        className={cn(
+          "grid gap-4 sm:grid-cols-2 xl:grid-cols-3 transition-opacity duration-300",
+          isRevalidating && "opacity-80"
+        )}
+      >
+        {resumes.map((resume) => (
+          <ResumeCard
+            key={resume.id}
+            resume={resume}
+            onDeleted={(id) => onResumeDeleted?.(id)}
+          />
+        ))}
+      </div>
     </div>
   );
 }

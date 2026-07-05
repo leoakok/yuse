@@ -9,6 +9,7 @@ import type { TrackedJob } from "@/lib/types/job";
 
 interface JobTableProps {
   jobs: TrackedJob[];
+  loading?: boolean;
   onDelete: (job: TrackedJob) => void;
   onSelect: (job: TrackedJob) => void;
   selectedJobId?: string | null;
@@ -37,8 +38,9 @@ function StatusBadge({ status }: { status: TrackedJob["status"] }) {
   );
 }
 
-export function JobTable({ jobs, onDelete, onSelect, selectedJobId }: JobTableProps) {
-  if (jobs.length === 0) {
+
+export function JobTable({ jobs, loading = false, onDelete, onSelect, selectedJobId }: JobTableProps) {
+  if (!loading && jobs.length === 0) {
     return (
       <div className="rounded-xl border border-dashed px-6 py-16 text-center">
         <p className="text-sm font-medium">No tracked jobs yet</p>
@@ -52,7 +54,7 @@ export function JobTable({ jobs, onDelete, onSelect, selectedJobId }: JobTablePr
   return (
     <div className="overflow-hidden rounded-xl border shadow-sm">
       <div className="overflow-x-auto">
-        <table className="w-full min-w-[720px] text-sm">
+        <table className="w-full min-w-[720px] text-sm" aria-busy={loading || undefined}>
           <thead className="border-b bg-muted/40 text-left text-xs uppercase tracking-wide text-muted-foreground">
             <tr>
               <th className="px-4 py-3 font-medium">Company</th>
@@ -64,7 +66,17 @@ export function JobTable({ jobs, onDelete, onSelect, selectedJobId }: JobTablePr
             </tr>
           </thead>
           <tbody>
-            {jobs.map((job) => (
+            {loading && jobs.length === 0 ? (
+              <tr>
+                <td
+                  colSpan={6}
+                  className="px-4 py-16 text-center text-sm text-muted-foreground"
+                >
+                  Loading jobs…
+                </td>
+              </tr>
+            ) : (
+              jobs.map((job) => (
               <tr
                 key={job.id}
                 onClick={() => onSelect(job)}
@@ -98,7 +110,8 @@ export function JobTable({ jobs, onDelete, onSelect, selectedJobId }: JobTablePr
                   </Button>
                 </td>
               </tr>
-            ))}
+              ))
+            )}
           </tbody>
         </table>
       </div>

@@ -6,17 +6,18 @@ import { toast } from "sonner";
 import { useCvAssistant } from "@/components/agent/cv-assistant-provider";
 import { Button } from "@/components/ui/button";
 import {
-  Dialog,
-  DialogContent,
-  DialogDescription,
-  DialogFooter,
-  DialogHeader,
-  DialogTitle,
-} from "@/components/ui/dialog";
+  ResponsiveDialog,
+  ResponsiveDialogContent,
+  ResponsiveDialogDescription,
+  ResponsiveDialogFooter,
+  ResponsiveDialogHeader,
+  ResponsiveDialogTitle,
+} from "@/components/ui/responsive-dialog";
 import { Input } from "@/components/ui/input";
 import { Separator } from "@/components/ui/separator";
 import { Textarea } from "@/components/ui/textarea";
 import { createTrackedJob, updateTrackedJob } from "@/lib/api/cv-api";
+import { isSafeJobUrl } from "@/lib/security/safe-url";
 import type { TrackedJob } from "@/lib/types/job";
 
 type TrackStep = "url" | "manual";
@@ -87,6 +88,10 @@ export function JobTrackDialog({ open, onOpenChange, onTracked }: JobTrackDialog
       setError("Paste a job posting URL first.");
       return;
     }
+    if (!isSafeJobUrl(url)) {
+      setError("Enter a valid http or https job posting URL.");
+      return;
+    }
 
     setIsSubmitting(true);
     setError(null);
@@ -145,16 +150,16 @@ export function JobTrackDialog({ open, onOpenChange, onTracked }: JobTrackDialog
   const canSubmitManual = title.trim().length > 0 && company.trim().length > 0;
 
   return (
-    <Dialog open={open} onOpenChange={handleOpenChange}>
-      <DialogContent className="sm:max-w-md" showCloseButton={!isSubmitting}>
-        <DialogHeader>
-          <DialogTitle>Track job</DialogTitle>
-          <DialogDescription>
+    <ResponsiveDialog open={open} onOpenChange={handleOpenChange}>
+      <ResponsiveDialogContent className="sm:max-w-md" showCloseButton={!isSubmitting}>
+        <ResponsiveDialogHeader>
+          <ResponsiveDialogTitle>Track job</ResponsiveDialogTitle>
+          <ResponsiveDialogDescription>
             {step === "url"
               ? "Paste a posting URL and Yuse will fetch details, tailor your CV, and draft a cover letter."
               : "Add the role details yourself when there is no posting link."}
-          </DialogDescription>
-        </DialogHeader>
+          </ResponsiveDialogDescription>
+        </ResponsiveDialogHeader>
 
         {step === "url" ? (
           <div className="grid gap-4">
@@ -260,7 +265,7 @@ export function JobTrackDialog({ open, onOpenChange, onTracked }: JobTrackDialog
           </div>
         )}
 
-        <DialogFooter className="gap-2 sm:gap-0">
+        <ResponsiveDialogFooter>
           {step === "manual" ? (
             <Button
               type="button"
@@ -290,8 +295,8 @@ export function JobTrackDialog({ open, onOpenChange, onTracked }: JobTrackDialog
               "Track job"
             )}
           </Button>
-        </DialogFooter>
-      </DialogContent>
-    </Dialog>
+        </ResponsiveDialogFooter>
+      </ResponsiveDialogContent>
+    </ResponsiveDialog>
   );
 }

@@ -4,6 +4,9 @@
       "command": "npx",
       "args": ["-y", "gcp-mcp-server@1.4.0"],
       "env": {}
+    },
+    "resend": {
+      "url": "https://mcp.resend.com"
     }
   }
 }

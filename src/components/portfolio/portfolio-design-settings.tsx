@@ -1,6 +1,10 @@
 "use client";
 
-import { useCallback, useEffect, useRef, type ReactNode } from "react";
+import { useCallback, useEffect, useRef } from "react";
+import {
+  WorkspaceSection,
+  WorkspaceSections,
+} from "@/components/layout/workspace-section";
 import { toast } from "sonner";
 import type {
   PortfolioAnimationLevel,
@@ -82,15 +86,6 @@ const ANIMATION_OPTIONS: { id: PortfolioAnimationLevel; label: string }[] = [
   { id: "FULL", label: "Full" },
 ];
 
-function DesignBlock({ title, children }: { title: string; children: ReactNode }) {
-  return (
-    <section className="rounded-lg border bg-card p-3">
-      <h2 className="mb-2.5 text-xs font-medium text-muted-foreground">{title}</h2>
-      {children}
-    </section>
-  );
-}
-
 function OptionPills<T extends string>({
   options,
   value,
@@ -134,7 +129,9 @@ export function PortfolioDesignSettings({
 }: PortfolioDesignSettingsProps) {
   const dirty = JSON.stringify(snapshot) !== JSON.stringify(savedSnapshot);
   const snapshotRef = useRef(snapshot);
-  snapshotRef.current = snapshot;
+  useEffect(() => {
+    snapshotRef.current = snapshot;
+  }, [snapshot]);
 
   const persist = useCallback(async () => {
     const current = snapshotRef.current;
@@ -155,81 +152,75 @@ export function PortfolioDesignSettings({
   }, [status]);
 
   return (
-    <div className="space-y-3">
-      <DesignBlock title="Theme">
+    <WorkspaceSections>
+      <WorkspaceSection title="Theme">
         <p className="text-sm font-medium">{themeName}</p>
-      </DesignBlock>
+      </WorkspaceSection>
 
-      <DesignBlock title="Layout">
-        <div className="space-y-3">
-          <OptionPills options={LAYOUT_OPTIONS} value={snapshot.layout} onChange={(v) => onChange({ layout: v })} />
-          <label className="flex items-center gap-2 text-xs">
-            <input
-              type="checkbox"
-              checked={snapshot.showPhoto}
-              onChange={(e) => onChange({ showPhoto: e.target.checked })}
-              className="size-3.5 rounded border"
-            />
-            Show photo
-          </label>
+      <WorkspaceSection title="Layout">
+        <OptionPills options={LAYOUT_OPTIONS} value={snapshot.layout} onChange={(v) => onChange({ layout: v })} />
+        <label className="flex items-center gap-2 text-xs">
+          <input
+            type="checkbox"
+            checked={snapshot.showPhoto}
+            onChange={(e) => onChange({ showPhoto: e.target.checked })}
+            className="size-3.5 rounded border"
+          />
+          Show photo
+        </label>
+      </WorkspaceSection>
+
+      <WorkspaceSection title="Projects">
+        <div>
+          <p className="mb-1.5 text-[10px] uppercase tracking-wide text-muted-foreground">Grid columns</p>
+          <OptionPills
+            options={GRID_OPTIONS}
+            value={snapshot.projectGridColumns}
+            onChange={(v) => onChange({ projectGridColumns: v })}
+          />
         </div>
-      </DesignBlock>
-
-      <DesignBlock title="Projects">
-        <div className="space-y-3">
-          <div>
-            <p className="mb-1.5 text-[10px] uppercase tracking-wide text-muted-foreground">Grid columns</p>
-            <OptionPills
-              options={GRID_OPTIONS}
-              value={snapshot.projectGridColumns}
-              onChange={(v) => onChange({ projectGridColumns: v })}
-            />
-          </div>
-          <div>
-            <p className="mb-1.5 text-[10px] uppercase tracking-wide text-muted-foreground">Card style</p>
-            <OptionPills
-              options={CARD_OPTIONS}
-              value={snapshot.projectCardStyle}
-              onChange={(v) => onChange({ projectCardStyle: v })}
-            />
-          </div>
+        <div>
+          <p className="mb-1.5 text-[10px] uppercase tracking-wide text-muted-foreground">Card style</p>
+          <OptionPills
+            options={CARD_OPTIONS}
+            value={snapshot.projectCardStyle}
+            onChange={(v) => onChange({ projectCardStyle: v })}
+          />
         </div>
-      </DesignBlock>
+      </WorkspaceSection>
 
-      <DesignBlock title="Type">
+      <WorkspaceSection title="Type">
         <OptionPills
           options={TYPE_OPTIONS}
           value={snapshot.typographyScale}
           onChange={(v) => onChange({ typographyScale: v })}
         />
-      </DesignBlock>
+      </WorkspaceSection>
 
-      <DesignBlock title="Hero & navigation">
-        <div className="space-y-3">
-          <div>
-            <p className="mb-1.5 text-[10px] uppercase tracking-wide text-muted-foreground">Hero</p>
-            <OptionPills options={HERO_OPTIONS} value={snapshot.heroStyle} onChange={(v) => onChange({ heroStyle: v })} />
-          </div>
-          <div>
-            <p className="mb-1.5 text-[10px] uppercase tracking-wide text-muted-foreground">Navigation</p>
-            <OptionPills
-              options={NAV_OPTIONS}
-              value={snapshot.navigationStyle}
-              onChange={(v) => onChange({ navigationStyle: v })}
-            />
-          </div>
-          <div>
-            <p className="mb-1.5 text-[10px] uppercase tracking-wide text-muted-foreground">Animation</p>
-            <OptionPills
-              options={ANIMATION_OPTIONS}
-              value={snapshot.animationLevel}
-              onChange={(v) => onChange({ animationLevel: v })}
-            />
-          </div>
+      <WorkspaceSection title="Hero and navigation">
+        <div>
+          <p className="mb-1.5 text-[10px] uppercase tracking-wide text-muted-foreground">Hero</p>
+          <OptionPills options={HERO_OPTIONS} value={snapshot.heroStyle} onChange={(v) => onChange({ heroStyle: v })} />
         </div>
-      </DesignBlock>
+        <div>
+          <p className="mb-1.5 text-[10px] uppercase tracking-wide text-muted-foreground">Navigation</p>
+          <OptionPills
+            options={NAV_OPTIONS}
+            value={snapshot.navigationStyle}
+            onChange={(v) => onChange({ navigationStyle: v })}
+          />
+        </div>
+        <div>
+          <p className="mb-1.5 text-[10px] uppercase tracking-wide text-muted-foreground">Animation</p>
+          <OptionPills
+            options={ANIMATION_OPTIONS}
+            value={snapshot.animationLevel}
+            onChange={(v) => onChange({ animationLevel: v })}
+          />
+        </div>
+      </WorkspaceSection>
 
-      <DesignBlock title="Accent">
+      <WorkspaceSection title="Accent">
         <div className="flex flex-wrap items-center gap-2">
           {ACCENT_PRESETS.map((preset) => (
             <button
@@ -251,8 +242,8 @@ export function PortfolioDesignSettings({
             className="h-7 w-12 cursor-pointer p-0.5"
           />
         </div>
-      </DesignBlock>
-    </div>
+      </WorkspaceSection>
+    </WorkspaceSections>
   );
 }
 

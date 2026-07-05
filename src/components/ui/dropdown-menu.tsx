@@ -7,6 +7,14 @@ import { motionPopupEnter, motionPopupSlide } from "@/lib/ui/motion"
 import { cn } from "@/lib/utils"
 import { ChevronRightIcon, CheckIcon } from "lucide-react"
 
+const dropdownMenuItemClassName =
+  "group/dropdown-menu-item relative flex cursor-default items-center gap-1.5 rounded-md px-1.5 py-1 text-sm outline-hidden select-none focus:bg-accent focus:text-accent-foreground not-data-[variant=destructive]:not-data-[variant=warning]:focus:**:text-accent-foreground data-inset:pl-7 data-[variant=destructive]:text-destructive data-[variant=destructive]:focus:bg-destructive/10 data-[variant=destructive]:focus:text-destructive dark:data-[variant=destructive]:focus:bg-destructive/20 data-[variant=warning]:text-warning data-[variant=warning]:focus:bg-warning/10 data-[variant=warning]:focus:text-warning dark:data-[variant=warning]:focus:bg-warning/20 data-disabled:pointer-events-none data-disabled:opacity-50 [&_svg]:pointer-events-none [&_svg]:shrink-0 [&_svg:not([class*='size-'])]:size-4 data-[variant=destructive]:*:[svg]:text-destructive data-[variant=warning]:*:[svg]:text-warning"
+
+const dropdownMenuLabelClassName =
+  "px-1.5 py-1 text-xs font-medium text-muted-foreground data-inset:pl-7"
+
+const dropdownMenuSeparatorClassName = "-mx-1 my-1 h-px bg-border"
+
 function DropdownMenu({ ...props }: MenuPrimitive.Root.Props) {
   return <MenuPrimitive.Root data-slot="dropdown-menu" {...props} />
 }
@@ -65,10 +73,7 @@ function DropdownMenuLabel({
     <MenuPrimitive.GroupLabel
       data-slot="dropdown-menu-label"
       data-inset={inset}
-      className={cn(
-        "px-1.5 py-1 text-xs font-medium text-muted-foreground data-inset:pl-7",
-        className
-      )}
+      className={cn(dropdownMenuLabelClassName, className)}
       {...props}
     />
   )
@@ -88,10 +93,7 @@ function DropdownMenuItem({
       data-slot="dropdown-menu-item"
       data-inset={inset}
       data-variant={variant}
-      className={cn(
-        "group/dropdown-menu-item relative flex cursor-default items-center gap-1.5 rounded-md px-1.5 py-1 text-sm outline-hidden select-none focus:bg-accent focus:text-accent-foreground not-data-[variant=destructive]:not-data-[variant=warning]:focus:**:text-accent-foreground data-inset:pl-7 data-[variant=destructive]:text-destructive data-[variant=destructive]:focus:bg-destructive/10 data-[variant=destructive]:focus:text-destructive dark:data-[variant=destructive]:focus:bg-destructive/20 data-[variant=warning]:text-warning data-[variant=warning]:focus:bg-warning/10 data-[variant=warning]:focus:text-warning dark:data-[variant=warning]:focus:bg-warning/20 data-disabled:pointer-events-none data-disabled:opacity-50 [&_svg]:pointer-events-none [&_svg]:shrink-0 [&_svg:not([class*='size-'])]:size-4 data-[variant=destructive]:*:[svg]:text-destructive data-[variant=warning]:*:[svg]:text-warning",
-        className
-      )}
+      className={cn(dropdownMenuItemClassName, className)}
       {...props}
     />
   )
@@ -228,7 +230,7 @@ function DropdownMenuSeparator({
   return (
     <MenuPrimitive.Separator
       data-slot="dropdown-menu-separator"
-      className={cn("-mx-1 my-1 h-px bg-border", className)}
+      className={cn(dropdownMenuSeparatorClassName, className)}
       {...props}
     />
   )
@@ -251,6 +253,9 @@ function DropdownMenuShortcut({
 }
 
 export {
+  dropdownMenuItemClassName,
+  dropdownMenuLabelClassName,
+  dropdownMenuSeparatorClassName,
   DropdownMenu,
   DropdownMenuPortal,
   DropdownMenuTrigger,

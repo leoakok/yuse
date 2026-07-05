@@ -92,6 +92,7 @@ import {
   UPDATE_RESUME_SETTINGS_MUTATION,
   UPDATE_RESUME_SECTION_DISPLAY_TITLE_MUTATION,
   REORDER_RESUME_SECTIONS_MUTATION,
+  SET_RESUME_SLUG_MUTATION,
   UPDATE_RESUME_SECTION_VISIBILITY_MUTATION,
   UPDATE_CONTACT_PROFILE_MUTATION,
   REQUEST_PROFILE_PHOTO_UPLOAD_MUTATION,
@@ -172,6 +173,14 @@ export async function bootstrapWorkspace(): Promise<{ user: User; workspace: Wor
 export async function listResumes(): Promise<Resume[]> {
   const data = await graphqlRequest<{ resumes: Resume[] }>(RESUMES_QUERY);
   return data.resumes.map(mapResume);
+}
+
+export async function setResumeSlug(resumeId: string, slug: string): Promise<Resume> {
+  const data = await graphqlRequest<{ setResumeSlug: Resume }>(SET_RESUME_SLUG_MUTATION, {
+    resumeId,
+    slug,
+  });
+  return mapResume(data.setResumeSlug);
 }
 
 function mapPageFormat(value: string | undefined): PageFormat {

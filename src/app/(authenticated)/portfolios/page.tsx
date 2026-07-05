@@ -1,22 +1,35 @@
 "use client";
 
-import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 import { CatalogShell } from "@/components/layout/catalog-shell";
 import { PortfolioGrid } from "@/components/portfolio/portfolio-grid";
+import { useWorkspace } from "@/components/layout/workspace-provider";
 import { createPortfolio, listPortfolios } from "@/lib/api/portfolio-api";
+import {
+  getCachedPortfolios,
+  setCachedPortfolios,
+} from "@/lib/cache/workspace-cache";
+import { useStaleWhileRevalidate } from "@/lib/hooks/use-stale-while-revalidate";
 import { portfolioPath } from "@/lib/portfolio/routes";
 import { useCvAssistant } from "@/components/agent/cv-assistant-provider";
-import type { Portfolio } from "@/lib/types/portfolio";
 
 export default function PortfoliosPage() {
   const router = useRouter();
+  const { user } = useWorkspace();
   const { refreshKey } = useCvAssistant();
-  const [portfolios, setPortfolios] = useState<Portfolio[]>([]);
-
-  useEffect(() => {
-    void listPortfolios().then(setPortfolios);
-  }, [refreshKey]);
+  const {
+    data: portfolios,
+    isLoading,
+    isRevalidating,
+    setData: setPortfolios,
+  } = useStaleWhileRevalidate(
+    () => listPortfolios(),
+    [user.id, refreshKey],
+    {
+      getCached: () => getCachedPortfolios(user.id),
+      setCached: (items) => setCachedPortfolios(user.id, items),
+    }
+  );
 
   const handleNewPortfolio = async () => {
     const portfolio = await createPortfolio("Untitled Portfolio");
@@ -29,10 +42,12 @@ export default function PortfoliosPage() {
       description="Personal sites that showcase your projects and experience."
     >
       <PortfolioGrid
-        portfolios={portfolios}
+        portfolios={portfolios ?? []}
+        isLoading={isLoading}
+        isRevalidating={isRevalidating}
         onCreatePortfolio={() => void handleNewPortfolio()}
         onPortfolioDeleted={(id) =>
-          setPortfolios((current) => current.filter((p) => p.id !== id))
+          setPortfolios((current) => (current ?? []).filter((p) => p.id !== id))
         }
       />
     </CatalogShell>
