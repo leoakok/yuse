@@ -148,7 +148,7 @@ export function AssistantMessageBubble({
       ) : null}
 
       {showContent ? (
-        <div className="rounded-xl border bg-card px-3 py-3 shadow-sm">
+        <div className="w-fit max-w-[85%] rounded-xl border bg-card px-3 py-3 shadow-sm">
           {message.content ? (
             <AssistantMessageContent content={message.content} />
           ) : isStreaming ? (
