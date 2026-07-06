@@ -15,9 +15,8 @@ import (
 )
 
 const (
-	defaultLinkedInProfileAPIURL = ""
-	linkedInProfileTimeout       = 30 * time.Second
-	maxLinkedInProfileResponse   = 2 * 1024 * 1024
+	linkedInProfileTimeout     = 30 * time.Second
+	maxLinkedInProfileResponse = 2 * 1024 * 1024
 )
 
 var linkedInProfilePathPattern = regexp.MustCompile(`(?i)^/in/([a-zA-Z0-9\-_%]+)/?$`)
@@ -32,7 +31,7 @@ type LinkedInProfileClient struct {
 func NewLinkedInProfileClientFromEnv() *LinkedInProfileClient {
 	apiURL := strings.TrimSpace(os.Getenv("LINKEDIN_PROFILE_API_URL"))
 	if apiURL == "" {
-		apiURL = defaultLinkedInProfileAPIURL
+		return nil
 	}
 	return NewLinkedInProfileClient(apiURL, strings.TrimSpace(os.Getenv("LINKEDIN_PROFILE_API_KEY")))
 }

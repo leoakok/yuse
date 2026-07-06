@@ -222,8 +222,8 @@ cp backend/.env.example backend/.env
 | `GITHUB_TOKEN` | No | Fallback token for unauthenticated GitHub API |
 | `GITHUB_OAUTH_CALLBACK_URL` | No | OAuth redirect (default `{CORS_ORIGIN}/api/auth/github/callback`) |
 | `TAVILY_API_KEY` | No | Web search fallback (DuckDuckGo used when unset) |
-| `LINKEDIN_PROFILE_API_URL` | No | Optional LinkedIn profile API endpoint |
-| `LINKEDIN_PROFILE_API_KEY` | No | API key for LinkedIn profile service |
+| `LINKEDIN_PROFILE_API_URL` | For LinkedIn import | Server-side LinkedIn profile API endpoint (not exposed to frontend) |
+| `LINKEDIN_PROFILE_API_KEY` | For LinkedIn import | Bearer token for the profile API |
 | `STORAGE_PROVIDER` | No | `azure` or `s3` (auto-detected from credentials when unset) |
 | `AZURE_STORAGE_ACCOUNT` | For photo upload | Azure storage account name |
 | `AZURE_STORAGE_ACCOUNT_KEY` | For photo upload | Azure storage account key |

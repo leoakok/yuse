@@ -98,7 +98,7 @@ func TestToolActivityStartLabelLinkedInProfile(t *testing.T) {
 	if strings.Contains(label, "linkedin.com") {
 		t.Fatal("label must not expose profile URL")
 	}
-	if strings.Contains(label, "") {
+	if strings.Contains(label, "http") || strings.Contains(label, "/api/") {
 		t.Fatal("label must not expose upstream API host")
 	}
 }
