@@ -57,8 +57,16 @@ func PublicAccessCheckStatus(ctx context.Context, pool *pgxpool.Pool, email stri
 		return AccessApproved, nil
 	}
 
+	redeemed, err := emailHasInviteRedemption(ctx, pool, normalized)
+	if err != nil {
+		return "", fmt.Errorf("check invite redemption: %w", err)
+	}
+	if redeemed {
+		return AccessApproved, nil
+	}
+
 	var waitlistStatus string
-	err := pool.QueryRow(ctx, `
+	err = pool.QueryRow(ctx, `
 		SELECT status FROM beta_waitlist WHERE LOWER(email) = LOWER($1)
 	`, normalized).Scan(&waitlistStatus)
 	if err == nil {
@@ -104,8 +112,16 @@ func SignupAccessStatus(ctx context.Context, pool *pgxpool.Pool, email string) (
 		return AccessApproved, nil
 	}
 
+	redeemed, err := emailHasInviteRedemption(ctx, pool, normalized)
+	if err != nil {
+		return "", fmt.Errorf("check invite redemption: %w", err)
+	}
+	if redeemed {
+		return AccessApproved, nil
+	}
+
 	var status string
-	err := pool.QueryRow(ctx, `
+	err = pool.QueryRow(ctx, `
 		SELECT status FROM beta_waitlist WHERE LOWER(email) = LOWER($1)
 	`, normalized).Scan(&status)
 	if errors.Is(err, pgx.ErrNoRows) {

@@ -12,6 +12,11 @@ import type {
   TestEmailType,
   WaitlistEntry,
   WaitlistStatus,
+  InviteLink,
+  LinkedInJobCard,
+  LinkedInWorkplaceType,
+  LinkedInExperienceLevel,
+  LinkedInEmploymentType,
 } from "@/lib/types/admin";
 import { graphqlRequest } from "@/lib/graphql/client";
 import {
@@ -28,6 +33,10 @@ import {
   SET_USER_ROLE_MUTATION,
   SEND_TEST_EMAIL_MUTATION,
   UPDATE_KNOWLEDGE_ENTRY_MUTATION,
+  ADMIN_INVITE_LINKS_QUERY,
+  CREATE_INVITE_LINK_MUTATION,
+  UPDATE_INVITE_LINK_MUTATION,
+  ADMIN_LINKEDIN_JOB_SEARCH_QUERY,
 } from "@/lib/graphql/operations";
 
 function mapAssistantContext(context: AssistantContext) {
@@ -165,4 +174,59 @@ export async function sendTestEmail(
     { type, recipientEmail },
   );
   return data.sendTestEmail;
+}
+
+export async function listAdminInviteLinks(): Promise<InviteLink[]> {
+  const data = await graphqlRequest<{ adminInviteLinks: InviteLink[] }>(ADMIN_INVITE_LINKS_QUERY);
+  return data.adminInviteLinks;
+}
+
+export async function createInviteLink(input: {
+  label?: string;
+  emailRestrict?: string;
+  maxUses?: number;
+  expiresAt?: string;
+}): Promise<InviteLink> {
+  const data = await graphqlRequest<{ createInviteLink: InviteLink }>(CREATE_INVITE_LINK_MUTATION, {
+    input,
+  });
+  return data.createInviteLink;
+}
+
+export async function updateInviteLink(input: {
+  id: string;
+  label?: string;
+  emailRestrict?: string | null;
+  maxUses?: number | null;
+  isActive?: boolean;
+  expiresAt?: string | null;
+}): Promise<InviteLink> {
+  const data = await graphqlRequest<{ updateInviteLink: InviteLink }>(UPDATE_INVITE_LINK_MUTATION, {
+    input,
+  });
+  return data.updateInviteLink;
+}
+
+export async function adminLinkedInJobSearch(input: {
+  keywords?: string;
+  geoId?: string;
+  timeFilter?: string;
+  workplaceTypes?: LinkedInWorkplaceType[];
+  experienceLevels?: LinkedInExperienceLevel[];
+  employmentTypes?: LinkedInEmploymentType[];
+  sessionCookie?: string;
+}): Promise<LinkedInJobCard[]> {
+  const data = await graphqlRequest<{ adminLinkedInJobSearch: LinkedInJobCard[] }>(
+    ADMIN_LINKEDIN_JOB_SEARCH_QUERY,
+    {
+      keywords: input.keywords?.trim() || null,
+      geoId: input.geoId?.trim() || null,
+      timeFilter: input.timeFilter || null,
+      workplaceTypes: input.workplaceTypes?.length ? input.workplaceTypes : null,
+      experienceLevels: input.experienceLevels?.length ? input.experienceLevels : null,
+      employmentTypes: input.employmentTypes?.length ? input.employmentTypes : null,
+      sessionCookie: input.sessionCookie || null,
+    },
+  );
+  return data.adminLinkedInJobSearch;
 }

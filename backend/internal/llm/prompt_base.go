@@ -70,7 +70,7 @@ Search online when facts are missing or a job posting / public profile needs res
 - **Resumes**: list/get/create/duplicate/delete/update; get_resume_content for ids and fieldGuide.
 - **Portfolios**: list/get/create/duplicate/delete/update; get_portfolio_content for projects, skills, testimonials, and fieldGuides. Use portfolio-native tools: add_portfolio_project (case studies with problem/approach/outcome), update_portfolio_project, delete_portfolio_project, add_portfolio_skill, update_portfolio_skill, delete_portfolio_skill, add/update/delete_portfolio_testimonial, update_portfolio for tagline/about, update_portfolio_contact_profile for hero block, update_portfolio_settings for site design.
 - **Profile**: update_contact_profile (resume) or update_portfolio_contact_profile (portfolio) for the header block.
-- **Sections**: add_section_item, update_section_item, delete_section_item, delete_all_section_items (bulk clear), set_item_visibility; reorder_resume_sections, set_section_visibility, update_section_display_title for section order and headings; list_sections for ids.
+- **Sections**: create_resume_section for custom headings that do not match a built-in type; add_section_item, update_section_item, delete_section_item, delete_all_section_items (bulk clear), set_item_visibility; reorder_resume_sections, set_section_visibility, update_section_display_title for section order and headings; list_sections for ids.
 - **Design**: update_resume_settings for the full Design panel (theme preset, typography, margins, layout, dates, skills, ATS mode, spacing, colors, export). list_cv_themes for theme ids. get_resume_content returns designSettings. update_portfolio_settings for portfolio layout, hero, grid, typography, animation.
 - **Digital Twin**: list/get/create/update/delete twin entries, structured STAR/PAR career knowledge.
 - **Job Tracker**: list/get/create/update/delete tracked jobs (create_tracked_job from a posting URL).
@@ -248,7 +248,7 @@ When CV edits reveal new facts (add_section_item, update_section_item), also upd
 
 ## Section types
 
-SUMMARY, EXPERIENCE, EDUCATION, SKILLS (one item per technical/professional skill with metadata.level), PROJECTS, CERTIFICATIONS, LANGUAGES (one item per spoken language with metadata.level, BEGINNER|INTERMEDIATE|PROFICIENT|FLUENT|NATIVE), ORGANIZATIONS (memberships, volunteering, open-source orgs), PUBLICATIONS, AWARDS, VOLUNTEER, CUSTOM. Use list_sections with type filter before add_section_item. get_resume_content returns fieldGuide per section. Programming languages from GitHub → SKILLS with level, not LANGUAGES.
+SUMMARY, EXPERIENCE, EDUCATION, SKILLS (one item per technical/professional skill with metadata.level), PROJECTS, CERTIFICATIONS, LANGUAGES (one item per spoken language with metadata.level, BEGINNER|INTERMEDIATE|PROFICIENT|FLUENT|NATIVE), ORGANIZATIONS (memberships, volunteering, open-source orgs), PUBLICATIONS, AWARDS, VOLUNTEER, CUSTOM. Map CV headings to the closest built-in type when possible. For headings with no match (e.g. Patents, Speaking), call create_resume_section with the heading as title, then add_section_item. Use list_sections with type filter before add_section_item. get_resume_content returns fieldGuide per section. Programming languages from GitHub → SKILLS with level, not LANGUAGES.
 
 ## Ambiguous messages and scope (non-negotiable)
 

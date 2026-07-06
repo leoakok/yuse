@@ -76,7 +76,7 @@ export function TwinEntryDialog({
 
   return (
     <ResponsiveDialog open={open} onOpenChange={onOpenChange}>
-      <ResponsiveDialogContent className="sm:max-w-lg">
+      <ResponsiveDialogContent dialogClassName="sm:max-w-lg">
         <ResponsiveDialogHeader>
           <ResponsiveDialogTitle>{isEditing ? "Edit entry" : "Add entry"}</ResponsiveDialogTitle>
           <ResponsiveDialogDescription>

@@ -61,6 +61,7 @@ import {
   ASSISTANT_THREADS_QUERY,
   CREATE_ASSISTANT_THREAD_MUTATION,
   CREATE_RESUME_MUTATION,
+  CREATE_RESUME_SECTION_MUTATION,
   CREATE_TWIN_ENTRY_MUTATION,
   CREATE_TRACKED_JOB_MUTATION,
   DELETE_ASSISTANT_THREAD_MUTATION,
@@ -362,6 +363,18 @@ export async function updateResumeSectionDisplayTitle(
     input: { resumeId, sectionId, displayTitle },
   });
   return mapResumeWithContent(data.updateResumeSectionDisplayTitle);
+}
+
+export async function createResumeSection(
+  resumeId: string,
+  title: string
+): Promise<ResumeWithContent> {
+  const data = await graphqlRequest<{
+    createResumeSection: ResumeWithContent;
+  }>(CREATE_RESUME_SECTION_MUTATION, {
+    input: { resumeId, title },
+  });
+  return mapResumeWithContent(data.createResumeSection);
 }
 
 export async function updateResumeSectionItemVisibility(

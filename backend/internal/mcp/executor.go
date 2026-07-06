@@ -21,6 +21,7 @@ type Executor interface {
 	UpdateResumeSectionItem(input model.UpdateResumeSectionItemInput) (*model.ResumeWithContent, error)
 	UpdateResumeSectionItemVisibility(input model.UpdateResumeSectionItemVisibilityInput) (*model.ResumeWithContent, error)
 	UpdateResumeSectionDisplayTitle(input model.UpdateResumeSectionDisplayTitleInput) (*model.ResumeWithContent, error)
+	CreateResumeSection(input model.CreateResumeSectionInput) (*model.ResumeWithContent, error)
 	ReorderResumeSections(input model.ReorderResumeSectionsInput) (*model.ResumeWithContent, error)
 	UpdateResumeSectionVisibility(input model.UpdateResumeSectionVisibilityInput) (*model.ResumeWithContent, error)
 	DeleteSectionItem(resumeID, sectionItemID string) (*model.ResumeWithContent, error)

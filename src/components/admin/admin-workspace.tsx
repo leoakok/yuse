@@ -8,35 +8,25 @@ import { AdminWaitlistPanel } from "@/components/admin/admin-waitlist-panel";
 import { AdminAuditPanel } from "@/components/admin/admin-audit-panel";
 import { AdminSystemPanel } from "@/components/admin/admin-system-panel";
 import { AdminEmailTesterPanel } from "@/components/admin/admin-email-tester-panel";
-import { useWorkspace } from "@/components/layout/workspace-provider";
+import { AdminInvitesPanel } from "@/components/admin/admin-invites-panel";
+import { AdminLinkedInPanel } from "@/components/admin/admin-linkedin-panel";
 import { Button } from "@/components/ui/button";
-import { useRouter } from "next/navigation";
-import { useEffect } from "react";
 import type { AdminSection } from "@/lib/types/admin";
 import { cn } from "@/lib/utils";
 
 const SECTIONS: Array<{ id: AdminSection; label: string }> = [
   { id: "users", label: "Users" },
   { id: "waitlist", label: "Waitlist" },
+  { id: "invites", label: "Invite links" },
   { id: "audit", label: "Audit log" },
   { id: "emails", label: "Email tester" },
+  { id: "linkedin", label: "LinkedIn test" },
   { id: "agent", label: "Agent tools" },
   { id: "system", label: "System" },
 ];
 
 export function AdminWorkspace() {
-  const { user } = useWorkspace();
-  const router = useRouter();
   const [section, setSection] = useState<AdminSection>("users");
-
-  useEffect(() => {
-    if (user.role === "ADMIN") return;
-    router.replace("/home");
-  }, [user.role, router]);
-
-  if (user.role !== "ADMIN") {
-    return null;
-  }
 
   return (
     <div className="space-y-6">
@@ -59,12 +49,16 @@ export function AdminWorkspace() {
       <div className={cn(section !== "waitlist" && "hidden")}>
         <AdminWaitlistPanel />
       </div>
+      <div className={cn(section !== "invites" && "hidden")}>
+        <AdminInvitesPanel />
+      </div>
       <div className={cn(section !== "audit" && "hidden")}>
         <AdminAuditPanel />
       </div>
       <div className={cn(section !== "emails" && "hidden")}>
         <AdminEmailTesterPanel />
       </div>
+      {section === "linkedin" ? <AdminLinkedInPanel /> : null}
       <div className={cn(section !== "system" && "hidden")}>
         <AdminSystemPanel />
       </div>

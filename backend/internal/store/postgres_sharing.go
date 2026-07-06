@@ -297,21 +297,7 @@ func (p *Postgres) resumeWithContentUnscoped(resumeID string) (*model.ResumeWith
 }
 
 func (p *Postgres) getResumeSettingsUnscoped(resumeID string) *model.ResumeSettings {
-	row := p.pool.QueryRow(p.ctx(), `
-		SELECT resume_id, theme_id, font_size, contact_name_font_size, contact_headline_font_size,
-			contact_details_font_size, section_title_font_size, item_title_font_size, item_meta_font_size,
-			page_format, margin_horizontal_mm, margin_vertical_mm, show_photo, item_title_layout,
-			item_title_separator, item_title_order, font_family, accent_color, section_divider_style,
-			date_format, date_position, skills_layout, ats_mode, column_layout, sidebar_position,
-			sidebar_width, design_preset_id, photo_position, photo_size, contact_layout, contact_fields,
-			section_spacing, item_spacing, description_style, bullet_char, item_title_emphasis,
-			highlight_current_role, location_display, heading_font_family, body_font_family,
-			name_font_weight, section_title_font_weight, line_height, heading_letter_spacing,
-			section_title_case, text_primary_color, text_muted_color, page_background, link_color,
-			skills_proficiency, languages_layout, certifications_layout, keep_sections_together,
-			max_items_before_break, footer_style, export_filename_template
-		FROM resume_settings WHERE resume_id = $1
-	`, resumeID)
+	row := p.pool.QueryRow(p.ctx(), resumeSettingsSelectSQL, resumeID)
 	settings, err := scanResumeSettings(row)
 	if err != nil {
 		return defaultResumeSettings(resumeID)
@@ -320,10 +306,7 @@ func (p *Postgres) getResumeSettingsUnscoped(resumeID string) *model.ResumeSetti
 }
 
 func (p *Postgres) getSectionUnscoped(id string) (*model.Section, error) {
-	row := p.pool.QueryRow(p.ctx(), `
-		SELECT id, workspace_id, type, title, description, created_by, created_at, updated_at
-		FROM sections WHERE id = $1
-	`, id)
+	row := p.pool.QueryRow(p.ctx(), sectionSelectSQL+` WHERE id = $1`, id)
 	return scanSection(row)
 }
 

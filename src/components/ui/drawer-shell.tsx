@@ -206,7 +206,13 @@ export function DrawerSheetContent({
     <SheetContent
       side="bottom"
       showCloseButton={false}
-      className={cn(drawerSheetContentClassName, fill && "flex flex-col", className)}
+      className={cn(
+        drawerSheetContentClassName,
+        fill && "flex flex-col",
+        className,
+        // Dialog max-width classes (e.g. sm:max-w-lg) must not narrow bottom sheets.
+        "w-full max-w-none sm:max-w-none"
+      )}
       {...props}
     >
       <DrawerShellContext.Provider value={true}>

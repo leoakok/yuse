@@ -317,7 +317,6 @@ const PRESETS: Record<DesignPresetId, DesignPresetBundle> = {
     extension: {
       sectionSpacing: "NORMAL",
       itemSpacing: "NORMAL",
-      highlightCurrentRole: true,
       skillsProficiency: "BARS",
       nameFontWeight: "SEMIBOLD",
       sectionTitleFontWeight: "SEMIBOLD",

@@ -42,6 +42,7 @@ export interface Section {
   workspaceId: string;
   type: SectionType;
   title: string;
+  customKey?: string | null;
   description?: string;
   createdBy: string;
   createdAt: string;

@@ -151,7 +151,7 @@ export function JobTrackDialog({ open, onOpenChange, onTracked }: JobTrackDialog
 
   return (
     <ResponsiveDialog open={open} onOpenChange={handleOpenChange}>
-      <ResponsiveDialogContent className="sm:max-w-md" showCloseButton={!isSubmitting}>
+      <ResponsiveDialogContent dialogClassName="sm:max-w-md" showCloseButton={!isSubmitting}>
         <ResponsiveDialogHeader>
           <ResponsiveDialogTitle>Track job</ResponsiveDialogTitle>
           <ResponsiveDialogDescription>

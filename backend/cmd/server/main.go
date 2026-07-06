@@ -92,6 +92,8 @@ func main() {
 	mux.Handle("GET /auth/verify-email", httpapi.VerifyEmail(pgStore.Pool()))
 	mux.Handle("POST /waitlist", waitlistLimiter.Middleware(ipKey)(httpapi.JoinWaitlist(pgStore.Pool())))
 	mux.Handle("POST /auth/access-check", accessCheckLimiter.Middleware(ipKey)(httpapi.CheckAccess(pgStore.Pool())))
+	mux.Handle("GET /invites/{code}", httpapi.PublicInvite(pgStore.Pool()))
+	mux.Handle("POST /auth/claim-invite", accessCheckLimiter.Middleware(ipKey)(httpapi.ClaimInvite(pgStore.Pool())))
 
 	githubOAuth := httpapi.GitHubOAuthHandlers{Pool: pgStore.Pool(), Config: cfg}
 	mux.Handle("GET /auth/github/start", sessionMiddleware.Wrap(http.HandlerFunc(githubOAuth.Start())))

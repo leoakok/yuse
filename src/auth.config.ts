@@ -91,6 +91,7 @@ export const authConfig = {
       const { pathname } = request.nextUrl;
       const isLanding = pathname === "/";
       const isLogin = pathname.startsWith("/login");
+      const isInvite = pathname.startsWith("/r/");
       const isAuthApi = pathname.startsWith("/api/auth");
       const isRegisterApi = pathname.startsWith("/api/register");
       const isWaitlistApi = pathname.startsWith("/api/waitlist");
@@ -106,6 +107,10 @@ export const authConfig = {
         if (auth?.user) {
           return Response.redirect(new URL("/home", request.nextUrl));
         }
+        return true;
+      }
+
+      if (isInvite) {
         return true;
       }
 

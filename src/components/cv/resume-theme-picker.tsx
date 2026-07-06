@@ -133,7 +133,9 @@ export function ResumeThemePicker({
       <ResponsiveDialog open={open} onOpenChange={setOpen}>
         <ResponsiveDialogContent
           showCloseButton
-          className="flex h-[90dvh] flex-col gap-0 overflow-hidden p-0"
+          dialogClassName="flex h-[90dvh] max-h-[90vh] flex-col gap-0 overflow-hidden p-0"
+          sheetClassName="flex h-[90dvh] flex-col gap-0 overflow-hidden p-0"
+          sheetBodyClassName="p-0"
         >
           <ResponsiveDialogHeader className="shrink-0 border-b px-4 py-4 sm:px-6">
             <ResponsiveDialogTitle>Choose a theme</ResponsiveDialogTitle>

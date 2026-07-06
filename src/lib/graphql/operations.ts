@@ -123,6 +123,7 @@ ${RESUME_SETTINGS_FIELDS}
           workspaceId
           type
           title
+          customKey
           description
           createdBy
           createdAt
@@ -454,6 +455,7 @@ ${RESUME_SETTINGS_FIELDS}
           workspaceId
           type
           title
+          customKey
           description
           createdBy
           createdAt
@@ -524,6 +526,7 @@ ${RESUME_SETTINGS_FIELDS}
           workspaceId
           type
           title
+          customKey
           description
           createdBy
           createdAt
@@ -594,6 +597,7 @@ ${RESUME_SETTINGS_FIELDS}
           workspaceId
           type
           title
+          customKey
           description
           createdBy
           createdAt
@@ -664,6 +668,7 @@ ${RESUME_SETTINGS_FIELDS}
           workspaceId
           type
           title
+          customKey
           description
           createdBy
           createdAt
@@ -734,6 +739,7 @@ ${RESUME_SETTINGS_FIELDS}
           workspaceId
           type
           title
+          customKey
           description
           createdBy
           createdAt
@@ -804,6 +810,7 @@ ${RESUME_SETTINGS_FIELDS}
           workspaceId
           type
           title
+          customKey
           description
           createdBy
           createdAt
@@ -874,6 +881,7 @@ ${RESUME_SETTINGS_FIELDS}
           workspaceId
           type
           title
+          customKey
           description
           createdBy
           createdAt
@@ -1621,6 +1629,38 @@ export const ADMIN_AUDIT_LOG_QUERY = `
   }
 `;
 
+export const ADMIN_LINKEDIN_JOB_SEARCH_QUERY = `
+  query AdminLinkedInJobSearch(
+    $keywords: String
+    $geoId: String
+    $timeFilter: String
+    $workplaceTypes: [LinkedInWorkplaceType!]
+    $experienceLevels: [LinkedInExperienceLevel!]
+    $employmentTypes: [LinkedInEmploymentType!]
+    $sessionCookie: String
+  ) {
+    adminLinkedInJobSearch(
+      keywords: $keywords
+      geoId: $geoId
+      timeFilter: $timeFilter
+      workplaceTypes: $workplaceTypes
+      experienceLevels: $experienceLevels
+      employmentTypes: $employmentTypes
+      sessionCookie: $sessionCookie
+    ) {
+      jobId
+      title
+      company
+      location
+      workplaceType
+      employmentType
+      listedAt
+      description
+      url
+    }
+  }
+`;
+
 export const APPROVE_WAITLIST_ENTRY_MUTATION = `
   mutation ApproveWaitlistEntry($id: ID!) {
     approveWaitlistEntry(id: $id) {
@@ -1658,6 +1698,114 @@ export const SEND_TEST_EMAIL_MUTATION = `
     sendTestEmail(type: $type, recipientEmail: $recipientEmail) {
       success
       message
+    }
+  }
+`;
+
+const INVITE_LINK_FIELDS = `
+  id
+  code
+  label
+  emailRestrict
+  maxUses
+  useCount
+  isActive
+  createdAt
+  expiresAt
+  urlPath
+`;
+
+export const ADMIN_INVITE_LINKS_QUERY = `
+  query AdminInviteLinks {
+    adminInviteLinks {
+      ${INVITE_LINK_FIELDS}
+    }
+  }
+`;
+
+export const CREATE_INVITE_LINK_MUTATION = `
+  mutation CreateInviteLink($input: CreateInviteLinkInput!) {
+    createInviteLink(input: $input) {
+      ${INVITE_LINK_FIELDS}
+    }
+  }
+`;
+
+export const UPDATE_INVITE_LINK_MUTATION = `
+  mutation UpdateInviteLink($input: UpdateInviteLinkInput!) {
+    updateInviteLink(input: $input) {
+      ${INVITE_LINK_FIELDS}
+    }
+  }
+`;
+
+export const CREATE_RESUME_SECTION_MUTATION = `
+  mutation CreateResumeSection($input: CreateResumeSectionInput!) {
+    createResumeSection(input: $input) {
+      resume {
+        id
+        workspaceId
+        title
+        contactProfileId
+        createdBy
+        createdAt
+        updatedAt
+      }
+      contactProfile {
+        id
+        workspaceId
+        fullName
+        headline
+        email
+        phone
+        location
+        website
+        linkedIn
+        github
+        photoUrl
+        linkedinPhotoUrl
+        githubPhotoUrl
+        effectivePhotoUrl
+        createdAt
+        updatedAt
+      }
+      settings {
+${RESUME_SETTINGS_FIELDS}
+      }
+      theme {
+        id
+        name
+        slug
+        isSystem
+        config
+      }
+      sections {
+        showInPreview
+        displayTitle
+        section {
+          id
+          workspaceId
+          type
+          title
+          customKey
+          description
+          createdBy
+          createdAt
+          updatedAt
+        }
+        items {
+          id
+          workspaceId
+          type
+          headline
+          body
+          metadata
+          showInPreview
+          createdBy
+          createdAt
+          updatedAt
+        }
+      }
     }
   }
 `;

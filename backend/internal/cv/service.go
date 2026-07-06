@@ -333,6 +333,10 @@ func (s *Service) UpdateResumeSectionDisplayTitle(
 	return s.store.UpdateResumeSectionDisplayTitle(input.ResumeID, input.SectionID, input.DisplayTitle)
 }
 
+func (s *Service) CreateResumeSection(input model.CreateResumeSectionInput) (*model.ResumeWithContent, error) {
+	return s.store.CreateResumeSection(input.ResumeID, input.Title)
+}
+
 func (s *Service) ReorderResumeSections(input model.ReorderResumeSectionsInput) (*model.ResumeWithContent, error) {
 	return s.store.ReorderResumeSections(input.ResumeID, input.SectionIds)
 }

@@ -51,6 +51,11 @@ func (r *mutationResolver) UpdateResumeSectionDisplayTitle(ctx context.Context, 
 	return scope.CV(ctx).UpdateResumeSectionDisplayTitle(input)
 }
 
+// CreateResumeSection is the resolver for the createResumeSection field.
+func (r *mutationResolver) CreateResumeSection(ctx context.Context, input model.CreateResumeSectionInput) (*model.ResumeWithContent, error) {
+	return scope.CV(ctx).CreateResumeSection(input)
+}
+
 // ReorderResumeSections is the resolver for the reorderResumeSections field.
 func (r *mutationResolver) ReorderResumeSections(ctx context.Context, input model.ReorderResumeSectionsInput) (*model.ResumeWithContent, error) {
 	return scope.CV(ctx).ReorderResumeSections(input)
@@ -380,6 +385,16 @@ func (r *mutationResolver) SendTestEmail(ctx context.Context, typeArg model.Test
 	return result, nil
 }
 
+// CreateInviteLink is the resolver for the createInviteLink field.
+func (r *mutationResolver) CreateInviteLink(ctx context.Context, input model.CreateInviteLinkInput) (*model.InviteLink, error) {
+	return scope.CV(ctx).CreateInviteLink(input)
+}
+
+// UpdateInviteLink is the resolver for the updateInviteLink field.
+func (r *mutationResolver) UpdateInviteLink(ctx context.Context, input model.UpdateInviteLinkInput) (*model.InviteLink, error) {
+	return scope.CV(ctx).UpdateInviteLink(input)
+}
+
 // Me is the resolver for the me field.
 func (r *queryResolver) Me(ctx context.Context) (*model.User, error) {
 	return scope.CV(ctx).Me(), nil
@@ -620,8 +635,13 @@ func (r *queryResolver) AdminAuditLog(ctx context.Context, limit *int, offset *i
 }
 
 // AdminLinkedInJobSearch is the resolver for the adminLinkedInJobSearch field.
-func (r *queryResolver) AdminLinkedInJobSearch(ctx context.Context, keywords string, geoID *string, timeFilter *string) ([]*model.LinkedInJobCard, error) {
-	return scope.CV(ctx).AdminLinkedInJobSearch(ctx, keywords, geoID, timeFilter)
+func (r *queryResolver) AdminLinkedInJobSearch(ctx context.Context, keywords *string, geoID *string, timeFilter *string, workplaceTypes []model.LinkedInWorkplaceType, experienceLevels []model.LinkedInExperienceLevel, employmentTypes []model.LinkedInEmploymentType, sessionCookie *string) ([]*model.LinkedInJobCard, error) {
+	return scope.CV(ctx).AdminLinkedInJobSearch(ctx, keywords, geoID, timeFilter, sessionCookie, workplaceTypes, experienceLevels, employmentTypes)
+}
+
+// AdminInviteLinks is the resolver for the adminInviteLinks field.
+func (r *queryResolver) AdminInviteLinks(ctx context.Context) ([]*model.InviteLink, error) {
+	return scope.CV(ctx).ListInviteLinks()
 }
 
 // HasPasswordCredential is the resolver for the hasPasswordCredential field.

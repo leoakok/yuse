@@ -24,6 +24,7 @@ type Store interface {
 	GetResumeSettings(resumeID string) *model.ResumeSettings
 	UpdateResumeSettings(resumeID string, update func(*model.ResumeSettings)) (*model.ResumeSettings, error)
 	UpdateResumeSectionDisplayTitle(resumeID, sectionID string, displayTitle *string) (*model.ResumeWithContent, error)
+	CreateResumeSection(resumeID, title string) (*model.ResumeWithContent, error)
 	ReorderResumeSections(resumeID string, sectionIDs []string) (*model.ResumeWithContent, error)
 	UpdateResumeSectionVisibility(resumeID, sectionID string, showInPreview bool) (*model.ResumeWithContent, error)
 	UpdateResumeSectionItemVisibility(resumeID, sectionID, sectionItemID string, showInPreview bool) (*model.ResumeWithContent, error)
@@ -96,6 +97,9 @@ type Store interface {
 	RejectWaitlistEntry(actorID, id string) (*model.WaitlistEntry, error)
 	SetUserActive(actorID, userID string, active bool) (*model.AdminUser, error)
 	SetUserRole(actorID, userID string, role model.UserRole) (*model.AdminUser, error)
+	ListInviteLinks() ([]*model.InviteLink, error)
+	CreateInviteLink(input model.CreateInviteLinkInput) (*model.InviteLink, error)
+	UpdateInviteLink(input model.UpdateInviteLinkInput) (*model.InviteLink, error)
 	ChangePassword(userID, currentPassword, newPassword string) error
 	ChangeEmail(userID, currentPassword, newEmail string, verificationRequired bool) (*model.User, error)
 }

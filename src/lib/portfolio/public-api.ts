@@ -1,3 +1,4 @@
+import { mapResumeWithContent } from "@/lib/api/cv-api";
 import type { ResumeWithContent } from "@/lib/types/cv";
 import type { PortfolioWithContent } from "@/lib/types/portfolio";
 import { backendBaseUrl } from "@/lib/auth/backend-url";
@@ -35,7 +36,7 @@ export async function fetchPublicContent(
   };
 
   if (data.kind === "resume" && data.resume) {
-    return { kind: "resume", resume: data.resume };
+    return { kind: "resume", resume: mapResumeWithContent(data.resume) };
   }
   if (data.portfolio) {
     return { kind: "portfolio", portfolio: mapPortfolioWithContent(data.portfolio) };

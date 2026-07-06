@@ -155,6 +155,19 @@ type ComplexityRoot struct {
 		Slug     func(childComplexity int) int
 	}
 
+	InviteLink struct {
+		Code          func(childComplexity int) int
+		CreatedAt     func(childComplexity int) int
+		EmailRestrict func(childComplexity int) int
+		ExpiresAt     func(childComplexity int) int
+		ID            func(childComplexity int) int
+		IsActive      func(childComplexity int) int
+		Label         func(childComplexity int) int
+		MaxUses       func(childComplexity int) int
+		URLPath       func(childComplexity int) int
+		UseCount      func(childComplexity int) int
+	}
+
 	KnowledgeEntry struct {
 		Body      func(childComplexity int) int
 		Category  func(childComplexity int) int
@@ -168,12 +181,15 @@ type ComplexityRoot struct {
 	}
 
 	LinkedInJobCard struct {
-		Company  func(childComplexity int) int
-		JobID    func(childComplexity int) int
-		ListedAt func(childComplexity int) int
-		Location func(childComplexity int) int
-		Title    func(childComplexity int) int
-		URL      func(childComplexity int) int
+		Company        func(childComplexity int) int
+		Description    func(childComplexity int) int
+		EmploymentType func(childComplexity int) int
+		JobID          func(childComplexity int) int
+		ListedAt       func(childComplexity int) int
+		Location       func(childComplexity int) int
+		Title          func(childComplexity int) int
+		URL            func(childComplexity int) int
+		WorkplaceType  func(childComplexity int) int
 	}
 
 	Mutation struct {
@@ -185,9 +201,11 @@ type ComplexityRoot struct {
 		ChangeEmail                       func(childComplexity int, currentPassword string, email string) int
 		ChangePassword                    func(childComplexity int, currentPassword string, newPassword string) int
 		CreateAssistantThread             func(childComplexity int) int
+		CreateInviteLink                  func(childComplexity int, input model.CreateInviteLinkInput) int
 		CreateKnowledgeEntry              func(childComplexity int, input model.CreateKnowledgeEntryInput) int
 		CreatePortfolio                   func(childComplexity int, title string) int
 		CreateResume                      func(childComplexity int, title string) int
+		CreateResumeSection               func(childComplexity int, input model.CreateResumeSectionInput) int
 		CreateTrackedJob                  func(childComplexity int, url string) int
 		CreateTwinEntry                   func(childComplexity int, input model.CreateTwinEntryInput) int
 		DeleteAssistantThread             func(childComplexity int, id string) int
@@ -216,6 +234,7 @@ type ComplexityRoot struct {
 		SetUserRole                       func(childComplexity int, userID string, role model.UserRole) int
 		SetUsername                       func(childComplexity int, username string) int
 		UpdateContactProfile              func(childComplexity int, input model.UpdateContactProfileInput) int
+		UpdateInviteLink                  func(childComplexity int, input model.UpdateInviteLinkInput) int
 		UpdateKnowledgeEntry              func(childComplexity int, input model.UpdateKnowledgeEntryInput) int
 		UpdatePortfolio                   func(childComplexity int, id string, title *string, tagline *string, about *string, contactProfileID *string) int
 		UpdatePortfolioContactProfile     func(childComplexity int, input model.UpdatePortfolioContactProfileInput) int
@@ -318,7 +337,8 @@ type ComplexityRoot struct {
 
 	Query struct {
 		AdminAuditLog              func(childComplexity int, limit *int, offset *int) int
-		AdminLinkedInJobSearch     func(childComplexity int, keywords string, geoID *string, timeFilter *string) int
+		AdminInviteLinks           func(childComplexity int) int
+		AdminLinkedInJobSearch     func(childComplexity int, keywords *string, geoID *string, timeFilter *string, workplaceTypes []model.LinkedInWorkplaceType, experienceLevels []model.LinkedInExperienceLevel, employmentTypes []model.LinkedInEmploymentType, sessionCookie *string) int
 		AdminUsers                 func(childComplexity int) int
 		AdminWaitlist              func(childComplexity int, status *model.WaitlistStatus) int
 		AssistantMessages          func(childComplexity int, threadID string, limit *int) int
@@ -434,6 +454,7 @@ type ComplexityRoot struct {
 	Section struct {
 		CreatedAt   func(childComplexity int) int
 		CreatedBy   func(childComplexity int) int
+		CustomKey   func(childComplexity int) int
 		Description func(childComplexity int) int
 		ID          func(childComplexity int) int
 		Title       func(childComplexity int) int
@@ -554,6 +575,7 @@ type MutationResolver interface {
 	UpdateResume(ctx context.Context, id string, title *string, contactProfileID *string) (*model.Resume, error)
 	UpdateResumeSettings(ctx context.Context, input model.UpdateResumeSettingsInput) (*model.ResumeSettings, error)
 	UpdateResumeSectionDisplayTitle(ctx context.Context, input model.UpdateResumeSectionDisplayTitleInput) (*model.ResumeWithContent, error)
+	CreateResumeSection(ctx context.Context, input model.CreateResumeSectionInput) (*model.ResumeWithContent, error)
 	ReorderResumeSections(ctx context.Context, input model.ReorderResumeSectionsInput) (*model.ResumeWithContent, error)
 	UpdateResumeSectionVisibility(ctx context.Context, input model.UpdateResumeSectionVisibilityInput) (*model.ResumeWithContent, error)
 	UpdateResumeSectionItemVisibility(ctx context.Context, input model.UpdateResumeSectionItemVisibilityInput) (*model.ResumeWithContent, error)
@@ -602,6 +624,8 @@ type MutationResolver interface {
 	SetUserActive(ctx context.Context, userID string, active bool) (*model.AdminUser, error)
 	SetUserRole(ctx context.Context, userID string, role model.UserRole) (*model.AdminUser, error)
 	SendTestEmail(ctx context.Context, typeArg model.TestEmailType, recipientEmail string) (*model.SendTestEmailResult, error)
+	CreateInviteLink(ctx context.Context, input model.CreateInviteLinkInput) (*model.InviteLink, error)
+	UpdateInviteLink(ctx context.Context, input model.UpdateInviteLinkInput) (*model.InviteLink, error)
 }
 type QueryResolver interface {
 	Me(ctx context.Context) (*model.User, error)
@@ -636,7 +660,8 @@ type QueryResolver interface {
 	AdminUsers(ctx context.Context) ([]*model.AdminUser, error)
 	AdminWaitlist(ctx context.Context, status *model.WaitlistStatus) ([]*model.WaitlistEntry, error)
 	AdminAuditLog(ctx context.Context, limit *int, offset *int) ([]*model.AdminAuditLogEntry, error)
-	AdminLinkedInJobSearch(ctx context.Context, keywords string, geoID *string, timeFilter *string) ([]*model.LinkedInJobCard, error)
+	AdminLinkedInJobSearch(ctx context.Context, keywords *string, geoID *string, timeFilter *string, workplaceTypes []model.LinkedInWorkplaceType, experienceLevels []model.LinkedInExperienceLevel, employmentTypes []model.LinkedInEmploymentType, sessionCookie *string) ([]*model.LinkedInJobCard, error)
+	AdminInviteLinks(ctx context.Context) ([]*model.InviteLink, error)
 }
 type UserResolver interface {
 	HasPasswordCredential(ctx context.Context, obj *model.User) (bool, error)
@@ -1194,6 +1219,76 @@ func (e *executableSchema) Complexity(ctx context.Context, typeName, field strin
 
 		return e.complexity.CvTheme.Slug(childComplexity), true
 
+	case "InviteLink.code":
+		if e.complexity.InviteLink.Code == nil {
+			break
+		}
+
+		return e.complexity.InviteLink.Code(childComplexity), true
+
+	case "InviteLink.createdAt":
+		if e.complexity.InviteLink.CreatedAt == nil {
+			break
+		}
+
+		return e.complexity.InviteLink.CreatedAt(childComplexity), true
+
+	case "InviteLink.emailRestrict":
+		if e.complexity.InviteLink.EmailRestrict == nil {
+			break
+		}
+
+		return e.complexity.InviteLink.EmailRestrict(childComplexity), true
+
+	case "InviteLink.expiresAt":
+		if e.complexity.InviteLink.ExpiresAt == nil {
+			break
+		}
+
+		return e.complexity.InviteLink.ExpiresAt(childComplexity), true
+
+	case "InviteLink.id":
+		if e.complexity.InviteLink.ID == nil {
+			break
+		}
+
+		return e.complexity.InviteLink.ID(childComplexity), true
+
+	case "InviteLink.isActive":
+		if e.complexity.InviteLink.IsActive == nil {
+			break
+		}
+
+		return e.complexity.InviteLink.IsActive(childComplexity), true
+
+	case "InviteLink.label":
+		if e.complexity.InviteLink.Label == nil {
+			break
+		}
+
+		return e.complexity.InviteLink.Label(childComplexity), true
+
+	case "InviteLink.maxUses":
+		if e.complexity.InviteLink.MaxUses == nil {
+			break
+		}
+
+		return e.complexity.InviteLink.MaxUses(childComplexity), true
+
+	case "InviteLink.urlPath":
+		if e.complexity.InviteLink.URLPath == nil {
+			break
+		}
+
+		return e.complexity.InviteLink.URLPath(childComplexity), true
+
+	case "InviteLink.useCount":
+		if e.complexity.InviteLink.UseCount == nil {
+			break
+		}
+
+		return e.complexity.InviteLink.UseCount(childComplexity), true
+
 	case "KnowledgeEntry.body":
 		if e.complexity.KnowledgeEntry.Body == nil {
 			break
@@ -1264,6 +1359,20 @@ func (e *executableSchema) Complexity(ctx context.Context, typeName, field strin
 
 		return e.complexity.LinkedInJobCard.Company(childComplexity), true
 
+	case "LinkedInJobCard.description":
+		if e.complexity.LinkedInJobCard.Description == nil {
+			break
+		}
+
+		return e.complexity.LinkedInJobCard.Description(childComplexity), true
+
+	case "LinkedInJobCard.employmentType":
+		if e.complexity.LinkedInJobCard.EmploymentType == nil {
+			break
+		}
+
+		return e.complexity.LinkedInJobCard.EmploymentType(childComplexity), true
+
 	case "LinkedInJobCard.jobId":
 		if e.complexity.LinkedInJobCard.JobID == nil {
 			break
@@ -1298,6 +1407,13 @@ func (e *executableSchema) Complexity(ctx context.Context, typeName, field strin
 		}
 
 		return e.complexity.LinkedInJobCard.URL(childComplexity), true
+
+	case "LinkedInJobCard.workplaceType":
+		if e.complexity.LinkedInJobCard.WorkplaceType == nil {
+			break
+		}
+
+		return e.complexity.LinkedInJobCard.WorkplaceType(childComplexity), true
 
 	case "Mutation.addPortfolioProject":
 		if e.complexity.Mutation.AddPortfolioProject == nil {
@@ -1390,6 +1506,18 @@ func (e *executableSchema) Complexity(ctx context.Context, typeName, field strin
 
 		return e.complexity.Mutation.CreateAssistantThread(childComplexity), true
 
+	case "Mutation.createInviteLink":
+		if e.complexity.Mutation.CreateInviteLink == nil {
+			break
+		}
+
+		args, err := ec.field_Mutation_createInviteLink_args(ctx, rawArgs)
+		if err != nil {
+			return 0, false
+		}
+
+		return e.complexity.Mutation.CreateInviteLink(childComplexity, args["input"].(model.CreateInviteLinkInput)), true
+
 	case "Mutation.createKnowledgeEntry":
 		if e.complexity.Mutation.CreateKnowledgeEntry == nil {
 			break
@@ -1425,6 +1553,18 @@ func (e *executableSchema) Complexity(ctx context.Context, typeName, field strin
 		}
 
 		return e.complexity.Mutation.CreateResume(childComplexity, args["title"].(string)), true
+
+	case "Mutation.createResumeSection":
+		if e.complexity.Mutation.CreateResumeSection == nil {
+			break
+		}
+
+		args, err := ec.field_Mutation_createResumeSection_args(ctx, rawArgs)
+		if err != nil {
+			return 0, false
+		}
+
+		return e.complexity.Mutation.CreateResumeSection(childComplexity, args["input"].(model.CreateResumeSectionInput)), true
 
 	case "Mutation.createTrackedJob":
 		if e.complexity.Mutation.CreateTrackedJob == nil {
@@ -1756,6 +1896,18 @@ func (e *executableSchema) Complexity(ctx context.Context, typeName, field strin
 		}
 
 		return e.complexity.Mutation.UpdateContactProfile(childComplexity, args["input"].(model.UpdateContactProfileInput)), true
+
+	case "Mutation.updateInviteLink":
+		if e.complexity.Mutation.UpdateInviteLink == nil {
+			break
+		}
+
+		args, err := ec.field_Mutation_updateInviteLink_args(ctx, rawArgs)
+		if err != nil {
+			return 0, false
+		}
+
+		return e.complexity.Mutation.UpdateInviteLink(childComplexity, args["input"].(model.UpdateInviteLinkInput)), true
 
 	case "Mutation.updateKnowledgeEntry":
 		if e.complexity.Mutation.UpdateKnowledgeEntry == nil {
@@ -2383,6 +2535,13 @@ func (e *executableSchema) Complexity(ctx context.Context, typeName, field strin
 
 		return e.complexity.Query.AdminAuditLog(childComplexity, args["limit"].(*int), args["offset"].(*int)), true
 
+	case "Query.adminInviteLinks":
+		if e.complexity.Query.AdminInviteLinks == nil {
+			break
+		}
+
+		return e.complexity.Query.AdminInviteLinks(childComplexity), true
+
 	case "Query.adminLinkedInJobSearch":
 		if e.complexity.Query.AdminLinkedInJobSearch == nil {
 			break
@@ -2393,7 +2552,7 @@ func (e *executableSchema) Complexity(ctx context.Context, typeName, field strin
 			return 0, false
 		}
 
-		return e.complexity.Query.AdminLinkedInJobSearch(childComplexity, args["keywords"].(string), args["geoId"].(*string), args["timeFilter"].(*string)), true
+		return e.complexity.Query.AdminLinkedInJobSearch(childComplexity, args["keywords"].(*string), args["geoId"].(*string), args["timeFilter"].(*string), args["workplaceTypes"].([]model.LinkedInWorkplaceType), args["experienceLevels"].([]model.LinkedInExperienceLevel), args["employmentTypes"].([]model.LinkedInEmploymentType), args["sessionCookie"].(*string)), true
 
 	case "Query.adminUsers":
 		if e.complexity.Query.AdminUsers == nil {
@@ -3216,6 +3375,13 @@ func (e *executableSchema) Complexity(ctx context.Context, typeName, field strin
 
 		return e.complexity.Section.CreatedBy(childComplexity), true
 
+	case "Section.customKey":
+		if e.complexity.Section.CustomKey == nil {
+			break
+		}
+
+		return e.complexity.Section.CustomKey(childComplexity), true
+
 	case "Section.description":
 		if e.complexity.Section.Description == nil {
 			break
@@ -3769,11 +3935,14 @@ func (e *executableSchema) Exec(ctx context.Context) graphql.ResponseHandler {
 		ec.unmarshalInputAddResumeSectionItemInput,
 		ec.unmarshalInputAssistantAttachmentInput,
 		ec.unmarshalInputAssistantContextInput,
+		ec.unmarshalInputCreateInviteLinkInput,
 		ec.unmarshalInputCreateKnowledgeEntryInput,
+		ec.unmarshalInputCreateResumeSectionInput,
 		ec.unmarshalInputCreateTwinEntryInput,
 		ec.unmarshalInputReorderResumeSectionsInput,
 		ec.unmarshalInputSetPortfolioProjectVisibilityInput,
 		ec.unmarshalInputUpdateContactProfileInput,
+		ec.unmarshalInputUpdateInviteLinkInput,
 		ec.unmarshalInputUpdateKnowledgeEntryInput,
 		ec.unmarshalInputUpdatePortfolioContactProfileInput,
 		ec.unmarshalInputUpdatePortfolioProjectInput,
@@ -3990,6 +4159,17 @@ func (ec *executionContext) field_Mutation_changePassword_args(ctx context.Conte
 	return args, nil
 }
 
+func (ec *executionContext) field_Mutation_createInviteLink_args(ctx context.Context, rawArgs map[string]any) (map[string]any, error) {
+	var err error
+	args := map[string]any{}
+	arg0, err := graphql.ProcessArgField(ctx, rawArgs, "input", ec.unmarshalNCreateInviteLinkInput2githubᚗcomᚋleoᚋaiᚑweekendᚋbackendᚋgraphᚋmodelᚐCreateInviteLinkInput)
+	if err != nil {
+		return nil, err
+	}
+	args["input"] = arg0
+	return args, nil
+}
+
 func (ec *executionContext) field_Mutation_createKnowledgeEntry_args(ctx context.Context, rawArgs map[string]any) (map[string]any, error) {
 	var err error
 	args := map[string]any{}
@@ -4009,6 +4189,17 @@ func (ec *executionContext) field_Mutation_createPortfolio_args(ctx context.Cont
 		return nil, err
 	}
 	args["title"] = arg0
+	return args, nil
+}
+
+func (ec *executionContext) field_Mutation_createResumeSection_args(ctx context.Context, rawArgs map[string]any) (map[string]any, error) {
+	var err error
+	args := map[string]any{}
+	arg0, err := graphql.ProcessArgField(ctx, rawArgs, "input", ec.unmarshalNCreateResumeSectionInput2githubᚗcomᚋleoᚋaiᚑweekendᚋbackendᚋgraphᚋmodelᚐCreateResumeSectionInput)
+	if err != nil {
+		return nil, err
+	}
+	args["input"] = arg0
 	return args, nil
 }
 
@@ -4385,6 +4576,17 @@ func (ec *executionContext) field_Mutation_updateContactProfile_args(ctx context
 	return args, nil
 }
 
+func (ec *executionContext) field_Mutation_updateInviteLink_args(ctx context.Context, rawArgs map[string]any) (map[string]any, error) {
+	var err error
+	args := map[string]any{}
+	arg0, err := graphql.ProcessArgField(ctx, rawArgs, "input", ec.unmarshalNUpdateInviteLinkInput2githubᚗcomᚋleoᚋaiᚑweekendᚋbackendᚋgraphᚋmodelᚐUpdateInviteLinkInput)
+	if err != nil {
+		return nil, err
+	}
+	args["input"] = arg0
+	return args, nil
+}
+
 func (ec *executionContext) field_Mutation_updateKnowledgeEntry_args(ctx context.Context, rawArgs map[string]any) (map[string]any, error) {
 	var err error
 	args := map[string]any{}
@@ -4610,7 +4812,7 @@ func (ec *executionContext) field_Query_adminAuditLog_args(ctx context.Context, 
 func (ec *executionContext) field_Query_adminLinkedInJobSearch_args(ctx context.Context, rawArgs map[string]any) (map[string]any, error) {
 	var err error
 	args := map[string]any{}
-	arg0, err := graphql.ProcessArgField(ctx, rawArgs, "keywords", ec.unmarshalNString2string)
+	arg0, err := graphql.ProcessArgField(ctx, rawArgs, "keywords", ec.unmarshalOString2ᚖstring)
 	if err != nil {
 		return nil, err
 	}
@@ -4625,6 +4827,26 @@ func (ec *executionContext) field_Query_adminLinkedInJobSearch_args(ctx context.
 		return nil, err
 	}
 	args["timeFilter"] = arg2
+	arg3, err := graphql.ProcessArgField(ctx, rawArgs, "workplaceTypes", ec.unmarshalOLinkedInWorkplaceType2ᚕgithubᚗcomᚋleoᚋaiᚑweekendᚋbackendᚋgraphᚋmodelᚐLinkedInWorkplaceTypeᚄ)
+	if err != nil {
+		return nil, err
+	}
+	args["workplaceTypes"] = arg3
+	arg4, err := graphql.ProcessArgField(ctx, rawArgs, "experienceLevels", ec.unmarshalOLinkedInExperienceLevel2ᚕgithubᚗcomᚋleoᚋaiᚑweekendᚋbackendᚋgraphᚋmodelᚐLinkedInExperienceLevelᚄ)
+	if err != nil {
+		return nil, err
+	}
+	args["experienceLevels"] = arg4
+	arg5, err := graphql.ProcessArgField(ctx, rawArgs, "employmentTypes", ec.unmarshalOLinkedInEmploymentType2ᚕgithubᚗcomᚋleoᚋaiᚑweekendᚋbackendᚋgraphᚋmodelᚐLinkedInEmploymentTypeᚄ)
+	if err != nil {
+		return nil, err
+	}
+	args["employmentTypes"] = arg5
+	arg6, err := graphql.ProcessArgField(ctx, rawArgs, "sessionCookie", ec.unmarshalOString2ᚖstring)
+	if err != nil {
+		return nil, err
+	}
+	args["sessionCookie"] = arg6
 	return args, nil
 }
 
@@ -8270,6 +8492,434 @@ func (ec *executionContext) fieldContext_CvTheme_config(_ context.Context, field
 	return fc, nil
 }
 
+func (ec *executionContext) _InviteLink_id(ctx context.Context, field graphql.CollectedField, obj *model.InviteLink) (ret graphql.Marshaler) {
+	fc, err := ec.fieldContext_InviteLink_id(ctx, field)
+	if err != nil {
+		return graphql.Null
+	}
+	ctx = graphql.WithFieldContext(ctx, fc)
+	defer func() {
+		if r := recover(); r != nil {
+			ec.Error(ctx, ec.Recover(ctx, r))
+			ret = graphql.Null
+		}
+	}()
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (any, error) {
+		ctx = rctx // use context from middleware stack in children
+		return obj.ID, nil
+	})
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	if resTmp == nil {
+		if !graphql.HasFieldError(ctx, fc) {
+			ec.Errorf(ctx, "must not be null")
+		}
+		return graphql.Null
+	}
+	res := resTmp.(string)
+	fc.Result = res
+	return ec.marshalNID2string(ctx, field.Selections, res)
+}
+
+func (ec *executionContext) fieldContext_InviteLink_id(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "InviteLink",
+		Field:      field,
+		IsMethod:   false,
+		IsResolver: false,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return nil, errors.New("field of type ID does not have child fields")
+		},
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _InviteLink_code(ctx context.Context, field graphql.CollectedField, obj *model.InviteLink) (ret graphql.Marshaler) {
+	fc, err := ec.fieldContext_InviteLink_code(ctx, field)
+	if err != nil {
+		return graphql.Null
+	}
+	ctx = graphql.WithFieldContext(ctx, fc)
+	defer func() {
+		if r := recover(); r != nil {
+			ec.Error(ctx, ec.Recover(ctx, r))
+			ret = graphql.Null
+		}
+	}()
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (any, error) {
+		ctx = rctx // use context from middleware stack in children
+		return obj.Code, nil
+	})
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	if resTmp == nil {
+		if !graphql.HasFieldError(ctx, fc) {
+			ec.Errorf(ctx, "must not be null")
+		}
+		return graphql.Null
+	}
+	res := resTmp.(string)
+	fc.Result = res
+	return ec.marshalNString2string(ctx, field.Selections, res)
+}
+
+func (ec *executionContext) fieldContext_InviteLink_code(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "InviteLink",
+		Field:      field,
+		IsMethod:   false,
+		IsResolver: false,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return nil, errors.New("field of type String does not have child fields")
+		},
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _InviteLink_label(ctx context.Context, field graphql.CollectedField, obj *model.InviteLink) (ret graphql.Marshaler) {
+	fc, err := ec.fieldContext_InviteLink_label(ctx, field)
+	if err != nil {
+		return graphql.Null
+	}
+	ctx = graphql.WithFieldContext(ctx, fc)
+	defer func() {
+		if r := recover(); r != nil {
+			ec.Error(ctx, ec.Recover(ctx, r))
+			ret = graphql.Null
+		}
+	}()
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (any, error) {
+		ctx = rctx // use context from middleware stack in children
+		return obj.Label, nil
+	})
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	if resTmp == nil {
+		return graphql.Null
+	}
+	res := resTmp.(*string)
+	fc.Result = res
+	return ec.marshalOString2ᚖstring(ctx, field.Selections, res)
+}
+
+func (ec *executionContext) fieldContext_InviteLink_label(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "InviteLink",
+		Field:      field,
+		IsMethod:   false,
+		IsResolver: false,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return nil, errors.New("field of type String does not have child fields")
+		},
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _InviteLink_emailRestrict(ctx context.Context, field graphql.CollectedField, obj *model.InviteLink) (ret graphql.Marshaler) {
+	fc, err := ec.fieldContext_InviteLink_emailRestrict(ctx, field)
+	if err != nil {
+		return graphql.Null
+	}
+	ctx = graphql.WithFieldContext(ctx, fc)
+	defer func() {
+		if r := recover(); r != nil {
+			ec.Error(ctx, ec.Recover(ctx, r))
+			ret = graphql.Null
+		}
+	}()
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (any, error) {
+		ctx = rctx // use context from middleware stack in children
+		return obj.EmailRestrict, nil
+	})
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	if resTmp == nil {
+		return graphql.Null
+	}
+	res := resTmp.(*string)
+	fc.Result = res
+	return ec.marshalOString2ᚖstring(ctx, field.Selections, res)
+}
+
+func (ec *executionContext) fieldContext_InviteLink_emailRestrict(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "InviteLink",
+		Field:      field,
+		IsMethod:   false,
+		IsResolver: false,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return nil, errors.New("field of type String does not have child fields")
+		},
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _InviteLink_maxUses(ctx context.Context, field graphql.CollectedField, obj *model.InviteLink) (ret graphql.Marshaler) {
+	fc, err := ec.fieldContext_InviteLink_maxUses(ctx, field)
+	if err != nil {
+		return graphql.Null
+	}
+	ctx = graphql.WithFieldContext(ctx, fc)
+	defer func() {
+		if r := recover(); r != nil {
+			ec.Error(ctx, ec.Recover(ctx, r))
+			ret = graphql.Null
+		}
+	}()
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (any, error) {
+		ctx = rctx // use context from middleware stack in children
+		return obj.MaxUses, nil
+	})
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	if resTmp == nil {
+		return graphql.Null
+	}
+	res := resTmp.(*int)
+	fc.Result = res
+	return ec.marshalOInt2ᚖint(ctx, field.Selections, res)
+}
+
+func (ec *executionContext) fieldContext_InviteLink_maxUses(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "InviteLink",
+		Field:      field,
+		IsMethod:   false,
+		IsResolver: false,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return nil, errors.New("field of type Int does not have child fields")
+		},
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _InviteLink_useCount(ctx context.Context, field graphql.CollectedField, obj *model.InviteLink) (ret graphql.Marshaler) {
+	fc, err := ec.fieldContext_InviteLink_useCount(ctx, field)
+	if err != nil {
+		return graphql.Null
+	}
+	ctx = graphql.WithFieldContext(ctx, fc)
+	defer func() {
+		if r := recover(); r != nil {
+			ec.Error(ctx, ec.Recover(ctx, r))
+			ret = graphql.Null
+		}
+	}()
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (any, error) {
+		ctx = rctx // use context from middleware stack in children
+		return obj.UseCount, nil
+	})
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	if resTmp == nil {
+		if !graphql.HasFieldError(ctx, fc) {
+			ec.Errorf(ctx, "must not be null")
+		}
+		return graphql.Null
+	}
+	res := resTmp.(int)
+	fc.Result = res
+	return ec.marshalNInt2int(ctx, field.Selections, res)
+}
+
+func (ec *executionContext) fieldContext_InviteLink_useCount(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "InviteLink",
+		Field:      field,
+		IsMethod:   false,
+		IsResolver: false,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return nil, errors.New("field of type Int does not have child fields")
+		},
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _InviteLink_isActive(ctx context.Context, field graphql.CollectedField, obj *model.InviteLink) (ret graphql.Marshaler) {
+	fc, err := ec.fieldContext_InviteLink_isActive(ctx, field)
+	if err != nil {
+		return graphql.Null
+	}
+	ctx = graphql.WithFieldContext(ctx, fc)
+	defer func() {
+		if r := recover(); r != nil {
+			ec.Error(ctx, ec.Recover(ctx, r))
+			ret = graphql.Null
+		}
+	}()
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (any, error) {
+		ctx = rctx // use context from middleware stack in children
+		return obj.IsActive, nil
+	})
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	if resTmp == nil {
+		if !graphql.HasFieldError(ctx, fc) {
+			ec.Errorf(ctx, "must not be null")
+		}
+		return graphql.Null
+	}
+	res := resTmp.(bool)
+	fc.Result = res
+	return ec.marshalNBoolean2bool(ctx, field.Selections, res)
+}
+
+func (ec *executionContext) fieldContext_InviteLink_isActive(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "InviteLink",
+		Field:      field,
+		IsMethod:   false,
+		IsResolver: false,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return nil, errors.New("field of type Boolean does not have child fields")
+		},
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _InviteLink_createdAt(ctx context.Context, field graphql.CollectedField, obj *model.InviteLink) (ret graphql.Marshaler) {
+	fc, err := ec.fieldContext_InviteLink_createdAt(ctx, field)
+	if err != nil {
+		return graphql.Null
+	}
+	ctx = graphql.WithFieldContext(ctx, fc)
+	defer func() {
+		if r := recover(); r != nil {
+			ec.Error(ctx, ec.Recover(ctx, r))
+			ret = graphql.Null
+		}
+	}()
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (any, error) {
+		ctx = rctx // use context from middleware stack in children
+		return obj.CreatedAt, nil
+	})
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	if resTmp == nil {
+		if !graphql.HasFieldError(ctx, fc) {
+			ec.Errorf(ctx, "must not be null")
+		}
+		return graphql.Null
+	}
+	res := resTmp.(string)
+	fc.Result = res
+	return ec.marshalNDateTime2string(ctx, field.Selections, res)
+}
+
+func (ec *executionContext) fieldContext_InviteLink_createdAt(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "InviteLink",
+		Field:      field,
+		IsMethod:   false,
+		IsResolver: false,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return nil, errors.New("field of type DateTime does not have child fields")
+		},
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _InviteLink_expiresAt(ctx context.Context, field graphql.CollectedField, obj *model.InviteLink) (ret graphql.Marshaler) {
+	fc, err := ec.fieldContext_InviteLink_expiresAt(ctx, field)
+	if err != nil {
+		return graphql.Null
+	}
+	ctx = graphql.WithFieldContext(ctx, fc)
+	defer func() {
+		if r := recover(); r != nil {
+			ec.Error(ctx, ec.Recover(ctx, r))
+			ret = graphql.Null
+		}
+	}()
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (any, error) {
+		ctx = rctx // use context from middleware stack in children
+		return obj.ExpiresAt, nil
+	})
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	if resTmp == nil {
+		return graphql.Null
+	}
+	res := resTmp.(*string)
+	fc.Result = res
+	return ec.marshalODateTime2ᚖstring(ctx, field.Selections, res)
+}
+
+func (ec *executionContext) fieldContext_InviteLink_expiresAt(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "InviteLink",
+		Field:      field,
+		IsMethod:   false,
+		IsResolver: false,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return nil, errors.New("field of type DateTime does not have child fields")
+		},
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _InviteLink_urlPath(ctx context.Context, field graphql.CollectedField, obj *model.InviteLink) (ret graphql.Marshaler) {
+	fc, err := ec.fieldContext_InviteLink_urlPath(ctx, field)
+	if err != nil {
+		return graphql.Null
+	}
+	ctx = graphql.WithFieldContext(ctx, fc)
+	defer func() {
+		if r := recover(); r != nil {
+			ec.Error(ctx, ec.Recover(ctx, r))
+			ret = graphql.Null
+		}
+	}()
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (any, error) {
+		ctx = rctx // use context from middleware stack in children
+		return obj.URLPath, nil
+	})
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	if resTmp == nil {
+		if !graphql.HasFieldError(ctx, fc) {
+			ec.Errorf(ctx, "must not be null")
+		}
+		return graphql.Null
+	}
+	res := resTmp.(string)
+	fc.Result = res
+	return ec.marshalNString2string(ctx, field.Selections, res)
+}
+
+func (ec *executionContext) fieldContext_InviteLink_urlPath(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "InviteLink",
+		Field:      field,
+		IsMethod:   false,
+		IsResolver: false,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return nil, errors.New("field of type String does not have child fields")
+		},
+	}
+	return fc, nil
+}
+
 func (ec *executionContext) _KnowledgeEntry_id(ctx context.Context, field graphql.CollectedField, obj *model.KnowledgeEntry) (ret graphql.Marshaler) {
 	fc, err := ec.fieldContext_KnowledgeEntry_id(ctx, field)
 	if err != nil {
@@ -8836,6 +9486,88 @@ func (ec *executionContext) fieldContext_LinkedInJobCard_location(_ context.Cont
 	return fc, nil
 }
 
+func (ec *executionContext) _LinkedInJobCard_workplaceType(ctx context.Context, field graphql.CollectedField, obj *model.LinkedInJobCard) (ret graphql.Marshaler) {
+	fc, err := ec.fieldContext_LinkedInJobCard_workplaceType(ctx, field)
+	if err != nil {
+		return graphql.Null
+	}
+	ctx = graphql.WithFieldContext(ctx, fc)
+	defer func() {
+		if r := recover(); r != nil {
+			ec.Error(ctx, ec.Recover(ctx, r))
+			ret = graphql.Null
+		}
+	}()
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (any, error) {
+		ctx = rctx // use context from middleware stack in children
+		return obj.WorkplaceType, nil
+	})
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	if resTmp == nil {
+		return graphql.Null
+	}
+	res := resTmp.(*string)
+	fc.Result = res
+	return ec.marshalOString2ᚖstring(ctx, field.Selections, res)
+}
+
+func (ec *executionContext) fieldContext_LinkedInJobCard_workplaceType(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "LinkedInJobCard",
+		Field:      field,
+		IsMethod:   false,
+		IsResolver: false,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return nil, errors.New("field of type String does not have child fields")
+		},
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _LinkedInJobCard_employmentType(ctx context.Context, field graphql.CollectedField, obj *model.LinkedInJobCard) (ret graphql.Marshaler) {
+	fc, err := ec.fieldContext_LinkedInJobCard_employmentType(ctx, field)
+	if err != nil {
+		return graphql.Null
+	}
+	ctx = graphql.WithFieldContext(ctx, fc)
+	defer func() {
+		if r := recover(); r != nil {
+			ec.Error(ctx, ec.Recover(ctx, r))
+			ret = graphql.Null
+		}
+	}()
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (any, error) {
+		ctx = rctx // use context from middleware stack in children
+		return obj.EmploymentType, nil
+	})
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	if resTmp == nil {
+		return graphql.Null
+	}
+	res := resTmp.(*string)
+	fc.Result = res
+	return ec.marshalOString2ᚖstring(ctx, field.Selections, res)
+}
+
+func (ec *executionContext) fieldContext_LinkedInJobCard_employmentType(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "LinkedInJobCard",
+		Field:      field,
+		IsMethod:   false,
+		IsResolver: false,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return nil, errors.New("field of type String does not have child fields")
+		},
+	}
+	return fc, nil
+}
+
 func (ec *executionContext) _LinkedInJobCard_listedAt(ctx context.Context, field graphql.CollectedField, obj *model.LinkedInJobCard) (ret graphql.Marshaler) {
 	fc, err := ec.fieldContext_LinkedInJobCard_listedAt(ctx, field)
 	if err != nil {
@@ -8865,6 +9597,47 @@ func (ec *executionContext) _LinkedInJobCard_listedAt(ctx context.Context, field
 }
 
 func (ec *executionContext) fieldContext_LinkedInJobCard_listedAt(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "LinkedInJobCard",
+		Field:      field,
+		IsMethod:   false,
+		IsResolver: false,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return nil, errors.New("field of type String does not have child fields")
+		},
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _LinkedInJobCard_description(ctx context.Context, field graphql.CollectedField, obj *model.LinkedInJobCard) (ret graphql.Marshaler) {
+	fc, err := ec.fieldContext_LinkedInJobCard_description(ctx, field)
+	if err != nil {
+		return graphql.Null
+	}
+	ctx = graphql.WithFieldContext(ctx, fc)
+	defer func() {
+		if r := recover(); r != nil {
+			ec.Error(ctx, ec.Recover(ctx, r))
+			ret = graphql.Null
+		}
+	}()
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (any, error) {
+		ctx = rctx // use context from middleware stack in children
+		return obj.Description, nil
+	})
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	if resTmp == nil {
+		return graphql.Null
+	}
+	res := resTmp.(*string)
+	fc.Result = res
+	return ec.marshalOString2ᚖstring(ctx, field.Selections, res)
+}
+
+func (ec *executionContext) fieldContext_LinkedInJobCard_description(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
 	fc = &graphql.FieldContext{
 		Object:     "LinkedInJobCard",
 		Field:      field,
@@ -9427,6 +10200,73 @@ func (ec *executionContext) fieldContext_Mutation_updateResumeSectionDisplayTitl
 	}()
 	ctx = graphql.WithFieldContext(ctx, fc)
 	if fc.Args, err = ec.field_Mutation_updateResumeSectionDisplayTitle_args(ctx, field.ArgumentMap(ec.Variables)); err != nil {
+		ec.Error(ctx, err)
+		return fc, err
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _Mutation_createResumeSection(ctx context.Context, field graphql.CollectedField) (ret graphql.Marshaler) {
+	fc, err := ec.fieldContext_Mutation_createResumeSection(ctx, field)
+	if err != nil {
+		return graphql.Null
+	}
+	ctx = graphql.WithFieldContext(ctx, fc)
+	defer func() {
+		if r := recover(); r != nil {
+			ec.Error(ctx, ec.Recover(ctx, r))
+			ret = graphql.Null
+		}
+	}()
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (any, error) {
+		ctx = rctx // use context from middleware stack in children
+		return ec.resolvers.Mutation().CreateResumeSection(rctx, fc.Args["input"].(model.CreateResumeSectionInput))
+	})
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	if resTmp == nil {
+		if !graphql.HasFieldError(ctx, fc) {
+			ec.Errorf(ctx, "must not be null")
+		}
+		return graphql.Null
+	}
+	res := resTmp.(*model.ResumeWithContent)
+	fc.Result = res
+	return ec.marshalNResumeWithContent2ᚖgithubᚗcomᚋleoᚋaiᚑweekendᚋbackendᚋgraphᚋmodelᚐResumeWithContent(ctx, field.Selections, res)
+}
+
+func (ec *executionContext) fieldContext_Mutation_createResumeSection(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "Mutation",
+		Field:      field,
+		IsMethod:   true,
+		IsResolver: true,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			switch field.Name {
+			case "resume":
+				return ec.fieldContext_ResumeWithContent_resume(ctx, field)
+			case "contactProfile":
+				return ec.fieldContext_ResumeWithContent_contactProfile(ctx, field)
+			case "settings":
+				return ec.fieldContext_ResumeWithContent_settings(ctx, field)
+			case "theme":
+				return ec.fieldContext_ResumeWithContent_theme(ctx, field)
+			case "sections":
+				return ec.fieldContext_ResumeWithContent_sections(ctx, field)
+			}
+			return nil, fmt.Errorf("no field named %q was found under type ResumeWithContent", field.Name)
+		},
+	}
+	defer func() {
+		if r := recover(); r != nil {
+			err = ec.Recover(ctx, r)
+			ec.Error(ctx, err)
+		}
+	}()
+	ctx = graphql.WithFieldContext(ctx, fc)
+	if fc.Args, err = ec.field_Mutation_createResumeSection_args(ctx, field.ArgumentMap(ec.Variables)); err != nil {
 		ec.Error(ctx, err)
 		return fc, err
 	}
@@ -12733,6 +13573,160 @@ func (ec *executionContext) fieldContext_Mutation_sendTestEmail(ctx context.Cont
 	return fc, nil
 }
 
+func (ec *executionContext) _Mutation_createInviteLink(ctx context.Context, field graphql.CollectedField) (ret graphql.Marshaler) {
+	fc, err := ec.fieldContext_Mutation_createInviteLink(ctx, field)
+	if err != nil {
+		return graphql.Null
+	}
+	ctx = graphql.WithFieldContext(ctx, fc)
+	defer func() {
+		if r := recover(); r != nil {
+			ec.Error(ctx, ec.Recover(ctx, r))
+			ret = graphql.Null
+		}
+	}()
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (any, error) {
+		ctx = rctx // use context from middleware stack in children
+		return ec.resolvers.Mutation().CreateInviteLink(rctx, fc.Args["input"].(model.CreateInviteLinkInput))
+	})
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	if resTmp == nil {
+		if !graphql.HasFieldError(ctx, fc) {
+			ec.Errorf(ctx, "must not be null")
+		}
+		return graphql.Null
+	}
+	res := resTmp.(*model.InviteLink)
+	fc.Result = res
+	return ec.marshalNInviteLink2ᚖgithubᚗcomᚋleoᚋaiᚑweekendᚋbackendᚋgraphᚋmodelᚐInviteLink(ctx, field.Selections, res)
+}
+
+func (ec *executionContext) fieldContext_Mutation_createInviteLink(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "Mutation",
+		Field:      field,
+		IsMethod:   true,
+		IsResolver: true,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			switch field.Name {
+			case "id":
+				return ec.fieldContext_InviteLink_id(ctx, field)
+			case "code":
+				return ec.fieldContext_InviteLink_code(ctx, field)
+			case "label":
+				return ec.fieldContext_InviteLink_label(ctx, field)
+			case "emailRestrict":
+				return ec.fieldContext_InviteLink_emailRestrict(ctx, field)
+			case "maxUses":
+				return ec.fieldContext_InviteLink_maxUses(ctx, field)
+			case "useCount":
+				return ec.fieldContext_InviteLink_useCount(ctx, field)
+			case "isActive":
+				return ec.fieldContext_InviteLink_isActive(ctx, field)
+			case "createdAt":
+				return ec.fieldContext_InviteLink_createdAt(ctx, field)
+			case "expiresAt":
+				return ec.fieldContext_InviteLink_expiresAt(ctx, field)
+			case "urlPath":
+				return ec.fieldContext_InviteLink_urlPath(ctx, field)
+			}
+			return nil, fmt.Errorf("no field named %q was found under type InviteLink", field.Name)
+		},
+	}
+	defer func() {
+		if r := recover(); r != nil {
+			err = ec.Recover(ctx, r)
+			ec.Error(ctx, err)
+		}
+	}()
+	ctx = graphql.WithFieldContext(ctx, fc)
+	if fc.Args, err = ec.field_Mutation_createInviteLink_args(ctx, field.ArgumentMap(ec.Variables)); err != nil {
+		ec.Error(ctx, err)
+		return fc, err
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _Mutation_updateInviteLink(ctx context.Context, field graphql.CollectedField) (ret graphql.Marshaler) {
+	fc, err := ec.fieldContext_Mutation_updateInviteLink(ctx, field)
+	if err != nil {
+		return graphql.Null
+	}
+	ctx = graphql.WithFieldContext(ctx, fc)
+	defer func() {
+		if r := recover(); r != nil {
+			ec.Error(ctx, ec.Recover(ctx, r))
+			ret = graphql.Null
+		}
+	}()
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (any, error) {
+		ctx = rctx // use context from middleware stack in children
+		return ec.resolvers.Mutation().UpdateInviteLink(rctx, fc.Args["input"].(model.UpdateInviteLinkInput))
+	})
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	if resTmp == nil {
+		if !graphql.HasFieldError(ctx, fc) {
+			ec.Errorf(ctx, "must not be null")
+		}
+		return graphql.Null
+	}
+	res := resTmp.(*model.InviteLink)
+	fc.Result = res
+	return ec.marshalNInviteLink2ᚖgithubᚗcomᚋleoᚋaiᚑweekendᚋbackendᚋgraphᚋmodelᚐInviteLink(ctx, field.Selections, res)
+}
+
+func (ec *executionContext) fieldContext_Mutation_updateInviteLink(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "Mutation",
+		Field:      field,
+		IsMethod:   true,
+		IsResolver: true,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			switch field.Name {
+			case "id":
+				return ec.fieldContext_InviteLink_id(ctx, field)
+			case "code":
+				return ec.fieldContext_InviteLink_code(ctx, field)
+			case "label":
+				return ec.fieldContext_InviteLink_label(ctx, field)
+			case "emailRestrict":
+				return ec.fieldContext_InviteLink_emailRestrict(ctx, field)
+			case "maxUses":
+				return ec.fieldContext_InviteLink_maxUses(ctx, field)
+			case "useCount":
+				return ec.fieldContext_InviteLink_useCount(ctx, field)
+			case "isActive":
+				return ec.fieldContext_InviteLink_isActive(ctx, field)
+			case "createdAt":
+				return ec.fieldContext_InviteLink_createdAt(ctx, field)
+			case "expiresAt":
+				return ec.fieldContext_InviteLink_expiresAt(ctx, field)
+			case "urlPath":
+				return ec.fieldContext_InviteLink_urlPath(ctx, field)
+			}
+			return nil, fmt.Errorf("no field named %q was found under type InviteLink", field.Name)
+		},
+	}
+	defer func() {
+		if r := recover(); r != nil {
+			err = ec.Recover(ctx, r)
+			ec.Error(ctx, err)
+		}
+	}()
+	ctx = graphql.WithFieldContext(ctx, fc)
+	if fc.Args, err = ec.field_Mutation_updateInviteLink_args(ctx, field.ArgumentMap(ec.Variables)); err != nil {
+		ec.Error(ctx, err)
+		return fc, err
+	}
+	return fc, nil
+}
+
 func (ec *executionContext) _Portfolio_id(ctx context.Context, field graphql.CollectedField, obj *model.Portfolio) (ret graphql.Marshaler) {
 	fc, err := ec.fieldContext_Portfolio_id(ctx, field)
 	if err != nil {
@@ -15963,6 +16957,8 @@ func (ec *executionContext) fieldContext_Query_sections(ctx context.Context, fie
 				return ec.fieldContext_Section_type(ctx, field)
 			case "title":
 				return ec.fieldContext_Section_title(ctx, field)
+			case "customKey":
+				return ec.fieldContext_Section_customKey(ctx, field)
 			case "description":
 				return ec.fieldContext_Section_description(ctx, field)
 			case "createdBy":
@@ -16033,6 +17029,8 @@ func (ec *executionContext) fieldContext_Query_section(ctx context.Context, fiel
 				return ec.fieldContext_Section_type(ctx, field)
 			case "title":
 				return ec.fieldContext_Section_title(ctx, field)
+			case "customKey":
+				return ec.fieldContext_Section_customKey(ctx, field)
 			case "description":
 				return ec.fieldContext_Section_description(ctx, field)
 			case "createdBy":
@@ -17814,7 +18812,7 @@ func (ec *executionContext) _Query_adminLinkedInJobSearch(ctx context.Context, f
 	}()
 	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (any, error) {
 		ctx = rctx // use context from middleware stack in children
-		return ec.resolvers.Query().AdminLinkedInJobSearch(rctx, fc.Args["keywords"].(string), fc.Args["geoId"].(*string), fc.Args["timeFilter"].(*string))
+		return ec.resolvers.Query().AdminLinkedInJobSearch(rctx, fc.Args["keywords"].(*string), fc.Args["geoId"].(*string), fc.Args["timeFilter"].(*string), fc.Args["workplaceTypes"].([]model.LinkedInWorkplaceType), fc.Args["experienceLevels"].([]model.LinkedInExperienceLevel), fc.Args["employmentTypes"].([]model.LinkedInEmploymentType), fc.Args["sessionCookie"].(*string))
 	})
 	if err != nil {
 		ec.Error(ctx, err)
@@ -17847,8 +18845,14 @@ func (ec *executionContext) fieldContext_Query_adminLinkedInJobSearch(ctx contex
 				return ec.fieldContext_LinkedInJobCard_company(ctx, field)
 			case "location":
 				return ec.fieldContext_LinkedInJobCard_location(ctx, field)
+			case "workplaceType":
+				return ec.fieldContext_LinkedInJobCard_workplaceType(ctx, field)
+			case "employmentType":
+				return ec.fieldContext_LinkedInJobCard_employmentType(ctx, field)
 			case "listedAt":
 				return ec.fieldContext_LinkedInJobCard_listedAt(ctx, field)
+			case "description":
+				return ec.fieldContext_LinkedInJobCard_description(ctx, field)
 			case "url":
 				return ec.fieldContext_LinkedInJobCard_url(ctx, field)
 			}
@@ -17865,6 +18869,72 @@ func (ec *executionContext) fieldContext_Query_adminLinkedInJobSearch(ctx contex
 	if fc.Args, err = ec.field_Query_adminLinkedInJobSearch_args(ctx, field.ArgumentMap(ec.Variables)); err != nil {
 		ec.Error(ctx, err)
 		return fc, err
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _Query_adminInviteLinks(ctx context.Context, field graphql.CollectedField) (ret graphql.Marshaler) {
+	fc, err := ec.fieldContext_Query_adminInviteLinks(ctx, field)
+	if err != nil {
+		return graphql.Null
+	}
+	ctx = graphql.WithFieldContext(ctx, fc)
+	defer func() {
+		if r := recover(); r != nil {
+			ec.Error(ctx, ec.Recover(ctx, r))
+			ret = graphql.Null
+		}
+	}()
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (any, error) {
+		ctx = rctx // use context from middleware stack in children
+		return ec.resolvers.Query().AdminInviteLinks(rctx)
+	})
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	if resTmp == nil {
+		if !graphql.HasFieldError(ctx, fc) {
+			ec.Errorf(ctx, "must not be null")
+		}
+		return graphql.Null
+	}
+	res := resTmp.([]*model.InviteLink)
+	fc.Result = res
+	return ec.marshalNInviteLink2ᚕᚖgithubᚗcomᚋleoᚋaiᚑweekendᚋbackendᚋgraphᚋmodelᚐInviteLinkᚄ(ctx, field.Selections, res)
+}
+
+func (ec *executionContext) fieldContext_Query_adminInviteLinks(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "Query",
+		Field:      field,
+		IsMethod:   true,
+		IsResolver: true,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			switch field.Name {
+			case "id":
+				return ec.fieldContext_InviteLink_id(ctx, field)
+			case "code":
+				return ec.fieldContext_InviteLink_code(ctx, field)
+			case "label":
+				return ec.fieldContext_InviteLink_label(ctx, field)
+			case "emailRestrict":
+				return ec.fieldContext_InviteLink_emailRestrict(ctx, field)
+			case "maxUses":
+				return ec.fieldContext_InviteLink_maxUses(ctx, field)
+			case "useCount":
+				return ec.fieldContext_InviteLink_useCount(ctx, field)
+			case "isActive":
+				return ec.fieldContext_InviteLink_isActive(ctx, field)
+			case "createdAt":
+				return ec.fieldContext_InviteLink_createdAt(ctx, field)
+			case "expiresAt":
+				return ec.fieldContext_InviteLink_expiresAt(ctx, field)
+			case "urlPath":
+				return ec.fieldContext_InviteLink_urlPath(ctx, field)
+			}
+			return nil, fmt.Errorf("no field named %q was found under type InviteLink", field.Name)
+		},
 	}
 	return fc, nil
 }
@@ -21438,6 +22508,47 @@ func (ec *executionContext) fieldContext_Section_title(_ context.Context, field 
 	return fc, nil
 }
 
+func (ec *executionContext) _Section_customKey(ctx context.Context, field graphql.CollectedField, obj *model.Section) (ret graphql.Marshaler) {
+	fc, err := ec.fieldContext_Section_customKey(ctx, field)
+	if err != nil {
+		return graphql.Null
+	}
+	ctx = graphql.WithFieldContext(ctx, fc)
+	defer func() {
+		if r := recover(); r != nil {
+			ec.Error(ctx, ec.Recover(ctx, r))
+			ret = graphql.Null
+		}
+	}()
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (any, error) {
+		ctx = rctx // use context from middleware stack in children
+		return obj.CustomKey, nil
+	})
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	if resTmp == nil {
+		return graphql.Null
+	}
+	res := resTmp.(*string)
+	fc.Result = res
+	return ec.marshalOString2ᚖstring(ctx, field.Selections, res)
+}
+
+func (ec *executionContext) fieldContext_Section_customKey(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "Section",
+		Field:      field,
+		IsMethod:   false,
+		IsResolver: false,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return nil, errors.New("field of type String does not have child fields")
+		},
+	}
+	return fc, nil
+}
+
 func (ec *executionContext) _Section_description(ctx context.Context, field graphql.CollectedField, obj *model.Section) (ret graphql.Marshaler) {
 	fc, err := ec.fieldContext_Section_description(ctx, field)
 	if err != nil {
@@ -22164,6 +23275,8 @@ func (ec *executionContext) fieldContext_SectionItemUsage_sections(_ context.Con
 				return ec.fieldContext_Section_type(ctx, field)
 			case "title":
 				return ec.fieldContext_Section_title(ctx, field)
+			case "customKey":
+				return ec.fieldContext_Section_customKey(ctx, field)
 			case "description":
 				return ec.fieldContext_Section_description(ctx, field)
 			case "createdBy":
@@ -22354,6 +23467,8 @@ func (ec *executionContext) fieldContext_SectionWithItems_section(_ context.Cont
 				return ec.fieldContext_Section_type(ctx, field)
 			case "title":
 				return ec.fieldContext_Section_title(ctx, field)
+			case "customKey":
+				return ec.fieldContext_Section_customKey(ctx, field)
 			case "description":
 				return ec.fieldContext_Section_description(ctx, field)
 			case "createdBy":
@@ -27136,6 +28251,54 @@ func (ec *executionContext) unmarshalInputAssistantContextInput(ctx context.Cont
 	return it, nil
 }
 
+func (ec *executionContext) unmarshalInputCreateInviteLinkInput(ctx context.Context, obj any) (model.CreateInviteLinkInput, error) {
+	var it model.CreateInviteLinkInput
+	asMap := map[string]any{}
+	for k, v := range obj.(map[string]any) {
+		asMap[k] = v
+	}
+
+	fieldsInOrder := [...]string{"label", "emailRestrict", "maxUses", "expiresAt"}
+	for _, k := range fieldsInOrder {
+		v, ok := asMap[k]
+		if !ok {
+			continue
+		}
+		switch k {
+		case "label":
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("label"))
+			data, err := ec.unmarshalOString2ᚖstring(ctx, v)
+			if err != nil {
+				return it, err
+			}
+			it.Label = data
+		case "emailRestrict":
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("emailRestrict"))
+			data, err := ec.unmarshalOString2ᚖstring(ctx, v)
+			if err != nil {
+				return it, err
+			}
+			it.EmailRestrict = data
+		case "maxUses":
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("maxUses"))
+			data, err := ec.unmarshalOInt2ᚖint(ctx, v)
+			if err != nil {
+				return it, err
+			}
+			it.MaxUses = data
+		case "expiresAt":
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("expiresAt"))
+			data, err := ec.unmarshalODateTime2ᚖstring(ctx, v)
+			if err != nil {
+				return it, err
+			}
+			it.ExpiresAt = data
+		}
+	}
+
+	return it, nil
+}
+
 func (ec *executionContext) unmarshalInputCreateKnowledgeEntryInput(ctx context.Context, obj any) (model.CreateKnowledgeEntryInput, error) {
 	var it model.CreateKnowledgeEntryInput
 	asMap := map[string]any{}
@@ -27192,6 +28355,40 @@ func (ec *executionContext) unmarshalInputCreateKnowledgeEntryInput(ctx context.
 				return it, err
 			}
 			it.Enabled = data
+		}
+	}
+
+	return it, nil
+}
+
+func (ec *executionContext) unmarshalInputCreateResumeSectionInput(ctx context.Context, obj any) (model.CreateResumeSectionInput, error) {
+	var it model.CreateResumeSectionInput
+	asMap := map[string]any{}
+	for k, v := range obj.(map[string]any) {
+		asMap[k] = v
+	}
+
+	fieldsInOrder := [...]string{"resumeId", "title"}
+	for _, k := range fieldsInOrder {
+		v, ok := asMap[k]
+		if !ok {
+			continue
+		}
+		switch k {
+		case "resumeId":
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("resumeId"))
+			data, err := ec.unmarshalNID2string(ctx, v)
+			if err != nil {
+				return it, err
+			}
+			it.ResumeID = data
+		case "title":
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("title"))
+			data, err := ec.unmarshalNString2string(ctx, v)
+			if err != nil {
+				return it, err
+			}
+			it.Title = data
 		}
 	}
 
@@ -27419,6 +28616,68 @@ func (ec *executionContext) unmarshalInputUpdateContactProfileInput(ctx context.
 				return it, err
 			}
 			it.GithubPhotoURL = data
+		}
+	}
+
+	return it, nil
+}
+
+func (ec *executionContext) unmarshalInputUpdateInviteLinkInput(ctx context.Context, obj any) (model.UpdateInviteLinkInput, error) {
+	var it model.UpdateInviteLinkInput
+	asMap := map[string]any{}
+	for k, v := range obj.(map[string]any) {
+		asMap[k] = v
+	}
+
+	fieldsInOrder := [...]string{"id", "label", "emailRestrict", "maxUses", "isActive", "expiresAt"}
+	for _, k := range fieldsInOrder {
+		v, ok := asMap[k]
+		if !ok {
+			continue
+		}
+		switch k {
+		case "id":
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("id"))
+			data, err := ec.unmarshalNID2string(ctx, v)
+			if err != nil {
+				return it, err
+			}
+			it.ID = data
+		case "label":
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("label"))
+			data, err := ec.unmarshalOString2ᚖstring(ctx, v)
+			if err != nil {
+				return it, err
+			}
+			it.Label = data
+		case "emailRestrict":
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("emailRestrict"))
+			data, err := ec.unmarshalOString2ᚖstring(ctx, v)
+			if err != nil {
+				return it, err
+			}
+			it.EmailRestrict = data
+		case "maxUses":
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("maxUses"))
+			data, err := ec.unmarshalOInt2ᚖint(ctx, v)
+			if err != nil {
+				return it, err
+			}
+			it.MaxUses = data
+		case "isActive":
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("isActive"))
+			data, err := ec.unmarshalOBoolean2ᚖbool(ctx, v)
+			if err != nil {
+				return it, err
+			}
+			it.IsActive = data
+		case "expiresAt":
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("expiresAt"))
+			data, err := ec.unmarshalODateTime2ᚖstring(ctx, v)
+			if err != nil {
+				return it, err
+			}
+			it.ExpiresAt = data
 		}
 	}
 
@@ -29380,6 +30639,78 @@ func (ec *executionContext) _CvTheme(ctx context.Context, sel ast.SelectionSet, 
 	return out
 }
 
+var inviteLinkImplementors = []string{"InviteLink"}
+
+func (ec *executionContext) _InviteLink(ctx context.Context, sel ast.SelectionSet, obj *model.InviteLink) graphql.Marshaler {
+	fields := graphql.CollectFields(ec.OperationContext, sel, inviteLinkImplementors)
+
+	out := graphql.NewFieldSet(fields)
+	deferred := make(map[string]*graphql.FieldSet)
+	for i, field := range fields {
+		switch field.Name {
+		case "__typename":
+			out.Values[i] = graphql.MarshalString("InviteLink")
+		case "id":
+			out.Values[i] = ec._InviteLink_id(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				out.Invalids++
+			}
+		case "code":
+			out.Values[i] = ec._InviteLink_code(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				out.Invalids++
+			}
+		case "label":
+			out.Values[i] = ec._InviteLink_label(ctx, field, obj)
+		case "emailRestrict":
+			out.Values[i] = ec._InviteLink_emailRestrict(ctx, field, obj)
+		case "maxUses":
+			out.Values[i] = ec._InviteLink_maxUses(ctx, field, obj)
+		case "useCount":
+			out.Values[i] = ec._InviteLink_useCount(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				out.Invalids++
+			}
+		case "isActive":
+			out.Values[i] = ec._InviteLink_isActive(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				out.Invalids++
+			}
+		case "createdAt":
+			out.Values[i] = ec._InviteLink_createdAt(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				out.Invalids++
+			}
+		case "expiresAt":
+			out.Values[i] = ec._InviteLink_expiresAt(ctx, field, obj)
+		case "urlPath":
+			out.Values[i] = ec._InviteLink_urlPath(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				out.Invalids++
+			}
+		default:
+			panic("unknown field " + strconv.Quote(field.Name))
+		}
+	}
+	out.Dispatch(ctx)
+	if out.Invalids > 0 {
+		return graphql.Null
+	}
+
+	atomic.AddInt32(&ec.deferred, int32(len(deferred)))
+
+	for label, dfs := range deferred {
+		ec.processDeferredGroup(graphql.DeferredGroup{
+			Label:    label,
+			Path:     graphql.GetPath(ctx),
+			FieldSet: dfs,
+			Context:  ctx,
+		})
+	}
+
+	return out
+}
+
 var knowledgeEntryImplementors = []string{"KnowledgeEntry"}
 
 func (ec *executionContext) _KnowledgeEntry(ctx context.Context, sel ast.SelectionSet, obj *model.KnowledgeEntry) graphql.Marshaler {
@@ -29484,8 +30815,14 @@ func (ec *executionContext) _LinkedInJobCard(ctx context.Context, sel ast.Select
 			out.Values[i] = ec._LinkedInJobCard_company(ctx, field, obj)
 		case "location":
 			out.Values[i] = ec._LinkedInJobCard_location(ctx, field, obj)
+		case "workplaceType":
+			out.Values[i] = ec._LinkedInJobCard_workplaceType(ctx, field, obj)
+		case "employmentType":
+			out.Values[i] = ec._LinkedInJobCard_employmentType(ctx, field, obj)
 		case "listedAt":
 			out.Values[i] = ec._LinkedInJobCard_listedAt(ctx, field, obj)
+		case "description":
+			out.Values[i] = ec._LinkedInJobCard_description(ctx, field, obj)
 		case "url":
 			out.Values[i] = ec._LinkedInJobCard_url(ctx, field, obj)
 			if out.Values[i] == graphql.Null {
@@ -29571,6 +30908,13 @@ func (ec *executionContext) _Mutation(ctx context.Context, sel ast.SelectionSet)
 		case "updateResumeSectionDisplayTitle":
 			out.Values[i] = ec.OperationContext.RootResolverMiddleware(innerCtx, func(ctx context.Context) (res graphql.Marshaler) {
 				return ec._Mutation_updateResumeSectionDisplayTitle(ctx, field)
+			})
+			if out.Values[i] == graphql.Null {
+				out.Invalids++
+			}
+		case "createResumeSection":
+			out.Values[i] = ec.OperationContext.RootResolverMiddleware(innerCtx, func(ctx context.Context) (res graphql.Marshaler) {
+				return ec._Mutation_createResumeSection(ctx, field)
 			})
 			if out.Values[i] == graphql.Null {
 				out.Invalids++
@@ -29907,6 +31251,20 @@ func (ec *executionContext) _Mutation(ctx context.Context, sel ast.SelectionSet)
 		case "sendTestEmail":
 			out.Values[i] = ec.OperationContext.RootResolverMiddleware(innerCtx, func(ctx context.Context) (res graphql.Marshaler) {
 				return ec._Mutation_sendTestEmail(ctx, field)
+			})
+			if out.Values[i] == graphql.Null {
+				out.Invalids++
+			}
+		case "createInviteLink":
+			out.Values[i] = ec.OperationContext.RootResolverMiddleware(innerCtx, func(ctx context.Context) (res graphql.Marshaler) {
+				return ec._Mutation_createInviteLink(ctx, field)
+			})
+			if out.Values[i] == graphql.Null {
+				out.Invalids++
+			}
+		case "updateInviteLink":
+			out.Values[i] = ec.OperationContext.RootResolverMiddleware(innerCtx, func(ctx context.Context) (res graphql.Marshaler) {
+				return ec._Mutation_updateInviteLink(ctx, field)
 			})
 			if out.Values[i] == graphql.Null {
 				out.Invalids++
@@ -31173,6 +32531,28 @@ func (ec *executionContext) _Query(ctx context.Context, sel ast.SelectionSet) gr
 			}
 
 			out.Concurrently(i, func(ctx context.Context) graphql.Marshaler { return rrm(innerCtx) })
+		case "adminInviteLinks":
+			field := field
+
+			innerFunc := func(ctx context.Context, fs *graphql.FieldSet) (res graphql.Marshaler) {
+				defer func() {
+					if r := recover(); r != nil {
+						ec.Error(ctx, ec.Recover(ctx, r))
+					}
+				}()
+				res = ec._Query_adminInviteLinks(ctx, field)
+				if res == graphql.Null {
+					atomic.AddUint32(&fs.Invalids, 1)
+				}
+				return res
+			}
+
+			rrm := func(ctx context.Context) graphql.Marshaler {
+				return ec.OperationContext.RootResolverMiddleware(ctx,
+					func(ctx context.Context) graphql.Marshaler { return innerFunc(ctx, out) })
+			}
+
+			out.Concurrently(i, func(ctx context.Context) graphql.Marshaler { return rrm(innerCtx) })
 		case "__type":
 			out.Values[i] = ec.OperationContext.RootResolverMiddleware(innerCtx, func(ctx context.Context) (res graphql.Marshaler) {
 				return ec._Query___type(ctx, field)
@@ -31675,6 +33055,8 @@ func (ec *executionContext) _Section(ctx context.Context, sel ast.SelectionSet, 
 			if out.Values[i] == graphql.Null {
 				out.Invalids++
 			}
+		case "customKey":
+			out.Values[i] = ec._Section_customKey(ctx, field, obj)
 		case "description":
 			out.Values[i] = ec._Section_description(ctx, field, obj)
 		case "createdBy":
@@ -33355,8 +34737,18 @@ func (ec *executionContext) marshalNContactProfile2ᚖgithubᚗcomᚋleoᚋaiᚑ
 	return ec._ContactProfile(ctx, sel, v)
 }
 
+func (ec *executionContext) unmarshalNCreateInviteLinkInput2githubᚗcomᚋleoᚋaiᚑweekendᚋbackendᚋgraphᚋmodelᚐCreateInviteLinkInput(ctx context.Context, v any) (model.CreateInviteLinkInput, error) {
+	res, err := ec.unmarshalInputCreateInviteLinkInput(ctx, v)
+	return res, graphql.ErrorOnPath(ctx, err)
+}
+
 func (ec *executionContext) unmarshalNCreateKnowledgeEntryInput2githubᚗcomᚋleoᚋaiᚑweekendᚋbackendᚋgraphᚋmodelᚐCreateKnowledgeEntryInput(ctx context.Context, v any) (model.CreateKnowledgeEntryInput, error) {
 	res, err := ec.unmarshalInputCreateKnowledgeEntryInput(ctx, v)
+	return res, graphql.ErrorOnPath(ctx, err)
+}
+
+func (ec *executionContext) unmarshalNCreateResumeSectionInput2githubᚗcomᚋleoᚋaiᚑweekendᚋbackendᚋgraphᚋmodelᚐCreateResumeSectionInput(ctx context.Context, v any) (model.CreateResumeSectionInput, error) {
+	res, err := ec.unmarshalInputCreateResumeSectionInput(ctx, v)
 	return res, graphql.ErrorOnPath(ctx, err)
 }
 
@@ -33593,6 +34985,64 @@ func (ec *executionContext) marshalNInt2int(ctx context.Context, sel ast.Selecti
 	return res
 }
 
+func (ec *executionContext) marshalNInviteLink2githubᚗcomᚋleoᚋaiᚑweekendᚋbackendᚋgraphᚋmodelᚐInviteLink(ctx context.Context, sel ast.SelectionSet, v model.InviteLink) graphql.Marshaler {
+	return ec._InviteLink(ctx, sel, &v)
+}
+
+func (ec *executionContext) marshalNInviteLink2ᚕᚖgithubᚗcomᚋleoᚋaiᚑweekendᚋbackendᚋgraphᚋmodelᚐInviteLinkᚄ(ctx context.Context, sel ast.SelectionSet, v []*model.InviteLink) graphql.Marshaler {
+	ret := make(graphql.Array, len(v))
+	var wg sync.WaitGroup
+	isLen1 := len(v) == 1
+	if !isLen1 {
+		wg.Add(len(v))
+	}
+	for i := range v {
+		i := i
+		fc := &graphql.FieldContext{
+			Index:  &i,
+			Result: &v[i],
+		}
+		ctx := graphql.WithFieldContext(ctx, fc)
+		f := func(i int) {
+			defer func() {
+				if r := recover(); r != nil {
+					ec.Error(ctx, ec.Recover(ctx, r))
+					ret = nil
+				}
+			}()
+			if !isLen1 {
+				defer wg.Done()
+			}
+			ret[i] = ec.marshalNInviteLink2ᚖgithubᚗcomᚋleoᚋaiᚑweekendᚋbackendᚋgraphᚋmodelᚐInviteLink(ctx, sel, v[i])
+		}
+		if isLen1 {
+			f(i)
+		} else {
+			go f(i)
+		}
+
+	}
+	wg.Wait()
+
+	for _, e := range ret {
+		if e == graphql.Null {
+			return graphql.Null
+		}
+	}
+
+	return ret
+}
+
+func (ec *executionContext) marshalNInviteLink2ᚖgithubᚗcomᚋleoᚋaiᚑweekendᚋbackendᚋgraphᚋmodelᚐInviteLink(ctx context.Context, sel ast.SelectionSet, v *model.InviteLink) graphql.Marshaler {
+	if v == nil {
+		if !graphql.HasFieldError(ctx, graphql.GetFieldContext(ctx)) {
+			ec.Errorf(ctx, "the requested element is null which the schema does not allow")
+		}
+		return graphql.Null
+	}
+	return ec._InviteLink(ctx, sel, v)
+}
+
 func (ec *executionContext) unmarshalNItemTitleEmphasis2githubᚗcomᚋleoᚋaiᚑweekendᚋbackendᚋgraphᚋmodelᚐItemTitleEmphasis(ctx context.Context, v any) (model.ItemTitleEmphasis, error) {
 	var res model.ItemTitleEmphasis
 	err := res.UnmarshalGQL(v)
@@ -33753,6 +35203,26 @@ func (ec *executionContext) marshalNLineHeightDensity2githubᚗcomᚋleoᚋaiᚑ
 	return v
 }
 
+func (ec *executionContext) unmarshalNLinkedInEmploymentType2githubᚗcomᚋleoᚋaiᚑweekendᚋbackendᚋgraphᚋmodelᚐLinkedInEmploymentType(ctx context.Context, v any) (model.LinkedInEmploymentType, error) {
+	var res model.LinkedInEmploymentType
+	err := res.UnmarshalGQL(v)
+	return res, graphql.ErrorOnPath(ctx, err)
+}
+
+func (ec *executionContext) marshalNLinkedInEmploymentType2githubᚗcomᚋleoᚋaiᚑweekendᚋbackendᚋgraphᚋmodelᚐLinkedInEmploymentType(ctx context.Context, sel ast.SelectionSet, v model.LinkedInEmploymentType) graphql.Marshaler {
+	return v
+}
+
+func (ec *executionContext) unmarshalNLinkedInExperienceLevel2githubᚗcomᚋleoᚋaiᚑweekendᚋbackendᚋgraphᚋmodelᚐLinkedInExperienceLevel(ctx context.Context, v any) (model.LinkedInExperienceLevel, error) {
+	var res model.LinkedInExperienceLevel
+	err := res.UnmarshalGQL(v)
+	return res, graphql.ErrorOnPath(ctx, err)
+}
+
+func (ec *executionContext) marshalNLinkedInExperienceLevel2githubᚗcomᚋleoᚋaiᚑweekendᚋbackendᚋgraphᚋmodelᚐLinkedInExperienceLevel(ctx context.Context, sel ast.SelectionSet, v model.LinkedInExperienceLevel) graphql.Marshaler {
+	return v
+}
+
 func (ec *executionContext) marshalNLinkedInJobCard2ᚕᚖgithubᚗcomᚋleoᚋaiᚑweekendᚋbackendᚋgraphᚋmodelᚐLinkedInJobCardᚄ(ctx context.Context, sel ast.SelectionSet, v []*model.LinkedInJobCard) graphql.Marshaler {
 	ret := make(graphql.Array, len(v))
 	var wg sync.WaitGroup
@@ -33805,6 +35275,16 @@ func (ec *executionContext) marshalNLinkedInJobCard2ᚖgithubᚗcomᚋleoᚋai�
 		return graphql.Null
 	}
 	return ec._LinkedInJobCard(ctx, sel, v)
+}
+
+func (ec *executionContext) unmarshalNLinkedInWorkplaceType2githubᚗcomᚋleoᚋaiᚑweekendᚋbackendᚋgraphᚋmodelᚐLinkedInWorkplaceType(ctx context.Context, v any) (model.LinkedInWorkplaceType, error) {
+	var res model.LinkedInWorkplaceType
+	err := res.UnmarshalGQL(v)
+	return res, graphql.ErrorOnPath(ctx, err)
+}
+
+func (ec *executionContext) marshalNLinkedInWorkplaceType2githubᚗcomᚋleoᚋaiᚑweekendᚋbackendᚋgraphᚋmodelᚐLinkedInWorkplaceType(ctx context.Context, sel ast.SelectionSet, v model.LinkedInWorkplaceType) graphql.Marshaler {
+	return v
 }
 
 func (ec *executionContext) unmarshalNLocationDisplay2githubᚗcomᚋleoᚋaiᚑweekendᚋbackendᚋgraphᚋmodelᚐLocationDisplay(ctx context.Context, v any) (model.LocationDisplay, error) {
@@ -34725,6 +36205,11 @@ func (ec *executionContext) marshalNTwinEntryType2githubᚗcomᚋleoᚋaiᚑweek
 
 func (ec *executionContext) unmarshalNUpdateContactProfileInput2githubᚗcomᚋleoᚋaiᚑweekendᚋbackendᚋgraphᚋmodelᚐUpdateContactProfileInput(ctx context.Context, v any) (model.UpdateContactProfileInput, error) {
 	res, err := ec.unmarshalInputUpdateContactProfileInput(ctx, v)
+	return res, graphql.ErrorOnPath(ctx, err)
+}
+
+func (ec *executionContext) unmarshalNUpdateInviteLinkInput2githubᚗcomᚋleoᚋaiᚑweekendᚋbackendᚋgraphᚋmodelᚐUpdateInviteLinkInput(ctx context.Context, v any) (model.UpdateInviteLinkInput, error) {
+	res, err := ec.unmarshalInputUpdateInviteLinkInput(ctx, v)
 	return res, graphql.ErrorOnPath(ctx, err)
 }
 
@@ -35709,6 +37194,201 @@ func (ec *executionContext) marshalOLineHeightDensity2ᚖgithubᚗcomᚋleoᚋai
 		return graphql.Null
 	}
 	return v
+}
+
+func (ec *executionContext) unmarshalOLinkedInEmploymentType2ᚕgithubᚗcomᚋleoᚋaiᚑweekendᚋbackendᚋgraphᚋmodelᚐLinkedInEmploymentTypeᚄ(ctx context.Context, v any) ([]model.LinkedInEmploymentType, error) {
+	if v == nil {
+		return nil, nil
+	}
+	var vSlice []any
+	vSlice = graphql.CoerceList(v)
+	var err error
+	res := make([]model.LinkedInEmploymentType, len(vSlice))
+	for i := range vSlice {
+		ctx := graphql.WithPathContext(ctx, graphql.NewPathWithIndex(i))
+		res[i], err = ec.unmarshalNLinkedInEmploymentType2githubᚗcomᚋleoᚋaiᚑweekendᚋbackendᚋgraphᚋmodelᚐLinkedInEmploymentType(ctx, vSlice[i])
+		if err != nil {
+			return nil, err
+		}
+	}
+	return res, nil
+}
+
+func (ec *executionContext) marshalOLinkedInEmploymentType2ᚕgithubᚗcomᚋleoᚋaiᚑweekendᚋbackendᚋgraphᚋmodelᚐLinkedInEmploymentTypeᚄ(ctx context.Context, sel ast.SelectionSet, v []model.LinkedInEmploymentType) graphql.Marshaler {
+	if v == nil {
+		return graphql.Null
+	}
+	ret := make(graphql.Array, len(v))
+	var wg sync.WaitGroup
+	isLen1 := len(v) == 1
+	if !isLen1 {
+		wg.Add(len(v))
+	}
+	for i := range v {
+		i := i
+		fc := &graphql.FieldContext{
+			Index:  &i,
+			Result: &v[i],
+		}
+		ctx := graphql.WithFieldContext(ctx, fc)
+		f := func(i int) {
+			defer func() {
+				if r := recover(); r != nil {
+					ec.Error(ctx, ec.Recover(ctx, r))
+					ret = nil
+				}
+			}()
+			if !isLen1 {
+				defer wg.Done()
+			}
+			ret[i] = ec.marshalNLinkedInEmploymentType2githubᚗcomᚋleoᚋaiᚑweekendᚋbackendᚋgraphᚋmodelᚐLinkedInEmploymentType(ctx, sel, v[i])
+		}
+		if isLen1 {
+			f(i)
+		} else {
+			go f(i)
+		}
+
+	}
+	wg.Wait()
+
+	for _, e := range ret {
+		if e == graphql.Null {
+			return graphql.Null
+		}
+	}
+
+	return ret
+}
+
+func (ec *executionContext) unmarshalOLinkedInExperienceLevel2ᚕgithubᚗcomᚋleoᚋaiᚑweekendᚋbackendᚋgraphᚋmodelᚐLinkedInExperienceLevelᚄ(ctx context.Context, v any) ([]model.LinkedInExperienceLevel, error) {
+	if v == nil {
+		return nil, nil
+	}
+	var vSlice []any
+	vSlice = graphql.CoerceList(v)
+	var err error
+	res := make([]model.LinkedInExperienceLevel, len(vSlice))
+	for i := range vSlice {
+		ctx := graphql.WithPathContext(ctx, graphql.NewPathWithIndex(i))
+		res[i], err = ec.unmarshalNLinkedInExperienceLevel2githubᚗcomᚋleoᚋaiᚑweekendᚋbackendᚋgraphᚋmodelᚐLinkedInExperienceLevel(ctx, vSlice[i])
+		if err != nil {
+			return nil, err
+		}
+	}
+	return res, nil
+}
+
+func (ec *executionContext) marshalOLinkedInExperienceLevel2ᚕgithubᚗcomᚋleoᚋaiᚑweekendᚋbackendᚋgraphᚋmodelᚐLinkedInExperienceLevelᚄ(ctx context.Context, sel ast.SelectionSet, v []model.LinkedInExperienceLevel) graphql.Marshaler {
+	if v == nil {
+		return graphql.Null
+	}
+	ret := make(graphql.Array, len(v))
+	var wg sync.WaitGroup
+	isLen1 := len(v) == 1
+	if !isLen1 {
+		wg.Add(len(v))
+	}
+	for i := range v {
+		i := i
+		fc := &graphql.FieldContext{
+			Index:  &i,
+			Result: &v[i],
+		}
+		ctx := graphql.WithFieldContext(ctx, fc)
+		f := func(i int) {
+			defer func() {
+				if r := recover(); r != nil {
+					ec.Error(ctx, ec.Recover(ctx, r))
+					ret = nil
+				}
+			}()
+			if !isLen1 {
+				defer wg.Done()
+			}
+			ret[i] = ec.marshalNLinkedInExperienceLevel2githubᚗcomᚋleoᚋaiᚑweekendᚋbackendᚋgraphᚋmodelᚐLinkedInExperienceLevel(ctx, sel, v[i])
+		}
+		if isLen1 {
+			f(i)
+		} else {
+			go f(i)
+		}
+
+	}
+	wg.Wait()
+
+	for _, e := range ret {
+		if e == graphql.Null {
+			return graphql.Null
+		}
+	}
+
+	return ret
+}
+
+func (ec *executionContext) unmarshalOLinkedInWorkplaceType2ᚕgithubᚗcomᚋleoᚋaiᚑweekendᚋbackendᚋgraphᚋmodelᚐLinkedInWorkplaceTypeᚄ(ctx context.Context, v any) ([]model.LinkedInWorkplaceType, error) {
+	if v == nil {
+		return nil, nil
+	}
+	var vSlice []any
+	vSlice = graphql.CoerceList(v)
+	var err error
+	res := make([]model.LinkedInWorkplaceType, len(vSlice))
+	for i := range vSlice {
+		ctx := graphql.WithPathContext(ctx, graphql.NewPathWithIndex(i))
+		res[i], err = ec.unmarshalNLinkedInWorkplaceType2githubᚗcomᚋleoᚋaiᚑweekendᚋbackendᚋgraphᚋmodelᚐLinkedInWorkplaceType(ctx, vSlice[i])
+		if err != nil {
+			return nil, err
+		}
+	}
+	return res, nil
+}
+
+func (ec *executionContext) marshalOLinkedInWorkplaceType2ᚕgithubᚗcomᚋleoᚋaiᚑweekendᚋbackendᚋgraphᚋmodelᚐLinkedInWorkplaceTypeᚄ(ctx context.Context, sel ast.SelectionSet, v []model.LinkedInWorkplaceType) graphql.Marshaler {
+	if v == nil {
+		return graphql.Null
+	}
+	ret := make(graphql.Array, len(v))
+	var wg sync.WaitGroup
+	isLen1 := len(v) == 1
+	if !isLen1 {
+		wg.Add(len(v))
+	}
+	for i := range v {
+		i := i
+		fc := &graphql.FieldContext{
+			Index:  &i,
+			Result: &v[i],
+		}
+		ctx := graphql.WithFieldContext(ctx, fc)
+		f := func(i int) {
+			defer func() {
+				if r := recover(); r != nil {
+					ec.Error(ctx, ec.Recover(ctx, r))
+					ret = nil
+				}
+			}()
+			if !isLen1 {
+				defer wg.Done()
+			}
+			ret[i] = ec.marshalNLinkedInWorkplaceType2githubᚗcomᚋleoᚋaiᚑweekendᚋbackendᚋgraphᚋmodelᚐLinkedInWorkplaceType(ctx, sel, v[i])
+		}
+		if isLen1 {
+			f(i)
+		} else {
+			go f(i)
+		}
+
+	}
+	wg.Wait()
+
+	for _, e := range ret {
+		if e == graphql.Null {
+			return graphql.Null
+		}
+	}
+
+	return ret
 }
 
 func (ec *executionContext) unmarshalOLocationDisplay2ᚖgithubᚗcomᚋleoᚋaiᚑweekendᚋbackendᚋgraphᚋmodelᚐLocationDisplay(ctx context.Context, v any) (*model.LocationDisplay, error) {

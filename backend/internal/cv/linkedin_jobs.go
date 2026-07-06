@@ -8,19 +8,43 @@ import (
 )
 
 // AdminLinkedInJobSearch runs LinkedIn Voyager job search (admin only).
-func (s *Service) AdminLinkedInJobSearch(ctx context.Context, keywords string, geoID, timeFilter *string) ([]*model.LinkedInJobCard, error) {
+// sessionCookie is ephemeral: used for this request only, never stored or logged.
+func (s *Service) AdminLinkedInJobSearch(
+	ctx context.Context,
+	keywords *string,
+	geoID, timeFilter, sessionCookie *string,
+	workplaceTypes []model.LinkedInWorkplaceType,
+	experienceLevels []model.LinkedInExperienceLevel,
+	employmentTypes []model.LinkedInEmploymentType,
+) ([]*model.LinkedInJobCard, error) {
 	if err := s.requireAdmin(); err != nil {
 		return nil, err
 	}
-	geo := ""
+
+	params := linkedin.SearchParams{}
+	if keywords != nil {
+		params.Keywords = *keywords
+	}
 	if geoID != nil {
-		geo = *geoID
+		params.GeoID = *geoID
 	}
-	filter := "r7200"
 	if timeFilter != nil && *timeFilter != "" {
-		filter = *timeFilter
+		params.TimeFilter = *timeFilter
 	}
-	results, err := linkedin.SearchJobs(ctx, keywords, geo, filter)
+	if sessionCookie != nil {
+		params.SessionCookie = *sessionCookie
+	}
+	for _, value := range workplaceTypes {
+		params.WorkplaceTypes = append(params.WorkplaceTypes, string(value))
+	}
+	for _, value := range experienceLevels {
+		params.ExperienceLevels = append(params.ExperienceLevels, string(value))
+	}
+	for _, value := range employmentTypes {
+		params.EmploymentTypes = append(params.EmploymentTypes, string(value))
+	}
+
+	results, err := linkedin.SearchJobs(ctx, params)
 	if err != nil {
 		return nil, err
 	}
@@ -38,8 +62,17 @@ func (s *Service) AdminLinkedInJobSearch(ctx context.Context, keywords string, g
 		if j.Location != "" {
 			card.Location = &j.Location
 		}
+		if j.WorkplaceType != "" {
+			card.WorkplaceType = &j.WorkplaceType
+		}
+		if j.EmploymentType != "" {
+			card.EmploymentType = &j.EmploymentType
+		}
 		if j.ListedAt != "" {
 			card.ListedAt = &j.ListedAt
+		}
+		if j.Description != "" {
+			card.Description = &j.Description
 		}
 		out = append(out, card)
 	}

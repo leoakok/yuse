@@ -33,3 +33,17 @@ func (p *Postgres) SetUserActive(actorID, userID string, active bool) (*model.Ad
 func (p *Postgres) SetUserRole(actorID, userID string, role model.UserRole) (*model.AdminUser, error) {
 	return SetUserRole(context.Background(), p.pool, actorID, userID, role)
 }
+
+func (p *Postgres) ListInviteLinks() ([]*model.InviteLink, error) {
+	return ListInviteLinks(context.Background(), p.pool)
+}
+
+func (p *Postgres) CreateInviteLink(input model.CreateInviteLinkInput) (*model.InviteLink, error) {
+	actor := p.activeUserID()
+	return CreateInviteLink(context.Background(), p.pool, actor, input)
+}
+
+func (p *Postgres) UpdateInviteLink(input model.UpdateInviteLinkInput) (*model.InviteLink, error) {
+	actor := p.activeUserID()
+	return UpdateInviteLink(context.Background(), p.pool, actor, input)
+}

@@ -668,6 +668,78 @@ func (m *Memory) UpdateResumeSectionVisibility(
 	return m.resumeWithContentLocked(resumeID)
 }
 
+func (m *Memory) CreateResumeSection(resumeID, title string) (*model.ResumeWithContent, error) {
+	trimmed := strings.TrimSpace(title)
+	if trimmed == "" {
+		return nil, fmt.Errorf("title is required")
+	}
+
+	m.mu.Lock()
+	defer m.mu.Unlock()
+
+	if _, ok := m.resumes[resumeID]; !ok {
+		return nil, ErrNotFound
+	}
+
+	customKey := sectionCustomKey(trimmed)
+	var section *model.Section
+	for _, s := range m.sections {
+		if s.WorkspaceID != DemoWorkspaceID || s.Type != model.SectionTypeCustom {
+			continue
+		}
+		if s.CustomKey != nil && *s.CustomKey == customKey {
+			section = s
+			break
+		}
+	}
+	if section == nil {
+		now := time.Now().UTC().Format(time.RFC3339)
+		key := customKey
+		section = &model.Section{
+			ID:          uuid.NewString(),
+			WorkspaceID: DemoWorkspaceID,
+			Type:        model.SectionTypeCustom,
+			Title:       trimmed,
+			CustomKey:   &key,
+			CreatedBy:   DemoUserID,
+			CreatedAt:   now,
+			UpdatedAt:   now,
+		}
+		m.sections[section.ID] = cloneSection(section)
+	}
+
+	linked := false
+	for i := range m.resumeSections {
+		if m.resumeSections[i].resumeID == resumeID && m.resumeSections[i].sectionID == section.ID {
+			m.resumeSections[i].showInPreview = true
+			linked = true
+			break
+		}
+	}
+	if !linked {
+		maxOrder := -1
+		for _, link := range m.resumeSections {
+			if link.resumeID == resumeID && link.sortOrder > maxOrder {
+				maxOrder = link.sortOrder
+			}
+		}
+		m.resumeSections = append(m.resumeSections, resumeSectionLink{
+			resumeID:      resumeID,
+			sectionID:     section.ID,
+			sortOrder:     maxOrder + 1,
+			showInPreview: true,
+		})
+	}
+
+	if resume := m.resumes[resumeID]; resume != nil {
+		now := time.Now().UTC().Format(time.RFC3339)
+		resume.UpdatedAt = now
+		m.resumes[resumeID] = cloneResume(resume)
+	}
+
+	return m.resumeWithContentLocked(resumeID)
+}
+
 func (m *Memory) AddResumeSectionItem(
 	resumeID, sectionID string,
 	headline, body string,
@@ -1284,6 +1356,18 @@ func (m *Memory) SetUserActive(_, _ string, _ bool) (*model.AdminUser, error) {
 }
 
 func (m *Memory) SetUserRole(_, _ string, _ model.UserRole) (*model.AdminUser, error) {
+	return nil, fmt.Errorf("not supported in memory store")
+}
+
+func (m *Memory) ListInviteLinks() ([]*model.InviteLink, error) {
+	return nil, nil
+}
+
+func (m *Memory) CreateInviteLink(_ model.CreateInviteLinkInput) (*model.InviteLink, error) {
+	return nil, fmt.Errorf("not supported in memory store")
+}
+
+func (m *Memory) UpdateInviteLink(_ model.UpdateInviteLinkInput) (*model.InviteLink, error) {
 	return nil, fmt.Errorf("not supported in memory store")
 }
 

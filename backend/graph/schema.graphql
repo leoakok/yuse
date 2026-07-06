@@ -356,6 +356,21 @@ type WaitlistEntry {
   reviewedBy: ID
 }
 
+"""Beta invite link for /r/{code} onboarding."""
+type InviteLink {
+  id: ID!
+  code: String!
+  label: String
+  emailRestrict: String
+  maxUses: Int
+  useCount: Int!
+  isActive: Boolean!
+  createdAt: DateTime!
+  expiresAt: DateTime
+  """Public path segment, e.g. /r/abc123."""
+  urlPath: String!
+}
+
 """Result of an admin test email send."""
 type SendTestEmailResult {
   success: Boolean!
@@ -380,8 +395,35 @@ type LinkedInJobCard {
   title: String!
   company: String
   location: String
+  workplaceType: String
+  employmentType: String
   listedAt: String
+  description: String
   url: String!
+}
+
+enum LinkedInWorkplaceType {
+  REMOTE
+  HYBRID
+  ON_SITE
+}
+
+enum LinkedInExperienceLevel {
+  INTERNSHIP
+  ENTRY
+  ASSOCIATE
+  MID_SENIOR
+  DIRECTOR
+  EXECUTIVE
+}
+
+enum LinkedInEmploymentType {
+  FULL_TIME
+  PART_TIME
+  CONTRACT
+  TEMPORARY
+  INTERNSHIP
+  VOLUNTEER
 }
 
 """A curated, tag-keyed guidance entry the agent injects into context based on the detected category."""
@@ -471,6 +513,8 @@ type Section {
   workspaceId: ID!
   type: SectionType!
   title: String!
+  """Stable key for CUSTOM sections; null for built-in section types."""
+  customKey: String
   description: String
   createdBy: ID!
   createdAt: DateTime!
@@ -819,8 +863,18 @@ type Query {
   adminWaitlist(status: WaitlistStatus): [WaitlistEntry!]!
   """Admin only. Lists recent admin audit log entries."""
   adminAuditLog(limit: Int = 50, offset: Int = 0): [AdminAuditLogEntry!]!
-  """Admin only. Search LinkedIn jobs via Voyager API (requires LINKEDIN_SESSION_COOKIE on backend)."""
-  adminLinkedInJobSearch(keywords: String!, geoId: String, timeFilter: String = "r7200"): [LinkedInJobCard!]!
+  """Admin only. Ephemeral LinkedIn job search test. sessionCookie is used for this request only and is never stored."""
+  adminLinkedInJobSearch(
+    keywords: String
+    geoId: String
+    timeFilter: String = "r86400"
+    workplaceTypes: [LinkedInWorkplaceType!]
+    experienceLevels: [LinkedInExperienceLevel!]
+    employmentTypes: [LinkedInEmploymentType!]
+    sessionCookie: String
+  ): [LinkedInJobCard!]!
+  """Admin only. Lists beta invite links."""
+  adminInviteLinks: [InviteLink!]!
 }
 
 input CreateKnowledgeEntryInput {
@@ -907,6 +961,12 @@ input UpdateResumeSectionDisplayTitleInput {
   sectionId: ID!
   """Empty string clears the per-resume override."""
   displayTitle: String
+}
+
+input CreateResumeSectionInput {
+  resumeId: ID!
+  """Display name for the new section, e.g. Volunteer Experience."""
+  title: String!
 }
 
 input ReorderResumeSectionsInput {
@@ -1098,6 +1158,7 @@ type Mutation {
   updateResume(id: ID!, title: String, contactProfileId: ID): Resume!
   updateResumeSettings(input: UpdateResumeSettingsInput!): ResumeSettings!
   updateResumeSectionDisplayTitle(input: UpdateResumeSectionDisplayTitleInput!): ResumeWithContent!
+  createResumeSection(input: CreateResumeSectionInput!): ResumeWithContent!
   reorderResumeSections(input: ReorderResumeSectionsInput!): ResumeWithContent!
   updateResumeSectionVisibility(input: UpdateResumeSectionVisibilityInput!): ResumeWithContent!
   updateResumeSectionItemVisibility(input: UpdateResumeSectionItemVisibilityInput!): ResumeWithContent!
@@ -1159,4 +1220,26 @@ type Mutation {
   setUserRole(userId: ID!, role: UserRole!): AdminUser!
   """Admin only. Send a preview of a transactional email to a recipient inbox."""
   sendTestEmail(type: TestEmailType!, recipientEmail: String!): SendTestEmailResult!
+  """Admin only. Create a beta invite link."""
+  createInviteLink(input: CreateInviteLinkInput!): InviteLink!
+  """Admin only. Update a beta invite link."""
+  updateInviteLink(input: UpdateInviteLinkInput!): InviteLink!
+}
+
+input CreateInviteLinkInput {
+  label: String
+  """When set, only this email may redeem the invite."""
+  emailRestrict: String
+  """When set, caps total redemptions across all emails."""
+  maxUses: Int
+  expiresAt: DateTime
+}
+
+input UpdateInviteLinkInput {
+  id: ID!
+  label: String
+  emailRestrict: String
+  maxUses: Int
+  isActive: Boolean
+  expiresAt: DateTime
 }

@@ -86,7 +86,7 @@ export function KnowledgeEntryDialog({ state, onClose, onSave }: KnowledgeEntryD
 
   return (
     <ResponsiveDialog open onOpenChange={(open) => !open && onClose()}>
-      <ResponsiveDialogContent className="max-h-[90vh] overflow-y-auto sm:max-w-lg">
+      <ResponsiveDialogContent dialogClassName="max-h-[90vh] overflow-y-auto sm:max-w-lg">
         <ResponsiveDialogHeader>
           <ResponsiveDialogTitle>
             {state.mode === "create" ? "Add knowledge entry" : "Edit knowledge entry"}

@@ -356,6 +356,28 @@ func (r *Registry) ExecuteWithProgress(toolName string, argsJSON []byte, progres
 		exec.Result = resumeContentSummary(content)
 		exec.AffectedResumeIDs = []string{resumeID}
 
+	case "create_resume_section":
+		resumeID, err := requireString(args, "resumeId")
+		if err != nil {
+			exec.Error = err.Error()
+			return exec
+		}
+		title, err := requireString(args, "title")
+		if err != nil {
+			exec.Error = err.Error()
+			return exec
+		}
+		content, err := r.exec.CreateResumeSection(model.CreateResumeSectionInput{
+			ResumeID: resumeID,
+			Title:    title,
+		})
+		if err != nil {
+			exec.Error = err.Error()
+			return exec
+		}
+		exec.Result = resumeContentSummary(content)
+		exec.AffectedResumeIDs = []string{resumeID}
+
 	case "delete_section_item":
 		resumeID, err := requireString(args, "resumeId")
 		if err != nil {
@@ -1039,6 +1061,9 @@ func resumeContentSummary(content *model.ResumeWithContent) map[string]any {
 		}
 		if swi.DisplayTitle != nil && strings.TrimSpace(*swi.DisplayTitle) != "" {
 			entry["displayTitle"] = *swi.DisplayTitle
+		}
+		if swi.Section.CustomKey != nil && strings.TrimSpace(*swi.Section.CustomKey) != "" {
+			entry["customKey"] = *swi.Section.CustomKey
 		}
 		sections = append(sections, entry)
 	}

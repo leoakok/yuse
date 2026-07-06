@@ -16,13 +16,13 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import {
-  Sheet,
-  SheetContent,
-  SheetDescription,
-  SheetFooter,
-  SheetHeader,
-  SheetTitle,
-} from "@/components/ui/sheet";
+  ResponsiveDialog,
+  ResponsiveDialogContent,
+  ResponsiveDialogDescription,
+  ResponsiveDialogFooter,
+  ResponsiveDialogHeader,
+  ResponsiveDialogTitle,
+} from "@/components/ui/responsive-dialog";
 import { Textarea } from "@/components/ui/textarea";
 import { resumePath } from "@/lib/cv/routes";
 import type { Resume } from "@/lib/types/cv";
@@ -138,14 +138,23 @@ export function JobDetailPanel({
   }
 
   return (
-    <Sheet open={open} onOpenChange={onOpenChange}>
-      <SheetContent className="flex w-full flex-col gap-0 p-0 sm:max-w-xl">
+    <ResponsiveDialog open={open} onOpenChange={onOpenChange}>
+      <ResponsiveDialogContent
+        dialogClassName="flex max-h-[90vh] w-full flex-col gap-0 p-0 sm:max-w-xl"
+        sheetClassName="flex flex-col gap-0 p-0"
+        sheetBodyClassName="p-0"
+        fill
+      >
         {job ? (
           <>
-            <SheetHeader className="border-b px-4 py-4 pr-12">
-              <SheetTitle className="text-left leading-snug">{displayTitle(job)}</SheetTitle>
-              <SheetDescription className="text-left">{displayCompany(job)}</SheetDescription>
-            </SheetHeader>
+            <ResponsiveDialogHeader className="border-b px-4 py-4 pr-12">
+              <ResponsiveDialogTitle className="text-left leading-snug">
+                {displayTitle(job)}
+              </ResponsiveDialogTitle>
+              <ResponsiveDialogDescription className="text-left">
+                {displayCompany(job)}
+              </ResponsiveDialogDescription>
+            </ResponsiveDialogHeader>
 
             <ScrollArea className="flex-1">
               <div className="space-y-5 px-4 py-4">
@@ -308,7 +317,7 @@ export function JobDetailPanel({
               </div>
             </ScrollArea>
 
-            <SheetFooter className="flex-row justify-between border-t px-4 py-3 sm:justify-between">
+            <ResponsiveDialogFooter className="flex-row justify-between border-t px-4 py-3 sm:justify-between">
               {onDelete ? (
                 <Button
                   type="button"
@@ -331,10 +340,10 @@ export function JobDetailPanel({
                   "Save changes"
                 )}
               </Button>
-            </SheetFooter>
+            </ResponsiveDialogFooter>
           </>
         ) : null}
-      </SheetContent>
-    </Sheet>
+      </ResponsiveDialogContent>
+    </ResponsiveDialog>
   );
 }

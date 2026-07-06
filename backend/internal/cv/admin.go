@@ -80,3 +80,27 @@ func (s *Service) SetUserRole(userID string, role model.UserRole) (*model.AdminU
 	}
 	return s.store.SetUserRole(actor.ID, userID, role)
 }
+
+// ListInviteLinks returns beta invite links (admin only).
+func (s *Service) ListInviteLinks() ([]*model.InviteLink, error) {
+	if err := s.requireAdmin(); err != nil {
+		return nil, err
+	}
+	return s.store.ListInviteLinks()
+}
+
+// CreateInviteLink creates a beta invite link (admin only).
+func (s *Service) CreateInviteLink(input model.CreateInviteLinkInput) (*model.InviteLink, error) {
+	if err := s.requireAdmin(); err != nil {
+		return nil, err
+	}
+	return s.store.CreateInviteLink(input)
+}
+
+// UpdateInviteLink updates a beta invite link (admin only).
+func (s *Service) UpdateInviteLink(input model.UpdateInviteLinkInput) (*model.InviteLink, error) {
+	if err := s.requireAdmin(); err != nil {
+		return nil, err
+	}
+	return s.store.UpdateInviteLink(input)
+}

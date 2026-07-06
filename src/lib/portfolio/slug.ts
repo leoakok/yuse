@@ -91,6 +91,7 @@ export function slugFromTitle(title: string): string {
 export function isPublicPortfolioPath(pathname: string): boolean {
   const parts = pathname.split("/").filter(Boolean);
   if (parts.length === 0 || parts.length > 2) return false;
+  if (parts[0] === "r") return false;
   if (parts.some((part) => !validateSlug(part).ok)) return false;
   return true;
 }

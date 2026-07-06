@@ -88,7 +88,7 @@ export function PortfolioProjectEditDialog({
 
   return (
     <ResponsiveDialog open onOpenChange={(open) => !open && onClose()}>
-      <ResponsiveDialogContent className="max-h-[90vh] overflow-y-auto sm:max-w-lg">
+      <ResponsiveDialogContent dialogClassName="max-h-[90vh] overflow-y-auto sm:max-w-lg">
         <ResponsiveDialogHeader>
           <ResponsiveDialogTitle>{state.mode === "create" ? "Add project" : "Edit project"}</ResponsiveDialogTitle>
         </ResponsiveDialogHeader>

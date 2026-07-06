@@ -98,7 +98,7 @@ export function PortfolioShareDialog({
 
   return (
     <ResponsiveDialog open={open} onOpenChange={onOpenChange}>
-      <ResponsiveDialogContent className="sm:max-w-lg">
+      <ResponsiveDialogContent dialogClassName="sm:max-w-lg">
         <ResponsiveDialogHeader>
           <ResponsiveDialogTitle>Share portfolio</ResponsiveDialogTitle>
         </ResponsiveDialogHeader>

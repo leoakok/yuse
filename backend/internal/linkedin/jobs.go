@@ -2,65 +2,70 @@ package linkedin
 
 import (
 	"context"
-	"encoding/json"
 	"fmt"
 	"io"
 	"net/http"
 	"net/url"
 	"os"
+	"regexp"
 	"strings"
-	"time"
 )
 
 const (
 	voyagerJobCardsPath = "/voyager/api/voyagerJobsDashJobCards"
-	defaultTimeFilter   = "r7200"
+	defaultTimeFilter   = "r86400"
 	defaultCount        = 25
+)
+
+var (
+	jobPostingURNPattern = regexp.MustCompile(`(?i)jobPosting:(\d{6,})`)
+	jobPostingURLPattern = regexp.MustCompile(`(?i)/jobs/view/(?:[^/?#]+-)?(\d{6,})`)
 )
 
 // JobCard is a normalized LinkedIn job search result.
 type JobCard struct {
-	JobID     string `json:"jobId"`
-	Title     string `json:"title"`
-	Company   string `json:"company,omitempty"`
-	Location  string `json:"location,omitempty"`
-	ListedAt  string `json:"listedAt,omitempty"`
-	URL       string `json:"url"`
+	JobID          string `json:"jobId"`
+	Title          string `json:"title"`
+	Company        string `json:"company,omitempty"`
+	Location       string `json:"location,omitempty"`
+	WorkplaceType  string `json:"workplaceType,omitempty"`
+	EmploymentType string `json:"employmentType,omitempty"`
+	ListedAt       string `json:"listedAt,omitempty"`
+	Description    string `json:"description,omitempty"`
+	URL            string `json:"url"`
 }
 
 // SearchJobs queries LinkedIn Voyager job search (admin tooling).
-// Requires LINKEDIN_SESSION_COOKIE (li_at cookie value) in the environment.
-func SearchJobs(ctx context.Context, keywords, geoID, timeFilter string) ([]JobCard, error) {
-	cookie := strings.TrimSpace(os.Getenv("LINKEDIN_SESSION_COOKIE"))
-	if cookie == "" {
-		return nil, fmt.Errorf("LINKEDIN_SESSION_COOKIE is not configured")
-	}
-	keywords = strings.TrimSpace(keywords)
-	if keywords == "" {
-		return nil, fmt.Errorf("keywords are required")
-	}
-	if strings.TrimSpace(timeFilter) == "" {
-		timeFilter = defaultTimeFilter
+func SearchJobs(ctx context.Context, params SearchParams) ([]JobCard, error) {
+	session, err := parseSessionInput(params.SessionCookie)
+	if err != nil {
+		env := strings.TrimSpace(os.Getenv("LINKEDIN_SESSION_COOKIE"))
+		if env == "" {
+			return nil, err
+		}
+		session, err = parseSessionInput(env)
+		if err != nil {
+			return nil, err
+		}
 	}
 
-	query := buildJobSearchQuery(keywords, geoID, timeFilter)
-	params := url.Values{}
-	params.Set("decorationId", "com.linkedin.voyager.dash.deco.jobs.search.JobSearchCardsCollection-174")
-	params.Set("count", fmt.Sprintf("%d", defaultCount))
-	params.Set("q", "jobSearch")
-	params.Set("query", query)
+	params.Keywords = strings.TrimSpace(params.Keywords)
+	params.GeoID = strings.TrimSpace(params.GeoID)
+	if !hasSearchCriteria(params) {
+		return nil, fmt.Errorf("enter keywords, a geoId, or at least one filter")
+	}
+	if strings.TrimSpace(params.TimeFilter) == "" {
+		params.TimeFilter = defaultTimeFilter
+	}
 
-	reqURL := "https://www.linkedin.com" + voyagerJobCardsPath + "?" + params.Encode()
+	reqURL := buildJobSearchURL(params)
 	req, err := http.NewRequestWithContext(ctx, http.MethodGet, reqURL, nil)
 	if err != nil {
 		return nil, err
 	}
-	req.Header.Set("Accept", "application/vnd.linkedin.normalized+json+2.1")
-	req.Header.Set("Cookie", "li_at="+cookie)
-	req.Header.Set("User-Agent", "Mozilla/5.0 (compatible; YuseAdmin/1.0)")
+	applyVoyagerHeaders(req, session)
 
-	client := &http.Client{Timeout: 20 * time.Second}
-	resp, err := client.Do(req)
+	resp, err := voyagerHTTPClient().Do(req)
 	if err != nil {
 		return nil, fmt.Errorf("linkedin request: %w", err)
 	}
@@ -71,102 +76,44 @@ func SearchJobs(ctx context.Context, keywords, geoID, timeFilter string) ([]JobC
 		return nil, fmt.Errorf("read linkedin response: %w", err)
 	}
 	if resp.StatusCode < 200 || resp.StatusCode >= 300 {
-		return nil, fmt.Errorf("linkedin HTTP %d: %s", resp.StatusCode, truncate(string(body), 200))
+		if resp.StatusCode >= 300 && resp.StatusCode < 400 {
+			return nil, fmt.Errorf("linkedin redirected to login (HTTP %d); refresh cookies from DevTools", resp.StatusCode)
+		}
+		return nil, linkedInHTTPError(resp.StatusCode, body)
 	}
 
-	return parseJobCards(body)
+	cards, err := parseJobCards(body)
+	if err != nil {
+		return nil, err
+	}
+	return enrichJobDescriptions(ctx, session, cards), nil
 }
 
-func buildJobSearchQuery(keywords, geoID, timeFilter string) string {
-	escapedKeywords := url.QueryEscape(keywords)
-	parts := []string{
-		"origin:JOB_SEARCH_PAGE_SEARCH_BUTTON",
-		"keywords:" + escapedKeywords,
+func buildJobSearchQuery(params SearchParams) string {
+	parts := []string{"origin:JOB_SEARCH_PAGE_SEARCH_BUTTON"}
+	if params.Keywords != "" {
+		escapedKeywords := strings.ReplaceAll(url.QueryEscape(params.Keywords), "+", "%20")
+		parts = append(parts, "keywords:"+escapedKeywords)
 	}
-	if geoID = strings.TrimSpace(geoID); geoID != "" {
-		parts = append(parts, "locationUnion:(geoId:"+geoID+")")
+	if params.GeoID != "" {
+		parts = append(parts, "locationUnion:(geoId:"+params.GeoID+")")
 	}
-	parts = append(parts, "selectedFilters:(sortBy:List(DD),timePostedRange:List("+timeFilter+"))")
+
+	filterParts := []string{
+		"sortBy:List(DD)",
+		"timePostedRange:List(" + params.TimeFilter + ")",
+	}
+	if list := restliList(linkedInWorkplaceCodes(params.WorkplaceTypes)); list != "" {
+		filterParts = append(filterParts, "workplaceType:"+list)
+	}
+	if list := restliList(linkedInExperienceCodes(params.ExperienceLevels)); list != "" {
+		filterParts = append(filterParts, "experience:"+list)
+	}
+	if list := restliList(linkedInEmploymentCodes(params.EmploymentTypes)); list != "" {
+		filterParts = append(filterParts, "jobType:"+list)
+	}
+	parts = append(parts, "selectedFilters:("+strings.Join(filterParts, ",")+")")
 	return "(" + strings.Join(parts, ",") + ")"
-}
-
-func parseJobCards(body []byte) ([]JobCard, error) {
-	var payload map[string]any
-	if err := json.Unmarshal(body, &payload); err != nil {
-		return nil, fmt.Errorf("parse linkedin json: %w", err)
-	}
-
-	elements, _ := payload["elements"].([]any)
-	if len(elements) == 0 {
-		included, _ := payload["included"].([]any)
-		return parseIncludedJobs(included), nil
-	}
-
-	out := make([]JobCard, 0, len(elements))
-	for _, el := range elements {
-		m, ok := el.(map[string]any)
-		if !ok {
-			continue
-		}
-		if card := jobCardFromElement(m); card.JobID != "" {
-			out = append(out, card)
-		}
-	}
-	if len(out) == 0 {
-		included, _ := payload["included"].([]any)
-		out = parseIncludedJobs(included)
-	}
-	return out, nil
-}
-
-func parseIncludedJobs(included []any) []JobCard {
-	out := make([]JobCard, 0)
-	for _, item := range included {
-		m, ok := item.(map[string]any)
-		if !ok {
-			continue
-		}
-		typ, _ := m["$type"].(string)
-		if !strings.Contains(typ, "JobPosting") && !strings.Contains(typ, "JobCard") {
-			continue
-		}
-		if card := jobCardFromElement(m); card.JobID != "" {
-			out = append(out, card)
-		}
-	}
-	return out
-}
-
-func jobCardFromElement(m map[string]any) JobCard {
-	jobID := firstString(m, "jobPostingUrn", "entityUrn", "trackingUrn")
-	jobID = extractNumericID(jobID)
-	title := firstString(m, "title", "jobTitle")
-	company := ""
-	if companyRef, ok := m["companyName"].(map[string]any); ok {
-		company = firstString(companyRef, "text", "name")
-	} else {
-		company = firstString(m, "companyName", "company")
-	}
-	location := ""
-	if locRef, ok := m["formattedLocation"].(map[string]any); ok {
-		location = firstString(locRef, "text")
-	} else {
-		location = firstString(m, "formattedLocation", "location")
-	}
-	listedAt := firstString(m, "listedAt", "originalListedAt")
-	url := firstString(m, "jobPostingUrl", "url")
-	if url == "" && jobID != "" {
-		slug := strings.ToLower(strings.ReplaceAll(title, " ", "-"))
-		url = fmt.Sprintf("https://www.linkedin.com/jobs/view/%s-%s", slug, jobID)
-	}
-	return JobCard{
-		JobID:    jobID,
-		Title:    title,
-		Company:  company,
-		Location: location,
-		ListedAt: listedAt,
-		URL:      url,
-	}
 }
 
 func firstString(m map[string]any, keys ...string) string {
@@ -178,17 +125,61 @@ func firstString(m map[string]any, keys ...string) string {
 	return ""
 }
 
-func extractNumericID(urn string) string {
-	urn = strings.TrimSpace(urn)
-	if urn == "" {
-		return ""
+func extractJobPostingID(urn, jobURL string) string {
+	if urn != "" {
+		if match := jobPostingURNPattern.FindStringSubmatch(urn); len(match) > 1 {
+			return match[1]
+		}
 	}
-	parts := strings.Split(urn, ":")
-	last := parts[len(parts)-1]
-	if idx := strings.LastIndex(last, ","); idx >= 0 {
-		last = last[idx+1:]
+	if jobURL != "" {
+		if match := jobPostingURLPattern.FindStringSubmatch(jobURL); len(match) > 1 {
+			return match[1]
+		}
 	}
-	return strings.TrimSpace(last)
+	return ""
+}
+
+func isValidJobID(id string) bool {
+	if len(id) < 6 {
+		return false
+	}
+	for _, r := range id {
+		if r < '0' || r > '9' {
+			return false
+		}
+	}
+	return true
+}
+
+func dedupeJobCards(cards []JobCard) []JobCard {
+	seen := make(map[string]struct{}, len(cards))
+	out := make([]JobCard, 0, len(cards))
+	for _, card := range cards {
+		if !isValidJobID(card.JobID) {
+			continue
+		}
+		if _, ok := seen[card.JobID]; ok {
+			continue
+		}
+		seen[card.JobID] = struct{}{}
+		out = append(out, card)
+	}
+	return out
+}
+
+func linkedInHTTPError(statusCode int, body []byte) error {
+	snippet := truncate(string(body), 200)
+	switch statusCode {
+	case 401:
+		return fmt.Errorf("linkedin session expired (HTTP 401); refresh cookies from DevTools")
+	case 403:
+		if strings.Contains(snippet, "CSRF") {
+			return fmt.Errorf("linkedin CSRF check failed; paste the full Cookie header from a linkedin.com voyager request in the Network tab")
+		}
+		return fmt.Errorf("linkedin access denied (HTTP 403); paste the full Cookie header from the Network tab, not just li_at")
+	default:
+		return fmt.Errorf("linkedin HTTP %d: %s", statusCode, snippet)
+	}
 }
 
 func truncate(s string, max int) string {

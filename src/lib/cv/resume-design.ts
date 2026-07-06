@@ -81,7 +81,6 @@ export interface CvDesignTokens {
   descriptionStyle: DescriptionStyle;
   bulletMarker: string;
   itemTitleEmphasis: ItemTitleEmphasis;
-  highlightCurrentRole: boolean;
   locationDisplay: LocationDisplay;
   skillsProficiency: SkillsProficiency;
   languagesLayout: LanguagesLayout;
@@ -188,7 +187,6 @@ export function resolveCvDesignTokens(settings: ResumeSettings): CvDesignTokens 
     descriptionStyle: ats ? "BULLETS" : normalizeDescriptionStyle(settings.descriptionStyle),
     bulletMarker: BULLET_MARKERS[normalizeBulletChar(settings.bulletChar)],
     itemTitleEmphasis: normalizeItemTitleEmphasis(settings.itemTitleEmphasis),
-    highlightCurrentRole: !ats && settings.highlightCurrentRole,
     locationDisplay: ats ? "INLINE_WITH_COMPANY" : normalizeLocationDisplay(settings.locationDisplay),
     skillsProficiency: ats ? "NONE" : normalizeSkillsProficiency(settings.skillsProficiency),
     languagesLayout: ats ? "LIST" : normalizeLanguagesLayout(settings.languagesLayout),
@@ -198,11 +196,6 @@ export function resolveCvDesignTokens(settings: ResumeSettings): CvDesignTokens 
     footerStyle: normalizeFooterStyle(settings.footerStyle),
     atsMode: ats,
   };
-}
-
-export function isCurrentRole(metadata: Record<string, string | undefined>): boolean {
-  const end = metadata.endDate?.trim().toLowerCase();
-  return !end || end === "present";
 }
 
 export function sectionDisplayTitle(

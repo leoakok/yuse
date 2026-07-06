@@ -340,6 +340,17 @@ Returns fieldHints when key profile fields were omitted.`,
 			}),
 		},
 		{
+			Name:        "create_resume_section",
+			Description: `Add a custom resume section with a user-chosen title (type CUSTOM). Use when the CV has a section that does not map to a built-in type (EXPERIENCE, EDUCATION, SKILLS, etc.). Creates the section, links it to the resume, and shows it in preview. Then call add_section_item with the returned section id.
+
+WHEN TO USE: Importing CVs with headings like Patents, Speaking Engagements, or Volunteer Experience when VOLUNTEER is not a fit.
+WHEN NOT: Built-in types. Prefer set_section_visibility + add_section_item on CERTIFICATIONS, VOLUNTEER, AWARDS, etc. when the heading matches.`,
+			Parameters: object(map[string]any{
+				"resumeId": str("Resume id."),
+				"title":    str("Section display name.", "Volunteer Experience"),
+			}, "resumeId", "title"),
+		},
+		{
 			Name:        "add_section_item",
 			Description: addSectionItemToolDescription(),
 			Parameters: mergeProps(object(map[string]any{

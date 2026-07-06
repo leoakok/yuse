@@ -195,7 +195,7 @@ export function ResumeImportDialog({ open, onOpenChange }: ResumeImportDialogPro
 
   return (
     <ResponsiveDialog open={open} onOpenChange={handleOpenChange}>
-      <ResponsiveDialogContent className="sm:max-w-md" showCloseButton={!isImporting}>
+      <ResponsiveDialogContent dialogClassName="sm:max-w-md" showCloseButton={!isImporting}>
         <ResponsiveDialogHeader>
           <ResponsiveDialogTitle>Import a resume</ResponsiveDialogTitle>
           <ResponsiveDialogDescription>

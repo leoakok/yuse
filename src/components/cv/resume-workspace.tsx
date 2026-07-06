@@ -53,6 +53,7 @@ import {
   type SectionItemDialogState,
 } from "@/components/cv/section-item-edit-dialog";
 import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
 import {
   ResponsiveDialog,
   ResponsiveDialogContent,
@@ -67,6 +68,7 @@ import {
   deleteSectionItem,
   duplicateResume,
   getSectionItemUsage,
+  createResumeSection,
   updateResumeSectionItemVisibility,
 } from "@/lib/api/cv-api";
 import { resumePath } from "@/lib/cv/routes";
@@ -322,6 +324,29 @@ export function ResumeWorkspace({
   );
   const [isDeletingItem, setIsDeletingItem] = useState(false);
   const [isDuplicating, setIsDuplicating] = useState(false);
+  const [addSectionOpen, setAddSectionOpen] = useState(false);
+  const [newSectionTitle, setNewSectionTitle] = useState("");
+  const [isAddingSection, setIsAddingSection] = useState(false);
+
+  async function handleAddSection() {
+    const title = newSectionTitle.trim();
+    if (!title) {
+      toast.error("Enter a section name.");
+      return;
+    }
+    setIsAddingSection(true);
+    try {
+      const updated = await createResumeSection(content.resume.id, title);
+      onContentChange(updated);
+      setAddSectionOpen(false);
+      setNewSectionTitle("");
+      toast.success("Section added.");
+    } catch {
+      toast.error("Could not add section.");
+    } finally {
+      setIsAddingSection(false);
+    }
+  }
 
   async function handleToggleVisibility(
     sectionId: string,
@@ -839,6 +864,17 @@ export function ResumeWorkspace({
                 </section>
               );
               })}
+              <div className="px-4 py-4 lg:px-5">
+                <Button
+                  type="button"
+                  variant="outline"
+                  size="sm"
+                  onClick={() => setAddSectionOpen(true)}
+                >
+                  <Plus />
+                  Add section
+                </Button>
+              </div>
             </WorkspaceSections>
           )}
         </div>
@@ -853,6 +889,41 @@ export function ResumeWorkspace({
         }}
         onSaved={onContentChange}
       />
+      <ResponsiveDialog open={addSectionOpen} onOpenChange={setAddSectionOpen}>
+        <ResponsiveDialogContent>
+          <ResponsiveDialogHeader>
+            <ResponsiveDialogTitle>Add section</ResponsiveDialogTitle>
+            <ResponsiveDialogDescription>
+              Create a custom section with your own heading, for example Patents or Speaking.
+            </ResponsiveDialogDescription>
+          </ResponsiveDialogHeader>
+          <div className="space-y-2">
+            <label htmlFor="new-section-title" className="text-sm font-medium">
+              Section name
+            </label>
+            <Input
+              id="new-section-title"
+              value={newSectionTitle}
+              onChange={(event) => setNewSectionTitle(event.target.value)}
+              placeholder="Volunteer Experience"
+              autoFocus
+            />
+          </div>
+          <ResponsiveDialogFooter>
+            <Button
+              type="button"
+              variant="outline"
+              onClick={() => setAddSectionOpen(false)}
+              disabled={isAddingSection}
+            >
+              Cancel
+            </Button>
+            <Button type="button" onClick={() => void handleAddSection()} disabled={isAddingSection}>
+              {isAddingSection ? "Adding…" : "Add section"}
+            </Button>
+          </ResponsiveDialogFooter>
+        </ResponsiveDialogContent>
+      </ResponsiveDialog>
       <ResponsiveDialog
         open={deleteItemTarget !== null}
         onOpenChange={(open) => {

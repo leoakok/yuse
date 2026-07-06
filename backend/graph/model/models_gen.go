@@ -166,6 +166,15 @@ type ContactProfile struct {
 	UpdatedAt         string  `json:"updatedAt"`
 }
 
+type CreateInviteLinkInput struct {
+	Label *string `json:"label,omitempty"`
+	// When set, only this email may redeem the invite.
+	EmailRestrict *string `json:"emailRestrict,omitempty"`
+	// When set, caps total redemptions across all emails.
+	MaxUses   *int    `json:"maxUses,omitempty"`
+	ExpiresAt *string `json:"expiresAt,omitempty"`
+}
+
 type CreateKnowledgeEntryInput struct {
 	Slug     string            `json:"slug"`
 	Title    string            `json:"title"`
@@ -173,6 +182,12 @@ type CreateKnowledgeEntryInput struct {
 	Tags     []string          `json:"tags,omitempty"`
 	Body     string            `json:"body"`
 	Enabled  *bool             `json:"enabled,omitempty"`
+}
+
+type CreateResumeSectionInput struct {
+	ResumeID string `json:"resumeId"`
+	// Display name for the new section, e.g. Volunteer Experience.
+	Title string `json:"title"`
 }
 
 type CreateTwinEntryInput struct {
@@ -190,6 +205,21 @@ type CvTheme struct {
 	Config   map[string]any `json:"config"`
 }
 
+// Beta invite link for /r/{code} onboarding.
+type InviteLink struct {
+	ID            string  `json:"id"`
+	Code          string  `json:"code"`
+	Label         *string `json:"label,omitempty"`
+	EmailRestrict *string `json:"emailRestrict,omitempty"`
+	MaxUses       *int    `json:"maxUses,omitempty"`
+	UseCount      int     `json:"useCount"`
+	IsActive      bool    `json:"isActive"`
+	CreatedAt     string  `json:"createdAt"`
+	ExpiresAt     *string `json:"expiresAt,omitempty"`
+	// Public path segment, e.g. /r/abc123.
+	URLPath string `json:"urlPath"`
+}
+
 // A curated, tag-keyed guidance entry the agent injects into context based on the detected category.
 type KnowledgeEntry struct {
 	ID        string            `json:"id"`
@@ -205,12 +235,15 @@ type KnowledgeEntry struct {
 
 // LinkedIn job search result (admin tooling).
 type LinkedInJobCard struct {
-	JobID    string  `json:"jobId"`
-	Title    string  `json:"title"`
-	Company  *string `json:"company,omitempty"`
-	Location *string `json:"location,omitempty"`
-	ListedAt *string `json:"listedAt,omitempty"`
-	URL      string  `json:"url"`
+	JobID          string  `json:"jobId"`
+	Title          string  `json:"title"`
+	Company        *string `json:"company,omitempty"`
+	Location       *string `json:"location,omitempty"`
+	WorkplaceType  *string `json:"workplaceType,omitempty"`
+	EmploymentType *string `json:"employmentType,omitempty"`
+	ListedAt       *string `json:"listedAt,omitempty"`
+	Description    *string `json:"description,omitempty"`
+	URL            string  `json:"url"`
 }
 
 type Mutation struct {
@@ -393,10 +426,12 @@ type Section struct {
 	WorkspaceID string      `json:"workspaceId"`
 	Type        SectionType `json:"type"`
 	Title       string      `json:"title"`
-	Description *string     `json:"description,omitempty"`
-	CreatedBy   string      `json:"createdBy"`
-	CreatedAt   string      `json:"createdAt"`
-	UpdatedAt   string      `json:"updatedAt"`
+	// Stable key for CUSTOM sections; null for built-in section types.
+	CustomKey   *string `json:"customKey,omitempty"`
+	Description *string `json:"description,omitempty"`
+	CreatedBy   string  `json:"createdBy"`
+	CreatedAt   string  `json:"createdAt"`
+	UpdatedAt   string  `json:"updatedAt"`
 }
 
 type SectionItem struct {
@@ -481,6 +516,15 @@ type UpdateContactProfileInput struct {
 	PhotoURL         *string `json:"photoUrl,omitempty"`
 	LinkedinPhotoURL *string `json:"linkedinPhotoUrl,omitempty"`
 	GithubPhotoURL   *string `json:"githubPhotoUrl,omitempty"`
+}
+
+type UpdateInviteLinkInput struct {
+	ID            string  `json:"id"`
+	Label         *string `json:"label,omitempty"`
+	EmailRestrict *string `json:"emailRestrict,omitempty"`
+	MaxUses       *int    `json:"maxUses,omitempty"`
+	IsActive      *bool   `json:"isActive,omitempty"`
+	ExpiresAt     *string `json:"expiresAt,omitempty"`
 }
 
 type UpdateKnowledgeEntryInput struct {
@@ -2235,6 +2279,189 @@ func (e *LineHeightDensity) UnmarshalJSON(b []byte) error {
 }
 
 func (e LineHeightDensity) MarshalJSON() ([]byte, error) {
+	var buf bytes.Buffer
+	e.MarshalGQL(&buf)
+	return buf.Bytes(), nil
+}
+
+type LinkedInEmploymentType string
+
+const (
+	LinkedInEmploymentTypeFullTime   LinkedInEmploymentType = "FULL_TIME"
+	LinkedInEmploymentTypePartTime   LinkedInEmploymentType = "PART_TIME"
+	LinkedInEmploymentTypeContract   LinkedInEmploymentType = "CONTRACT"
+	LinkedInEmploymentTypeTemporary  LinkedInEmploymentType = "TEMPORARY"
+	LinkedInEmploymentTypeInternship LinkedInEmploymentType = "INTERNSHIP"
+	LinkedInEmploymentTypeVolunteer  LinkedInEmploymentType = "VOLUNTEER"
+)
+
+var AllLinkedInEmploymentType = []LinkedInEmploymentType{
+	LinkedInEmploymentTypeFullTime,
+	LinkedInEmploymentTypePartTime,
+	LinkedInEmploymentTypeContract,
+	LinkedInEmploymentTypeTemporary,
+	LinkedInEmploymentTypeInternship,
+	LinkedInEmploymentTypeVolunteer,
+}
+
+func (e LinkedInEmploymentType) IsValid() bool {
+	switch e {
+	case LinkedInEmploymentTypeFullTime, LinkedInEmploymentTypePartTime, LinkedInEmploymentTypeContract, LinkedInEmploymentTypeTemporary, LinkedInEmploymentTypeInternship, LinkedInEmploymentTypeVolunteer:
+		return true
+	}
+	return false
+}
+
+func (e LinkedInEmploymentType) String() string {
+	return string(e)
+}
+
+func (e *LinkedInEmploymentType) UnmarshalGQL(v any) error {
+	str, ok := v.(string)
+	if !ok {
+		return fmt.Errorf("enums must be strings")
+	}
+
+	*e = LinkedInEmploymentType(str)
+	if !e.IsValid() {
+		return fmt.Errorf("%s is not a valid LinkedInEmploymentType", str)
+	}
+	return nil
+}
+
+func (e LinkedInEmploymentType) MarshalGQL(w io.Writer) {
+	fmt.Fprint(w, strconv.Quote(e.String()))
+}
+
+func (e *LinkedInEmploymentType) UnmarshalJSON(b []byte) error {
+	s, err := strconv.Unquote(string(b))
+	if err != nil {
+		return err
+	}
+	return e.UnmarshalGQL(s)
+}
+
+func (e LinkedInEmploymentType) MarshalJSON() ([]byte, error) {
+	var buf bytes.Buffer
+	e.MarshalGQL(&buf)
+	return buf.Bytes(), nil
+}
+
+type LinkedInExperienceLevel string
+
+const (
+	LinkedInExperienceLevelInternship LinkedInExperienceLevel = "INTERNSHIP"
+	LinkedInExperienceLevelEntry      LinkedInExperienceLevel = "ENTRY"
+	LinkedInExperienceLevelAssociate  LinkedInExperienceLevel = "ASSOCIATE"
+	LinkedInExperienceLevelMidSenior  LinkedInExperienceLevel = "MID_SENIOR"
+	LinkedInExperienceLevelDirector   LinkedInExperienceLevel = "DIRECTOR"
+	LinkedInExperienceLevelExecutive  LinkedInExperienceLevel = "EXECUTIVE"
+)
+
+var AllLinkedInExperienceLevel = []LinkedInExperienceLevel{
+	LinkedInExperienceLevelInternship,
+	LinkedInExperienceLevelEntry,
+	LinkedInExperienceLevelAssociate,
+	LinkedInExperienceLevelMidSenior,
+	LinkedInExperienceLevelDirector,
+	LinkedInExperienceLevelExecutive,
+}
+
+func (e LinkedInExperienceLevel) IsValid() bool {
+	switch e {
+	case LinkedInExperienceLevelInternship, LinkedInExperienceLevelEntry, LinkedInExperienceLevelAssociate, LinkedInExperienceLevelMidSenior, LinkedInExperienceLevelDirector, LinkedInExperienceLevelExecutive:
+		return true
+	}
+	return false
+}
+
+func (e LinkedInExperienceLevel) String() string {
+	return string(e)
+}
+
+func (e *LinkedInExperienceLevel) UnmarshalGQL(v any) error {
+	str, ok := v.(string)
+	if !ok {
+		return fmt.Errorf("enums must be strings")
+	}
+
+	*e = LinkedInExperienceLevel(str)
+	if !e.IsValid() {
+		return fmt.Errorf("%s is not a valid LinkedInExperienceLevel", str)
+	}
+	return nil
+}
+
+func (e LinkedInExperienceLevel) MarshalGQL(w io.Writer) {
+	fmt.Fprint(w, strconv.Quote(e.String()))
+}
+
+func (e *LinkedInExperienceLevel) UnmarshalJSON(b []byte) error {
+	s, err := strconv.Unquote(string(b))
+	if err != nil {
+		return err
+	}
+	return e.UnmarshalGQL(s)
+}
+
+func (e LinkedInExperienceLevel) MarshalJSON() ([]byte, error) {
+	var buf bytes.Buffer
+	e.MarshalGQL(&buf)
+	return buf.Bytes(), nil
+}
+
+type LinkedInWorkplaceType string
+
+const (
+	LinkedInWorkplaceTypeRemote LinkedInWorkplaceType = "REMOTE"
+	LinkedInWorkplaceTypeHybrid LinkedInWorkplaceType = "HYBRID"
+	LinkedInWorkplaceTypeOnSite LinkedInWorkplaceType = "ON_SITE"
+)
+
+var AllLinkedInWorkplaceType = []LinkedInWorkplaceType{
+	LinkedInWorkplaceTypeRemote,
+	LinkedInWorkplaceTypeHybrid,
+	LinkedInWorkplaceTypeOnSite,
+}
+
+func (e LinkedInWorkplaceType) IsValid() bool {
+	switch e {
+	case LinkedInWorkplaceTypeRemote, LinkedInWorkplaceTypeHybrid, LinkedInWorkplaceTypeOnSite:
+		return true
+	}
+	return false
+}
+
+func (e LinkedInWorkplaceType) String() string {
+	return string(e)
+}
+
+func (e *LinkedInWorkplaceType) UnmarshalGQL(v any) error {
+	str, ok := v.(string)
+	if !ok {
+		return fmt.Errorf("enums must be strings")
+	}
+
+	*e = LinkedInWorkplaceType(str)
+	if !e.IsValid() {
+		return fmt.Errorf("%s is not a valid LinkedInWorkplaceType", str)
+	}
+	return nil
+}
+
+func (e LinkedInWorkplaceType) MarshalGQL(w io.Writer) {
+	fmt.Fprint(w, strconv.Quote(e.String()))
+}
+
+func (e *LinkedInWorkplaceType) UnmarshalJSON(b []byte) error {
+	s, err := strconv.Unquote(string(b))
+	if err != nil {
+		return err
+	}
+	return e.UnmarshalGQL(s)
+}
+
+func (e LinkedInWorkplaceType) MarshalJSON() ([]byte, error) {
 	var buf bytes.Buffer
 	e.MarshalGQL(&buf)
 	return buf.Bytes(), nil

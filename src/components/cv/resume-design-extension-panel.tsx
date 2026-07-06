@@ -192,15 +192,6 @@ export function ResumeSpacingItemsSettings({
             onChange={(locationDisplay) => onChange({ locationDisplay })}
           />
         </div>
-        <label className="flex items-center gap-2 text-xs">
-          <input
-            type="checkbox"
-            checked={values.highlightCurrentRole}
-            onChange={(e) => onChange({ highlightCurrentRole: e.target.checked })}
-            className="size-3.5 rounded border"
-          />
-          Highlight current role
-        </label>
       </div>
     </div>
   );

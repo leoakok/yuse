@@ -23,7 +23,8 @@ import {
   SheetTitle,
 } from "@/components/ui/sheet";
 
-const LARGE_SCREEN_QUERY = "(min-width: 1024px)";
+/** Tablet and up: centered dialog. Below: full-width bottom sheet. */
+const LARGE_SCREEN_QUERY = "(min-width: 768px)";
 
 type ResponsiveMode = "dialog" | "sheet";
 
@@ -57,12 +58,24 @@ function ResponsiveDialog({
 
 function ResponsiveDialogContent({
   className,
+  dialogClassName,
+  sheetClassName,
+  sheetBodyClassName,
+  fill,
   children,
   showCloseButton = true,
   closeDisabled,
   ...props
 }: React.ComponentProps<typeof DialogContent> & {
   closeDisabled?: boolean;
+  /** Dialog-only styles (e.g. sm:max-w-lg). Not applied to the mobile sheet. */
+  dialogClassName?: string;
+  /** Mobile sheet-only styles. Not applied to the desktop dialog. */
+  sheetClassName?: string;
+  /** Mobile sheet body padding/layout. Defaults to horizontal padding for form dialogs. */
+  sheetBodyClassName?: string;
+  /** Mobile sheet: body fills remaining height (multi-section panels). */
+  fill?: boolean;
 }) {
   const mode = useResponsiveMode();
   const [registeredHeader, setRegisteredHeader] = React.useState<DrawerShellHeaderState>(
@@ -91,7 +104,7 @@ function ResponsiveDialogContent({
   if (mode === "dialog") {
     return (
       <DialogContent
-        className={className}
+        className={cn(className, dialogClassName)}
         showCloseButton={showCloseButton}
         {...props}
       >
@@ -102,8 +115,9 @@ function ResponsiveDialogContent({
 
   return (
     <DrawerSheetContent
-      className={className}
-      bodyClassName="px-4"
+      className={sheetClassName}
+      bodyClassName={sheetBodyClassName ?? "px-4"}
+      fill={fill}
       showCloseButton={showCloseButton}
       closeDisabled={closeDisabled}
       title={registeredHeader.title}

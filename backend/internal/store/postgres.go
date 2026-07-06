@@ -281,9 +281,7 @@ func (p *Postgres) SaveResume(resume *model.Resume) {
 }
 
 func (p *Postgres) ListSections(sectionType *model.SectionType) []*model.Section {
-	query := `
-		SELECT id, workspace_id, type, title, description, created_by, created_at, updated_at
-		FROM sections WHERE workspace_id = $1`
+	query := sectionSelectSQL + ` WHERE workspace_id = $1`
 	args := []any{p.activeWorkspaceID()}
 	if sectionType != nil {
 		query += ` AND type = $2`
@@ -299,10 +297,7 @@ func (p *Postgres) ListSections(sectionType *model.SectionType) []*model.Section
 }
 
 func (p *Postgres) GetSection(id string) (*model.Section, error) {
-	row := p.pool.QueryRow(p.ctx(), `
-		SELECT id, workspace_id, type, title, description, created_by, created_at, updated_at
-		FROM sections WHERE id = $1 AND workspace_id = $2
-	`, id, p.activeWorkspaceID())
+	row := p.pool.QueryRow(p.ctx(), sectionSelectSQL+` WHERE id = $1 AND workspace_id = $2`, id, p.activeWorkspaceID())
 	s, err := scanSection(row)
 	if errors.Is(err, pgx.ErrNoRows) {
 		return nil, ErrNotFound
@@ -690,6 +685,110 @@ func (p *Postgres) UpdateResumeSectionVisibility(
 		return nil, ErrNotFound
 	}
 	return p.ResumeWithContent(resumeID)
+}
+
+func (p *Postgres) CreateResumeSection(resumeID, title string) (*model.ResumeWithContent, error) {
+	trimmed := strings.TrimSpace(title)
+	if trimmed == "" {
+		return nil, fmt.Errorf("title is required")
+	}
+	if _, err := p.GetResume(resumeID); err != nil {
+		return nil, err
+	}
+
+	ctx := p.ctx()
+	tx, err := p.pool.Begin(ctx)
+	if err != nil {
+		return nil, err
+	}
+	defer func() { _ = tx.Rollback(ctx) }()
+
+	workspaceID := p.activeWorkspaceID()
+	userID := p.activeUserID()
+	now := time.Now().UTC()
+	customKey := sectionCustomKey(trimmed)
+
+	section, err := p.findOrCreateCustomSectionTx(ctx, tx, workspaceID, userID, trimmed, customKey, now)
+	if err != nil {
+		return nil, err
+	}
+
+	var linked bool
+	if err := tx.QueryRow(ctx, `
+		SELECT EXISTS(SELECT 1 FROM resume_sections WHERE resume_id = $1 AND section_id = $2)
+	`, resumeID, section.ID).Scan(&linked); err != nil {
+		return nil, err
+	}
+
+	if !linked {
+		var maxSort int
+		_ = tx.QueryRow(ctx, `
+			SELECT COALESCE(MAX(sort_order), -1) FROM resume_sections WHERE resume_id = $1
+		`, resumeID).Scan(&maxSort)
+		_, err = tx.Exec(ctx, `
+			INSERT INTO resume_sections (resume_id, section_id, sort_order, show_in_preview)
+			VALUES ($1, $2, $3, true)
+		`, resumeID, section.ID, maxSort+1)
+		if err != nil {
+			return nil, fmt.Errorf("link section to resume: %w", err)
+		}
+	} else {
+		_, err = tx.Exec(ctx, `
+			UPDATE resume_sections SET show_in_preview = true
+			WHERE resume_id = $1 AND section_id = $2
+		`, resumeID, section.ID)
+		if err != nil {
+			return nil, err
+		}
+	}
+
+	_, err = tx.Exec(ctx, `UPDATE resumes SET updated_at = $2 WHERE id = $1`, resumeID, now)
+	if err != nil {
+		return nil, err
+	}
+
+	if err := tx.Commit(ctx); err != nil {
+		return nil, err
+	}
+	return p.ResumeWithContent(resumeID)
+}
+
+func (p *Postgres) findOrCreateCustomSectionTx(
+	ctx context.Context,
+	tx pgx.Tx,
+	workspaceID, userID, title, customKey string,
+	now time.Time,
+) (*model.Section, error) {
+	row := tx.QueryRow(ctx, sectionSelectSQL+`
+		WHERE workspace_id = $1 AND type = $2 AND custom_key = $3
+	`, workspaceID, string(model.SectionTypeCustom), customKey)
+	section, err := scanSection(row)
+	if err == nil {
+		return section, nil
+	}
+	if !errors.Is(err, pgx.ErrNoRows) {
+		return nil, err
+	}
+
+	sectionID := uuid.NewString()
+	_, err = tx.Exec(ctx, `
+		INSERT INTO sections (id, workspace_id, type, title, custom_key, created_by, created_at, updated_at)
+		VALUES ($1, $2, $3, $4, $5, $6, $7, $7)
+	`, sectionID, workspaceID, string(model.SectionTypeCustom), title, customKey, userID, now)
+	if err != nil {
+		return nil, err
+	}
+	key := customKey
+	return &model.Section{
+		ID:          sectionID,
+		WorkspaceID: workspaceID,
+		Type:        model.SectionTypeCustom,
+		Title:       title,
+		CustomKey:   &key,
+		CreatedBy:   userID,
+		CreatedAt:   formatTime(now),
+		UpdatedAt:   formatTime(now),
+	}, nil
 }
 
 func (p *Postgres) AddResumeSectionItem(
@@ -1348,9 +1447,43 @@ func (p *Postgres) ensureWorkspaceSectionTx(
 	workspaceID, userID string,
 	now time.Time,
 ) (*model.Section, error) {
-	row := tx.QueryRow(ctx, `
-		SELECT id, workspace_id, type, title, description, created_by, created_at, updated_at
-		FROM sections
+	if spec.sectionType == model.SectionTypeCustom {
+		customKey := sectionCustomKey(spec.title)
+		row := tx.QueryRow(ctx, sectionSelectSQL+`
+			WHERE workspace_id = $1 AND type = $2 AND custom_key = $3
+			ORDER BY created_at
+			LIMIT 1
+		`, workspaceID, string(spec.sectionType), customKey)
+		section, err := scanSection(row)
+		if err == nil {
+			return section, nil
+		}
+		if !errors.Is(err, pgx.ErrNoRows) {
+			return nil, err
+		}
+
+		sectionID := uuid.NewString()
+		_, err = tx.Exec(ctx, `
+			INSERT INTO sections (id, workspace_id, type, title, custom_key, created_by, created_at, updated_at)
+			VALUES ($1, $2, $3, $4, $5, $6, $7, $7)
+		`, sectionID, workspaceID, string(spec.sectionType), spec.title, customKey, userID, now)
+		if err != nil {
+			return nil, err
+		}
+		key := customKey
+		return &model.Section{
+			ID:          sectionID,
+			WorkspaceID: workspaceID,
+			Type:        spec.sectionType,
+			Title:       spec.title,
+			CustomKey:   &key,
+			CreatedBy:   userID,
+			CreatedAt:   formatTime(now),
+			UpdatedAt:   formatTime(now),
+		}, nil
+	}
+
+	row := tx.QueryRow(ctx, sectionSelectSQL+`
 		WHERE workspace_id = $1 AND type = $2
 		ORDER BY created_at
 		LIMIT 1
@@ -1383,10 +1516,7 @@ func (p *Postgres) ensureWorkspaceSectionTx(
 }
 
 func (p *Postgres) getSectionTx(ctx context.Context, tx pgx.Tx, id string) (*model.Section, error) {
-	row := tx.QueryRow(ctx, `
-		SELECT id, workspace_id, type, title, description, created_by, created_at, updated_at
-		FROM sections WHERE id = $1 AND workspace_id = $2
-	`, id, p.activeWorkspaceID())
+	row := tx.QueryRow(ctx, sectionSelectSQL+` WHERE id = $1 AND workspace_id = $2`, id, p.activeWorkspaceID())
 	s, err := scanSection(row)
 	if errors.Is(err, pgx.ErrNoRows) {
 		return nil, ErrNotFound
@@ -1530,11 +1660,13 @@ func scanResumes(rows pgx.Rows) []*model.Resume {
 func scanSection(row scannable) (*model.Section, error) {
 	var s model.Section
 	var sectionType string
+	var customKey *string
 	var createdAt, updatedAt time.Time
-	if err := row.Scan(&s.ID, &s.WorkspaceID, &sectionType, &s.Title, &s.Description, &s.CreatedBy, &createdAt, &updatedAt); err != nil {
+	if err := row.Scan(&s.ID, &s.WorkspaceID, &sectionType, &s.Title, &customKey, &s.Description, &s.CreatedBy, &createdAt, &updatedAt); err != nil {
 		return nil, err
 	}
 	s.Type = model.SectionType(sectionType)
+	s.CustomKey = customKey
 	s.CreatedAt = formatTime(createdAt)
 	s.UpdatedAt = formatTime(updatedAt)
 	return cloneSection(&s), nil
@@ -1545,11 +1677,13 @@ func scanSections(rows pgx.Rows) []*model.Section {
 	for rows.Next() {
 		var s model.Section
 		var sectionType string
+		var customKey *string
 		var createdAt, updatedAt time.Time
-		if err := rows.Scan(&s.ID, &s.WorkspaceID, &sectionType, &s.Title, &s.Description, &s.CreatedBy, &createdAt, &updatedAt); err != nil {
+		if err := rows.Scan(&s.ID, &s.WorkspaceID, &sectionType, &s.Title, &customKey, &s.Description, &s.CreatedBy, &createdAt, &updatedAt); err != nil {
 			continue
 		}
 		s.Type = model.SectionType(sectionType)
+		s.CustomKey = customKey
 		s.CreatedAt = formatTime(createdAt)
 		s.UpdatedAt = formatTime(updatedAt)
 		out = append(out, cloneSection(&s))

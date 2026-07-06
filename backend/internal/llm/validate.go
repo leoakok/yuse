@@ -21,6 +21,7 @@ var writeTools = map[string]bool{
 	"reorder_resume_sections":     true,
 	"set_section_visibility":      true,
 	"update_section_display_title": true,
+	"create_resume_section":       true,
 	"update_contact_profile":      true,
 	"update_resume_settings":      true,
 	"create_portfolio":            true,

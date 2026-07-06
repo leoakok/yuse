@@ -1,7 +1,8 @@
 "use client";
 
-import { useEffect, useRef, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import { CvPreview } from "@/components/cv/cv-preview";
+import { getPageSizePx } from "@/lib/cv/page-format";
 import { TAILOR_SHOWCASE_EXAMPLES } from "@/lib/landing/tailor-demo-content";
 import type { ResumeWithContent } from "@/lib/types/cv";
 import { cn } from "@/lib/utils";
@@ -9,16 +10,21 @@ import { cn } from "@/lib/utils";
 function LandingA4CvPreview({
   content,
   label,
+  styleLabel,
   className,
 }: {
   content: ResumeWithContent;
   label: string;
+  styleLabel: string;
   className?: string;
 }) {
+  const pageFormat = content.settings?.pageFormat ?? "A4";
+  const fallbackPageSize = useMemo(() => getPageSizePx(pageFormat), [pageFormat]);
+
   const containerRef = useRef<HTMLDivElement>(null);
   const pageRef = useRef<HTMLDivElement>(null);
-  const [scale, setScale] = useState(0.5);
-  const [scaledHeight, setScaledHeight] = useState<number | undefined>();
+  const [scale, setScale] = useState(() => 360 / fallbackPageSize.width);
+  const [pageSize, setPageSize] = useState(fallbackPageSize);
 
   useEffect(() => {
     const container = containerRef.current;
@@ -26,12 +32,13 @@ function LandingA4CvPreview({
     if (!container || !page) return;
 
     const updateScale = () => {
-      const pageWidth = page.offsetWidth;
+      const pageWidth = page.offsetWidth || fallbackPageSize.width;
+      const pageHeight = page.offsetHeight || fallbackPageSize.height;
       const available = container.clientWidth;
       if (pageWidth > 0 && available > 0) {
         const nextScale = Math.min(1, available / pageWidth);
         setScale(nextScale);
-        setScaledHeight(page.offsetHeight * nextScale);
+        setPageSize({ width: pageWidth, height: pageHeight });
       }
     };
 
@@ -40,27 +47,35 @@ function LandingA4CvPreview({
     observer.observe(container);
     observer.observe(page);
     return () => observer.disconnect();
-  }, [content]);
+  }, [content, fallbackPageSize]);
+
+  const scaledWidth = pageSize.width * scale;
+  const scaledHeight = pageSize.height * scale;
 
   return (
     <figure className={cn("flex min-w-0 flex-col gap-2", className)}>
-      <figcaption className="text-center text-sm font-medium text-muted-foreground">
-        {label}
+      <figcaption className="text-center">
+        <span className="text-sm font-medium text-foreground">{styleLabel}</span>
+        <span className="mt-0.5 block text-xs text-muted-foreground">{label}</span>
       </figcaption>
-      <div ref={containerRef} className="flex justify-center overflow-hidden">
+      <div ref={containerRef} className="flex w-full justify-center overflow-hidden px-2 pb-3 pt-1">
         <div
+          className="relative shrink-0 overflow-hidden rounded-sm shadow-lg ring-1 ring-black/5"
           style={{
-            transform: `scale(${scale})`,
-            transformOrigin: "top center",
-            height: scale < 1 ? scaledHeight : undefined,
+            width: scaledWidth,
+            height: scaledHeight,
           }}
         >
-          <div ref={pageRef}>
-            <CvPreview
-              content={content}
-              singlePage
-              className="rounded-sm shadow-[0_12px_40px_-8px_rgba(0,0,0,0.14),0_4px_12px_-4px_rgba(0,0,0,0.08)] ring-1 ring-black/5"
-            />
+          <div
+            className="origin-top-left"
+            style={{
+              width: pageSize.width,
+              transform: `scale(${scale})`,
+            }}
+          >
+            <div ref={pageRef}>
+              <CvPreview content={content} singlePage className="rounded-none shadow-none ring-0" />
+            </div>
           </div>
         </div>
       </div>
@@ -96,6 +111,7 @@ export function TailorCvShowcase() {
               key={example.id}
               content={example.preview}
               label={example.label}
+              styleLabel={example.styleLabel}
               className="w-[min(78vw,360px)] shrink-0 snap-center md:w-[380px]"
             />
           ))}

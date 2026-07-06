@@ -156,6 +156,9 @@ func (githubTokenExecutor) UpdateResumeSectionItemVisibility(model.UpdateResumeS
 func (githubTokenExecutor) UpdateResumeSectionDisplayTitle(model.UpdateResumeSectionDisplayTitleInput) (*model.ResumeWithContent, error) {
 	return nil, nil
 }
+func (githubTokenExecutor) CreateResumeSection(model.CreateResumeSectionInput) (*model.ResumeWithContent, error) {
+	return nil, nil
+}
 func (githubTokenExecutor) ReorderResumeSections(model.ReorderResumeSectionsInput) (*model.ResumeWithContent, error) {
 	return nil, nil
 }

@@ -1,6 +1,6 @@
 "use client";
 
-import { useLayoutEffect, useMemo, useRef, useState, type ReactNode, type RefObject } from "react";
+import { useLayoutEffect, useMemo, useRef, useState, type RefObject } from "react";
 import type {
   ColumnLayout,
   ContactField,
@@ -59,7 +59,7 @@ import {
   getSectionItemSubtitle,
 } from "@/lib/cv/section-item-display";
 import { resolveCvTypography, type CvTypography } from "@/lib/cv/typography";
-import { resolveCvDesignTokens, sectionDisplayTitle, isCurrentRole, type CvDesignTokens } from "@/lib/cv/resume-design";
+import { resolveCvDesignTokens, sectionDisplayTitle, type CvDesignTokens } from "@/lib/cv/resume-design";
 import { formatLevelLabel } from "@/lib/cv/levels";
 import { LANGUAGE_LEVELS, SKILL_LEVELS } from "@/lib/cv/levels";
 import { cn } from "@/lib/utils";
@@ -386,11 +386,6 @@ function CvPreviewItem({
     designTokens.locationDisplay === "OWN_LINE" && location && item.type === "EXPERIENCE";
   const showLocationInline =
     designTokens.locationDisplay === "INLINE_WITH_COMPANY" && location && item.type === "EXPERIENCE";
-  const highlight =
-    designTokens.highlightCurrentRole &&
-    item.type === "EXPERIENCE" &&
-    isCurrentRole(item.metadata);
-
   const datesNode = dates ? (
     <span className="shrink-0" style={metaStyle}>
       {dates}
@@ -451,24 +446,8 @@ function CvPreviewItem({
     </div>
   ) : null;
 
-  const itemShell = (children: ReactNode) => (
-    <div
-      className={cn(highlight && "rounded-sm border-l-2 pl-2")}
-      style={
-        highlight
-          ? {
-              borderLeftColor: designTokens.accentColor,
-              backgroundColor: `${designTokens.accentColor}14`,
-            }
-          : undefined
-      }
-    >
-      {children}
-    </div>
-  );
-
   if (datePosition === "BELOW") {
-    return itemShell(
+    return (
       <>
         {titleBlock}
         {subtitleBlock}
@@ -479,7 +458,7 @@ function CvPreviewItem({
     );
   }
 
-  return itemShell(
+  return (
     <>
       <div
         className={cn(

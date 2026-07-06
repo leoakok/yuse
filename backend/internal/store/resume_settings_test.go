@@ -87,6 +87,72 @@ func TestMemoryResumeItemVisibilityRoundTrip(t *testing.T) {
 	}
 }
 
+func TestMemoryCreateResumeSectionAddsCustomSection(t *testing.T) {
+	dataStore := store.NewMemory()
+	svc := cv.NewService(dataStore, llm.NewService(config.Config{}), nil)
+
+	content, err := svc.GetResumeWithContent("resume-swe")
+	if err != nil {
+		t.Fatalf("GetResumeWithContent: %v", err)
+	}
+
+	updated, err := svc.CreateResumeSection(model.CreateResumeSectionInput{
+		ResumeID: content.Resume.ID,
+		Title:    "Patents",
+	})
+	if err != nil {
+		t.Fatalf("CreateResumeSection: %v", err)
+	}
+
+	var found bool
+	for _, row := range updated.Sections {
+		if row.Section.Type == model.SectionTypeCustom && row.Section.Title == "Patents" {
+			found = true
+			if row.Section.CustomKey == nil || *row.Section.CustomKey != "patents" {
+				t.Fatalf("custom key: got %#v want patents", row.Section.CustomKey)
+			}
+		}
+	}
+	if !found {
+		t.Fatal("expected custom Patents section on resume")
+	}
+}
+
+func TestMemoryPublicResumeWithContentPreservesSettings(t *testing.T) {
+	dataStore := store.NewMemory()
+	svc := cv.NewService(dataStore, llm.NewService(config.Config{}), nil)
+
+	content, err := svc.GetResumeWithContent("resume-swe")
+	if err != nil {
+		t.Fatalf("GetResumeWithContent: %v", err)
+	}
+
+	accent := "#224466"
+	_, err = svc.UpdateResumeSettings(model.UpdateResumeSettingsInput{
+		ResumeID:    content.Resume.ID,
+		AccentColor: &accent,
+	})
+	if err != nil {
+		t.Fatalf("UpdateResumeSettings: %v", err)
+	}
+
+	if _, err := dataStore.SetUsername(store.DemoUserID, "demo-user"); err != nil {
+		t.Fatalf("SetUsername: %v", err)
+	}
+	if _, err := dataStore.SetResumeSlug(store.DemoUserID, content.Resume.ID, "swe-resume"); err != nil {
+		t.Fatalf("SetResumeSlug: %v", err)
+	}
+
+	slug := "swe-resume"
+	public, err := dataStore.PublicResumeWithContent("demo-user", &slug)
+	if err != nil {
+		t.Fatalf("PublicResumeWithContent: %v", err)
+	}
+	if public.Settings.AccentColor != accent {
+		t.Fatalf("public accent: got %q want %q", public.Settings.AccentColor, accent)
+	}
+}
+
 func TestPostgresUpdateResumeSettingsRoundTrip(t *testing.T) {
 	if os.Getenv("DATABASE_URL") == "" {
 		t.Skip("DATABASE_URL not set")

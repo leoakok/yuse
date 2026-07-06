@@ -74,6 +74,11 @@ func ToolActivityStartLabel(toolName string, args map[string]any) string {
 		return "Let me update section visibility…"
 	case "update_section_display_title":
 		return "Let me rename that section…"
+	case "create_resume_section":
+		if title, ok := optionalString(args, "title"); ok && title != "" {
+			return fmt.Sprintf("I'll add a %s section…", truncateLabel(title, 40))
+		}
+		return "I'll add a custom section…"
 	case "delete_section_item":
 		return "Let me remove that entry…"
 	case "delete_all_section_items":

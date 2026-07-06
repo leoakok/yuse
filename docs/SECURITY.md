@@ -63,7 +63,7 @@ This document records the security audit for Yuse (Next.js + Go GraphQL) and wha
 | `ADMIN_EMAILS` | (none) | Comma-separated emails granted `ADMIN` on registration and OAuth bootstrap; required for env-based admin access |
 | `BETA_INVITE_ONLY` | `false` | When true, new signups require approved waitlist entry |
 | `ENCRYPTION_KEY` | | Optional 32-byte AES key for OAuth token encryption; falls back to `AUTH_SECRET` |
-| `LINKEDIN_SESSION_COOKIE` | | Admin-only LinkedIn job search (`li_at` cookie value) |
+| `LINKEDIN_SESSION_COOKIE` | | Admin-only LinkedIn job search (`li_at=...; JSESSIONID="ajax:..."` from DevTools) |
 | `RATE_LIMIT_WAITLIST_PER_IP` | `10` | Waitlist submissions per IP per window |
 | `RATE_LIMIT_WAITLIST_WINDOW` | `1h` | Waitlist window |
 | `RATE_LIMIT_ACCESS_CHECK_PER_IP` | `5` | Access-check probes per IP per window |

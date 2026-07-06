@@ -136,7 +136,7 @@ export function PortfolioProfileEditDialog({
 
   return (
     <ResponsiveDialog open={open} onOpenChange={onOpenChange}>
-      <ResponsiveDialogContent className="max-h-[90vh] overflow-y-auto">
+      <ResponsiveDialogContent dialogClassName="max-h-[90vh] overflow-y-auto">
         <ResponsiveDialogHeader>
           <ResponsiveDialogTitle>Edit profile</ResponsiveDialogTitle>
           <ResponsiveDialogDescription>
