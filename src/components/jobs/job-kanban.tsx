@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useState, type ReactNode } from "react";
+import { createPortal } from "react-dom";
 import {
   DndContext,
   DragOverlay,
@@ -94,7 +95,7 @@ function JobCardContent({
           : undefined
       }
       className={cn(
-        "gap-2 rounded-lg border bg-card p-3 shadow-sm transition-[box-shadow,transform] duration-200 ease-out",
+        "gap-2 rounded-lg border bg-card p-3 shadow-sm transition-[box-shadow] duration-200 ease-out",
         onSelect && "cursor-grab hover:shadow-md active:cursor-grabbing",
         isSelected && "border-primary/50 ring-1 ring-primary/20",
         isDragging && "shadow-lg",
@@ -375,18 +376,21 @@ export function JobKanban({
           />
         ))}
       </div>
-      <DragOverlay dropAnimation={reducedMotion ? null : undefined} className="z-50">
-        {activeJob ? (
-          <div
-            className={cn(
-              "w-[17rem] cursor-grabbing",
-              !reducedMotion && "rotate-1",
-            )}
-          >
-            <JobCardContent job={activeJob} isDragging />
-          </div>
-        ) : null}
-      </DragOverlay>
+      {createPortal(
+        <DragOverlay dropAnimation={reducedMotion ? null : undefined} className="z-50">
+          {activeJob ? (
+            <div
+              className={cn(
+                "w-[17rem] cursor-grabbing",
+                !reducedMotion && "rotate-1",
+              )}
+            >
+              <JobCardContent job={activeJob} isDragging />
+            </div>
+          ) : null}
+        </DragOverlay>,
+        document.body,
+      )}
     </DndContext>
   );
 }

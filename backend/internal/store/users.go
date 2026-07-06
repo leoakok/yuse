@@ -22,26 +22,40 @@ type SessionScope struct {
 	ThreadID    string
 }
 
-// defaultAdminEmail is always granted ADMIN on register/OAuth bootstrap.
-const defaultAdminEmail = "leo@yuse.one"
+var configuredAdminEmails map[string]bool
 
-// adminEmails are granted the ADMIN role on sign-in/registration.
-// defaultAdminEmail is always included; ADMIN_EMAILS adds more (comma-separated).
-func adminEmails() map[string]bool {
+// ConfigureAdminEmails sets admin emails from loaded config (call once at server start).
+// When unset, RoleForEmail reads ADMIN_EMAILS from the environment (used in tests).
+func ConfigureAdminEmails(emails []string) {
+	configuredAdminEmails = parseAdminEmails(emails)
+}
+
+func parseAdminEmails(emails []string) map[string]bool {
 	out := make(map[string]bool)
-	out[defaultAdminEmail] = true
-
-	raw := strings.TrimSpace(os.Getenv("ADMIN_EMAILS"))
-	if raw == "" {
-		raw = defaultAdminEmail
-	}
-	for _, email := range strings.Split(raw, ",") {
+	for _, email := range emails {
 		normalized := strings.ToLower(strings.TrimSpace(email))
 		if normalized != "" {
 			out[normalized] = true
 		}
 	}
 	return out
+}
+
+// adminEmails are granted the ADMIN role on sign-in/registration (comma-separated ADMIN_EMAILS).
+func adminEmails() map[string]bool {
+	if configuredAdminEmails != nil {
+		return configuredAdminEmails
+	}
+	raw := strings.TrimSpace(os.Getenv("ADMIN_EMAILS"))
+	if raw == "" {
+		return map[string]bool{}
+	}
+	parts := strings.Split(raw, ",")
+	list := make([]string, 0, len(parts))
+	for _, part := range parts {
+		list = append(list, part)
+	}
+	return parseAdminEmails(list)
 }
 
 // RoleForEmail returns the platform role for an email address.

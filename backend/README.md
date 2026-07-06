@@ -106,7 +106,7 @@ Security-related env (see `docs/SECURITY.md`): set `TRUSTED_PROXY=true` behind V
 
 ## Admin bootstrap
 
-`leo@yuse.one` is always granted the `ADMIN` role on email/password registration and OAuth bootstrap. Set `ADMIN_EMAILS` (comma-separated) for additional admins. Admins can promote other users via GraphQL `setUserRole` in `/admin`.
+Set `ADMIN_EMAILS` (comma-separated) so listed addresses receive the `ADMIN` role on email/password registration and OAuth bootstrap. Users already marked `ADMIN` in the database keep that role. Admins can promote others via GraphQL `setUserRole` in `/admin`.
 
 ## Transactional email
 

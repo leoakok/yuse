@@ -76,11 +76,12 @@ func (m *Memory) seed() {
 		return now.Add(-d).Format(time.RFC3339)
 	}
 
+	demoEmail := "demo@cvbuilder.local" // test fixture identity; admin role follows ADMIN_EMAILS
 	m.user = &model.User{
 		ID:          DemoUserID,
-		Email:       "demo@cvbuilder.local",
+		Email:       demoEmail,
 		DisplayName: "Demo User",
-		Role:        model.UserRoleAdmin,
+		Role:        model.UserRole(RoleForEmail(demoEmail)),
 		CreatedAt:   ago(30 * 24 * time.Hour),
 		UpdatedAt:   now.Format(time.RFC3339),
 	}

@@ -33,6 +33,7 @@ func main() {
 	if err := cfg.ValidateServer(); err != nil {
 		log.Fatalf("invalid config: %v", err)
 	}
+	store.ConfigureAdminEmails(cfg.AdminEmails)
 
 	emailCfg := email.LoadConfig()
 	verificationRequired := cfg.EmailVerificationRequired || emailCfg.IsConfigured()

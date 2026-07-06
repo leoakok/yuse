@@ -60,7 +60,7 @@ This document records the security audit for Yuse (Next.js + Go GraphQL) and wha
 | `EMAIL_FROM` | | | Sender address (must be verified in Resend) |
 | `RESEND_API_KEY` | | | Resend API key (falls back to `EMAIL_API_KEY`) |
 | `EMAIL_VERIFICATION_REQUIRED` | `false` | | Block assistant for unverified email users |
-| `ADMIN_EMAILS` | `leo@yuse.one` | Comma-separated admin emails; `leo@yuse.one` is always admin |
+| `ADMIN_EMAILS` | (none) | Comma-separated emails granted `ADMIN` on registration and OAuth bootstrap; required for env-based admin access |
 | `BETA_INVITE_ONLY` | `false` | When true, new signups require approved waitlist entry |
 | `ENCRYPTION_KEY` | | Optional 32-byte AES key for OAuth token encryption; falls back to `AUTH_SECRET` |
 | `LINKEDIN_SESSION_COOKIE` | | Admin-only LinkedIn job search (`li_at` cookie value) |
