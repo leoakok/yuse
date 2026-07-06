@@ -246,3 +246,39 @@ func TestIsInteractiveClarificationSkillGap(t *testing.T) {
 		t.Fatal("persistence claim should not count as clarification")
 	}
 }
+
+func TestContainsEmDash(t *testing.T) {
+	if !containsEmDash("Saved your CV—open it from Resumes.") {
+		t.Fatal("expected em dash detection")
+	}
+	if containsEmDash("Saved your CV, open it from Resumes.") {
+		t.Fatal("comma-only text should not contain em dash")
+	}
+}
+
+func TestStripEmDashesSpaced(t *testing.T) {
+	got := stripEmDashes("Created your resume — open it from Resumes.")
+	want := "Created your resume, open it from Resumes."
+	if got != want {
+		t.Fatalf("got %q, want %q", got, want)
+	}
+}
+
+func TestStripEmDashesTight(t *testing.T) {
+	got := stripEmDashes("Tailored for the role—strong fit on backend skills.")
+	want := "Tailored for the role, strong fit on backend skills."
+	if got != want {
+		t.Fatalf("got %q, want %q", got, want)
+	}
+}
+
+func TestFinalizeAgentReplyStripsEmDashAfterSanitize(t *testing.T) {
+	reply := "I've created your resume — open it from Resumes."
+	got := FinalizeAgentReply(reply, []mcp.Execution{{Tool: "create_resume"}})
+	if containsEmDash(got) {
+		t.Fatalf("expected em dash stripped, got %q", got)
+	}
+	if !strings.Contains(got, "open it from Resumes") {
+		t.Fatalf("expected content preserved, got %q", got)
+	}
+}

@@ -75,7 +75,7 @@ func (s *Service) RunAgentStream(
 	// Scope handling: only out-of-scope and chit-chat get a canned reply with no
 	// tool calls. UNCLEAR and everything else run the main agent (with history).
 	if isScopeHandled(class.Category) {
-		reply := ScopeReply(class, userText)
+		reply := stripEmDashes(ScopeReply(class, userText))
 		sink.Delta(reply)
 		return &AgentTurn{Reply: reply, Executions: nil}, nil
 	}
@@ -93,7 +93,7 @@ func (s *Service) RunAgentStream(
 	if turn == nil || strings.TrimSpace(turn.Reply) == "" {
 		return nil, fmt.Errorf("assistant produced no reply")
 	}
-	turn.Reply = SanitizeAgentReply(turn.Reply, turn.Executions)
+	turn.Reply = FinalizeAgentReply(turn.Reply, turn.Executions)
 	return turn, nil
 }
 
@@ -147,6 +147,7 @@ func (s *Service) agentLoop(
 				if reply == "" {
 					reply = briefWriteConfirmation(executions)
 				}
+				reply = FinalizeAgentReply(reply, executions)
 				sink.Delta(reply)
 				return &AgentTurn{Reply: reply, Executions: executions}, nil
 			}
@@ -238,12 +239,11 @@ func (s *Service) agentLoop(
 				lastContent = ""
 				continue
 			}
-			if lastContent != "" {
-				sink.Delta(lastContent)
-			}
 			if lastContent == "" {
 				lastContent = "Done."
 			}
+			lastContent = FinalizeAgentReply(lastContent, executions)
+			sink.Delta(lastContent)
 			return &AgentTurn{Reply: lastContent, Executions: executions}, nil
 		}
 

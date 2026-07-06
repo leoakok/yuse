@@ -919,6 +919,29 @@ func dedupeHintStrings(items []string) []string {
 	return out
 }
 
+const emDashRune = '—'
+
+func containsEmDash(text string) bool {
+	return strings.ContainsRune(text, emDashRune)
+}
+
+// stripEmDashes replaces em dashes in user-facing assistant copy with plain punctuation.
+func stripEmDashes(text string) string {
+	if !containsEmDash(text) {
+		return text
+	}
+	s := strings.ReplaceAll(text, " — ", ", ")
+	s = strings.ReplaceAll(s, "— ", ", ")
+	s = strings.ReplaceAll(s, " —", ",")
+	s = strings.ReplaceAll(s, "—", ", ")
+	return s
+}
+
+// FinalizeAgentReply applies persistence sanitization and em-dash stripping for user-facing output.
+func FinalizeAgentReply(reply string, executions []mcp.Execution) string {
+	return stripEmDashes(SanitizeAgentReply(reply, executions))
+}
+
 // SanitizeAgentReply replaces assistant claims that no write tool succeeded.
 func SanitizeAgentReply(reply string, executions []mcp.Execution) string {
 	trimmed := strings.TrimSpace(reply)
