@@ -196,7 +196,7 @@ export function AdminLinkedInPanel() {
         />
         <LinkedInFilterDropdown
           label="More"
-          options={MORE_FILTERS}
+          options={[...MORE_FILTERS]}
           selected={easyApply ? ["EASY_APPLY"] : []}
           onChange={(values) => setEasyApply(values.includes("EASY_APPLY"))}
         />
