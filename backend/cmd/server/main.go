@@ -122,7 +122,9 @@ func main() {
 	mux.Handle("POST /assistant/stream", sessionMiddleware.Wrap(httpapi.AssistantStream()))
 	mux.Handle("GET /public/{username}", httpapi.PublicPortfolio(pgStore))
 	mux.Handle("GET /public/{username}/{slug}", httpapi.PublicPortfolio(pgStore))
-	mux.Handle("POST /internal/cron/job-automations", httpapi.JobAutomationsCron(autoRunner, cfg.CronSecret))
+	cronHandler := httpapi.JobAutomationsCron(autoRunner, cfg.CronSecret)
+	mux.Handle("GET /internal/cron/job-automations", cronHandler)
+	mux.Handle("POST /internal/cron/job-automations", cronHandler)
 
 	corsHandler := cors.New(cors.Options{
 		AllowedOrigins:   []string{cfg.CORSOrigin},
