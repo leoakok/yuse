@@ -137,6 +137,18 @@ type AssistantTurnResult struct {
 	PortfolioWithContent *PortfolioWithContent `json:"portfolioWithContent,omitempty"`
 }
 
+type AutomationRun struct {
+	ID           string              `json:"id"`
+	AutomationID string              `json:"automationId"`
+	StartedAt    string              `json:"startedAt"`
+	FinishedAt   *string             `json:"finishedAt,omitempty"`
+	Status       AutomationRunStatus `json:"status"`
+	JobsFetched  int                 `json:"jobsFetched"`
+	JobsMatched  int                 `json:"jobsMatched"`
+	JobsEmailed  int                 `json:"jobsEmailed"`
+	Error        *string             `json:"error,omitempty"`
+}
+
 type ConnectionStatus struct {
 	Provider    ConnectionProvider `json:"provider"`
 	Connected   bool               `json:"connected"`
@@ -173,6 +185,24 @@ type CreateInviteLinkInput struct {
 	// When set, caps total redemptions across all emails.
 	MaxUses   *int    `json:"maxUses,omitempty"`
 	ExpiresAt *string `json:"expiresAt,omitempty"`
+}
+
+type CreateJobAutomationInput struct {
+	Name             string                    `json:"name"`
+	Enabled          *bool                     `json:"enabled,omitempty"`
+	Keywords         *string                   `json:"keywords,omitempty"`
+	GeoID            *string                   `json:"geoId,omitempty"`
+	GeoLabel         *string                   `json:"geoLabel,omitempty"`
+	TimeFilter       *string                   `json:"timeFilter,omitempty"`
+	WorkplaceTypes   []LinkedInWorkplaceType   `json:"workplaceTypes,omitempty"`
+	ExperienceLevels []LinkedInExperienceLevel `json:"experienceLevels,omitempty"`
+	EmploymentTypes  []LinkedInEmploymentType  `json:"employmentTypes,omitempty"`
+	EasyApply        *bool                     `json:"easyApply,omitempty"`
+	SortBy           *LinkedInJobSortBy        `json:"sortBy,omitempty"`
+	MaxResults       *int                      `json:"maxResults,omitempty"`
+	MatchCriteria    string                    `json:"matchCriteria"`
+	IntervalMinutes  int                       `json:"intervalMinutes"`
+	NotifyEmail      *string                   `json:"notifyEmail,omitempty"`
 }
 
 type CreateKnowledgeEntryInput struct {
@@ -220,6 +250,36 @@ type InviteLink struct {
 	URLPath string `json:"urlPath"`
 }
 
+// Admin-only scheduled LinkedIn job search automation.
+type JobAutomation struct {
+	ID               string                    `json:"id"`
+	Name             string                    `json:"name"`
+	Enabled          bool                      `json:"enabled"`
+	Keywords         *string                   `json:"keywords,omitempty"`
+	GeoID            *string                   `json:"geoId,omitempty"`
+	GeoLabel         *string                   `json:"geoLabel,omitempty"`
+	TimeFilter       string                    `json:"timeFilter"`
+	WorkplaceTypes   []LinkedInWorkplaceType   `json:"workplaceTypes"`
+	ExperienceLevels []LinkedInExperienceLevel `json:"experienceLevels"`
+	EmploymentTypes  []LinkedInEmploymentType  `json:"employmentTypes"`
+	EasyApply        bool                      `json:"easyApply"`
+	SortBy           LinkedInJobSortBy         `json:"sortBy"`
+	MaxResults       int                       `json:"maxResults"`
+	MatchCriteria    string                    `json:"matchCriteria"`
+	IntervalMinutes  int                       `json:"intervalMinutes"`
+	NextRunAt        *string                   `json:"nextRunAt,omitempty"`
+	LastRunAt        *string                   `json:"lastRunAt,omitempty"`
+	NotifyEmail      string                    `json:"notifyEmail"`
+	SessionInvalid   bool                      `json:"sessionInvalid"`
+	CreatedAt        string                    `json:"createdAt"`
+	UpdatedAt        string                    `json:"updatedAt"`
+}
+
+type JobAutomationRunResult struct {
+	Run     *AutomationRun     `json:"run"`
+	Matches []*LinkedInJobCard `json:"matches"`
+}
+
 // A curated, tag-keyed guidance entry the agent injects into context based on the detected category.
 type KnowledgeEntry struct {
 	ID        string            `json:"id"`
@@ -233,6 +293,12 @@ type KnowledgeEntry struct {
 	UpdatedAt string            `json:"updatedAt"`
 }
 
+// LinkedIn geo location suggestion (admin tooling).
+type LinkedInGeoLocation struct {
+	GeoID string `json:"geoId"`
+	Label string `json:"label"`
+}
+
 // LinkedIn job search result (admin tooling).
 type LinkedInJobCard struct {
 	JobID          string  `json:"jobId"`
@@ -244,6 +310,11 @@ type LinkedInJobCard struct {
 	ListedAt       *string `json:"listedAt,omitempty"`
 	Description    *string `json:"description,omitempty"`
 	URL            string  `json:"url"`
+}
+
+type LinkedInSessionStatus struct {
+	Configured bool    `json:"configured"`
+	UpdatedAt  *string `json:"updatedAt,omitempty"`
 }
 
 type Mutation struct {
@@ -525,6 +596,25 @@ type UpdateInviteLinkInput struct {
 	MaxUses       *int    `json:"maxUses,omitempty"`
 	IsActive      *bool   `json:"isActive,omitempty"`
 	ExpiresAt     *string `json:"expiresAt,omitempty"`
+}
+
+type UpdateJobAutomationInput struct {
+	ID               string                    `json:"id"`
+	Name             *string                   `json:"name,omitempty"`
+	Enabled          *bool                     `json:"enabled,omitempty"`
+	Keywords         *string                   `json:"keywords,omitempty"`
+	GeoID            *string                   `json:"geoId,omitempty"`
+	GeoLabel         *string                   `json:"geoLabel,omitempty"`
+	TimeFilter       *string                   `json:"timeFilter,omitempty"`
+	WorkplaceTypes   []LinkedInWorkplaceType   `json:"workplaceTypes,omitempty"`
+	ExperienceLevels []LinkedInExperienceLevel `json:"experienceLevels,omitempty"`
+	EmploymentTypes  []LinkedInEmploymentType  `json:"employmentTypes,omitempty"`
+	EasyApply        *bool                     `json:"easyApply,omitempty"`
+	SortBy           *LinkedInJobSortBy        `json:"sortBy,omitempty"`
+	MaxResults       *int                      `json:"maxResults,omitempty"`
+	MatchCriteria    *string                   `json:"matchCriteria,omitempty"`
+	IntervalMinutes  *int                      `json:"intervalMinutes,omitempty"`
+	NotifyEmail      *string                   `json:"notifyEmail,omitempty"`
 }
 
 type UpdateKnowledgeEntryInput struct {
@@ -943,6 +1033,65 @@ func (e *AssistantView) UnmarshalJSON(b []byte) error {
 }
 
 func (e AssistantView) MarshalJSON() ([]byte, error) {
+	var buf bytes.Buffer
+	e.MarshalGQL(&buf)
+	return buf.Bytes(), nil
+}
+
+type AutomationRunStatus string
+
+const (
+	AutomationRunStatusRunning AutomationRunStatus = "RUNNING"
+	AutomationRunStatusSuccess AutomationRunStatus = "SUCCESS"
+	AutomationRunStatusFailed  AutomationRunStatus = "FAILED"
+	AutomationRunStatusSkipped AutomationRunStatus = "SKIPPED"
+)
+
+var AllAutomationRunStatus = []AutomationRunStatus{
+	AutomationRunStatusRunning,
+	AutomationRunStatusSuccess,
+	AutomationRunStatusFailed,
+	AutomationRunStatusSkipped,
+}
+
+func (e AutomationRunStatus) IsValid() bool {
+	switch e {
+	case AutomationRunStatusRunning, AutomationRunStatusSuccess, AutomationRunStatusFailed, AutomationRunStatusSkipped:
+		return true
+	}
+	return false
+}
+
+func (e AutomationRunStatus) String() string {
+	return string(e)
+}
+
+func (e *AutomationRunStatus) UnmarshalGQL(v any) error {
+	str, ok := v.(string)
+	if !ok {
+		return fmt.Errorf("enums must be strings")
+	}
+
+	*e = AutomationRunStatus(str)
+	if !e.IsValid() {
+		return fmt.Errorf("%s is not a valid AutomationRunStatus", str)
+	}
+	return nil
+}
+
+func (e AutomationRunStatus) MarshalGQL(w io.Writer) {
+	fmt.Fprint(w, strconv.Quote(e.String()))
+}
+
+func (e *AutomationRunStatus) UnmarshalJSON(b []byte) error {
+	s, err := strconv.Unquote(string(b))
+	if err != nil {
+		return err
+	}
+	return e.UnmarshalGQL(s)
+}
+
+func (e AutomationRunStatus) MarshalJSON() ([]byte, error) {
 	var buf bytes.Buffer
 	e.MarshalGQL(&buf)
 	return buf.Bytes(), nil
@@ -2293,6 +2442,7 @@ const (
 	LinkedInEmploymentTypeTemporary  LinkedInEmploymentType = "TEMPORARY"
 	LinkedInEmploymentTypeInternship LinkedInEmploymentType = "INTERNSHIP"
 	LinkedInEmploymentTypeVolunteer  LinkedInEmploymentType = "VOLUNTEER"
+	LinkedInEmploymentTypeOther      LinkedInEmploymentType = "OTHER"
 )
 
 var AllLinkedInEmploymentType = []LinkedInEmploymentType{
@@ -2302,11 +2452,12 @@ var AllLinkedInEmploymentType = []LinkedInEmploymentType{
 	LinkedInEmploymentTypeTemporary,
 	LinkedInEmploymentTypeInternship,
 	LinkedInEmploymentTypeVolunteer,
+	LinkedInEmploymentTypeOther,
 }
 
 func (e LinkedInEmploymentType) IsValid() bool {
 	switch e {
-	case LinkedInEmploymentTypeFullTime, LinkedInEmploymentTypePartTime, LinkedInEmploymentTypeContract, LinkedInEmploymentTypeTemporary, LinkedInEmploymentTypeInternship, LinkedInEmploymentTypeVolunteer:
+	case LinkedInEmploymentTypeFullTime, LinkedInEmploymentTypePartTime, LinkedInEmploymentTypeContract, LinkedInEmploymentTypeTemporary, LinkedInEmploymentTypeInternship, LinkedInEmploymentTypeVolunteer, LinkedInEmploymentTypeOther:
 		return true
 	}
 	return false
@@ -2405,6 +2556,61 @@ func (e *LinkedInExperienceLevel) UnmarshalJSON(b []byte) error {
 }
 
 func (e LinkedInExperienceLevel) MarshalJSON() ([]byte, error) {
+	var buf bytes.Buffer
+	e.MarshalGQL(&buf)
+	return buf.Bytes(), nil
+}
+
+type LinkedInJobSortBy string
+
+const (
+	LinkedInJobSortByDateDesc  LinkedInJobSortBy = "DATE_DESC"
+	LinkedInJobSortByRelevance LinkedInJobSortBy = "RELEVANCE"
+)
+
+var AllLinkedInJobSortBy = []LinkedInJobSortBy{
+	LinkedInJobSortByDateDesc,
+	LinkedInJobSortByRelevance,
+}
+
+func (e LinkedInJobSortBy) IsValid() bool {
+	switch e {
+	case LinkedInJobSortByDateDesc, LinkedInJobSortByRelevance:
+		return true
+	}
+	return false
+}
+
+func (e LinkedInJobSortBy) String() string {
+	return string(e)
+}
+
+func (e *LinkedInJobSortBy) UnmarshalGQL(v any) error {
+	str, ok := v.(string)
+	if !ok {
+		return fmt.Errorf("enums must be strings")
+	}
+
+	*e = LinkedInJobSortBy(str)
+	if !e.IsValid() {
+		return fmt.Errorf("%s is not a valid LinkedInJobSortBy", str)
+	}
+	return nil
+}
+
+func (e LinkedInJobSortBy) MarshalGQL(w io.Writer) {
+	fmt.Fprint(w, strconv.Quote(e.String()))
+}
+
+func (e *LinkedInJobSortBy) UnmarshalJSON(b []byte) error {
+	s, err := strconv.Unquote(string(b))
+	if err != nil {
+		return err
+	}
+	return e.UnmarshalGQL(s)
+}
+
+func (e LinkedInJobSortBy) MarshalJSON() ([]byte, error) {
 	var buf bytes.Buffer
 	e.MarshalGQL(&buf)
 	return buf.Bytes(), nil

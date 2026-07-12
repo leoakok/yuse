@@ -1629,23 +1629,38 @@ export const ADMIN_AUDIT_LOG_QUERY = `
   }
 `;
 
+export const ADMIN_LINKEDIN_GEO_SEARCH_QUERY = `
+  query AdminLinkedInGeoSearch($keywords: String!) {
+    adminLinkedInGeoSearch(keywords: $keywords) {
+      geoId
+      label
+    }
+  }
+`;
+
 export const ADMIN_LINKEDIN_JOB_SEARCH_QUERY = `
   query AdminLinkedInJobSearch(
     $keywords: String
     $geoId: String
     $timeFilter: String
+    $sortBy: LinkedInJobSortBy
+    $maxResults: Int
     $workplaceTypes: [LinkedInWorkplaceType!]
     $experienceLevels: [LinkedInExperienceLevel!]
     $employmentTypes: [LinkedInEmploymentType!]
+    $easyApply: Boolean
     $sessionCookie: String
   ) {
     adminLinkedInJobSearch(
       keywords: $keywords
       geoId: $geoId
       timeFilter: $timeFilter
+      sortBy: $sortBy
+      maxResults: $maxResults
       workplaceTypes: $workplaceTypes
       experienceLevels: $experienceLevels
       employmentTypes: $employmentTypes
+      easyApply: $easyApply
       sessionCookie: $sessionCookie
     ) {
       jobId
@@ -1805,6 +1820,124 @@ ${RESUME_SETTINGS_FIELDS}
           createdAt
           updatedAt
         }
+      }
+    }
+  }
+`;
+
+const JOB_AUTOMATION_FIELDS = `
+  id
+  name
+  enabled
+  keywords
+  geoId
+  geoLabel
+  timeFilter
+  workplaceTypes
+  experienceLevels
+  employmentTypes
+  easyApply
+  sortBy
+  maxResults
+  matchCriteria
+  intervalMinutes
+  nextRunAt
+  lastRunAt
+  notifyEmail
+  sessionInvalid
+  createdAt
+  updatedAt
+`;
+
+const AUTOMATION_RUN_FIELDS = `
+  id
+  automationId
+  startedAt
+  finishedAt
+  status
+  jobsFetched
+  jobsMatched
+  jobsEmailed
+  error
+`;
+
+export const JOB_AUTOMATIONS_QUERY = `
+  query JobAutomations {
+    jobAutomations {
+      ${JOB_AUTOMATION_FIELDS}
+    }
+  }
+`;
+
+export const AUTOMATION_RUNS_QUERY = `
+  query AutomationRuns($automationId: ID!, $limit: Int) {
+    automationRuns(automationId: $automationId, limit: $limit) {
+      ${AUTOMATION_RUN_FIELDS}
+    }
+  }
+`;
+
+export const LINKEDIN_SESSION_STATUS_QUERY = `
+  query LinkedInSessionStatus {
+    linkedInSessionStatus {
+      configured
+      updatedAt
+    }
+  }
+`;
+
+export const CREATE_JOB_AUTOMATION_MUTATION = `
+  mutation CreateJobAutomation($input: CreateJobAutomationInput!) {
+    createJobAutomation(input: $input) {
+      ${JOB_AUTOMATION_FIELDS}
+    }
+  }
+`;
+
+export const UPDATE_JOB_AUTOMATION_MUTATION = `
+  mutation UpdateJobAutomation($input: UpdateJobAutomationInput!) {
+    updateJobAutomation(input: $input) {
+      ${JOB_AUTOMATION_FIELDS}
+    }
+  }
+`;
+
+export const DELETE_JOB_AUTOMATION_MUTATION = `
+  mutation DeleteJobAutomation($id: ID!) {
+    deleteJobAutomation(id: $id)
+  }
+`;
+
+export const SAVE_LINKEDIN_SESSION_MUTATION = `
+  mutation SaveLinkedInSession($cookie: String!) {
+    saveLinkedInSession(cookie: $cookie) {
+      configured
+      updatedAt
+    }
+  }
+`;
+
+export const CLEAR_LINKEDIN_SESSION_MUTATION = `
+  mutation ClearLinkedInSession {
+    clearLinkedInSession {
+      configured
+      updatedAt
+    }
+  }
+`;
+
+export const RUN_JOB_AUTOMATION_NOW_MUTATION = `
+  mutation RunJobAutomationNow($id: ID!) {
+    runJobAutomationNow(id: $id) {
+      run {
+        ${AUTOMATION_RUN_FIELDS}
+      }
+      matches {
+        jobId
+        title
+        company
+        location
+        url
       }
     }
   }

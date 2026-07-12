@@ -1371,3 +1371,39 @@ func (m *Memory) UpdateInviteLink(_ model.UpdateInviteLinkInput) (*model.InviteL
 	return nil, fmt.Errorf("not supported in memory store")
 }
 
+func (m *Memory) ListJobAutomations() ([]*JobAutomationRecord, error) {
+	return nil, nil
+}
+
+func (m *Memory) GetJobAutomation(_ string) (*JobAutomationRecord, error) {
+	return nil, nil
+}
+
+func (m *Memory) CreateJobAutomation(_ *JobAutomationRecord) (*JobAutomationRecord, error) {
+	return nil, fmt.Errorf("not supported in memory store")
+}
+
+func (m *Memory) UpdateJobAutomation(_ string, _ func(*JobAutomationRecord) error) (*JobAutomationRecord, error) {
+	return nil, fmt.Errorf("not supported in memory store")
+}
+
+func (m *Memory) DeleteJobAutomation(_ string) (bool, error) {
+	return false, fmt.Errorf("not supported in memory store")
+}
+
+func (m *Memory) ListAutomationRuns(_ string, _ int) ([]*AutomationRunRecord, error) {
+	return nil, nil
+}
+
+func (m *Memory) SaveLinkedInSession(_ string) (bool, *time.Time, error) {
+	return false, nil, fmt.Errorf("not supported in memory store")
+}
+
+func (m *Memory) ClearLinkedInSession() (bool, error) {
+	return false, fmt.Errorf("not supported in memory store")
+}
+
+func (m *Memory) LinkedInSessionConfigured() (bool, *time.Time, error) {
+	return false, nil, nil
+}
+

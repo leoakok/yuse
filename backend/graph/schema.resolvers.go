@@ -395,6 +395,36 @@ func (r *mutationResolver) UpdateInviteLink(ctx context.Context, input model.Upd
 	return scope.CV(ctx).UpdateInviteLink(input)
 }
 
+// CreateJobAutomation is the resolver for the createJobAutomation field.
+func (r *mutationResolver) CreateJobAutomation(ctx context.Context, input model.CreateJobAutomationInput) (*model.JobAutomation, error) {
+	return scope.CV(ctx).CreateJobAutomation(input)
+}
+
+// UpdateJobAutomation is the resolver for the updateJobAutomation field.
+func (r *mutationResolver) UpdateJobAutomation(ctx context.Context, input model.UpdateJobAutomationInput) (*model.JobAutomation, error) {
+	return scope.CV(ctx).UpdateJobAutomation(input)
+}
+
+// DeleteJobAutomation is the resolver for the deleteJobAutomation field.
+func (r *mutationResolver) DeleteJobAutomation(ctx context.Context, id string) (bool, error) {
+	return scope.CV(ctx).DeleteJobAutomation(id)
+}
+
+// SaveLinkedInSession is the resolver for the saveLinkedInSession field.
+func (r *mutationResolver) SaveLinkedInSession(ctx context.Context, cookie string) (*model.LinkedInSessionStatus, error) {
+	return scope.CV(ctx).SaveLinkedInSession(cookie)
+}
+
+// ClearLinkedInSession is the resolver for the clearLinkedInSession field.
+func (r *mutationResolver) ClearLinkedInSession(ctx context.Context) (*model.LinkedInSessionStatus, error) {
+	return scope.CV(ctx).ClearLinkedInSession()
+}
+
+// RunJobAutomationNow is the resolver for the runJobAutomationNow field.
+func (r *mutationResolver) RunJobAutomationNow(ctx context.Context, id string) (*model.JobAutomationRunResult, error) {
+	return scope.CV(ctx).RunJobAutomationNow(ctx, id)
+}
+
 // Me is the resolver for the me field.
 func (r *queryResolver) Me(ctx context.Context) (*model.User, error) {
 	return scope.CV(ctx).Me(), nil
@@ -634,14 +664,43 @@ func (r *queryResolver) AdminAuditLog(ctx context.Context, limit *int, offset *i
 	return scope.CV(ctx).ListAdminAuditLog(lim, off)
 }
 
+// AdminLinkedInGeoSearch is the resolver for the adminLinkedInGeoSearch field.
+func (r *queryResolver) AdminLinkedInGeoSearch(ctx context.Context, keywords string) ([]*model.LinkedInGeoLocation, error) {
+	return scope.CV(ctx).AdminLinkedInGeoSearch(ctx, keywords)
+}
+
 // AdminLinkedInJobSearch is the resolver for the adminLinkedInJobSearch field.
-func (r *queryResolver) AdminLinkedInJobSearch(ctx context.Context, keywords *string, geoID *string, timeFilter *string, workplaceTypes []model.LinkedInWorkplaceType, experienceLevels []model.LinkedInExperienceLevel, employmentTypes []model.LinkedInEmploymentType, sessionCookie *string) ([]*model.LinkedInJobCard, error) {
-	return scope.CV(ctx).AdminLinkedInJobSearch(ctx, keywords, geoID, timeFilter, sessionCookie, workplaceTypes, experienceLevels, employmentTypes)
+func (r *queryResolver) AdminLinkedInJobSearch(ctx context.Context, keywords *string, geoID *string, timeFilter *string, sortBy *model.LinkedInJobSortBy, maxResults *int, workplaceTypes []model.LinkedInWorkplaceType, experienceLevels []model.LinkedInExperienceLevel, employmentTypes []model.LinkedInEmploymentType, easyApply *bool, sessionCookie *string) ([]*model.LinkedInJobCard, error) {
+	return scope.CV(ctx).AdminLinkedInJobSearch(ctx, keywords, geoID, timeFilter, sessionCookie, sortBy, maxResults, workplaceTypes, experienceLevels, employmentTypes, easyApply)
 }
 
 // AdminInviteLinks is the resolver for the adminInviteLinks field.
 func (r *queryResolver) AdminInviteLinks(ctx context.Context) ([]*model.InviteLink, error) {
 	return scope.CV(ctx).ListInviteLinks()
+}
+
+// JobAutomations is the resolver for the jobAutomations field.
+func (r *queryResolver) JobAutomations(ctx context.Context) ([]*model.JobAutomation, error) {
+	return scope.CV(ctx).ListJobAutomations()
+}
+
+// JobAutomation is the resolver for the jobAutomation field.
+func (r *queryResolver) JobAutomation(ctx context.Context, id string) (*model.JobAutomation, error) {
+	return scope.CV(ctx).GetJobAutomation(id)
+}
+
+// AutomationRuns is the resolver for the automationRuns field.
+func (r *queryResolver) AutomationRuns(ctx context.Context, automationID string, limit *int) ([]*model.AutomationRun, error) {
+	l := 10
+	if limit != nil {
+		l = *limit
+	}
+	return scope.CV(ctx).ListAutomationRuns(automationID, l)
+}
+
+// LinkedInSessionStatus is the resolver for the linkedInSessionStatus field.
+func (r *queryResolver) LinkedInSessionStatus(ctx context.Context) (*model.LinkedInSessionStatus, error) {
+	return scope.CV(ctx).LinkedInSessionStatus()
 }
 
 // HasPasswordCredential is the resolver for the hasPasswordCredential field.

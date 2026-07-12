@@ -36,6 +36,7 @@ type JobCard struct {
 }
 
 // SearchJobs queries LinkedIn Voyager job search (admin tooling).
+// It pages Voyager until maxResults is reached or no more cards are returned.
 func SearchJobs(ctx context.Context, params SearchParams) ([]JobCard, error) {
 	session, err := parseSessionInput(params.SessionCookie)
 	if err != nil {
@@ -54,10 +55,44 @@ func SearchJobs(ctx context.Context, params SearchParams) ([]JobCard, error) {
 	if !hasSearchCriteria(params) {
 		return nil, fmt.Errorf("enter keywords, a geoId, or at least one filter")
 	}
-	if strings.TrimSpace(params.TimeFilter) == "" {
-		params.TimeFilter = defaultTimeFilter
+	normalizedTime, err := NormalizeTimeFilter(params.TimeFilter)
+	if err != nil {
+		return nil, err
+	}
+	params.TimeFilter = normalizedTime
+	normalizedSort, err := NormalizeSortBy(params.SortBy)
+	if err != nil {
+		return nil, err
+	}
+	params.SortBy = normalizedSort
+	maxResults := normalizeMaxResults(params.MaxResults)
+
+	var all []JobCard
+	for start := 0; len(all) < maxResults; start += defaultCount {
+		pageParams := params
+		pageParams.Start = start
+
+		cards, err := searchJobsPage(ctx, session, pageParams)
+		if err != nil {
+			return nil, err
+		}
+		if len(cards) == 0 {
+			break
+		}
+		all = append(all, cards...)
+		all = dedupeJobCards(all)
+		if len(cards) < defaultCount {
+			break
+		}
 	}
 
+	if len(all) > maxResults {
+		all = all[:maxResults]
+	}
+	return enrichJobDescriptions(ctx, session, all), nil
+}
+
+func searchJobsPage(ctx context.Context, session sessionCookies, params SearchParams) ([]JobCard, error) {
 	reqURL := buildJobSearchURL(params)
 	req, err := http.NewRequestWithContext(ctx, http.MethodGet, reqURL, nil)
 	if err != nil {
@@ -82,11 +117,7 @@ func SearchJobs(ctx context.Context, params SearchParams) ([]JobCard, error) {
 		return nil, linkedInHTTPError(resp.StatusCode, body)
 	}
 
-	cards, err := parseJobCards(body)
-	if err != nil {
-		return nil, err
-	}
-	return enrichJobDescriptions(ctx, session, cards), nil
+	return parseJobCards(body)
 }
 
 func buildJobSearchQuery(params SearchParams) string {
@@ -99,8 +130,12 @@ func buildJobSearchQuery(params SearchParams) string {
 		parts = append(parts, "locationUnion:(geoId:"+params.GeoID+")")
 	}
 
+	sortBy := params.SortBy
+	if sortBy == "" {
+		sortBy = sortByDateDesc
+	}
 	filterParts := []string{
-		"sortBy:List(DD)",
+		"sortBy:List(" + sortBy + ")",
 		"timePostedRange:List(" + params.TimeFilter + ")",
 	}
 	if list := restliList(linkedInWorkplaceCodes(params.WorkplaceTypes)); list != "" {
@@ -111,6 +146,9 @@ func buildJobSearchQuery(params SearchParams) string {
 	}
 	if list := restliList(linkedInEmploymentCodes(params.EmploymentTypes)); list != "" {
 		filterParts = append(filterParts, "jobType:"+list)
+	}
+	if params.EasyApply {
+		filterParts = append(filterParts, "applyWithLinkedin:List(true)")
 	}
 	parts = append(parts, "selectedFilters:("+strings.Join(filterParts, ",")+")")
 	return "(" + strings.Join(parts, ",") + ")"

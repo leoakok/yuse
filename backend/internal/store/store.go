@@ -1,6 +1,8 @@
 package store
 
 import (
+	"time"
+
 	"github.com/leo/ai-weekend/backend/graph/model"
 )
 
@@ -100,6 +102,15 @@ type Store interface {
 	ListInviteLinks() ([]*model.InviteLink, error)
 	CreateInviteLink(input model.CreateInviteLinkInput) (*model.InviteLink, error)
 	UpdateInviteLink(input model.UpdateInviteLinkInput) (*model.InviteLink, error)
+	ListJobAutomations() ([]*JobAutomationRecord, error)
+	GetJobAutomation(id string) (*JobAutomationRecord, error)
+	CreateJobAutomation(rec *JobAutomationRecord) (*JobAutomationRecord, error)
+	UpdateJobAutomation(id string, update func(*JobAutomationRecord) error) (*JobAutomationRecord, error)
+	DeleteJobAutomation(id string) (bool, error)
+	ListAutomationRuns(automationID string, limit int) ([]*AutomationRunRecord, error)
+	SaveLinkedInSession(cookie string) (bool, *time.Time, error)
+	ClearLinkedInSession() (bool, error)
+	LinkedInSessionConfigured() (bool, *time.Time, error)
 	ChangePassword(userID, currentPassword, newPassword string) error
 	ChangeEmail(userID, currentPassword, newEmail string, verificationRequired bool) (*model.User, error)
 }

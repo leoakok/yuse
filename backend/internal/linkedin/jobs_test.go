@@ -100,6 +100,17 @@ func TestBuildJobSearchQueryMultiWorkplace(t *testing.T) {
 	}
 }
 
+func TestBuildJobSearchQueryEasyApply(t *testing.T) {
+	got := buildJobSearchQuery(SearchParams{
+		Keywords:   "engineer",
+		TimeFilter: "r86400",
+		EasyApply:  true,
+	})
+	if !strings.Contains(got, "applyWithLinkedin:List(true)") {
+		t.Fatalf("missing easy apply filter: %s", got)
+	}
+}
+
 func TestParseWorkplaceAndLocation(t *testing.T) {
 	loc, workplace := parseWorkplaceAndLocation("Kartal, Istanbul, Türkiye (Hybrid)")
 	if loc != "Kartal, Istanbul, Türkiye" || workplace != "Hybrid" {

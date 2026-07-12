@@ -9,12 +9,17 @@ import (
 
 func buildJobSearchURL(params SearchParams) string {
 	query := buildJobSearchQuery(params)
+	start := params.Start
+	if start < 0 {
+		start = 0
+	}
 	// Voyager expects RestLI query syntax with raw colons/parens (not url.Values.Encode).
 	return fmt.Sprintf(
-		"https://www.linkedin.com%s?decorationId=%s&count=%d&q=jobSearch&query=%s",
+		"https://www.linkedin.com%s?decorationId=%s&count=%d&start=%d&q=jobSearch&query=%s",
 		voyagerJobCardsPath,
 		url.QueryEscape("com.linkedin.voyager.dash.deco.jobs.search.JobSearchCardsCollection-174"),
 		defaultCount,
+		start,
 		query,
 	)
 }

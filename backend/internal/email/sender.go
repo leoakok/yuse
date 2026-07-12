@@ -118,3 +118,37 @@ func SendPasswordResetEmail(cfg Config, to, resetURL string) error {
 	}
 	return cfg.sendOrLog("password reset", to, "Reset your Yuse password", html)
 }
+
+// SendJobAutomationMatchesEmail notifies a user about new job matches.
+func SendJobAutomationMatchesEmail(cfg Config, to, automationName string, jobs []jobMatchEmailItem) error {
+	body, err := jobAutomationMatchesBody(automationName, jobs)
+	if err != nil {
+		return err
+	}
+	subject := fmt.Sprintf("%d new job match%s", len(jobs), pluralSuffix(len(jobs)))
+	html, err := renderEmail("New job matches", subject, body)
+	if err != nil {
+		return err
+	}
+	return cfg.sendRequired("job automation matches", to, subject, html)
+}
+
+// SendLinkedInSessionExpiredEmail asks the user to refresh their LinkedIn cookie.
+func SendLinkedInSessionExpiredEmail(cfg Config, to, appURL string) error {
+	body, err := linkedInSessionExpiredBody(strings.TrimRight(appURL, "/"))
+	if err != nil {
+		return err
+	}
+	html, err := renderEmail("LinkedIn session expired", "Refresh your LinkedIn session to resume automations.", body)
+	if err != nil {
+		return err
+	}
+	return cfg.sendOrLog("linkedin session expired", to, "LinkedIn session expired — automations paused", html)
+}
+
+func pluralSuffix(count int) string {
+	if count == 1 {
+		return ""
+	}
+	return "es"
+}

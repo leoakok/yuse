@@ -136,3 +136,74 @@ func passwordResetBody(resetURL string) (string, error) {
 		brandMuted,
 	), nil
 }
+
+func jobAutomationMatchesBody(automationName string, jobs []jobMatchEmailItem) (string, error) {
+	var items strings.Builder
+	for _, job := range jobs {
+		company := strings.TrimSpace(job.Company)
+		if company != "" {
+			company = " · " + template.HTMLEscapeString(company)
+		}
+		location := strings.TrimSpace(job.Location)
+		locLine := ""
+		if location != "" {
+			locLine = fmt.Sprintf(`<p style="margin:4px 0 0;font-size:14px;color:%s;">%s</p>`, brandMuted, template.HTMLEscapeString(location))
+		}
+		items.WriteString(fmt.Sprintf(`<div style="margin:0 0 20px;padding-bottom:20px;border-bottom:1px solid #e8e4df;">
+<p style="margin:0;font-size:16px;font-weight:600;color:%s;"><a href="%s" style="color:%s;text-decoration:none;">%s</a>%s</p>
+%s
+</div>`,
+			brandForeground,
+			template.HTMLEscapeString(job.URL),
+			brandPrimary,
+			template.HTMLEscapeString(job.Title),
+			company,
+			locLine,
+		))
+	}
+	name := strings.TrimSpace(automationName)
+	if name == "" {
+		name = "your automation"
+	}
+	return fmt.Sprintf(`<p style="margin:0 0 16px;font-size:16px;line-height:1.6;color:%s;">%d new job%s matched <strong>%s</strong>.</p>
+%s
+<p style="margin:0;font-size:14px;line-height:1.5;color:%s;">Matches are based on your criteria. Tune the automation if results are too broad or narrow.</p>`,
+		brandForeground,
+		len(jobs),
+		pluralS(len(jobs)),
+		template.HTMLEscapeString(name),
+		items.String(),
+		brandMuted,
+	), nil
+}
+
+func linkedInSessionExpiredBody(appURL string) (string, error) {
+	btn, err := renderButton(appURL+"/admin", "Open admin settings")
+	if err != nil {
+		return "", err
+	}
+	return fmt.Sprintf(`<p style="margin:0 0 16px;font-size:16px;line-height:1.6;color:%s;">Your saved LinkedIn session expired or was rejected.</p>
+<p style="margin:0 0 16px;font-size:16px;line-height:1.6;color:%s;">Job search automations are paused until you paste a fresh cookie from LinkedIn DevTools.</p>
+%s`,
+		brandForeground,
+		brandForeground,
+		btn,
+	), nil
+}
+
+type jobMatchEmailItem struct {
+	Title    string
+	Company  string
+	Location string
+	URL      string
+}
+
+// JobMatchEmailItem is one job row in a match notification email.
+type JobMatchEmailItem = jobMatchEmailItem
+
+func pluralS(count int) string {
+	if count == 1 {
+		return ""
+	}
+	return "s"
+}

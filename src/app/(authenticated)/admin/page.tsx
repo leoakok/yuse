@@ -6,6 +6,7 @@ export default function AdminPage() {
     <CatalogShell
       title="Admin"
       description="Manage beta access, users, and agent tuning."
+      fillHeight
     >
       <AdminWorkspace />
     </CatalogShell>

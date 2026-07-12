@@ -48,6 +48,7 @@ type Config struct {
 	RateLimitWaitlistWindow    time.Duration
 	RateLimitAccessCheckPerIP  int
 	RateLimitAccessCheckWindow time.Duration
+	CronSecret                 string
 }
 
 func Load() (Config, error) {
@@ -91,6 +92,7 @@ func Load() (Config, error) {
 		RateLimitWaitlistWindow:     envDuration("RATE_LIMIT_WAITLIST_WINDOW", time.Hour),
 		RateLimitAccessCheckPerIP:   envInt("RATE_LIMIT_ACCESS_CHECK_PER_IP", 5),
 		RateLimitAccessCheckWindow: envDuration("RATE_LIMIT_ACCESS_CHECK_WINDOW", 15*time.Minute),
+		CronSecret:                 strings.TrimSpace(os.Getenv("CRON_SECRET")),
 	}
 
 	if cfg.GitHubOAuthCallbackURL == "" {

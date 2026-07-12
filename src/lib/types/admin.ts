@@ -30,7 +30,7 @@ export type AdminAuditLogEntry = {
   createdAt: string;
 };
 
-export type AdminSection = "users" | "waitlist" | "invites" | "audit" | "emails" | "linkedin" | "agent" | "system";
+export type AdminSection = "users" | "waitlist" | "invites" | "audit" | "emails" | "linkedin" | "automations" | "agent" | "system";
 
 export type LinkedInWorkplaceType = "REMOTE" | "HYBRID" | "ON_SITE";
 export type LinkedInExperienceLevel =
@@ -46,7 +46,15 @@ export type LinkedInEmploymentType =
   | "CONTRACT"
   | "TEMPORARY"
   | "INTERNSHIP"
-  | "VOLUNTEER";
+  | "VOLUNTEER"
+  | "OTHER";
+
+export type LinkedInJobSortBy = "DATE_DESC" | "RELEVANCE";
+
+export type LinkedInGeoLocation = {
+  geoId: string;
+  label: string;
+};
 
 export type LinkedInJobCard = {
   jobId: string;
@@ -90,4 +98,89 @@ export type PublicInvitePreview = {
   emailRestrict?: string | null;
   remainingUses?: number | null;
   expired: boolean;
+};
+
+export type JobAutomation = {
+  id: string;
+  name: string;
+  enabled: boolean;
+  keywords?: string | null;
+  geoId?: string | null;
+  geoLabel?: string | null;
+  timeFilter: string;
+  workplaceTypes: LinkedInWorkplaceType[];
+  experienceLevels: LinkedInExperienceLevel[];
+  employmentTypes: LinkedInEmploymentType[];
+  easyApply: boolean;
+  sortBy: LinkedInJobSortBy;
+  maxResults: number;
+  matchCriteria: string;
+  intervalMinutes: number;
+  nextRunAt?: string | null;
+  lastRunAt?: string | null;
+  notifyEmail: string;
+  sessionInvalid: boolean;
+  createdAt: string;
+  updatedAt: string;
+};
+
+export type AutomationRunStatus = "RUNNING" | "SUCCESS" | "FAILED" | "SKIPPED";
+
+export type AutomationRun = {
+  id: string;
+  automationId: string;
+  startedAt: string;
+  finishedAt?: string | null;
+  status: AutomationRunStatus;
+  jobsFetched: number;
+  jobsMatched: number;
+  jobsEmailed: number;
+  error?: string | null;
+};
+
+export type LinkedInSessionStatus = {
+  configured: boolean;
+  updatedAt?: string | null;
+};
+
+export type JobAutomationRunResult = {
+  run: AutomationRun;
+  matches: LinkedInJobCard[];
+};
+
+export type CreateJobAutomationInput = {
+  name: string;
+  enabled?: boolean;
+  keywords?: string;
+  geoId?: string;
+  geoLabel?: string;
+  timeFilter?: string;
+  workplaceTypes?: LinkedInWorkplaceType[];
+  experienceLevels?: LinkedInExperienceLevel[];
+  employmentTypes?: LinkedInEmploymentType[];
+  easyApply?: boolean;
+  sortBy?: LinkedInJobSortBy;
+  maxResults?: number;
+  matchCriteria: string;
+  intervalMinutes: number;
+  notifyEmail?: string;
+};
+
+export type UpdateJobAutomationInput = {
+  id: string;
+  name?: string;
+  enabled?: boolean;
+  keywords?: string | null;
+  geoId?: string | null;
+  geoLabel?: string | null;
+  timeFilter?: string;
+  workplaceTypes?: LinkedInWorkplaceType[];
+  experienceLevels?: LinkedInExperienceLevel[];
+  employmentTypes?: LinkedInEmploymentType[];
+  easyApply?: boolean;
+  sortBy?: LinkedInJobSortBy;
+  maxResults?: number;
+  matchCriteria?: string;
+  intervalMinutes?: number;
+  notifyEmail?: string;
 };

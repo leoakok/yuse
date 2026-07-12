@@ -16,6 +16,7 @@ import (
 	"github.com/rs/cors"
 	"github.com/leo/ai-weekend/backend/graph"
 	"github.com/leo/ai-weekend/backend/internal/app"
+	"github.com/leo/ai-weekend/backend/internal/automation"
 	"github.com/leo/ai-weekend/backend/internal/config"
 	"github.com/leo/ai-weekend/backend/internal/email"
 	"github.com/leo/ai-weekend/backend/internal/httpapi"
@@ -50,6 +51,14 @@ func main() {
 		log.Fatal("expected postgres store")
 	}
 
+	autoRunner := &automation.Runner{
+		Pool:      pgStore.Pool(),
+		LLM:       stack.LLM,
+		Email:     emailCfg,
+		AppOrigin: strings.TrimRight(cfg.CORSOrigin, "/"),
+	}
+	stack.CV.ConfigureAutomationRunner(autoRunner)
+
 	loginLimiter := ratelimit.New(cfg.RateLimitLoginPerIP, cfg.RateLimitLoginWindow)
 	registerLimiter := ratelimit.New(cfg.RateLimitRegisterPerIP, cfg.RateLimitRegisterWindow)
 	waitlistLimiter := ratelimit.New(cfg.RateLimitWaitlistPerIP, cfg.RateLimitWaitlistWindow)
@@ -71,6 +80,7 @@ func main() {
 		TestEmailLimiter:          testEmailLimiter,
 		EmailCfg:                  emailCfg,
 		AppOrigin:                 strings.TrimRight(cfg.CORSOrigin, "/"),
+		AutomationRunner:          autoRunner,
 	}
 
 	gqlServer := handler.NewDefaultServer(graph.NewExecutableSchema(graph.Config{
@@ -112,6 +122,7 @@ func main() {
 	mux.Handle("POST /assistant/stream", sessionMiddleware.Wrap(httpapi.AssistantStream()))
 	mux.Handle("GET /public/{username}", httpapi.PublicPortfolio(pgStore))
 	mux.Handle("GET /public/{username}/{slug}", httpapi.PublicPortfolio(pgStore))
+	mux.Handle("POST /internal/cron/job-automations", httpapi.JobAutomationsCron(autoRunner, cfg.CronSecret))
 
 	corsHandler := cors.New(cors.Options{
 		AllowedOrigins:   []string{cfg.CORSOrigin},

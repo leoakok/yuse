@@ -8,6 +8,7 @@ import (
 	"time"
 
 	"github.com/google/uuid"
+	"github.com/leo/ai-weekend/backend/internal/automation"
 	"github.com/leo/ai-weekend/backend/graph/model"
 	"github.com/leo/ai-weekend/backend/internal/llm"
 	"github.com/leo/ai-weekend/backend/internal/mcp"
@@ -17,9 +18,10 @@ import (
 )
 
 type Service struct {
-	store  store.Store
-	llm    *llm.Service
-	photos storage.ProfilePhotoUploader
+	store            store.Store
+	llm              *llm.Service
+	photos           storage.ProfilePhotoUploader
+	automationRunner *automation.Runner
 }
 
 func NewService(dataStore store.Store, llmService *llm.Service, photos storage.ProfilePhotoUploader) *Service {

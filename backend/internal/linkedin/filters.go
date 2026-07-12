@@ -7,9 +7,13 @@ type SearchParams struct {
 	Keywords         string
 	GeoID            string
 	TimeFilter       string
+	SortBy           string
+	MaxResults       int
+	Start            int
 	WorkplaceTypes   []string
 	ExperienceLevels []string
 	EmploymentTypes  []string
+	EasyApply        bool
 	SessionCookie    string
 }
 
@@ -59,6 +63,8 @@ func linkedInEmploymentCode(value string) string {
 		return "I"
 	case "VOLUNTEER", "V":
 		return "V"
+	case "OTHER", "O":
+		return "O"
 	default:
 		return ""
 	}
@@ -122,6 +128,9 @@ func hasSearchCriteria(params SearchParams) bool {
 		return true
 	}
 	if len(params.WorkplaceTypes) > 0 || len(params.ExperienceLevels) > 0 || len(params.EmploymentTypes) > 0 {
+		return true
+	}
+	if params.EasyApply {
 		return true
 	}
 	return false

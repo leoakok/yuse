@@ -118,6 +118,18 @@ type ComplexityRoot struct {
 		ResumeWithContent    func(childComplexity int) int
 	}
 
+	AutomationRun struct {
+		AutomationID func(childComplexity int) int
+		Error        func(childComplexity int) int
+		FinishedAt   func(childComplexity int) int
+		ID           func(childComplexity int) int
+		JobsEmailed  func(childComplexity int) int
+		JobsFetched  func(childComplexity int) int
+		JobsMatched  func(childComplexity int) int
+		StartedAt    func(childComplexity int) int
+		Status       func(childComplexity int) int
+	}
+
 	ConnectionStatus struct {
 		AvatarURL   func(childComplexity int) int
 		Connected   func(childComplexity int) int
@@ -168,6 +180,35 @@ type ComplexityRoot struct {
 		UseCount      func(childComplexity int) int
 	}
 
+	JobAutomation struct {
+		CreatedAt        func(childComplexity int) int
+		EasyApply        func(childComplexity int) int
+		EmploymentTypes  func(childComplexity int) int
+		Enabled          func(childComplexity int) int
+		ExperienceLevels func(childComplexity int) int
+		GeoID            func(childComplexity int) int
+		GeoLabel         func(childComplexity int) int
+		ID               func(childComplexity int) int
+		IntervalMinutes  func(childComplexity int) int
+		Keywords         func(childComplexity int) int
+		LastRunAt        func(childComplexity int) int
+		MatchCriteria    func(childComplexity int) int
+		MaxResults       func(childComplexity int) int
+		Name             func(childComplexity int) int
+		NextRunAt        func(childComplexity int) int
+		NotifyEmail      func(childComplexity int) int
+		SessionInvalid   func(childComplexity int) int
+		SortBy           func(childComplexity int) int
+		TimeFilter       func(childComplexity int) int
+		UpdatedAt        func(childComplexity int) int
+		WorkplaceTypes   func(childComplexity int) int
+	}
+
+	JobAutomationRunResult struct {
+		Matches func(childComplexity int) int
+		Run     func(childComplexity int) int
+	}
+
 	KnowledgeEntry struct {
 		Body      func(childComplexity int) int
 		Category  func(childComplexity int) int
@@ -178,6 +219,11 @@ type ComplexityRoot struct {
 		Tags      func(childComplexity int) int
 		Title     func(childComplexity int) int
 		UpdatedAt func(childComplexity int) int
+	}
+
+	LinkedInGeoLocation struct {
+		GeoID func(childComplexity int) int
+		Label func(childComplexity int) int
 	}
 
 	LinkedInJobCard struct {
@@ -192,6 +238,11 @@ type ComplexityRoot struct {
 		WorkplaceType  func(childComplexity int) int
 	}
 
+	LinkedInSessionStatus struct {
+		Configured func(childComplexity int) int
+		UpdatedAt  func(childComplexity int) int
+	}
+
 	Mutation struct {
 		AddPortfolioProject               func(childComplexity int, input model.AddPortfolioProjectInput) int
 		AddPortfolioSkill                 func(childComplexity int, input model.AddPortfolioSkillInput) int
@@ -200,8 +251,10 @@ type ComplexityRoot struct {
 		ApproveWaitlistEntry              func(childComplexity int, id string) int
 		ChangeEmail                       func(childComplexity int, currentPassword string, email string) int
 		ChangePassword                    func(childComplexity int, currentPassword string, newPassword string) int
+		ClearLinkedInSession              func(childComplexity int) int
 		CreateAssistantThread             func(childComplexity int) int
 		CreateInviteLink                  func(childComplexity int, input model.CreateInviteLinkInput) int
+		CreateJobAutomation               func(childComplexity int, input model.CreateJobAutomationInput) int
 		CreateKnowledgeEntry              func(childComplexity int, input model.CreateKnowledgeEntryInput) int
 		CreatePortfolio                   func(childComplexity int, title string) int
 		CreateResume                      func(childComplexity int, title string) int
@@ -209,6 +262,7 @@ type ComplexityRoot struct {
 		CreateTrackedJob                  func(childComplexity int, url string) int
 		CreateTwinEntry                   func(childComplexity int, input model.CreateTwinEntryInput) int
 		DeleteAssistantThread             func(childComplexity int, id string) int
+		DeleteJobAutomation               func(childComplexity int, id string) int
 		DeleteKnowledgeEntry              func(childComplexity int, id string) int
 		DeletePortfolio                   func(childComplexity int, id string) int
 		DeletePortfolioProject            func(childComplexity int, portfolioID string, projectID string) int
@@ -225,6 +279,8 @@ type ComplexityRoot struct {
 		ReorderResumeSections             func(childComplexity int, input model.ReorderResumeSectionsInput) int
 		RequestProfilePhotoUpload         func(childComplexity int, contentType string, fileName string) int
 		ResendVerificationEmail           func(childComplexity int) int
+		RunJobAutomationNow               func(childComplexity int, id string) int
+		SaveLinkedInSession               func(childComplexity int, cookie string) int
 		SendAssistantMessage              func(childComplexity int, threadID string, text string, context model.AssistantContextInput, attachments []*model.AssistantAttachmentInput) int
 		SendTestEmail                     func(childComplexity int, typeArg model.TestEmailType, recipientEmail string) int
 		SetPortfolioProjectVisibility     func(childComplexity int, input model.SetPortfolioProjectVisibilityInput) int
@@ -235,6 +291,7 @@ type ComplexityRoot struct {
 		SetUsername                       func(childComplexity int, username string) int
 		UpdateContactProfile              func(childComplexity int, input model.UpdateContactProfileInput) int
 		UpdateInviteLink                  func(childComplexity int, input model.UpdateInviteLinkInput) int
+		UpdateJobAutomation               func(childComplexity int, input model.UpdateJobAutomationInput) int
 		UpdateKnowledgeEntry              func(childComplexity int, input model.UpdateKnowledgeEntryInput) int
 		UpdatePortfolio                   func(childComplexity int, id string, title *string, tagline *string, about *string, contactProfileID *string) int
 		UpdatePortfolioContactProfile     func(childComplexity int, input model.UpdatePortfolioContactProfileInput) int
@@ -338,16 +395,21 @@ type ComplexityRoot struct {
 	Query struct {
 		AdminAuditLog              func(childComplexity int, limit *int, offset *int) int
 		AdminInviteLinks           func(childComplexity int) int
-		AdminLinkedInJobSearch     func(childComplexity int, keywords *string, geoID *string, timeFilter *string, workplaceTypes []model.LinkedInWorkplaceType, experienceLevels []model.LinkedInExperienceLevel, employmentTypes []model.LinkedInEmploymentType, sessionCookie *string) int
+		AdminLinkedInGeoSearch     func(childComplexity int, keywords string) int
+		AdminLinkedInJobSearch     func(childComplexity int, keywords *string, geoID *string, timeFilter *string, sortBy *model.LinkedInJobSortBy, maxResults *int, workplaceTypes []model.LinkedInWorkplaceType, experienceLevels []model.LinkedInExperienceLevel, employmentTypes []model.LinkedInEmploymentType, easyApply *bool, sessionCookie *string) int
 		AdminUsers                 func(childComplexity int) int
 		AdminWaitlist              func(childComplexity int, status *model.WaitlistStatus) int
 		AssistantMessages          func(childComplexity int, threadID string, limit *int) int
 		AssistantThreads           func(childComplexity int) int
+		AutomationRuns             func(childComplexity int, automationID string, limit *int) int
 		ClassifyAssistantMessage   func(childComplexity int, text string, context model.AssistantContextInput) int
 		ConnectionStatus           func(childComplexity int, provider model.ConnectionProvider) int
 		ContactProfiles            func(childComplexity int) int
 		CvThemes                   func(childComplexity int) int
+		JobAutomation              func(childComplexity int, id string) int
+		JobAutomations             func(childComplexity int) int
 		KnowledgeEntries           func(childComplexity int, includeDisabled *bool) int
+		LinkedInSessionStatus      func(childComplexity int) int
 		Me                         func(childComplexity int) int
 		MyWorkspace                func(childComplexity int) int
 		Portfolio                  func(childComplexity int, id string) int
@@ -626,6 +688,12 @@ type MutationResolver interface {
 	SendTestEmail(ctx context.Context, typeArg model.TestEmailType, recipientEmail string) (*model.SendTestEmailResult, error)
 	CreateInviteLink(ctx context.Context, input model.CreateInviteLinkInput) (*model.InviteLink, error)
 	UpdateInviteLink(ctx context.Context, input model.UpdateInviteLinkInput) (*model.InviteLink, error)
+	CreateJobAutomation(ctx context.Context, input model.CreateJobAutomationInput) (*model.JobAutomation, error)
+	UpdateJobAutomation(ctx context.Context, input model.UpdateJobAutomationInput) (*model.JobAutomation, error)
+	DeleteJobAutomation(ctx context.Context, id string) (bool, error)
+	SaveLinkedInSession(ctx context.Context, cookie string) (*model.LinkedInSessionStatus, error)
+	ClearLinkedInSession(ctx context.Context) (*model.LinkedInSessionStatus, error)
+	RunJobAutomationNow(ctx context.Context, id string) (*model.JobAutomationRunResult, error)
 }
 type QueryResolver interface {
 	Me(ctx context.Context) (*model.User, error)
@@ -660,8 +728,13 @@ type QueryResolver interface {
 	AdminUsers(ctx context.Context) ([]*model.AdminUser, error)
 	AdminWaitlist(ctx context.Context, status *model.WaitlistStatus) ([]*model.WaitlistEntry, error)
 	AdminAuditLog(ctx context.Context, limit *int, offset *int) ([]*model.AdminAuditLogEntry, error)
-	AdminLinkedInJobSearch(ctx context.Context, keywords *string, geoID *string, timeFilter *string, workplaceTypes []model.LinkedInWorkplaceType, experienceLevels []model.LinkedInExperienceLevel, employmentTypes []model.LinkedInEmploymentType, sessionCookie *string) ([]*model.LinkedInJobCard, error)
+	AdminLinkedInGeoSearch(ctx context.Context, keywords string) ([]*model.LinkedInGeoLocation, error)
+	AdminLinkedInJobSearch(ctx context.Context, keywords *string, geoID *string, timeFilter *string, sortBy *model.LinkedInJobSortBy, maxResults *int, workplaceTypes []model.LinkedInWorkplaceType, experienceLevels []model.LinkedInExperienceLevel, employmentTypes []model.LinkedInEmploymentType, easyApply *bool, sessionCookie *string) ([]*model.LinkedInJobCard, error)
 	AdminInviteLinks(ctx context.Context) ([]*model.InviteLink, error)
+	JobAutomations(ctx context.Context) ([]*model.JobAutomation, error)
+	JobAutomation(ctx context.Context, id string) (*model.JobAutomation, error)
+	AutomationRuns(ctx context.Context, automationID string, limit *int) ([]*model.AutomationRun, error)
+	LinkedInSessionStatus(ctx context.Context) (*model.LinkedInSessionStatus, error)
 }
 type UserResolver interface {
 	HasPasswordCredential(ctx context.Context, obj *model.User) (bool, error)
@@ -1023,6 +1096,69 @@ func (e *executableSchema) Complexity(ctx context.Context, typeName, field strin
 
 		return e.complexity.AssistantTurnResult.ResumeWithContent(childComplexity), true
 
+	case "AutomationRun.automationId":
+		if e.complexity.AutomationRun.AutomationID == nil {
+			break
+		}
+
+		return e.complexity.AutomationRun.AutomationID(childComplexity), true
+
+	case "AutomationRun.error":
+		if e.complexity.AutomationRun.Error == nil {
+			break
+		}
+
+		return e.complexity.AutomationRun.Error(childComplexity), true
+
+	case "AutomationRun.finishedAt":
+		if e.complexity.AutomationRun.FinishedAt == nil {
+			break
+		}
+
+		return e.complexity.AutomationRun.FinishedAt(childComplexity), true
+
+	case "AutomationRun.id":
+		if e.complexity.AutomationRun.ID == nil {
+			break
+		}
+
+		return e.complexity.AutomationRun.ID(childComplexity), true
+
+	case "AutomationRun.jobsEmailed":
+		if e.complexity.AutomationRun.JobsEmailed == nil {
+			break
+		}
+
+		return e.complexity.AutomationRun.JobsEmailed(childComplexity), true
+
+	case "AutomationRun.jobsFetched":
+		if e.complexity.AutomationRun.JobsFetched == nil {
+			break
+		}
+
+		return e.complexity.AutomationRun.JobsFetched(childComplexity), true
+
+	case "AutomationRun.jobsMatched":
+		if e.complexity.AutomationRun.JobsMatched == nil {
+			break
+		}
+
+		return e.complexity.AutomationRun.JobsMatched(childComplexity), true
+
+	case "AutomationRun.startedAt":
+		if e.complexity.AutomationRun.StartedAt == nil {
+			break
+		}
+
+		return e.complexity.AutomationRun.StartedAt(childComplexity), true
+
+	case "AutomationRun.status":
+		if e.complexity.AutomationRun.Status == nil {
+			break
+		}
+
+		return e.complexity.AutomationRun.Status(childComplexity), true
+
 	case "ConnectionStatus.avatarUrl":
 		if e.complexity.ConnectionStatus.AvatarURL == nil {
 			break
@@ -1289,6 +1425,167 @@ func (e *executableSchema) Complexity(ctx context.Context, typeName, field strin
 
 		return e.complexity.InviteLink.UseCount(childComplexity), true
 
+	case "JobAutomation.createdAt":
+		if e.complexity.JobAutomation.CreatedAt == nil {
+			break
+		}
+
+		return e.complexity.JobAutomation.CreatedAt(childComplexity), true
+
+	case "JobAutomation.easyApply":
+		if e.complexity.JobAutomation.EasyApply == nil {
+			break
+		}
+
+		return e.complexity.JobAutomation.EasyApply(childComplexity), true
+
+	case "JobAutomation.employmentTypes":
+		if e.complexity.JobAutomation.EmploymentTypes == nil {
+			break
+		}
+
+		return e.complexity.JobAutomation.EmploymentTypes(childComplexity), true
+
+	case "JobAutomation.enabled":
+		if e.complexity.JobAutomation.Enabled == nil {
+			break
+		}
+
+		return e.complexity.JobAutomation.Enabled(childComplexity), true
+
+	case "JobAutomation.experienceLevels":
+		if e.complexity.JobAutomation.ExperienceLevels == nil {
+			break
+		}
+
+		return e.complexity.JobAutomation.ExperienceLevels(childComplexity), true
+
+	case "JobAutomation.geoId":
+		if e.complexity.JobAutomation.GeoID == nil {
+			break
+		}
+
+		return e.complexity.JobAutomation.GeoID(childComplexity), true
+
+	case "JobAutomation.geoLabel":
+		if e.complexity.JobAutomation.GeoLabel == nil {
+			break
+		}
+
+		return e.complexity.JobAutomation.GeoLabel(childComplexity), true
+
+	case "JobAutomation.id":
+		if e.complexity.JobAutomation.ID == nil {
+			break
+		}
+
+		return e.complexity.JobAutomation.ID(childComplexity), true
+
+	case "JobAutomation.intervalMinutes":
+		if e.complexity.JobAutomation.IntervalMinutes == nil {
+			break
+		}
+
+		return e.complexity.JobAutomation.IntervalMinutes(childComplexity), true
+
+	case "JobAutomation.keywords":
+		if e.complexity.JobAutomation.Keywords == nil {
+			break
+		}
+
+		return e.complexity.JobAutomation.Keywords(childComplexity), true
+
+	case "JobAutomation.lastRunAt":
+		if e.complexity.JobAutomation.LastRunAt == nil {
+			break
+		}
+
+		return e.complexity.JobAutomation.LastRunAt(childComplexity), true
+
+	case "JobAutomation.matchCriteria":
+		if e.complexity.JobAutomation.MatchCriteria == nil {
+			break
+		}
+
+		return e.complexity.JobAutomation.MatchCriteria(childComplexity), true
+
+	case "JobAutomation.maxResults":
+		if e.complexity.JobAutomation.MaxResults == nil {
+			break
+		}
+
+		return e.complexity.JobAutomation.MaxResults(childComplexity), true
+
+	case "JobAutomation.name":
+		if e.complexity.JobAutomation.Name == nil {
+			break
+		}
+
+		return e.complexity.JobAutomation.Name(childComplexity), true
+
+	case "JobAutomation.nextRunAt":
+		if e.complexity.JobAutomation.NextRunAt == nil {
+			break
+		}
+
+		return e.complexity.JobAutomation.NextRunAt(childComplexity), true
+
+	case "JobAutomation.notifyEmail":
+		if e.complexity.JobAutomation.NotifyEmail == nil {
+			break
+		}
+
+		return e.complexity.JobAutomation.NotifyEmail(childComplexity), true
+
+	case "JobAutomation.sessionInvalid":
+		if e.complexity.JobAutomation.SessionInvalid == nil {
+			break
+		}
+
+		return e.complexity.JobAutomation.SessionInvalid(childComplexity), true
+
+	case "JobAutomation.sortBy":
+		if e.complexity.JobAutomation.SortBy == nil {
+			break
+		}
+
+		return e.complexity.JobAutomation.SortBy(childComplexity), true
+
+	case "JobAutomation.timeFilter":
+		if e.complexity.JobAutomation.TimeFilter == nil {
+			break
+		}
+
+		return e.complexity.JobAutomation.TimeFilter(childComplexity), true
+
+	case "JobAutomation.updatedAt":
+		if e.complexity.JobAutomation.UpdatedAt == nil {
+			break
+		}
+
+		return e.complexity.JobAutomation.UpdatedAt(childComplexity), true
+
+	case "JobAutomation.workplaceTypes":
+		if e.complexity.JobAutomation.WorkplaceTypes == nil {
+			break
+		}
+
+		return e.complexity.JobAutomation.WorkplaceTypes(childComplexity), true
+
+	case "JobAutomationRunResult.matches":
+		if e.complexity.JobAutomationRunResult.Matches == nil {
+			break
+		}
+
+		return e.complexity.JobAutomationRunResult.Matches(childComplexity), true
+
+	case "JobAutomationRunResult.run":
+		if e.complexity.JobAutomationRunResult.Run == nil {
+			break
+		}
+
+		return e.complexity.JobAutomationRunResult.Run(childComplexity), true
+
 	case "KnowledgeEntry.body":
 		if e.complexity.KnowledgeEntry.Body == nil {
 			break
@@ -1352,6 +1649,20 @@ func (e *executableSchema) Complexity(ctx context.Context, typeName, field strin
 
 		return e.complexity.KnowledgeEntry.UpdatedAt(childComplexity), true
 
+	case "LinkedInGeoLocation.geoId":
+		if e.complexity.LinkedInGeoLocation.GeoID == nil {
+			break
+		}
+
+		return e.complexity.LinkedInGeoLocation.GeoID(childComplexity), true
+
+	case "LinkedInGeoLocation.label":
+		if e.complexity.LinkedInGeoLocation.Label == nil {
+			break
+		}
+
+		return e.complexity.LinkedInGeoLocation.Label(childComplexity), true
+
 	case "LinkedInJobCard.company":
 		if e.complexity.LinkedInJobCard.Company == nil {
 			break
@@ -1414,6 +1725,20 @@ func (e *executableSchema) Complexity(ctx context.Context, typeName, field strin
 		}
 
 		return e.complexity.LinkedInJobCard.WorkplaceType(childComplexity), true
+
+	case "LinkedInSessionStatus.configured":
+		if e.complexity.LinkedInSessionStatus.Configured == nil {
+			break
+		}
+
+		return e.complexity.LinkedInSessionStatus.Configured(childComplexity), true
+
+	case "LinkedInSessionStatus.updatedAt":
+		if e.complexity.LinkedInSessionStatus.UpdatedAt == nil {
+			break
+		}
+
+		return e.complexity.LinkedInSessionStatus.UpdatedAt(childComplexity), true
 
 	case "Mutation.addPortfolioProject":
 		if e.complexity.Mutation.AddPortfolioProject == nil {
@@ -1499,6 +1824,13 @@ func (e *executableSchema) Complexity(ctx context.Context, typeName, field strin
 
 		return e.complexity.Mutation.ChangePassword(childComplexity, args["currentPassword"].(string), args["newPassword"].(string)), true
 
+	case "Mutation.clearLinkedInSession":
+		if e.complexity.Mutation.ClearLinkedInSession == nil {
+			break
+		}
+
+		return e.complexity.Mutation.ClearLinkedInSession(childComplexity), true
+
 	case "Mutation.createAssistantThread":
 		if e.complexity.Mutation.CreateAssistantThread == nil {
 			break
@@ -1517,6 +1849,18 @@ func (e *executableSchema) Complexity(ctx context.Context, typeName, field strin
 		}
 
 		return e.complexity.Mutation.CreateInviteLink(childComplexity, args["input"].(model.CreateInviteLinkInput)), true
+
+	case "Mutation.createJobAutomation":
+		if e.complexity.Mutation.CreateJobAutomation == nil {
+			break
+		}
+
+		args, err := ec.field_Mutation_createJobAutomation_args(ctx, rawArgs)
+		if err != nil {
+			return 0, false
+		}
+
+		return e.complexity.Mutation.CreateJobAutomation(childComplexity, args["input"].(model.CreateJobAutomationInput)), true
 
 	case "Mutation.createKnowledgeEntry":
 		if e.complexity.Mutation.CreateKnowledgeEntry == nil {
@@ -1601,6 +1945,18 @@ func (e *executableSchema) Complexity(ctx context.Context, typeName, field strin
 		}
 
 		return e.complexity.Mutation.DeleteAssistantThread(childComplexity, args["id"].(string)), true
+
+	case "Mutation.deleteJobAutomation":
+		if e.complexity.Mutation.DeleteJobAutomation == nil {
+			break
+		}
+
+		args, err := ec.field_Mutation_deleteJobAutomation_args(ctx, rawArgs)
+		if err != nil {
+			return 0, false
+		}
+
+		return e.complexity.Mutation.DeleteJobAutomation(childComplexity, args["id"].(string)), true
 
 	case "Mutation.deleteKnowledgeEntry":
 		if e.complexity.Mutation.DeleteKnowledgeEntry == nil {
@@ -1789,6 +2145,30 @@ func (e *executableSchema) Complexity(ctx context.Context, typeName, field strin
 
 		return e.complexity.Mutation.ResendVerificationEmail(childComplexity), true
 
+	case "Mutation.runJobAutomationNow":
+		if e.complexity.Mutation.RunJobAutomationNow == nil {
+			break
+		}
+
+		args, err := ec.field_Mutation_runJobAutomationNow_args(ctx, rawArgs)
+		if err != nil {
+			return 0, false
+		}
+
+		return e.complexity.Mutation.RunJobAutomationNow(childComplexity, args["id"].(string)), true
+
+	case "Mutation.saveLinkedInSession":
+		if e.complexity.Mutation.SaveLinkedInSession == nil {
+			break
+		}
+
+		args, err := ec.field_Mutation_saveLinkedInSession_args(ctx, rawArgs)
+		if err != nil {
+			return 0, false
+		}
+
+		return e.complexity.Mutation.SaveLinkedInSession(childComplexity, args["cookie"].(string)), true
+
 	case "Mutation.sendAssistantMessage":
 		if e.complexity.Mutation.SendAssistantMessage == nil {
 			break
@@ -1908,6 +2288,18 @@ func (e *executableSchema) Complexity(ctx context.Context, typeName, field strin
 		}
 
 		return e.complexity.Mutation.UpdateInviteLink(childComplexity, args["input"].(model.UpdateInviteLinkInput)), true
+
+	case "Mutation.updateJobAutomation":
+		if e.complexity.Mutation.UpdateJobAutomation == nil {
+			break
+		}
+
+		args, err := ec.field_Mutation_updateJobAutomation_args(ctx, rawArgs)
+		if err != nil {
+			return 0, false
+		}
+
+		return e.complexity.Mutation.UpdateJobAutomation(childComplexity, args["input"].(model.UpdateJobAutomationInput)), true
 
 	case "Mutation.updateKnowledgeEntry":
 		if e.complexity.Mutation.UpdateKnowledgeEntry == nil {
@@ -2542,6 +2934,18 @@ func (e *executableSchema) Complexity(ctx context.Context, typeName, field strin
 
 		return e.complexity.Query.AdminInviteLinks(childComplexity), true
 
+	case "Query.adminLinkedInGeoSearch":
+		if e.complexity.Query.AdminLinkedInGeoSearch == nil {
+			break
+		}
+
+		args, err := ec.field_Query_adminLinkedInGeoSearch_args(ctx, rawArgs)
+		if err != nil {
+			return 0, false
+		}
+
+		return e.complexity.Query.AdminLinkedInGeoSearch(childComplexity, args["keywords"].(string)), true
+
 	case "Query.adminLinkedInJobSearch":
 		if e.complexity.Query.AdminLinkedInJobSearch == nil {
 			break
@@ -2552,7 +2956,7 @@ func (e *executableSchema) Complexity(ctx context.Context, typeName, field strin
 			return 0, false
 		}
 
-		return e.complexity.Query.AdminLinkedInJobSearch(childComplexity, args["keywords"].(*string), args["geoId"].(*string), args["timeFilter"].(*string), args["workplaceTypes"].([]model.LinkedInWorkplaceType), args["experienceLevels"].([]model.LinkedInExperienceLevel), args["employmentTypes"].([]model.LinkedInEmploymentType), args["sessionCookie"].(*string)), true
+		return e.complexity.Query.AdminLinkedInJobSearch(childComplexity, args["keywords"].(*string), args["geoId"].(*string), args["timeFilter"].(*string), args["sortBy"].(*model.LinkedInJobSortBy), args["maxResults"].(*int), args["workplaceTypes"].([]model.LinkedInWorkplaceType), args["experienceLevels"].([]model.LinkedInExperienceLevel), args["employmentTypes"].([]model.LinkedInEmploymentType), args["easyApply"].(*bool), args["sessionCookie"].(*string)), true
 
 	case "Query.adminUsers":
 		if e.complexity.Query.AdminUsers == nil {
@@ -2592,6 +2996,18 @@ func (e *executableSchema) Complexity(ctx context.Context, typeName, field strin
 
 		return e.complexity.Query.AssistantThreads(childComplexity), true
 
+	case "Query.automationRuns":
+		if e.complexity.Query.AutomationRuns == nil {
+			break
+		}
+
+		args, err := ec.field_Query_automationRuns_args(ctx, rawArgs)
+		if err != nil {
+			return 0, false
+		}
+
+		return e.complexity.Query.AutomationRuns(childComplexity, args["automationId"].(string), args["limit"].(*int)), true
+
 	case "Query.classifyAssistantMessage":
 		if e.complexity.Query.ClassifyAssistantMessage == nil {
 			break
@@ -2630,6 +3046,25 @@ func (e *executableSchema) Complexity(ctx context.Context, typeName, field strin
 
 		return e.complexity.Query.CvThemes(childComplexity), true
 
+	case "Query.jobAutomation":
+		if e.complexity.Query.JobAutomation == nil {
+			break
+		}
+
+		args, err := ec.field_Query_jobAutomation_args(ctx, rawArgs)
+		if err != nil {
+			return 0, false
+		}
+
+		return e.complexity.Query.JobAutomation(childComplexity, args["id"].(string)), true
+
+	case "Query.jobAutomations":
+		if e.complexity.Query.JobAutomations == nil {
+			break
+		}
+
+		return e.complexity.Query.JobAutomations(childComplexity), true
+
 	case "Query.knowledgeEntries":
 		if e.complexity.Query.KnowledgeEntries == nil {
 			break
@@ -2641,6 +3076,13 @@ func (e *executableSchema) Complexity(ctx context.Context, typeName, field strin
 		}
 
 		return e.complexity.Query.KnowledgeEntries(childComplexity, args["includeDisabled"].(*bool)), true
+
+	case "Query.linkedInSessionStatus":
+		if e.complexity.Query.LinkedInSessionStatus == nil {
+			break
+		}
+
+		return e.complexity.Query.LinkedInSessionStatus(childComplexity), true
 
 	case "Query.me":
 		if e.complexity.Query.Me == nil {
@@ -3936,6 +4378,7 @@ func (e *executableSchema) Exec(ctx context.Context) graphql.ResponseHandler {
 		ec.unmarshalInputAssistantAttachmentInput,
 		ec.unmarshalInputAssistantContextInput,
 		ec.unmarshalInputCreateInviteLinkInput,
+		ec.unmarshalInputCreateJobAutomationInput,
 		ec.unmarshalInputCreateKnowledgeEntryInput,
 		ec.unmarshalInputCreateResumeSectionInput,
 		ec.unmarshalInputCreateTwinEntryInput,
@@ -3943,6 +4386,7 @@ func (e *executableSchema) Exec(ctx context.Context) graphql.ResponseHandler {
 		ec.unmarshalInputSetPortfolioProjectVisibilityInput,
 		ec.unmarshalInputUpdateContactProfileInput,
 		ec.unmarshalInputUpdateInviteLinkInput,
+		ec.unmarshalInputUpdateJobAutomationInput,
 		ec.unmarshalInputUpdateKnowledgeEntryInput,
 		ec.unmarshalInputUpdatePortfolioContactProfileInput,
 		ec.unmarshalInputUpdatePortfolioProjectInput,
@@ -4170,6 +4614,17 @@ func (ec *executionContext) field_Mutation_createInviteLink_args(ctx context.Con
 	return args, nil
 }
 
+func (ec *executionContext) field_Mutation_createJobAutomation_args(ctx context.Context, rawArgs map[string]any) (map[string]any, error) {
+	var err error
+	args := map[string]any{}
+	arg0, err := graphql.ProcessArgField(ctx, rawArgs, "input", ec.unmarshalNCreateJobAutomationInput2githubᚗcomᚋleoᚋaiᚑweekendᚋbackendᚋgraphᚋmodelᚐCreateJobAutomationInput)
+	if err != nil {
+		return nil, err
+	}
+	args["input"] = arg0
+	return args, nil
+}
+
 func (ec *executionContext) field_Mutation_createKnowledgeEntry_args(ctx context.Context, rawArgs map[string]any) (map[string]any, error) {
 	var err error
 	args := map[string]any{}
@@ -4237,6 +4692,17 @@ func (ec *executionContext) field_Mutation_createTwinEntry_args(ctx context.Cont
 }
 
 func (ec *executionContext) field_Mutation_deleteAssistantThread_args(ctx context.Context, rawArgs map[string]any) (map[string]any, error) {
+	var err error
+	args := map[string]any{}
+	arg0, err := graphql.ProcessArgField(ctx, rawArgs, "id", ec.unmarshalNID2string)
+	if err != nil {
+		return nil, err
+	}
+	args["id"] = arg0
+	return args, nil
+}
+
+func (ec *executionContext) field_Mutation_deleteJobAutomation_args(ctx context.Context, rawArgs map[string]any) (map[string]any, error) {
 	var err error
 	args := map[string]any{}
 	arg0, err := graphql.ProcessArgField(ctx, rawArgs, "id", ec.unmarshalNID2string)
@@ -4437,6 +4903,28 @@ func (ec *executionContext) field_Mutation_requestProfilePhotoUpload_args(ctx co
 	return args, nil
 }
 
+func (ec *executionContext) field_Mutation_runJobAutomationNow_args(ctx context.Context, rawArgs map[string]any) (map[string]any, error) {
+	var err error
+	args := map[string]any{}
+	arg0, err := graphql.ProcessArgField(ctx, rawArgs, "id", ec.unmarshalNID2string)
+	if err != nil {
+		return nil, err
+	}
+	args["id"] = arg0
+	return args, nil
+}
+
+func (ec *executionContext) field_Mutation_saveLinkedInSession_args(ctx context.Context, rawArgs map[string]any) (map[string]any, error) {
+	var err error
+	args := map[string]any{}
+	arg0, err := graphql.ProcessArgField(ctx, rawArgs, "cookie", ec.unmarshalNString2string)
+	if err != nil {
+		return nil, err
+	}
+	args["cookie"] = arg0
+	return args, nil
+}
+
 func (ec *executionContext) field_Mutation_sendAssistantMessage_args(ctx context.Context, rawArgs map[string]any) (map[string]any, error) {
 	var err error
 	args := map[string]any{}
@@ -4580,6 +5068,17 @@ func (ec *executionContext) field_Mutation_updateInviteLink_args(ctx context.Con
 	var err error
 	args := map[string]any{}
 	arg0, err := graphql.ProcessArgField(ctx, rawArgs, "input", ec.unmarshalNUpdateInviteLinkInput2githubᚗcomᚋleoᚋaiᚑweekendᚋbackendᚋgraphᚋmodelᚐUpdateInviteLinkInput)
+	if err != nil {
+		return nil, err
+	}
+	args["input"] = arg0
+	return args, nil
+}
+
+func (ec *executionContext) field_Mutation_updateJobAutomation_args(ctx context.Context, rawArgs map[string]any) (map[string]any, error) {
+	var err error
+	args := map[string]any{}
+	arg0, err := graphql.ProcessArgField(ctx, rawArgs, "input", ec.unmarshalNUpdateJobAutomationInput2githubᚗcomᚋleoᚋaiᚑweekendᚋbackendᚋgraphᚋmodelᚐUpdateJobAutomationInput)
 	if err != nil {
 		return nil, err
 	}
@@ -4809,6 +5308,17 @@ func (ec *executionContext) field_Query_adminAuditLog_args(ctx context.Context, 
 	return args, nil
 }
 
+func (ec *executionContext) field_Query_adminLinkedInGeoSearch_args(ctx context.Context, rawArgs map[string]any) (map[string]any, error) {
+	var err error
+	args := map[string]any{}
+	arg0, err := graphql.ProcessArgField(ctx, rawArgs, "keywords", ec.unmarshalNString2string)
+	if err != nil {
+		return nil, err
+	}
+	args["keywords"] = arg0
+	return args, nil
+}
+
 func (ec *executionContext) field_Query_adminLinkedInJobSearch_args(ctx context.Context, rawArgs map[string]any) (map[string]any, error) {
 	var err error
 	args := map[string]any{}
@@ -4827,26 +5337,41 @@ func (ec *executionContext) field_Query_adminLinkedInJobSearch_args(ctx context.
 		return nil, err
 	}
 	args["timeFilter"] = arg2
-	arg3, err := graphql.ProcessArgField(ctx, rawArgs, "workplaceTypes", ec.unmarshalOLinkedInWorkplaceType2ᚕgithubᚗcomᚋleoᚋaiᚑweekendᚋbackendᚋgraphᚋmodelᚐLinkedInWorkplaceTypeᚄ)
+	arg3, err := graphql.ProcessArgField(ctx, rawArgs, "sortBy", ec.unmarshalOLinkedInJobSortBy2ᚖgithubᚗcomᚋleoᚋaiᚑweekendᚋbackendᚋgraphᚋmodelᚐLinkedInJobSortBy)
 	if err != nil {
 		return nil, err
 	}
-	args["workplaceTypes"] = arg3
-	arg4, err := graphql.ProcessArgField(ctx, rawArgs, "experienceLevels", ec.unmarshalOLinkedInExperienceLevel2ᚕgithubᚗcomᚋleoᚋaiᚑweekendᚋbackendᚋgraphᚋmodelᚐLinkedInExperienceLevelᚄ)
+	args["sortBy"] = arg3
+	arg4, err := graphql.ProcessArgField(ctx, rawArgs, "maxResults", ec.unmarshalOInt2ᚖint)
 	if err != nil {
 		return nil, err
 	}
-	args["experienceLevels"] = arg4
-	arg5, err := graphql.ProcessArgField(ctx, rawArgs, "employmentTypes", ec.unmarshalOLinkedInEmploymentType2ᚕgithubᚗcomᚋleoᚋaiᚑweekendᚋbackendᚋgraphᚋmodelᚐLinkedInEmploymentTypeᚄ)
+	args["maxResults"] = arg4
+	arg5, err := graphql.ProcessArgField(ctx, rawArgs, "workplaceTypes", ec.unmarshalOLinkedInWorkplaceType2ᚕgithubᚗcomᚋleoᚋaiᚑweekendᚋbackendᚋgraphᚋmodelᚐLinkedInWorkplaceTypeᚄ)
 	if err != nil {
 		return nil, err
 	}
-	args["employmentTypes"] = arg5
-	arg6, err := graphql.ProcessArgField(ctx, rawArgs, "sessionCookie", ec.unmarshalOString2ᚖstring)
+	args["workplaceTypes"] = arg5
+	arg6, err := graphql.ProcessArgField(ctx, rawArgs, "experienceLevels", ec.unmarshalOLinkedInExperienceLevel2ᚕgithubᚗcomᚋleoᚋaiᚑweekendᚋbackendᚋgraphᚋmodelᚐLinkedInExperienceLevelᚄ)
 	if err != nil {
 		return nil, err
 	}
-	args["sessionCookie"] = arg6
+	args["experienceLevels"] = arg6
+	arg7, err := graphql.ProcessArgField(ctx, rawArgs, "employmentTypes", ec.unmarshalOLinkedInEmploymentType2ᚕgithubᚗcomᚋleoᚋaiᚑweekendᚋbackendᚋgraphᚋmodelᚐLinkedInEmploymentTypeᚄ)
+	if err != nil {
+		return nil, err
+	}
+	args["employmentTypes"] = arg7
+	arg8, err := graphql.ProcessArgField(ctx, rawArgs, "easyApply", ec.unmarshalOBoolean2ᚖbool)
+	if err != nil {
+		return nil, err
+	}
+	args["easyApply"] = arg8
+	arg9, err := graphql.ProcessArgField(ctx, rawArgs, "sessionCookie", ec.unmarshalOString2ᚖstring)
+	if err != nil {
+		return nil, err
+	}
+	args["sessionCookie"] = arg9
 	return args, nil
 }
 
@@ -4869,6 +5394,22 @@ func (ec *executionContext) field_Query_assistantMessages_args(ctx context.Conte
 		return nil, err
 	}
 	args["threadId"] = arg0
+	arg1, err := graphql.ProcessArgField(ctx, rawArgs, "limit", ec.unmarshalOInt2ᚖint)
+	if err != nil {
+		return nil, err
+	}
+	args["limit"] = arg1
+	return args, nil
+}
+
+func (ec *executionContext) field_Query_automationRuns_args(ctx context.Context, rawArgs map[string]any) (map[string]any, error) {
+	var err error
+	args := map[string]any{}
+	arg0, err := graphql.ProcessArgField(ctx, rawArgs, "automationId", ec.unmarshalNID2string)
+	if err != nil {
+		return nil, err
+	}
+	args["automationId"] = arg0
 	arg1, err := graphql.ProcessArgField(ctx, rawArgs, "limit", ec.unmarshalOInt2ᚖint)
 	if err != nil {
 		return nil, err
@@ -4901,6 +5442,17 @@ func (ec *executionContext) field_Query_connectionStatus_args(ctx context.Contex
 		return nil, err
 	}
 	args["provider"] = arg0
+	return args, nil
+}
+
+func (ec *executionContext) field_Query_jobAutomation_args(ctx context.Context, rawArgs map[string]any) (map[string]any, error) {
+	var err error
+	args := map[string]any{}
+	arg0, err := graphql.ProcessArgField(ctx, rawArgs, "id", ec.unmarshalNID2string)
+	if err != nil {
+		return nil, err
+	}
+	args["id"] = arg0
 	return args, nil
 }
 
@@ -7308,6 +7860,396 @@ func (ec *executionContext) fieldContext_AssistantTurnResult_portfolioWithConten
 	return fc, nil
 }
 
+func (ec *executionContext) _AutomationRun_id(ctx context.Context, field graphql.CollectedField, obj *model.AutomationRun) (ret graphql.Marshaler) {
+	fc, err := ec.fieldContext_AutomationRun_id(ctx, field)
+	if err != nil {
+		return graphql.Null
+	}
+	ctx = graphql.WithFieldContext(ctx, fc)
+	defer func() {
+		if r := recover(); r != nil {
+			ec.Error(ctx, ec.Recover(ctx, r))
+			ret = graphql.Null
+		}
+	}()
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (any, error) {
+		ctx = rctx // use context from middleware stack in children
+		return obj.ID, nil
+	})
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	if resTmp == nil {
+		if !graphql.HasFieldError(ctx, fc) {
+			ec.Errorf(ctx, "must not be null")
+		}
+		return graphql.Null
+	}
+	res := resTmp.(string)
+	fc.Result = res
+	return ec.marshalNID2string(ctx, field.Selections, res)
+}
+
+func (ec *executionContext) fieldContext_AutomationRun_id(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "AutomationRun",
+		Field:      field,
+		IsMethod:   false,
+		IsResolver: false,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return nil, errors.New("field of type ID does not have child fields")
+		},
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _AutomationRun_automationId(ctx context.Context, field graphql.CollectedField, obj *model.AutomationRun) (ret graphql.Marshaler) {
+	fc, err := ec.fieldContext_AutomationRun_automationId(ctx, field)
+	if err != nil {
+		return graphql.Null
+	}
+	ctx = graphql.WithFieldContext(ctx, fc)
+	defer func() {
+		if r := recover(); r != nil {
+			ec.Error(ctx, ec.Recover(ctx, r))
+			ret = graphql.Null
+		}
+	}()
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (any, error) {
+		ctx = rctx // use context from middleware stack in children
+		return obj.AutomationID, nil
+	})
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	if resTmp == nil {
+		if !graphql.HasFieldError(ctx, fc) {
+			ec.Errorf(ctx, "must not be null")
+		}
+		return graphql.Null
+	}
+	res := resTmp.(string)
+	fc.Result = res
+	return ec.marshalNID2string(ctx, field.Selections, res)
+}
+
+func (ec *executionContext) fieldContext_AutomationRun_automationId(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "AutomationRun",
+		Field:      field,
+		IsMethod:   false,
+		IsResolver: false,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return nil, errors.New("field of type ID does not have child fields")
+		},
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _AutomationRun_startedAt(ctx context.Context, field graphql.CollectedField, obj *model.AutomationRun) (ret graphql.Marshaler) {
+	fc, err := ec.fieldContext_AutomationRun_startedAt(ctx, field)
+	if err != nil {
+		return graphql.Null
+	}
+	ctx = graphql.WithFieldContext(ctx, fc)
+	defer func() {
+		if r := recover(); r != nil {
+			ec.Error(ctx, ec.Recover(ctx, r))
+			ret = graphql.Null
+		}
+	}()
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (any, error) {
+		ctx = rctx // use context from middleware stack in children
+		return obj.StartedAt, nil
+	})
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	if resTmp == nil {
+		if !graphql.HasFieldError(ctx, fc) {
+			ec.Errorf(ctx, "must not be null")
+		}
+		return graphql.Null
+	}
+	res := resTmp.(string)
+	fc.Result = res
+	return ec.marshalNDateTime2string(ctx, field.Selections, res)
+}
+
+func (ec *executionContext) fieldContext_AutomationRun_startedAt(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "AutomationRun",
+		Field:      field,
+		IsMethod:   false,
+		IsResolver: false,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return nil, errors.New("field of type DateTime does not have child fields")
+		},
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _AutomationRun_finishedAt(ctx context.Context, field graphql.CollectedField, obj *model.AutomationRun) (ret graphql.Marshaler) {
+	fc, err := ec.fieldContext_AutomationRun_finishedAt(ctx, field)
+	if err != nil {
+		return graphql.Null
+	}
+	ctx = graphql.WithFieldContext(ctx, fc)
+	defer func() {
+		if r := recover(); r != nil {
+			ec.Error(ctx, ec.Recover(ctx, r))
+			ret = graphql.Null
+		}
+	}()
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (any, error) {
+		ctx = rctx // use context from middleware stack in children
+		return obj.FinishedAt, nil
+	})
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	if resTmp == nil {
+		return graphql.Null
+	}
+	res := resTmp.(*string)
+	fc.Result = res
+	return ec.marshalODateTime2ᚖstring(ctx, field.Selections, res)
+}
+
+func (ec *executionContext) fieldContext_AutomationRun_finishedAt(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "AutomationRun",
+		Field:      field,
+		IsMethod:   false,
+		IsResolver: false,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return nil, errors.New("field of type DateTime does not have child fields")
+		},
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _AutomationRun_status(ctx context.Context, field graphql.CollectedField, obj *model.AutomationRun) (ret graphql.Marshaler) {
+	fc, err := ec.fieldContext_AutomationRun_status(ctx, field)
+	if err != nil {
+		return graphql.Null
+	}
+	ctx = graphql.WithFieldContext(ctx, fc)
+	defer func() {
+		if r := recover(); r != nil {
+			ec.Error(ctx, ec.Recover(ctx, r))
+			ret = graphql.Null
+		}
+	}()
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (any, error) {
+		ctx = rctx // use context from middleware stack in children
+		return obj.Status, nil
+	})
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	if resTmp == nil {
+		if !graphql.HasFieldError(ctx, fc) {
+			ec.Errorf(ctx, "must not be null")
+		}
+		return graphql.Null
+	}
+	res := resTmp.(model.AutomationRunStatus)
+	fc.Result = res
+	return ec.marshalNAutomationRunStatus2githubᚗcomᚋleoᚋaiᚑweekendᚋbackendᚋgraphᚋmodelᚐAutomationRunStatus(ctx, field.Selections, res)
+}
+
+func (ec *executionContext) fieldContext_AutomationRun_status(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "AutomationRun",
+		Field:      field,
+		IsMethod:   false,
+		IsResolver: false,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return nil, errors.New("field of type AutomationRunStatus does not have child fields")
+		},
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _AutomationRun_jobsFetched(ctx context.Context, field graphql.CollectedField, obj *model.AutomationRun) (ret graphql.Marshaler) {
+	fc, err := ec.fieldContext_AutomationRun_jobsFetched(ctx, field)
+	if err != nil {
+		return graphql.Null
+	}
+	ctx = graphql.WithFieldContext(ctx, fc)
+	defer func() {
+		if r := recover(); r != nil {
+			ec.Error(ctx, ec.Recover(ctx, r))
+			ret = graphql.Null
+		}
+	}()
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (any, error) {
+		ctx = rctx // use context from middleware stack in children
+		return obj.JobsFetched, nil
+	})
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	if resTmp == nil {
+		if !graphql.HasFieldError(ctx, fc) {
+			ec.Errorf(ctx, "must not be null")
+		}
+		return graphql.Null
+	}
+	res := resTmp.(int)
+	fc.Result = res
+	return ec.marshalNInt2int(ctx, field.Selections, res)
+}
+
+func (ec *executionContext) fieldContext_AutomationRun_jobsFetched(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "AutomationRun",
+		Field:      field,
+		IsMethod:   false,
+		IsResolver: false,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return nil, errors.New("field of type Int does not have child fields")
+		},
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _AutomationRun_jobsMatched(ctx context.Context, field graphql.CollectedField, obj *model.AutomationRun) (ret graphql.Marshaler) {
+	fc, err := ec.fieldContext_AutomationRun_jobsMatched(ctx, field)
+	if err != nil {
+		return graphql.Null
+	}
+	ctx = graphql.WithFieldContext(ctx, fc)
+	defer func() {
+		if r := recover(); r != nil {
+			ec.Error(ctx, ec.Recover(ctx, r))
+			ret = graphql.Null
+		}
+	}()
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (any, error) {
+		ctx = rctx // use context from middleware stack in children
+		return obj.JobsMatched, nil
+	})
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	if resTmp == nil {
+		if !graphql.HasFieldError(ctx, fc) {
+			ec.Errorf(ctx, "must not be null")
+		}
+		return graphql.Null
+	}
+	res := resTmp.(int)
+	fc.Result = res
+	return ec.marshalNInt2int(ctx, field.Selections, res)
+}
+
+func (ec *executionContext) fieldContext_AutomationRun_jobsMatched(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "AutomationRun",
+		Field:      field,
+		IsMethod:   false,
+		IsResolver: false,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return nil, errors.New("field of type Int does not have child fields")
+		},
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _AutomationRun_jobsEmailed(ctx context.Context, field graphql.CollectedField, obj *model.AutomationRun) (ret graphql.Marshaler) {
+	fc, err := ec.fieldContext_AutomationRun_jobsEmailed(ctx, field)
+	if err != nil {
+		return graphql.Null
+	}
+	ctx = graphql.WithFieldContext(ctx, fc)
+	defer func() {
+		if r := recover(); r != nil {
+			ec.Error(ctx, ec.Recover(ctx, r))
+			ret = graphql.Null
+		}
+	}()
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (any, error) {
+		ctx = rctx // use context from middleware stack in children
+		return obj.JobsEmailed, nil
+	})
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	if resTmp == nil {
+		if !graphql.HasFieldError(ctx, fc) {
+			ec.Errorf(ctx, "must not be null")
+		}
+		return graphql.Null
+	}
+	res := resTmp.(int)
+	fc.Result = res
+	return ec.marshalNInt2int(ctx, field.Selections, res)
+}
+
+func (ec *executionContext) fieldContext_AutomationRun_jobsEmailed(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "AutomationRun",
+		Field:      field,
+		IsMethod:   false,
+		IsResolver: false,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return nil, errors.New("field of type Int does not have child fields")
+		},
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _AutomationRun_error(ctx context.Context, field graphql.CollectedField, obj *model.AutomationRun) (ret graphql.Marshaler) {
+	fc, err := ec.fieldContext_AutomationRun_error(ctx, field)
+	if err != nil {
+		return graphql.Null
+	}
+	ctx = graphql.WithFieldContext(ctx, fc)
+	defer func() {
+		if r := recover(); r != nil {
+			ec.Error(ctx, ec.Recover(ctx, r))
+			ret = graphql.Null
+		}
+	}()
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (any, error) {
+		ctx = rctx // use context from middleware stack in children
+		return obj.Error, nil
+	})
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	if resTmp == nil {
+		return graphql.Null
+	}
+	res := resTmp.(*string)
+	fc.Result = res
+	return ec.marshalOString2ᚖstring(ctx, field.Selections, res)
+}
+
+func (ec *executionContext) fieldContext_AutomationRun_error(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "AutomationRun",
+		Field:      field,
+		IsMethod:   false,
+		IsResolver: false,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return nil, errors.New("field of type String does not have child fields")
+		},
+	}
+	return fc, nil
+}
+
 func (ec *executionContext) _ConnectionStatus_provider(ctx context.Context, field graphql.CollectedField, obj *model.ConnectionStatus) (ret graphql.Marshaler) {
 	fc, err := ec.fieldContext_ConnectionStatus_provider(ctx, field)
 	if err != nil {
@@ -8920,6 +9862,1043 @@ func (ec *executionContext) fieldContext_InviteLink_urlPath(_ context.Context, f
 	return fc, nil
 }
 
+func (ec *executionContext) _JobAutomation_id(ctx context.Context, field graphql.CollectedField, obj *model.JobAutomation) (ret graphql.Marshaler) {
+	fc, err := ec.fieldContext_JobAutomation_id(ctx, field)
+	if err != nil {
+		return graphql.Null
+	}
+	ctx = graphql.WithFieldContext(ctx, fc)
+	defer func() {
+		if r := recover(); r != nil {
+			ec.Error(ctx, ec.Recover(ctx, r))
+			ret = graphql.Null
+		}
+	}()
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (any, error) {
+		ctx = rctx // use context from middleware stack in children
+		return obj.ID, nil
+	})
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	if resTmp == nil {
+		if !graphql.HasFieldError(ctx, fc) {
+			ec.Errorf(ctx, "must not be null")
+		}
+		return graphql.Null
+	}
+	res := resTmp.(string)
+	fc.Result = res
+	return ec.marshalNID2string(ctx, field.Selections, res)
+}
+
+func (ec *executionContext) fieldContext_JobAutomation_id(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "JobAutomation",
+		Field:      field,
+		IsMethod:   false,
+		IsResolver: false,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return nil, errors.New("field of type ID does not have child fields")
+		},
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _JobAutomation_name(ctx context.Context, field graphql.CollectedField, obj *model.JobAutomation) (ret graphql.Marshaler) {
+	fc, err := ec.fieldContext_JobAutomation_name(ctx, field)
+	if err != nil {
+		return graphql.Null
+	}
+	ctx = graphql.WithFieldContext(ctx, fc)
+	defer func() {
+		if r := recover(); r != nil {
+			ec.Error(ctx, ec.Recover(ctx, r))
+			ret = graphql.Null
+		}
+	}()
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (any, error) {
+		ctx = rctx // use context from middleware stack in children
+		return obj.Name, nil
+	})
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	if resTmp == nil {
+		if !graphql.HasFieldError(ctx, fc) {
+			ec.Errorf(ctx, "must not be null")
+		}
+		return graphql.Null
+	}
+	res := resTmp.(string)
+	fc.Result = res
+	return ec.marshalNString2string(ctx, field.Selections, res)
+}
+
+func (ec *executionContext) fieldContext_JobAutomation_name(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "JobAutomation",
+		Field:      field,
+		IsMethod:   false,
+		IsResolver: false,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return nil, errors.New("field of type String does not have child fields")
+		},
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _JobAutomation_enabled(ctx context.Context, field graphql.CollectedField, obj *model.JobAutomation) (ret graphql.Marshaler) {
+	fc, err := ec.fieldContext_JobAutomation_enabled(ctx, field)
+	if err != nil {
+		return graphql.Null
+	}
+	ctx = graphql.WithFieldContext(ctx, fc)
+	defer func() {
+		if r := recover(); r != nil {
+			ec.Error(ctx, ec.Recover(ctx, r))
+			ret = graphql.Null
+		}
+	}()
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (any, error) {
+		ctx = rctx // use context from middleware stack in children
+		return obj.Enabled, nil
+	})
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	if resTmp == nil {
+		if !graphql.HasFieldError(ctx, fc) {
+			ec.Errorf(ctx, "must not be null")
+		}
+		return graphql.Null
+	}
+	res := resTmp.(bool)
+	fc.Result = res
+	return ec.marshalNBoolean2bool(ctx, field.Selections, res)
+}
+
+func (ec *executionContext) fieldContext_JobAutomation_enabled(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "JobAutomation",
+		Field:      field,
+		IsMethod:   false,
+		IsResolver: false,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return nil, errors.New("field of type Boolean does not have child fields")
+		},
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _JobAutomation_keywords(ctx context.Context, field graphql.CollectedField, obj *model.JobAutomation) (ret graphql.Marshaler) {
+	fc, err := ec.fieldContext_JobAutomation_keywords(ctx, field)
+	if err != nil {
+		return graphql.Null
+	}
+	ctx = graphql.WithFieldContext(ctx, fc)
+	defer func() {
+		if r := recover(); r != nil {
+			ec.Error(ctx, ec.Recover(ctx, r))
+			ret = graphql.Null
+		}
+	}()
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (any, error) {
+		ctx = rctx // use context from middleware stack in children
+		return obj.Keywords, nil
+	})
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	if resTmp == nil {
+		return graphql.Null
+	}
+	res := resTmp.(*string)
+	fc.Result = res
+	return ec.marshalOString2ᚖstring(ctx, field.Selections, res)
+}
+
+func (ec *executionContext) fieldContext_JobAutomation_keywords(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "JobAutomation",
+		Field:      field,
+		IsMethod:   false,
+		IsResolver: false,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return nil, errors.New("field of type String does not have child fields")
+		},
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _JobAutomation_geoId(ctx context.Context, field graphql.CollectedField, obj *model.JobAutomation) (ret graphql.Marshaler) {
+	fc, err := ec.fieldContext_JobAutomation_geoId(ctx, field)
+	if err != nil {
+		return graphql.Null
+	}
+	ctx = graphql.WithFieldContext(ctx, fc)
+	defer func() {
+		if r := recover(); r != nil {
+			ec.Error(ctx, ec.Recover(ctx, r))
+			ret = graphql.Null
+		}
+	}()
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (any, error) {
+		ctx = rctx // use context from middleware stack in children
+		return obj.GeoID, nil
+	})
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	if resTmp == nil {
+		return graphql.Null
+	}
+	res := resTmp.(*string)
+	fc.Result = res
+	return ec.marshalOString2ᚖstring(ctx, field.Selections, res)
+}
+
+func (ec *executionContext) fieldContext_JobAutomation_geoId(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "JobAutomation",
+		Field:      field,
+		IsMethod:   false,
+		IsResolver: false,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return nil, errors.New("field of type String does not have child fields")
+		},
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _JobAutomation_geoLabel(ctx context.Context, field graphql.CollectedField, obj *model.JobAutomation) (ret graphql.Marshaler) {
+	fc, err := ec.fieldContext_JobAutomation_geoLabel(ctx, field)
+	if err != nil {
+		return graphql.Null
+	}
+	ctx = graphql.WithFieldContext(ctx, fc)
+	defer func() {
+		if r := recover(); r != nil {
+			ec.Error(ctx, ec.Recover(ctx, r))
+			ret = graphql.Null
+		}
+	}()
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (any, error) {
+		ctx = rctx // use context from middleware stack in children
+		return obj.GeoLabel, nil
+	})
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	if resTmp == nil {
+		return graphql.Null
+	}
+	res := resTmp.(*string)
+	fc.Result = res
+	return ec.marshalOString2ᚖstring(ctx, field.Selections, res)
+}
+
+func (ec *executionContext) fieldContext_JobAutomation_geoLabel(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "JobAutomation",
+		Field:      field,
+		IsMethod:   false,
+		IsResolver: false,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return nil, errors.New("field of type String does not have child fields")
+		},
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _JobAutomation_timeFilter(ctx context.Context, field graphql.CollectedField, obj *model.JobAutomation) (ret graphql.Marshaler) {
+	fc, err := ec.fieldContext_JobAutomation_timeFilter(ctx, field)
+	if err != nil {
+		return graphql.Null
+	}
+	ctx = graphql.WithFieldContext(ctx, fc)
+	defer func() {
+		if r := recover(); r != nil {
+			ec.Error(ctx, ec.Recover(ctx, r))
+			ret = graphql.Null
+		}
+	}()
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (any, error) {
+		ctx = rctx // use context from middleware stack in children
+		return obj.TimeFilter, nil
+	})
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	if resTmp == nil {
+		if !graphql.HasFieldError(ctx, fc) {
+			ec.Errorf(ctx, "must not be null")
+		}
+		return graphql.Null
+	}
+	res := resTmp.(string)
+	fc.Result = res
+	return ec.marshalNString2string(ctx, field.Selections, res)
+}
+
+func (ec *executionContext) fieldContext_JobAutomation_timeFilter(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "JobAutomation",
+		Field:      field,
+		IsMethod:   false,
+		IsResolver: false,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return nil, errors.New("field of type String does not have child fields")
+		},
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _JobAutomation_workplaceTypes(ctx context.Context, field graphql.CollectedField, obj *model.JobAutomation) (ret graphql.Marshaler) {
+	fc, err := ec.fieldContext_JobAutomation_workplaceTypes(ctx, field)
+	if err != nil {
+		return graphql.Null
+	}
+	ctx = graphql.WithFieldContext(ctx, fc)
+	defer func() {
+		if r := recover(); r != nil {
+			ec.Error(ctx, ec.Recover(ctx, r))
+			ret = graphql.Null
+		}
+	}()
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (any, error) {
+		ctx = rctx // use context from middleware stack in children
+		return obj.WorkplaceTypes, nil
+	})
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	if resTmp == nil {
+		if !graphql.HasFieldError(ctx, fc) {
+			ec.Errorf(ctx, "must not be null")
+		}
+		return graphql.Null
+	}
+	res := resTmp.([]model.LinkedInWorkplaceType)
+	fc.Result = res
+	return ec.marshalNLinkedInWorkplaceType2ᚕgithubᚗcomᚋleoᚋaiᚑweekendᚋbackendᚋgraphᚋmodelᚐLinkedInWorkplaceTypeᚄ(ctx, field.Selections, res)
+}
+
+func (ec *executionContext) fieldContext_JobAutomation_workplaceTypes(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "JobAutomation",
+		Field:      field,
+		IsMethod:   false,
+		IsResolver: false,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return nil, errors.New("field of type LinkedInWorkplaceType does not have child fields")
+		},
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _JobAutomation_experienceLevels(ctx context.Context, field graphql.CollectedField, obj *model.JobAutomation) (ret graphql.Marshaler) {
+	fc, err := ec.fieldContext_JobAutomation_experienceLevels(ctx, field)
+	if err != nil {
+		return graphql.Null
+	}
+	ctx = graphql.WithFieldContext(ctx, fc)
+	defer func() {
+		if r := recover(); r != nil {
+			ec.Error(ctx, ec.Recover(ctx, r))
+			ret = graphql.Null
+		}
+	}()
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (any, error) {
+		ctx = rctx // use context from middleware stack in children
+		return obj.ExperienceLevels, nil
+	})
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	if resTmp == nil {
+		if !graphql.HasFieldError(ctx, fc) {
+			ec.Errorf(ctx, "must not be null")
+		}
+		return graphql.Null
+	}
+	res := resTmp.([]model.LinkedInExperienceLevel)
+	fc.Result = res
+	return ec.marshalNLinkedInExperienceLevel2ᚕgithubᚗcomᚋleoᚋaiᚑweekendᚋbackendᚋgraphᚋmodelᚐLinkedInExperienceLevelᚄ(ctx, field.Selections, res)
+}
+
+func (ec *executionContext) fieldContext_JobAutomation_experienceLevels(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "JobAutomation",
+		Field:      field,
+		IsMethod:   false,
+		IsResolver: false,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return nil, errors.New("field of type LinkedInExperienceLevel does not have child fields")
+		},
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _JobAutomation_employmentTypes(ctx context.Context, field graphql.CollectedField, obj *model.JobAutomation) (ret graphql.Marshaler) {
+	fc, err := ec.fieldContext_JobAutomation_employmentTypes(ctx, field)
+	if err != nil {
+		return graphql.Null
+	}
+	ctx = graphql.WithFieldContext(ctx, fc)
+	defer func() {
+		if r := recover(); r != nil {
+			ec.Error(ctx, ec.Recover(ctx, r))
+			ret = graphql.Null
+		}
+	}()
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (any, error) {
+		ctx = rctx // use context from middleware stack in children
+		return obj.EmploymentTypes, nil
+	})
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	if resTmp == nil {
+		if !graphql.HasFieldError(ctx, fc) {
+			ec.Errorf(ctx, "must not be null")
+		}
+		return graphql.Null
+	}
+	res := resTmp.([]model.LinkedInEmploymentType)
+	fc.Result = res
+	return ec.marshalNLinkedInEmploymentType2ᚕgithubᚗcomᚋleoᚋaiᚑweekendᚋbackendᚋgraphᚋmodelᚐLinkedInEmploymentTypeᚄ(ctx, field.Selections, res)
+}
+
+func (ec *executionContext) fieldContext_JobAutomation_employmentTypes(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "JobAutomation",
+		Field:      field,
+		IsMethod:   false,
+		IsResolver: false,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return nil, errors.New("field of type LinkedInEmploymentType does not have child fields")
+		},
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _JobAutomation_easyApply(ctx context.Context, field graphql.CollectedField, obj *model.JobAutomation) (ret graphql.Marshaler) {
+	fc, err := ec.fieldContext_JobAutomation_easyApply(ctx, field)
+	if err != nil {
+		return graphql.Null
+	}
+	ctx = graphql.WithFieldContext(ctx, fc)
+	defer func() {
+		if r := recover(); r != nil {
+			ec.Error(ctx, ec.Recover(ctx, r))
+			ret = graphql.Null
+		}
+	}()
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (any, error) {
+		ctx = rctx // use context from middleware stack in children
+		return obj.EasyApply, nil
+	})
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	if resTmp == nil {
+		if !graphql.HasFieldError(ctx, fc) {
+			ec.Errorf(ctx, "must not be null")
+		}
+		return graphql.Null
+	}
+	res := resTmp.(bool)
+	fc.Result = res
+	return ec.marshalNBoolean2bool(ctx, field.Selections, res)
+}
+
+func (ec *executionContext) fieldContext_JobAutomation_easyApply(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "JobAutomation",
+		Field:      field,
+		IsMethod:   false,
+		IsResolver: false,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return nil, errors.New("field of type Boolean does not have child fields")
+		},
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _JobAutomation_sortBy(ctx context.Context, field graphql.CollectedField, obj *model.JobAutomation) (ret graphql.Marshaler) {
+	fc, err := ec.fieldContext_JobAutomation_sortBy(ctx, field)
+	if err != nil {
+		return graphql.Null
+	}
+	ctx = graphql.WithFieldContext(ctx, fc)
+	defer func() {
+		if r := recover(); r != nil {
+			ec.Error(ctx, ec.Recover(ctx, r))
+			ret = graphql.Null
+		}
+	}()
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (any, error) {
+		ctx = rctx // use context from middleware stack in children
+		return obj.SortBy, nil
+	})
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	if resTmp == nil {
+		if !graphql.HasFieldError(ctx, fc) {
+			ec.Errorf(ctx, "must not be null")
+		}
+		return graphql.Null
+	}
+	res := resTmp.(model.LinkedInJobSortBy)
+	fc.Result = res
+	return ec.marshalNLinkedInJobSortBy2githubᚗcomᚋleoᚋaiᚑweekendᚋbackendᚋgraphᚋmodelᚐLinkedInJobSortBy(ctx, field.Selections, res)
+}
+
+func (ec *executionContext) fieldContext_JobAutomation_sortBy(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "JobAutomation",
+		Field:      field,
+		IsMethod:   false,
+		IsResolver: false,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return nil, errors.New("field of type LinkedInJobSortBy does not have child fields")
+		},
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _JobAutomation_maxResults(ctx context.Context, field graphql.CollectedField, obj *model.JobAutomation) (ret graphql.Marshaler) {
+	fc, err := ec.fieldContext_JobAutomation_maxResults(ctx, field)
+	if err != nil {
+		return graphql.Null
+	}
+	ctx = graphql.WithFieldContext(ctx, fc)
+	defer func() {
+		if r := recover(); r != nil {
+			ec.Error(ctx, ec.Recover(ctx, r))
+			ret = graphql.Null
+		}
+	}()
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (any, error) {
+		ctx = rctx // use context from middleware stack in children
+		return obj.MaxResults, nil
+	})
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	if resTmp == nil {
+		if !graphql.HasFieldError(ctx, fc) {
+			ec.Errorf(ctx, "must not be null")
+		}
+		return graphql.Null
+	}
+	res := resTmp.(int)
+	fc.Result = res
+	return ec.marshalNInt2int(ctx, field.Selections, res)
+}
+
+func (ec *executionContext) fieldContext_JobAutomation_maxResults(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "JobAutomation",
+		Field:      field,
+		IsMethod:   false,
+		IsResolver: false,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return nil, errors.New("field of type Int does not have child fields")
+		},
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _JobAutomation_matchCriteria(ctx context.Context, field graphql.CollectedField, obj *model.JobAutomation) (ret graphql.Marshaler) {
+	fc, err := ec.fieldContext_JobAutomation_matchCriteria(ctx, field)
+	if err != nil {
+		return graphql.Null
+	}
+	ctx = graphql.WithFieldContext(ctx, fc)
+	defer func() {
+		if r := recover(); r != nil {
+			ec.Error(ctx, ec.Recover(ctx, r))
+			ret = graphql.Null
+		}
+	}()
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (any, error) {
+		ctx = rctx // use context from middleware stack in children
+		return obj.MatchCriteria, nil
+	})
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	if resTmp == nil {
+		if !graphql.HasFieldError(ctx, fc) {
+			ec.Errorf(ctx, "must not be null")
+		}
+		return graphql.Null
+	}
+	res := resTmp.(string)
+	fc.Result = res
+	return ec.marshalNString2string(ctx, field.Selections, res)
+}
+
+func (ec *executionContext) fieldContext_JobAutomation_matchCriteria(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "JobAutomation",
+		Field:      field,
+		IsMethod:   false,
+		IsResolver: false,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return nil, errors.New("field of type String does not have child fields")
+		},
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _JobAutomation_intervalMinutes(ctx context.Context, field graphql.CollectedField, obj *model.JobAutomation) (ret graphql.Marshaler) {
+	fc, err := ec.fieldContext_JobAutomation_intervalMinutes(ctx, field)
+	if err != nil {
+		return graphql.Null
+	}
+	ctx = graphql.WithFieldContext(ctx, fc)
+	defer func() {
+		if r := recover(); r != nil {
+			ec.Error(ctx, ec.Recover(ctx, r))
+			ret = graphql.Null
+		}
+	}()
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (any, error) {
+		ctx = rctx // use context from middleware stack in children
+		return obj.IntervalMinutes, nil
+	})
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	if resTmp == nil {
+		if !graphql.HasFieldError(ctx, fc) {
+			ec.Errorf(ctx, "must not be null")
+		}
+		return graphql.Null
+	}
+	res := resTmp.(int)
+	fc.Result = res
+	return ec.marshalNInt2int(ctx, field.Selections, res)
+}
+
+func (ec *executionContext) fieldContext_JobAutomation_intervalMinutes(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "JobAutomation",
+		Field:      field,
+		IsMethod:   false,
+		IsResolver: false,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return nil, errors.New("field of type Int does not have child fields")
+		},
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _JobAutomation_nextRunAt(ctx context.Context, field graphql.CollectedField, obj *model.JobAutomation) (ret graphql.Marshaler) {
+	fc, err := ec.fieldContext_JobAutomation_nextRunAt(ctx, field)
+	if err != nil {
+		return graphql.Null
+	}
+	ctx = graphql.WithFieldContext(ctx, fc)
+	defer func() {
+		if r := recover(); r != nil {
+			ec.Error(ctx, ec.Recover(ctx, r))
+			ret = graphql.Null
+		}
+	}()
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (any, error) {
+		ctx = rctx // use context from middleware stack in children
+		return obj.NextRunAt, nil
+	})
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	if resTmp == nil {
+		return graphql.Null
+	}
+	res := resTmp.(*string)
+	fc.Result = res
+	return ec.marshalODateTime2ᚖstring(ctx, field.Selections, res)
+}
+
+func (ec *executionContext) fieldContext_JobAutomation_nextRunAt(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "JobAutomation",
+		Field:      field,
+		IsMethod:   false,
+		IsResolver: false,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return nil, errors.New("field of type DateTime does not have child fields")
+		},
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _JobAutomation_lastRunAt(ctx context.Context, field graphql.CollectedField, obj *model.JobAutomation) (ret graphql.Marshaler) {
+	fc, err := ec.fieldContext_JobAutomation_lastRunAt(ctx, field)
+	if err != nil {
+		return graphql.Null
+	}
+	ctx = graphql.WithFieldContext(ctx, fc)
+	defer func() {
+		if r := recover(); r != nil {
+			ec.Error(ctx, ec.Recover(ctx, r))
+			ret = graphql.Null
+		}
+	}()
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (any, error) {
+		ctx = rctx // use context from middleware stack in children
+		return obj.LastRunAt, nil
+	})
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	if resTmp == nil {
+		return graphql.Null
+	}
+	res := resTmp.(*string)
+	fc.Result = res
+	return ec.marshalODateTime2ᚖstring(ctx, field.Selections, res)
+}
+
+func (ec *executionContext) fieldContext_JobAutomation_lastRunAt(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "JobAutomation",
+		Field:      field,
+		IsMethod:   false,
+		IsResolver: false,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return nil, errors.New("field of type DateTime does not have child fields")
+		},
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _JobAutomation_notifyEmail(ctx context.Context, field graphql.CollectedField, obj *model.JobAutomation) (ret graphql.Marshaler) {
+	fc, err := ec.fieldContext_JobAutomation_notifyEmail(ctx, field)
+	if err != nil {
+		return graphql.Null
+	}
+	ctx = graphql.WithFieldContext(ctx, fc)
+	defer func() {
+		if r := recover(); r != nil {
+			ec.Error(ctx, ec.Recover(ctx, r))
+			ret = graphql.Null
+		}
+	}()
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (any, error) {
+		ctx = rctx // use context from middleware stack in children
+		return obj.NotifyEmail, nil
+	})
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	if resTmp == nil {
+		if !graphql.HasFieldError(ctx, fc) {
+			ec.Errorf(ctx, "must not be null")
+		}
+		return graphql.Null
+	}
+	res := resTmp.(string)
+	fc.Result = res
+	return ec.marshalNString2string(ctx, field.Selections, res)
+}
+
+func (ec *executionContext) fieldContext_JobAutomation_notifyEmail(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "JobAutomation",
+		Field:      field,
+		IsMethod:   false,
+		IsResolver: false,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return nil, errors.New("field of type String does not have child fields")
+		},
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _JobAutomation_sessionInvalid(ctx context.Context, field graphql.CollectedField, obj *model.JobAutomation) (ret graphql.Marshaler) {
+	fc, err := ec.fieldContext_JobAutomation_sessionInvalid(ctx, field)
+	if err != nil {
+		return graphql.Null
+	}
+	ctx = graphql.WithFieldContext(ctx, fc)
+	defer func() {
+		if r := recover(); r != nil {
+			ec.Error(ctx, ec.Recover(ctx, r))
+			ret = graphql.Null
+		}
+	}()
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (any, error) {
+		ctx = rctx // use context from middleware stack in children
+		return obj.SessionInvalid, nil
+	})
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	if resTmp == nil {
+		if !graphql.HasFieldError(ctx, fc) {
+			ec.Errorf(ctx, "must not be null")
+		}
+		return graphql.Null
+	}
+	res := resTmp.(bool)
+	fc.Result = res
+	return ec.marshalNBoolean2bool(ctx, field.Selections, res)
+}
+
+func (ec *executionContext) fieldContext_JobAutomation_sessionInvalid(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "JobAutomation",
+		Field:      field,
+		IsMethod:   false,
+		IsResolver: false,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return nil, errors.New("field of type Boolean does not have child fields")
+		},
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _JobAutomation_createdAt(ctx context.Context, field graphql.CollectedField, obj *model.JobAutomation) (ret graphql.Marshaler) {
+	fc, err := ec.fieldContext_JobAutomation_createdAt(ctx, field)
+	if err != nil {
+		return graphql.Null
+	}
+	ctx = graphql.WithFieldContext(ctx, fc)
+	defer func() {
+		if r := recover(); r != nil {
+			ec.Error(ctx, ec.Recover(ctx, r))
+			ret = graphql.Null
+		}
+	}()
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (any, error) {
+		ctx = rctx // use context from middleware stack in children
+		return obj.CreatedAt, nil
+	})
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	if resTmp == nil {
+		if !graphql.HasFieldError(ctx, fc) {
+			ec.Errorf(ctx, "must not be null")
+		}
+		return graphql.Null
+	}
+	res := resTmp.(string)
+	fc.Result = res
+	return ec.marshalNDateTime2string(ctx, field.Selections, res)
+}
+
+func (ec *executionContext) fieldContext_JobAutomation_createdAt(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "JobAutomation",
+		Field:      field,
+		IsMethod:   false,
+		IsResolver: false,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return nil, errors.New("field of type DateTime does not have child fields")
+		},
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _JobAutomation_updatedAt(ctx context.Context, field graphql.CollectedField, obj *model.JobAutomation) (ret graphql.Marshaler) {
+	fc, err := ec.fieldContext_JobAutomation_updatedAt(ctx, field)
+	if err != nil {
+		return graphql.Null
+	}
+	ctx = graphql.WithFieldContext(ctx, fc)
+	defer func() {
+		if r := recover(); r != nil {
+			ec.Error(ctx, ec.Recover(ctx, r))
+			ret = graphql.Null
+		}
+	}()
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (any, error) {
+		ctx = rctx // use context from middleware stack in children
+		return obj.UpdatedAt, nil
+	})
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	if resTmp == nil {
+		if !graphql.HasFieldError(ctx, fc) {
+			ec.Errorf(ctx, "must not be null")
+		}
+		return graphql.Null
+	}
+	res := resTmp.(string)
+	fc.Result = res
+	return ec.marshalNDateTime2string(ctx, field.Selections, res)
+}
+
+func (ec *executionContext) fieldContext_JobAutomation_updatedAt(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "JobAutomation",
+		Field:      field,
+		IsMethod:   false,
+		IsResolver: false,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return nil, errors.New("field of type DateTime does not have child fields")
+		},
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _JobAutomationRunResult_run(ctx context.Context, field graphql.CollectedField, obj *model.JobAutomationRunResult) (ret graphql.Marshaler) {
+	fc, err := ec.fieldContext_JobAutomationRunResult_run(ctx, field)
+	if err != nil {
+		return graphql.Null
+	}
+	ctx = graphql.WithFieldContext(ctx, fc)
+	defer func() {
+		if r := recover(); r != nil {
+			ec.Error(ctx, ec.Recover(ctx, r))
+			ret = graphql.Null
+		}
+	}()
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (any, error) {
+		ctx = rctx // use context from middleware stack in children
+		return obj.Run, nil
+	})
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	if resTmp == nil {
+		if !graphql.HasFieldError(ctx, fc) {
+			ec.Errorf(ctx, "must not be null")
+		}
+		return graphql.Null
+	}
+	res := resTmp.(*model.AutomationRun)
+	fc.Result = res
+	return ec.marshalNAutomationRun2ᚖgithubᚗcomᚋleoᚋaiᚑweekendᚋbackendᚋgraphᚋmodelᚐAutomationRun(ctx, field.Selections, res)
+}
+
+func (ec *executionContext) fieldContext_JobAutomationRunResult_run(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "JobAutomationRunResult",
+		Field:      field,
+		IsMethod:   false,
+		IsResolver: false,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			switch field.Name {
+			case "id":
+				return ec.fieldContext_AutomationRun_id(ctx, field)
+			case "automationId":
+				return ec.fieldContext_AutomationRun_automationId(ctx, field)
+			case "startedAt":
+				return ec.fieldContext_AutomationRun_startedAt(ctx, field)
+			case "finishedAt":
+				return ec.fieldContext_AutomationRun_finishedAt(ctx, field)
+			case "status":
+				return ec.fieldContext_AutomationRun_status(ctx, field)
+			case "jobsFetched":
+				return ec.fieldContext_AutomationRun_jobsFetched(ctx, field)
+			case "jobsMatched":
+				return ec.fieldContext_AutomationRun_jobsMatched(ctx, field)
+			case "jobsEmailed":
+				return ec.fieldContext_AutomationRun_jobsEmailed(ctx, field)
+			case "error":
+				return ec.fieldContext_AutomationRun_error(ctx, field)
+			}
+			return nil, fmt.Errorf("no field named %q was found under type AutomationRun", field.Name)
+		},
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _JobAutomationRunResult_matches(ctx context.Context, field graphql.CollectedField, obj *model.JobAutomationRunResult) (ret graphql.Marshaler) {
+	fc, err := ec.fieldContext_JobAutomationRunResult_matches(ctx, field)
+	if err != nil {
+		return graphql.Null
+	}
+	ctx = graphql.WithFieldContext(ctx, fc)
+	defer func() {
+		if r := recover(); r != nil {
+			ec.Error(ctx, ec.Recover(ctx, r))
+			ret = graphql.Null
+		}
+	}()
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (any, error) {
+		ctx = rctx // use context from middleware stack in children
+		return obj.Matches, nil
+	})
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	if resTmp == nil {
+		if !graphql.HasFieldError(ctx, fc) {
+			ec.Errorf(ctx, "must not be null")
+		}
+		return graphql.Null
+	}
+	res := resTmp.([]*model.LinkedInJobCard)
+	fc.Result = res
+	return ec.marshalNLinkedInJobCard2ᚕᚖgithubᚗcomᚋleoᚋaiᚑweekendᚋbackendᚋgraphᚋmodelᚐLinkedInJobCardᚄ(ctx, field.Selections, res)
+}
+
+func (ec *executionContext) fieldContext_JobAutomationRunResult_matches(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "JobAutomationRunResult",
+		Field:      field,
+		IsMethod:   false,
+		IsResolver: false,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			switch field.Name {
+			case "jobId":
+				return ec.fieldContext_LinkedInJobCard_jobId(ctx, field)
+			case "title":
+				return ec.fieldContext_LinkedInJobCard_title(ctx, field)
+			case "company":
+				return ec.fieldContext_LinkedInJobCard_company(ctx, field)
+			case "location":
+				return ec.fieldContext_LinkedInJobCard_location(ctx, field)
+			case "workplaceType":
+				return ec.fieldContext_LinkedInJobCard_workplaceType(ctx, field)
+			case "employmentType":
+				return ec.fieldContext_LinkedInJobCard_employmentType(ctx, field)
+			case "listedAt":
+				return ec.fieldContext_LinkedInJobCard_listedAt(ctx, field)
+			case "description":
+				return ec.fieldContext_LinkedInJobCard_description(ctx, field)
+			case "url":
+				return ec.fieldContext_LinkedInJobCard_url(ctx, field)
+			}
+			return nil, fmt.Errorf("no field named %q was found under type LinkedInJobCard", field.Name)
+		},
+	}
+	return fc, nil
+}
+
 func (ec *executionContext) _KnowledgeEntry_id(ctx context.Context, field graphql.CollectedField, obj *model.KnowledgeEntry) (ret graphql.Marshaler) {
 	fc, err := ec.fieldContext_KnowledgeEntry_id(ctx, field)
 	if err != nil {
@@ -9316,6 +11295,94 @@ func (ec *executionContext) fieldContext_KnowledgeEntry_updatedAt(_ context.Cont
 	return fc, nil
 }
 
+func (ec *executionContext) _LinkedInGeoLocation_geoId(ctx context.Context, field graphql.CollectedField, obj *model.LinkedInGeoLocation) (ret graphql.Marshaler) {
+	fc, err := ec.fieldContext_LinkedInGeoLocation_geoId(ctx, field)
+	if err != nil {
+		return graphql.Null
+	}
+	ctx = graphql.WithFieldContext(ctx, fc)
+	defer func() {
+		if r := recover(); r != nil {
+			ec.Error(ctx, ec.Recover(ctx, r))
+			ret = graphql.Null
+		}
+	}()
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (any, error) {
+		ctx = rctx // use context from middleware stack in children
+		return obj.GeoID, nil
+	})
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	if resTmp == nil {
+		if !graphql.HasFieldError(ctx, fc) {
+			ec.Errorf(ctx, "must not be null")
+		}
+		return graphql.Null
+	}
+	res := resTmp.(string)
+	fc.Result = res
+	return ec.marshalNString2string(ctx, field.Selections, res)
+}
+
+func (ec *executionContext) fieldContext_LinkedInGeoLocation_geoId(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "LinkedInGeoLocation",
+		Field:      field,
+		IsMethod:   false,
+		IsResolver: false,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return nil, errors.New("field of type String does not have child fields")
+		},
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _LinkedInGeoLocation_label(ctx context.Context, field graphql.CollectedField, obj *model.LinkedInGeoLocation) (ret graphql.Marshaler) {
+	fc, err := ec.fieldContext_LinkedInGeoLocation_label(ctx, field)
+	if err != nil {
+		return graphql.Null
+	}
+	ctx = graphql.WithFieldContext(ctx, fc)
+	defer func() {
+		if r := recover(); r != nil {
+			ec.Error(ctx, ec.Recover(ctx, r))
+			ret = graphql.Null
+		}
+	}()
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (any, error) {
+		ctx = rctx // use context from middleware stack in children
+		return obj.Label, nil
+	})
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	if resTmp == nil {
+		if !graphql.HasFieldError(ctx, fc) {
+			ec.Errorf(ctx, "must not be null")
+		}
+		return graphql.Null
+	}
+	res := resTmp.(string)
+	fc.Result = res
+	return ec.marshalNString2string(ctx, field.Selections, res)
+}
+
+func (ec *executionContext) fieldContext_LinkedInGeoLocation_label(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "LinkedInGeoLocation",
+		Field:      field,
+		IsMethod:   false,
+		IsResolver: false,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return nil, errors.New("field of type String does not have child fields")
+		},
+	}
+	return fc, nil
+}
+
 func (ec *executionContext) _LinkedInJobCard_jobId(ctx context.Context, field graphql.CollectedField, obj *model.LinkedInJobCard) (ret graphql.Marshaler) {
 	fc, err := ec.fieldContext_LinkedInJobCard_jobId(ctx, field)
 	if err != nil {
@@ -9689,6 +11756,91 @@ func (ec *executionContext) fieldContext_LinkedInJobCard_url(_ context.Context, 
 		IsResolver: false,
 		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
 			return nil, errors.New("field of type String does not have child fields")
+		},
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _LinkedInSessionStatus_configured(ctx context.Context, field graphql.CollectedField, obj *model.LinkedInSessionStatus) (ret graphql.Marshaler) {
+	fc, err := ec.fieldContext_LinkedInSessionStatus_configured(ctx, field)
+	if err != nil {
+		return graphql.Null
+	}
+	ctx = graphql.WithFieldContext(ctx, fc)
+	defer func() {
+		if r := recover(); r != nil {
+			ec.Error(ctx, ec.Recover(ctx, r))
+			ret = graphql.Null
+		}
+	}()
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (any, error) {
+		ctx = rctx // use context from middleware stack in children
+		return obj.Configured, nil
+	})
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	if resTmp == nil {
+		if !graphql.HasFieldError(ctx, fc) {
+			ec.Errorf(ctx, "must not be null")
+		}
+		return graphql.Null
+	}
+	res := resTmp.(bool)
+	fc.Result = res
+	return ec.marshalNBoolean2bool(ctx, field.Selections, res)
+}
+
+func (ec *executionContext) fieldContext_LinkedInSessionStatus_configured(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "LinkedInSessionStatus",
+		Field:      field,
+		IsMethod:   false,
+		IsResolver: false,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return nil, errors.New("field of type Boolean does not have child fields")
+		},
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _LinkedInSessionStatus_updatedAt(ctx context.Context, field graphql.CollectedField, obj *model.LinkedInSessionStatus) (ret graphql.Marshaler) {
+	fc, err := ec.fieldContext_LinkedInSessionStatus_updatedAt(ctx, field)
+	if err != nil {
+		return graphql.Null
+	}
+	ctx = graphql.WithFieldContext(ctx, fc)
+	defer func() {
+		if r := recover(); r != nil {
+			ec.Error(ctx, ec.Recover(ctx, r))
+			ret = graphql.Null
+		}
+	}()
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (any, error) {
+		ctx = rctx // use context from middleware stack in children
+		return obj.UpdatedAt, nil
+	})
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	if resTmp == nil {
+		return graphql.Null
+	}
+	res := resTmp.(*string)
+	fc.Result = res
+	return ec.marshalODateTime2ᚖstring(ctx, field.Selections, res)
+}
+
+func (ec *executionContext) fieldContext_LinkedInSessionStatus_updatedAt(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "LinkedInSessionStatus",
+		Field:      field,
+		IsMethod:   false,
+		IsResolver: false,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return nil, errors.New("field of type DateTime does not have child fields")
 		},
 	}
 	return fc, nil
@@ -13721,6 +15873,431 @@ func (ec *executionContext) fieldContext_Mutation_updateInviteLink(ctx context.C
 	}()
 	ctx = graphql.WithFieldContext(ctx, fc)
 	if fc.Args, err = ec.field_Mutation_updateInviteLink_args(ctx, field.ArgumentMap(ec.Variables)); err != nil {
+		ec.Error(ctx, err)
+		return fc, err
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _Mutation_createJobAutomation(ctx context.Context, field graphql.CollectedField) (ret graphql.Marshaler) {
+	fc, err := ec.fieldContext_Mutation_createJobAutomation(ctx, field)
+	if err != nil {
+		return graphql.Null
+	}
+	ctx = graphql.WithFieldContext(ctx, fc)
+	defer func() {
+		if r := recover(); r != nil {
+			ec.Error(ctx, ec.Recover(ctx, r))
+			ret = graphql.Null
+		}
+	}()
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (any, error) {
+		ctx = rctx // use context from middleware stack in children
+		return ec.resolvers.Mutation().CreateJobAutomation(rctx, fc.Args["input"].(model.CreateJobAutomationInput))
+	})
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	if resTmp == nil {
+		if !graphql.HasFieldError(ctx, fc) {
+			ec.Errorf(ctx, "must not be null")
+		}
+		return graphql.Null
+	}
+	res := resTmp.(*model.JobAutomation)
+	fc.Result = res
+	return ec.marshalNJobAutomation2ᚖgithubᚗcomᚋleoᚋaiᚑweekendᚋbackendᚋgraphᚋmodelᚐJobAutomation(ctx, field.Selections, res)
+}
+
+func (ec *executionContext) fieldContext_Mutation_createJobAutomation(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "Mutation",
+		Field:      field,
+		IsMethod:   true,
+		IsResolver: true,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			switch field.Name {
+			case "id":
+				return ec.fieldContext_JobAutomation_id(ctx, field)
+			case "name":
+				return ec.fieldContext_JobAutomation_name(ctx, field)
+			case "enabled":
+				return ec.fieldContext_JobAutomation_enabled(ctx, field)
+			case "keywords":
+				return ec.fieldContext_JobAutomation_keywords(ctx, field)
+			case "geoId":
+				return ec.fieldContext_JobAutomation_geoId(ctx, field)
+			case "geoLabel":
+				return ec.fieldContext_JobAutomation_geoLabel(ctx, field)
+			case "timeFilter":
+				return ec.fieldContext_JobAutomation_timeFilter(ctx, field)
+			case "workplaceTypes":
+				return ec.fieldContext_JobAutomation_workplaceTypes(ctx, field)
+			case "experienceLevels":
+				return ec.fieldContext_JobAutomation_experienceLevels(ctx, field)
+			case "employmentTypes":
+				return ec.fieldContext_JobAutomation_employmentTypes(ctx, field)
+			case "easyApply":
+				return ec.fieldContext_JobAutomation_easyApply(ctx, field)
+			case "sortBy":
+				return ec.fieldContext_JobAutomation_sortBy(ctx, field)
+			case "maxResults":
+				return ec.fieldContext_JobAutomation_maxResults(ctx, field)
+			case "matchCriteria":
+				return ec.fieldContext_JobAutomation_matchCriteria(ctx, field)
+			case "intervalMinutes":
+				return ec.fieldContext_JobAutomation_intervalMinutes(ctx, field)
+			case "nextRunAt":
+				return ec.fieldContext_JobAutomation_nextRunAt(ctx, field)
+			case "lastRunAt":
+				return ec.fieldContext_JobAutomation_lastRunAt(ctx, field)
+			case "notifyEmail":
+				return ec.fieldContext_JobAutomation_notifyEmail(ctx, field)
+			case "sessionInvalid":
+				return ec.fieldContext_JobAutomation_sessionInvalid(ctx, field)
+			case "createdAt":
+				return ec.fieldContext_JobAutomation_createdAt(ctx, field)
+			case "updatedAt":
+				return ec.fieldContext_JobAutomation_updatedAt(ctx, field)
+			}
+			return nil, fmt.Errorf("no field named %q was found under type JobAutomation", field.Name)
+		},
+	}
+	defer func() {
+		if r := recover(); r != nil {
+			err = ec.Recover(ctx, r)
+			ec.Error(ctx, err)
+		}
+	}()
+	ctx = graphql.WithFieldContext(ctx, fc)
+	if fc.Args, err = ec.field_Mutation_createJobAutomation_args(ctx, field.ArgumentMap(ec.Variables)); err != nil {
+		ec.Error(ctx, err)
+		return fc, err
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _Mutation_updateJobAutomation(ctx context.Context, field graphql.CollectedField) (ret graphql.Marshaler) {
+	fc, err := ec.fieldContext_Mutation_updateJobAutomation(ctx, field)
+	if err != nil {
+		return graphql.Null
+	}
+	ctx = graphql.WithFieldContext(ctx, fc)
+	defer func() {
+		if r := recover(); r != nil {
+			ec.Error(ctx, ec.Recover(ctx, r))
+			ret = graphql.Null
+		}
+	}()
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (any, error) {
+		ctx = rctx // use context from middleware stack in children
+		return ec.resolvers.Mutation().UpdateJobAutomation(rctx, fc.Args["input"].(model.UpdateJobAutomationInput))
+	})
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	if resTmp == nil {
+		if !graphql.HasFieldError(ctx, fc) {
+			ec.Errorf(ctx, "must not be null")
+		}
+		return graphql.Null
+	}
+	res := resTmp.(*model.JobAutomation)
+	fc.Result = res
+	return ec.marshalNJobAutomation2ᚖgithubᚗcomᚋleoᚋaiᚑweekendᚋbackendᚋgraphᚋmodelᚐJobAutomation(ctx, field.Selections, res)
+}
+
+func (ec *executionContext) fieldContext_Mutation_updateJobAutomation(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "Mutation",
+		Field:      field,
+		IsMethod:   true,
+		IsResolver: true,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			switch field.Name {
+			case "id":
+				return ec.fieldContext_JobAutomation_id(ctx, field)
+			case "name":
+				return ec.fieldContext_JobAutomation_name(ctx, field)
+			case "enabled":
+				return ec.fieldContext_JobAutomation_enabled(ctx, field)
+			case "keywords":
+				return ec.fieldContext_JobAutomation_keywords(ctx, field)
+			case "geoId":
+				return ec.fieldContext_JobAutomation_geoId(ctx, field)
+			case "geoLabel":
+				return ec.fieldContext_JobAutomation_geoLabel(ctx, field)
+			case "timeFilter":
+				return ec.fieldContext_JobAutomation_timeFilter(ctx, field)
+			case "workplaceTypes":
+				return ec.fieldContext_JobAutomation_workplaceTypes(ctx, field)
+			case "experienceLevels":
+				return ec.fieldContext_JobAutomation_experienceLevels(ctx, field)
+			case "employmentTypes":
+				return ec.fieldContext_JobAutomation_employmentTypes(ctx, field)
+			case "easyApply":
+				return ec.fieldContext_JobAutomation_easyApply(ctx, field)
+			case "sortBy":
+				return ec.fieldContext_JobAutomation_sortBy(ctx, field)
+			case "maxResults":
+				return ec.fieldContext_JobAutomation_maxResults(ctx, field)
+			case "matchCriteria":
+				return ec.fieldContext_JobAutomation_matchCriteria(ctx, field)
+			case "intervalMinutes":
+				return ec.fieldContext_JobAutomation_intervalMinutes(ctx, field)
+			case "nextRunAt":
+				return ec.fieldContext_JobAutomation_nextRunAt(ctx, field)
+			case "lastRunAt":
+				return ec.fieldContext_JobAutomation_lastRunAt(ctx, field)
+			case "notifyEmail":
+				return ec.fieldContext_JobAutomation_notifyEmail(ctx, field)
+			case "sessionInvalid":
+				return ec.fieldContext_JobAutomation_sessionInvalid(ctx, field)
+			case "createdAt":
+				return ec.fieldContext_JobAutomation_createdAt(ctx, field)
+			case "updatedAt":
+				return ec.fieldContext_JobAutomation_updatedAt(ctx, field)
+			}
+			return nil, fmt.Errorf("no field named %q was found under type JobAutomation", field.Name)
+		},
+	}
+	defer func() {
+		if r := recover(); r != nil {
+			err = ec.Recover(ctx, r)
+			ec.Error(ctx, err)
+		}
+	}()
+	ctx = graphql.WithFieldContext(ctx, fc)
+	if fc.Args, err = ec.field_Mutation_updateJobAutomation_args(ctx, field.ArgumentMap(ec.Variables)); err != nil {
+		ec.Error(ctx, err)
+		return fc, err
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _Mutation_deleteJobAutomation(ctx context.Context, field graphql.CollectedField) (ret graphql.Marshaler) {
+	fc, err := ec.fieldContext_Mutation_deleteJobAutomation(ctx, field)
+	if err != nil {
+		return graphql.Null
+	}
+	ctx = graphql.WithFieldContext(ctx, fc)
+	defer func() {
+		if r := recover(); r != nil {
+			ec.Error(ctx, ec.Recover(ctx, r))
+			ret = graphql.Null
+		}
+	}()
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (any, error) {
+		ctx = rctx // use context from middleware stack in children
+		return ec.resolvers.Mutation().DeleteJobAutomation(rctx, fc.Args["id"].(string))
+	})
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	if resTmp == nil {
+		if !graphql.HasFieldError(ctx, fc) {
+			ec.Errorf(ctx, "must not be null")
+		}
+		return graphql.Null
+	}
+	res := resTmp.(bool)
+	fc.Result = res
+	return ec.marshalNBoolean2bool(ctx, field.Selections, res)
+}
+
+func (ec *executionContext) fieldContext_Mutation_deleteJobAutomation(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "Mutation",
+		Field:      field,
+		IsMethod:   true,
+		IsResolver: true,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return nil, errors.New("field of type Boolean does not have child fields")
+		},
+	}
+	defer func() {
+		if r := recover(); r != nil {
+			err = ec.Recover(ctx, r)
+			ec.Error(ctx, err)
+		}
+	}()
+	ctx = graphql.WithFieldContext(ctx, fc)
+	if fc.Args, err = ec.field_Mutation_deleteJobAutomation_args(ctx, field.ArgumentMap(ec.Variables)); err != nil {
+		ec.Error(ctx, err)
+		return fc, err
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _Mutation_saveLinkedInSession(ctx context.Context, field graphql.CollectedField) (ret graphql.Marshaler) {
+	fc, err := ec.fieldContext_Mutation_saveLinkedInSession(ctx, field)
+	if err != nil {
+		return graphql.Null
+	}
+	ctx = graphql.WithFieldContext(ctx, fc)
+	defer func() {
+		if r := recover(); r != nil {
+			ec.Error(ctx, ec.Recover(ctx, r))
+			ret = graphql.Null
+		}
+	}()
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (any, error) {
+		ctx = rctx // use context from middleware stack in children
+		return ec.resolvers.Mutation().SaveLinkedInSession(rctx, fc.Args["cookie"].(string))
+	})
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	if resTmp == nil {
+		if !graphql.HasFieldError(ctx, fc) {
+			ec.Errorf(ctx, "must not be null")
+		}
+		return graphql.Null
+	}
+	res := resTmp.(*model.LinkedInSessionStatus)
+	fc.Result = res
+	return ec.marshalNLinkedInSessionStatus2ᚖgithubᚗcomᚋleoᚋaiᚑweekendᚋbackendᚋgraphᚋmodelᚐLinkedInSessionStatus(ctx, field.Selections, res)
+}
+
+func (ec *executionContext) fieldContext_Mutation_saveLinkedInSession(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "Mutation",
+		Field:      field,
+		IsMethod:   true,
+		IsResolver: true,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			switch field.Name {
+			case "configured":
+				return ec.fieldContext_LinkedInSessionStatus_configured(ctx, field)
+			case "updatedAt":
+				return ec.fieldContext_LinkedInSessionStatus_updatedAt(ctx, field)
+			}
+			return nil, fmt.Errorf("no field named %q was found under type LinkedInSessionStatus", field.Name)
+		},
+	}
+	defer func() {
+		if r := recover(); r != nil {
+			err = ec.Recover(ctx, r)
+			ec.Error(ctx, err)
+		}
+	}()
+	ctx = graphql.WithFieldContext(ctx, fc)
+	if fc.Args, err = ec.field_Mutation_saveLinkedInSession_args(ctx, field.ArgumentMap(ec.Variables)); err != nil {
+		ec.Error(ctx, err)
+		return fc, err
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _Mutation_clearLinkedInSession(ctx context.Context, field graphql.CollectedField) (ret graphql.Marshaler) {
+	fc, err := ec.fieldContext_Mutation_clearLinkedInSession(ctx, field)
+	if err != nil {
+		return graphql.Null
+	}
+	ctx = graphql.WithFieldContext(ctx, fc)
+	defer func() {
+		if r := recover(); r != nil {
+			ec.Error(ctx, ec.Recover(ctx, r))
+			ret = graphql.Null
+		}
+	}()
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (any, error) {
+		ctx = rctx // use context from middleware stack in children
+		return ec.resolvers.Mutation().ClearLinkedInSession(rctx)
+	})
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	if resTmp == nil {
+		if !graphql.HasFieldError(ctx, fc) {
+			ec.Errorf(ctx, "must not be null")
+		}
+		return graphql.Null
+	}
+	res := resTmp.(*model.LinkedInSessionStatus)
+	fc.Result = res
+	return ec.marshalNLinkedInSessionStatus2ᚖgithubᚗcomᚋleoᚋaiᚑweekendᚋbackendᚋgraphᚋmodelᚐLinkedInSessionStatus(ctx, field.Selections, res)
+}
+
+func (ec *executionContext) fieldContext_Mutation_clearLinkedInSession(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "Mutation",
+		Field:      field,
+		IsMethod:   true,
+		IsResolver: true,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			switch field.Name {
+			case "configured":
+				return ec.fieldContext_LinkedInSessionStatus_configured(ctx, field)
+			case "updatedAt":
+				return ec.fieldContext_LinkedInSessionStatus_updatedAt(ctx, field)
+			}
+			return nil, fmt.Errorf("no field named %q was found under type LinkedInSessionStatus", field.Name)
+		},
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _Mutation_runJobAutomationNow(ctx context.Context, field graphql.CollectedField) (ret graphql.Marshaler) {
+	fc, err := ec.fieldContext_Mutation_runJobAutomationNow(ctx, field)
+	if err != nil {
+		return graphql.Null
+	}
+	ctx = graphql.WithFieldContext(ctx, fc)
+	defer func() {
+		if r := recover(); r != nil {
+			ec.Error(ctx, ec.Recover(ctx, r))
+			ret = graphql.Null
+		}
+	}()
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (any, error) {
+		ctx = rctx // use context from middleware stack in children
+		return ec.resolvers.Mutation().RunJobAutomationNow(rctx, fc.Args["id"].(string))
+	})
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	if resTmp == nil {
+		if !graphql.HasFieldError(ctx, fc) {
+			ec.Errorf(ctx, "must not be null")
+		}
+		return graphql.Null
+	}
+	res := resTmp.(*model.JobAutomationRunResult)
+	fc.Result = res
+	return ec.marshalNJobAutomationRunResult2ᚖgithubᚗcomᚋleoᚋaiᚑweekendᚋbackendᚋgraphᚋmodelᚐJobAutomationRunResult(ctx, field.Selections, res)
+}
+
+func (ec *executionContext) fieldContext_Mutation_runJobAutomationNow(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "Mutation",
+		Field:      field,
+		IsMethod:   true,
+		IsResolver: true,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			switch field.Name {
+			case "run":
+				return ec.fieldContext_JobAutomationRunResult_run(ctx, field)
+			case "matches":
+				return ec.fieldContext_JobAutomationRunResult_matches(ctx, field)
+			}
+			return nil, fmt.Errorf("no field named %q was found under type JobAutomationRunResult", field.Name)
+		},
+	}
+	defer func() {
+		if r := recover(); r != nil {
+			err = ec.Recover(ctx, r)
+			ec.Error(ctx, err)
+		}
+	}()
+	ctx = graphql.WithFieldContext(ctx, fc)
+	if fc.Args, err = ec.field_Mutation_runJobAutomationNow_args(ctx, field.ArgumentMap(ec.Variables)); err != nil {
 		ec.Error(ctx, err)
 		return fc, err
 	}
@@ -18798,6 +21375,67 @@ func (ec *executionContext) fieldContext_Query_adminAuditLog(ctx context.Context
 	return fc, nil
 }
 
+func (ec *executionContext) _Query_adminLinkedInGeoSearch(ctx context.Context, field graphql.CollectedField) (ret graphql.Marshaler) {
+	fc, err := ec.fieldContext_Query_adminLinkedInGeoSearch(ctx, field)
+	if err != nil {
+		return graphql.Null
+	}
+	ctx = graphql.WithFieldContext(ctx, fc)
+	defer func() {
+		if r := recover(); r != nil {
+			ec.Error(ctx, ec.Recover(ctx, r))
+			ret = graphql.Null
+		}
+	}()
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (any, error) {
+		ctx = rctx // use context from middleware stack in children
+		return ec.resolvers.Query().AdminLinkedInGeoSearch(rctx, fc.Args["keywords"].(string))
+	})
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	if resTmp == nil {
+		if !graphql.HasFieldError(ctx, fc) {
+			ec.Errorf(ctx, "must not be null")
+		}
+		return graphql.Null
+	}
+	res := resTmp.([]*model.LinkedInGeoLocation)
+	fc.Result = res
+	return ec.marshalNLinkedInGeoLocation2ᚕᚖgithubᚗcomᚋleoᚋaiᚑweekendᚋbackendᚋgraphᚋmodelᚐLinkedInGeoLocationᚄ(ctx, field.Selections, res)
+}
+
+func (ec *executionContext) fieldContext_Query_adminLinkedInGeoSearch(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "Query",
+		Field:      field,
+		IsMethod:   true,
+		IsResolver: true,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			switch field.Name {
+			case "geoId":
+				return ec.fieldContext_LinkedInGeoLocation_geoId(ctx, field)
+			case "label":
+				return ec.fieldContext_LinkedInGeoLocation_label(ctx, field)
+			}
+			return nil, fmt.Errorf("no field named %q was found under type LinkedInGeoLocation", field.Name)
+		},
+	}
+	defer func() {
+		if r := recover(); r != nil {
+			err = ec.Recover(ctx, r)
+			ec.Error(ctx, err)
+		}
+	}()
+	ctx = graphql.WithFieldContext(ctx, fc)
+	if fc.Args, err = ec.field_Query_adminLinkedInGeoSearch_args(ctx, field.ArgumentMap(ec.Variables)); err != nil {
+		ec.Error(ctx, err)
+		return fc, err
+	}
+	return fc, nil
+}
+
 func (ec *executionContext) _Query_adminLinkedInJobSearch(ctx context.Context, field graphql.CollectedField) (ret graphql.Marshaler) {
 	fc, err := ec.fieldContext_Query_adminLinkedInJobSearch(ctx, field)
 	if err != nil {
@@ -18812,7 +21450,7 @@ func (ec *executionContext) _Query_adminLinkedInJobSearch(ctx context.Context, f
 	}()
 	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (any, error) {
 		ctx = rctx // use context from middleware stack in children
-		return ec.resolvers.Query().AdminLinkedInJobSearch(rctx, fc.Args["keywords"].(*string), fc.Args["geoId"].(*string), fc.Args["timeFilter"].(*string), fc.Args["workplaceTypes"].([]model.LinkedInWorkplaceType), fc.Args["experienceLevels"].([]model.LinkedInExperienceLevel), fc.Args["employmentTypes"].([]model.LinkedInEmploymentType), fc.Args["sessionCookie"].(*string))
+		return ec.resolvers.Query().AdminLinkedInJobSearch(rctx, fc.Args["keywords"].(*string), fc.Args["geoId"].(*string), fc.Args["timeFilter"].(*string), fc.Args["sortBy"].(*model.LinkedInJobSortBy), fc.Args["maxResults"].(*int), fc.Args["workplaceTypes"].([]model.LinkedInWorkplaceType), fc.Args["experienceLevels"].([]model.LinkedInExperienceLevel), fc.Args["employmentTypes"].([]model.LinkedInEmploymentType), fc.Args["easyApply"].(*bool), fc.Args["sessionCookie"].(*string))
 	})
 	if err != nil {
 		ec.Error(ctx, err)
@@ -18934,6 +21572,315 @@ func (ec *executionContext) fieldContext_Query_adminInviteLinks(_ context.Contex
 				return ec.fieldContext_InviteLink_urlPath(ctx, field)
 			}
 			return nil, fmt.Errorf("no field named %q was found under type InviteLink", field.Name)
+		},
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _Query_jobAutomations(ctx context.Context, field graphql.CollectedField) (ret graphql.Marshaler) {
+	fc, err := ec.fieldContext_Query_jobAutomations(ctx, field)
+	if err != nil {
+		return graphql.Null
+	}
+	ctx = graphql.WithFieldContext(ctx, fc)
+	defer func() {
+		if r := recover(); r != nil {
+			ec.Error(ctx, ec.Recover(ctx, r))
+			ret = graphql.Null
+		}
+	}()
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (any, error) {
+		ctx = rctx // use context from middleware stack in children
+		return ec.resolvers.Query().JobAutomations(rctx)
+	})
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	if resTmp == nil {
+		if !graphql.HasFieldError(ctx, fc) {
+			ec.Errorf(ctx, "must not be null")
+		}
+		return graphql.Null
+	}
+	res := resTmp.([]*model.JobAutomation)
+	fc.Result = res
+	return ec.marshalNJobAutomation2ᚕᚖgithubᚗcomᚋleoᚋaiᚑweekendᚋbackendᚋgraphᚋmodelᚐJobAutomationᚄ(ctx, field.Selections, res)
+}
+
+func (ec *executionContext) fieldContext_Query_jobAutomations(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "Query",
+		Field:      field,
+		IsMethod:   true,
+		IsResolver: true,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			switch field.Name {
+			case "id":
+				return ec.fieldContext_JobAutomation_id(ctx, field)
+			case "name":
+				return ec.fieldContext_JobAutomation_name(ctx, field)
+			case "enabled":
+				return ec.fieldContext_JobAutomation_enabled(ctx, field)
+			case "keywords":
+				return ec.fieldContext_JobAutomation_keywords(ctx, field)
+			case "geoId":
+				return ec.fieldContext_JobAutomation_geoId(ctx, field)
+			case "geoLabel":
+				return ec.fieldContext_JobAutomation_geoLabel(ctx, field)
+			case "timeFilter":
+				return ec.fieldContext_JobAutomation_timeFilter(ctx, field)
+			case "workplaceTypes":
+				return ec.fieldContext_JobAutomation_workplaceTypes(ctx, field)
+			case "experienceLevels":
+				return ec.fieldContext_JobAutomation_experienceLevels(ctx, field)
+			case "employmentTypes":
+				return ec.fieldContext_JobAutomation_employmentTypes(ctx, field)
+			case "easyApply":
+				return ec.fieldContext_JobAutomation_easyApply(ctx, field)
+			case "sortBy":
+				return ec.fieldContext_JobAutomation_sortBy(ctx, field)
+			case "maxResults":
+				return ec.fieldContext_JobAutomation_maxResults(ctx, field)
+			case "matchCriteria":
+				return ec.fieldContext_JobAutomation_matchCriteria(ctx, field)
+			case "intervalMinutes":
+				return ec.fieldContext_JobAutomation_intervalMinutes(ctx, field)
+			case "nextRunAt":
+				return ec.fieldContext_JobAutomation_nextRunAt(ctx, field)
+			case "lastRunAt":
+				return ec.fieldContext_JobAutomation_lastRunAt(ctx, field)
+			case "notifyEmail":
+				return ec.fieldContext_JobAutomation_notifyEmail(ctx, field)
+			case "sessionInvalid":
+				return ec.fieldContext_JobAutomation_sessionInvalid(ctx, field)
+			case "createdAt":
+				return ec.fieldContext_JobAutomation_createdAt(ctx, field)
+			case "updatedAt":
+				return ec.fieldContext_JobAutomation_updatedAt(ctx, field)
+			}
+			return nil, fmt.Errorf("no field named %q was found under type JobAutomation", field.Name)
+		},
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _Query_jobAutomation(ctx context.Context, field graphql.CollectedField) (ret graphql.Marshaler) {
+	fc, err := ec.fieldContext_Query_jobAutomation(ctx, field)
+	if err != nil {
+		return graphql.Null
+	}
+	ctx = graphql.WithFieldContext(ctx, fc)
+	defer func() {
+		if r := recover(); r != nil {
+			ec.Error(ctx, ec.Recover(ctx, r))
+			ret = graphql.Null
+		}
+	}()
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (any, error) {
+		ctx = rctx // use context from middleware stack in children
+		return ec.resolvers.Query().JobAutomation(rctx, fc.Args["id"].(string))
+	})
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	if resTmp == nil {
+		return graphql.Null
+	}
+	res := resTmp.(*model.JobAutomation)
+	fc.Result = res
+	return ec.marshalOJobAutomation2ᚖgithubᚗcomᚋleoᚋaiᚑweekendᚋbackendᚋgraphᚋmodelᚐJobAutomation(ctx, field.Selections, res)
+}
+
+func (ec *executionContext) fieldContext_Query_jobAutomation(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "Query",
+		Field:      field,
+		IsMethod:   true,
+		IsResolver: true,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			switch field.Name {
+			case "id":
+				return ec.fieldContext_JobAutomation_id(ctx, field)
+			case "name":
+				return ec.fieldContext_JobAutomation_name(ctx, field)
+			case "enabled":
+				return ec.fieldContext_JobAutomation_enabled(ctx, field)
+			case "keywords":
+				return ec.fieldContext_JobAutomation_keywords(ctx, field)
+			case "geoId":
+				return ec.fieldContext_JobAutomation_geoId(ctx, field)
+			case "geoLabel":
+				return ec.fieldContext_JobAutomation_geoLabel(ctx, field)
+			case "timeFilter":
+				return ec.fieldContext_JobAutomation_timeFilter(ctx, field)
+			case "workplaceTypes":
+				return ec.fieldContext_JobAutomation_workplaceTypes(ctx, field)
+			case "experienceLevels":
+				return ec.fieldContext_JobAutomation_experienceLevels(ctx, field)
+			case "employmentTypes":
+				return ec.fieldContext_JobAutomation_employmentTypes(ctx, field)
+			case "easyApply":
+				return ec.fieldContext_JobAutomation_easyApply(ctx, field)
+			case "sortBy":
+				return ec.fieldContext_JobAutomation_sortBy(ctx, field)
+			case "maxResults":
+				return ec.fieldContext_JobAutomation_maxResults(ctx, field)
+			case "matchCriteria":
+				return ec.fieldContext_JobAutomation_matchCriteria(ctx, field)
+			case "intervalMinutes":
+				return ec.fieldContext_JobAutomation_intervalMinutes(ctx, field)
+			case "nextRunAt":
+				return ec.fieldContext_JobAutomation_nextRunAt(ctx, field)
+			case "lastRunAt":
+				return ec.fieldContext_JobAutomation_lastRunAt(ctx, field)
+			case "notifyEmail":
+				return ec.fieldContext_JobAutomation_notifyEmail(ctx, field)
+			case "sessionInvalid":
+				return ec.fieldContext_JobAutomation_sessionInvalid(ctx, field)
+			case "createdAt":
+				return ec.fieldContext_JobAutomation_createdAt(ctx, field)
+			case "updatedAt":
+				return ec.fieldContext_JobAutomation_updatedAt(ctx, field)
+			}
+			return nil, fmt.Errorf("no field named %q was found under type JobAutomation", field.Name)
+		},
+	}
+	defer func() {
+		if r := recover(); r != nil {
+			err = ec.Recover(ctx, r)
+			ec.Error(ctx, err)
+		}
+	}()
+	ctx = graphql.WithFieldContext(ctx, fc)
+	if fc.Args, err = ec.field_Query_jobAutomation_args(ctx, field.ArgumentMap(ec.Variables)); err != nil {
+		ec.Error(ctx, err)
+		return fc, err
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _Query_automationRuns(ctx context.Context, field graphql.CollectedField) (ret graphql.Marshaler) {
+	fc, err := ec.fieldContext_Query_automationRuns(ctx, field)
+	if err != nil {
+		return graphql.Null
+	}
+	ctx = graphql.WithFieldContext(ctx, fc)
+	defer func() {
+		if r := recover(); r != nil {
+			ec.Error(ctx, ec.Recover(ctx, r))
+			ret = graphql.Null
+		}
+	}()
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (any, error) {
+		ctx = rctx // use context from middleware stack in children
+		return ec.resolvers.Query().AutomationRuns(rctx, fc.Args["automationId"].(string), fc.Args["limit"].(*int))
+	})
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	if resTmp == nil {
+		if !graphql.HasFieldError(ctx, fc) {
+			ec.Errorf(ctx, "must not be null")
+		}
+		return graphql.Null
+	}
+	res := resTmp.([]*model.AutomationRun)
+	fc.Result = res
+	return ec.marshalNAutomationRun2ᚕᚖgithubᚗcomᚋleoᚋaiᚑweekendᚋbackendᚋgraphᚋmodelᚐAutomationRunᚄ(ctx, field.Selections, res)
+}
+
+func (ec *executionContext) fieldContext_Query_automationRuns(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "Query",
+		Field:      field,
+		IsMethod:   true,
+		IsResolver: true,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			switch field.Name {
+			case "id":
+				return ec.fieldContext_AutomationRun_id(ctx, field)
+			case "automationId":
+				return ec.fieldContext_AutomationRun_automationId(ctx, field)
+			case "startedAt":
+				return ec.fieldContext_AutomationRun_startedAt(ctx, field)
+			case "finishedAt":
+				return ec.fieldContext_AutomationRun_finishedAt(ctx, field)
+			case "status":
+				return ec.fieldContext_AutomationRun_status(ctx, field)
+			case "jobsFetched":
+				return ec.fieldContext_AutomationRun_jobsFetched(ctx, field)
+			case "jobsMatched":
+				return ec.fieldContext_AutomationRun_jobsMatched(ctx, field)
+			case "jobsEmailed":
+				return ec.fieldContext_AutomationRun_jobsEmailed(ctx, field)
+			case "error":
+				return ec.fieldContext_AutomationRun_error(ctx, field)
+			}
+			return nil, fmt.Errorf("no field named %q was found under type AutomationRun", field.Name)
+		},
+	}
+	defer func() {
+		if r := recover(); r != nil {
+			err = ec.Recover(ctx, r)
+			ec.Error(ctx, err)
+		}
+	}()
+	ctx = graphql.WithFieldContext(ctx, fc)
+	if fc.Args, err = ec.field_Query_automationRuns_args(ctx, field.ArgumentMap(ec.Variables)); err != nil {
+		ec.Error(ctx, err)
+		return fc, err
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _Query_linkedInSessionStatus(ctx context.Context, field graphql.CollectedField) (ret graphql.Marshaler) {
+	fc, err := ec.fieldContext_Query_linkedInSessionStatus(ctx, field)
+	if err != nil {
+		return graphql.Null
+	}
+	ctx = graphql.WithFieldContext(ctx, fc)
+	defer func() {
+		if r := recover(); r != nil {
+			ec.Error(ctx, ec.Recover(ctx, r))
+			ret = graphql.Null
+		}
+	}()
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (any, error) {
+		ctx = rctx // use context from middleware stack in children
+		return ec.resolvers.Query().LinkedInSessionStatus(rctx)
+	})
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	if resTmp == nil {
+		if !graphql.HasFieldError(ctx, fc) {
+			ec.Errorf(ctx, "must not be null")
+		}
+		return graphql.Null
+	}
+	res := resTmp.(*model.LinkedInSessionStatus)
+	fc.Result = res
+	return ec.marshalNLinkedInSessionStatus2ᚖgithubᚗcomᚋleoᚋaiᚑweekendᚋbackendᚋgraphᚋmodelᚐLinkedInSessionStatus(ctx, field.Selections, res)
+}
+
+func (ec *executionContext) fieldContext_Query_linkedInSessionStatus(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "Query",
+		Field:      field,
+		IsMethod:   true,
+		IsResolver: true,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			switch field.Name {
+			case "configured":
+				return ec.fieldContext_LinkedInSessionStatus_configured(ctx, field)
+			case "updatedAt":
+				return ec.fieldContext_LinkedInSessionStatus_updatedAt(ctx, field)
+			}
+			return nil, fmt.Errorf("no field named %q was found under type LinkedInSessionStatus", field.Name)
 		},
 	}
 	return fc, nil
@@ -28299,6 +31246,144 @@ func (ec *executionContext) unmarshalInputCreateInviteLinkInput(ctx context.Cont
 	return it, nil
 }
 
+func (ec *executionContext) unmarshalInputCreateJobAutomationInput(ctx context.Context, obj any) (model.CreateJobAutomationInput, error) {
+	var it model.CreateJobAutomationInput
+	asMap := map[string]any{}
+	for k, v := range obj.(map[string]any) {
+		asMap[k] = v
+	}
+
+	if _, present := asMap["enabled"]; !present {
+		asMap["enabled"] = true
+	}
+	if _, present := asMap["timeFilter"]; !present {
+		asMap["timeFilter"] = "r86400"
+	}
+	if _, present := asMap["sortBy"]; !present {
+		asMap["sortBy"] = "DATE_DESC"
+	}
+	if _, present := asMap["maxResults"]; !present {
+		asMap["maxResults"] = 100
+	}
+
+	fieldsInOrder := [...]string{"name", "enabled", "keywords", "geoId", "geoLabel", "timeFilter", "workplaceTypes", "experienceLevels", "employmentTypes", "easyApply", "sortBy", "maxResults", "matchCriteria", "intervalMinutes", "notifyEmail"}
+	for _, k := range fieldsInOrder {
+		v, ok := asMap[k]
+		if !ok {
+			continue
+		}
+		switch k {
+		case "name":
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("name"))
+			data, err := ec.unmarshalNString2string(ctx, v)
+			if err != nil {
+				return it, err
+			}
+			it.Name = data
+		case "enabled":
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("enabled"))
+			data, err := ec.unmarshalOBoolean2ᚖbool(ctx, v)
+			if err != nil {
+				return it, err
+			}
+			it.Enabled = data
+		case "keywords":
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("keywords"))
+			data, err := ec.unmarshalOString2ᚖstring(ctx, v)
+			if err != nil {
+				return it, err
+			}
+			it.Keywords = data
+		case "geoId":
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("geoId"))
+			data, err := ec.unmarshalOString2ᚖstring(ctx, v)
+			if err != nil {
+				return it, err
+			}
+			it.GeoID = data
+		case "geoLabel":
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("geoLabel"))
+			data, err := ec.unmarshalOString2ᚖstring(ctx, v)
+			if err != nil {
+				return it, err
+			}
+			it.GeoLabel = data
+		case "timeFilter":
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("timeFilter"))
+			data, err := ec.unmarshalOString2ᚖstring(ctx, v)
+			if err != nil {
+				return it, err
+			}
+			it.TimeFilter = data
+		case "workplaceTypes":
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("workplaceTypes"))
+			data, err := ec.unmarshalOLinkedInWorkplaceType2ᚕgithubᚗcomᚋleoᚋaiᚑweekendᚋbackendᚋgraphᚋmodelᚐLinkedInWorkplaceTypeᚄ(ctx, v)
+			if err != nil {
+				return it, err
+			}
+			it.WorkplaceTypes = data
+		case "experienceLevels":
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("experienceLevels"))
+			data, err := ec.unmarshalOLinkedInExperienceLevel2ᚕgithubᚗcomᚋleoᚋaiᚑweekendᚋbackendᚋgraphᚋmodelᚐLinkedInExperienceLevelᚄ(ctx, v)
+			if err != nil {
+				return it, err
+			}
+			it.ExperienceLevels = data
+		case "employmentTypes":
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("employmentTypes"))
+			data, err := ec.unmarshalOLinkedInEmploymentType2ᚕgithubᚗcomᚋleoᚋaiᚑweekendᚋbackendᚋgraphᚋmodelᚐLinkedInEmploymentTypeᚄ(ctx, v)
+			if err != nil {
+				return it, err
+			}
+			it.EmploymentTypes = data
+		case "easyApply":
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("easyApply"))
+			data, err := ec.unmarshalOBoolean2ᚖbool(ctx, v)
+			if err != nil {
+				return it, err
+			}
+			it.EasyApply = data
+		case "sortBy":
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("sortBy"))
+			data, err := ec.unmarshalOLinkedInJobSortBy2ᚖgithubᚗcomᚋleoᚋaiᚑweekendᚋbackendᚋgraphᚋmodelᚐLinkedInJobSortBy(ctx, v)
+			if err != nil {
+				return it, err
+			}
+			it.SortBy = data
+		case "maxResults":
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("maxResults"))
+			data, err := ec.unmarshalOInt2ᚖint(ctx, v)
+			if err != nil {
+				return it, err
+			}
+			it.MaxResults = data
+		case "matchCriteria":
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("matchCriteria"))
+			data, err := ec.unmarshalNString2string(ctx, v)
+			if err != nil {
+				return it, err
+			}
+			it.MatchCriteria = data
+		case "intervalMinutes":
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("intervalMinutes"))
+			data, err := ec.unmarshalNInt2int(ctx, v)
+			if err != nil {
+				return it, err
+			}
+			it.IntervalMinutes = data
+		case "notifyEmail":
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("notifyEmail"))
+			data, err := ec.unmarshalOString2ᚖstring(ctx, v)
+			if err != nil {
+				return it, err
+			}
+			it.NotifyEmail = data
+		}
+	}
+
+	return it, nil
+}
+
 func (ec *executionContext) unmarshalInputCreateKnowledgeEntryInput(ctx context.Context, obj any) (model.CreateKnowledgeEntryInput, error) {
 	var it model.CreateKnowledgeEntryInput
 	asMap := map[string]any{}
@@ -28678,6 +31763,138 @@ func (ec *executionContext) unmarshalInputUpdateInviteLinkInput(ctx context.Cont
 				return it, err
 			}
 			it.ExpiresAt = data
+		}
+	}
+
+	return it, nil
+}
+
+func (ec *executionContext) unmarshalInputUpdateJobAutomationInput(ctx context.Context, obj any) (model.UpdateJobAutomationInput, error) {
+	var it model.UpdateJobAutomationInput
+	asMap := map[string]any{}
+	for k, v := range obj.(map[string]any) {
+		asMap[k] = v
+	}
+
+	fieldsInOrder := [...]string{"id", "name", "enabled", "keywords", "geoId", "geoLabel", "timeFilter", "workplaceTypes", "experienceLevels", "employmentTypes", "easyApply", "sortBy", "maxResults", "matchCriteria", "intervalMinutes", "notifyEmail"}
+	for _, k := range fieldsInOrder {
+		v, ok := asMap[k]
+		if !ok {
+			continue
+		}
+		switch k {
+		case "id":
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("id"))
+			data, err := ec.unmarshalNID2string(ctx, v)
+			if err != nil {
+				return it, err
+			}
+			it.ID = data
+		case "name":
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("name"))
+			data, err := ec.unmarshalOString2ᚖstring(ctx, v)
+			if err != nil {
+				return it, err
+			}
+			it.Name = data
+		case "enabled":
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("enabled"))
+			data, err := ec.unmarshalOBoolean2ᚖbool(ctx, v)
+			if err != nil {
+				return it, err
+			}
+			it.Enabled = data
+		case "keywords":
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("keywords"))
+			data, err := ec.unmarshalOString2ᚖstring(ctx, v)
+			if err != nil {
+				return it, err
+			}
+			it.Keywords = data
+		case "geoId":
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("geoId"))
+			data, err := ec.unmarshalOString2ᚖstring(ctx, v)
+			if err != nil {
+				return it, err
+			}
+			it.GeoID = data
+		case "geoLabel":
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("geoLabel"))
+			data, err := ec.unmarshalOString2ᚖstring(ctx, v)
+			if err != nil {
+				return it, err
+			}
+			it.GeoLabel = data
+		case "timeFilter":
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("timeFilter"))
+			data, err := ec.unmarshalOString2ᚖstring(ctx, v)
+			if err != nil {
+				return it, err
+			}
+			it.TimeFilter = data
+		case "workplaceTypes":
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("workplaceTypes"))
+			data, err := ec.unmarshalOLinkedInWorkplaceType2ᚕgithubᚗcomᚋleoᚋaiᚑweekendᚋbackendᚋgraphᚋmodelᚐLinkedInWorkplaceTypeᚄ(ctx, v)
+			if err != nil {
+				return it, err
+			}
+			it.WorkplaceTypes = data
+		case "experienceLevels":
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("experienceLevels"))
+			data, err := ec.unmarshalOLinkedInExperienceLevel2ᚕgithubᚗcomᚋleoᚋaiᚑweekendᚋbackendᚋgraphᚋmodelᚐLinkedInExperienceLevelᚄ(ctx, v)
+			if err != nil {
+				return it, err
+			}
+			it.ExperienceLevels = data
+		case "employmentTypes":
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("employmentTypes"))
+			data, err := ec.unmarshalOLinkedInEmploymentType2ᚕgithubᚗcomᚋleoᚋaiᚑweekendᚋbackendᚋgraphᚋmodelᚐLinkedInEmploymentTypeᚄ(ctx, v)
+			if err != nil {
+				return it, err
+			}
+			it.EmploymentTypes = data
+		case "easyApply":
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("easyApply"))
+			data, err := ec.unmarshalOBoolean2ᚖbool(ctx, v)
+			if err != nil {
+				return it, err
+			}
+			it.EasyApply = data
+		case "sortBy":
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("sortBy"))
+			data, err := ec.unmarshalOLinkedInJobSortBy2ᚖgithubᚗcomᚋleoᚋaiᚑweekendᚋbackendᚋgraphᚋmodelᚐLinkedInJobSortBy(ctx, v)
+			if err != nil {
+				return it, err
+			}
+			it.SortBy = data
+		case "maxResults":
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("maxResults"))
+			data, err := ec.unmarshalOInt2ᚖint(ctx, v)
+			if err != nil {
+				return it, err
+			}
+			it.MaxResults = data
+		case "matchCriteria":
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("matchCriteria"))
+			data, err := ec.unmarshalOString2ᚖstring(ctx, v)
+			if err != nil {
+				return it, err
+			}
+			it.MatchCriteria = data
+		case "intervalMinutes":
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("intervalMinutes"))
+			data, err := ec.unmarshalOInt2ᚖint(ctx, v)
+			if err != nil {
+				return it, err
+			}
+			it.IntervalMinutes = data
+		case "notifyEmail":
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("notifyEmail"))
+			data, err := ec.unmarshalOString2ᚖstring(ctx, v)
+			if err != nil {
+				return it, err
+			}
+			it.NotifyEmail = data
 		}
 	}
 
@@ -30414,6 +33631,79 @@ func (ec *executionContext) _AssistantTurnResult(ctx context.Context, sel ast.Se
 	return out
 }
 
+var automationRunImplementors = []string{"AutomationRun"}
+
+func (ec *executionContext) _AutomationRun(ctx context.Context, sel ast.SelectionSet, obj *model.AutomationRun) graphql.Marshaler {
+	fields := graphql.CollectFields(ec.OperationContext, sel, automationRunImplementors)
+
+	out := graphql.NewFieldSet(fields)
+	deferred := make(map[string]*graphql.FieldSet)
+	for i, field := range fields {
+		switch field.Name {
+		case "__typename":
+			out.Values[i] = graphql.MarshalString("AutomationRun")
+		case "id":
+			out.Values[i] = ec._AutomationRun_id(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				out.Invalids++
+			}
+		case "automationId":
+			out.Values[i] = ec._AutomationRun_automationId(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				out.Invalids++
+			}
+		case "startedAt":
+			out.Values[i] = ec._AutomationRun_startedAt(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				out.Invalids++
+			}
+		case "finishedAt":
+			out.Values[i] = ec._AutomationRun_finishedAt(ctx, field, obj)
+		case "status":
+			out.Values[i] = ec._AutomationRun_status(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				out.Invalids++
+			}
+		case "jobsFetched":
+			out.Values[i] = ec._AutomationRun_jobsFetched(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				out.Invalids++
+			}
+		case "jobsMatched":
+			out.Values[i] = ec._AutomationRun_jobsMatched(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				out.Invalids++
+			}
+		case "jobsEmailed":
+			out.Values[i] = ec._AutomationRun_jobsEmailed(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				out.Invalids++
+			}
+		case "error":
+			out.Values[i] = ec._AutomationRun_error(ctx, field, obj)
+		default:
+			panic("unknown field " + strconv.Quote(field.Name))
+		}
+	}
+	out.Dispatch(ctx)
+	if out.Invalids > 0 {
+		return graphql.Null
+	}
+
+	atomic.AddInt32(&ec.deferred, int32(len(deferred)))
+
+	for label, dfs := range deferred {
+		ec.processDeferredGroup(graphql.DeferredGroup{
+			Label:    label,
+			Path:     graphql.GetPath(ctx),
+			FieldSet: dfs,
+			Context:  ctx,
+		})
+	}
+
+	return out
+}
+
 var connectionStatusImplementors = []string{"ConnectionStatus"}
 
 func (ec *executionContext) _ConnectionStatus(ctx context.Context, sel ast.SelectionSet, obj *model.ConnectionStatus) graphql.Marshaler {
@@ -30711,6 +34001,174 @@ func (ec *executionContext) _InviteLink(ctx context.Context, sel ast.SelectionSe
 	return out
 }
 
+var jobAutomationImplementors = []string{"JobAutomation"}
+
+func (ec *executionContext) _JobAutomation(ctx context.Context, sel ast.SelectionSet, obj *model.JobAutomation) graphql.Marshaler {
+	fields := graphql.CollectFields(ec.OperationContext, sel, jobAutomationImplementors)
+
+	out := graphql.NewFieldSet(fields)
+	deferred := make(map[string]*graphql.FieldSet)
+	for i, field := range fields {
+		switch field.Name {
+		case "__typename":
+			out.Values[i] = graphql.MarshalString("JobAutomation")
+		case "id":
+			out.Values[i] = ec._JobAutomation_id(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				out.Invalids++
+			}
+		case "name":
+			out.Values[i] = ec._JobAutomation_name(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				out.Invalids++
+			}
+		case "enabled":
+			out.Values[i] = ec._JobAutomation_enabled(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				out.Invalids++
+			}
+		case "keywords":
+			out.Values[i] = ec._JobAutomation_keywords(ctx, field, obj)
+		case "geoId":
+			out.Values[i] = ec._JobAutomation_geoId(ctx, field, obj)
+		case "geoLabel":
+			out.Values[i] = ec._JobAutomation_geoLabel(ctx, field, obj)
+		case "timeFilter":
+			out.Values[i] = ec._JobAutomation_timeFilter(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				out.Invalids++
+			}
+		case "workplaceTypes":
+			out.Values[i] = ec._JobAutomation_workplaceTypes(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				out.Invalids++
+			}
+		case "experienceLevels":
+			out.Values[i] = ec._JobAutomation_experienceLevels(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				out.Invalids++
+			}
+		case "employmentTypes":
+			out.Values[i] = ec._JobAutomation_employmentTypes(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				out.Invalids++
+			}
+		case "easyApply":
+			out.Values[i] = ec._JobAutomation_easyApply(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				out.Invalids++
+			}
+		case "sortBy":
+			out.Values[i] = ec._JobAutomation_sortBy(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				out.Invalids++
+			}
+		case "maxResults":
+			out.Values[i] = ec._JobAutomation_maxResults(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				out.Invalids++
+			}
+		case "matchCriteria":
+			out.Values[i] = ec._JobAutomation_matchCriteria(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				out.Invalids++
+			}
+		case "intervalMinutes":
+			out.Values[i] = ec._JobAutomation_intervalMinutes(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				out.Invalids++
+			}
+		case "nextRunAt":
+			out.Values[i] = ec._JobAutomation_nextRunAt(ctx, field, obj)
+		case "lastRunAt":
+			out.Values[i] = ec._JobAutomation_lastRunAt(ctx, field, obj)
+		case "notifyEmail":
+			out.Values[i] = ec._JobAutomation_notifyEmail(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				out.Invalids++
+			}
+		case "sessionInvalid":
+			out.Values[i] = ec._JobAutomation_sessionInvalid(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				out.Invalids++
+			}
+		case "createdAt":
+			out.Values[i] = ec._JobAutomation_createdAt(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				out.Invalids++
+			}
+		case "updatedAt":
+			out.Values[i] = ec._JobAutomation_updatedAt(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				out.Invalids++
+			}
+		default:
+			panic("unknown field " + strconv.Quote(field.Name))
+		}
+	}
+	out.Dispatch(ctx)
+	if out.Invalids > 0 {
+		return graphql.Null
+	}
+
+	atomic.AddInt32(&ec.deferred, int32(len(deferred)))
+
+	for label, dfs := range deferred {
+		ec.processDeferredGroup(graphql.DeferredGroup{
+			Label:    label,
+			Path:     graphql.GetPath(ctx),
+			FieldSet: dfs,
+			Context:  ctx,
+		})
+	}
+
+	return out
+}
+
+var jobAutomationRunResultImplementors = []string{"JobAutomationRunResult"}
+
+func (ec *executionContext) _JobAutomationRunResult(ctx context.Context, sel ast.SelectionSet, obj *model.JobAutomationRunResult) graphql.Marshaler {
+	fields := graphql.CollectFields(ec.OperationContext, sel, jobAutomationRunResultImplementors)
+
+	out := graphql.NewFieldSet(fields)
+	deferred := make(map[string]*graphql.FieldSet)
+	for i, field := range fields {
+		switch field.Name {
+		case "__typename":
+			out.Values[i] = graphql.MarshalString("JobAutomationRunResult")
+		case "run":
+			out.Values[i] = ec._JobAutomationRunResult_run(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				out.Invalids++
+			}
+		case "matches":
+			out.Values[i] = ec._JobAutomationRunResult_matches(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				out.Invalids++
+			}
+		default:
+			panic("unknown field " + strconv.Quote(field.Name))
+		}
+	}
+	out.Dispatch(ctx)
+	if out.Invalids > 0 {
+		return graphql.Null
+	}
+
+	atomic.AddInt32(&ec.deferred, int32(len(deferred)))
+
+	for label, dfs := range deferred {
+		ec.processDeferredGroup(graphql.DeferredGroup{
+			Label:    label,
+			Path:     graphql.GetPath(ctx),
+			FieldSet: dfs,
+			Context:  ctx,
+		})
+	}
+
+	return out
+}
+
 var knowledgeEntryImplementors = []string{"KnowledgeEntry"}
 
 func (ec *executionContext) _KnowledgeEntry(ctx context.Context, sel ast.SelectionSet, obj *model.KnowledgeEntry) graphql.Marshaler {
@@ -30790,6 +34248,50 @@ func (ec *executionContext) _KnowledgeEntry(ctx context.Context, sel ast.Selecti
 	return out
 }
 
+var linkedInGeoLocationImplementors = []string{"LinkedInGeoLocation"}
+
+func (ec *executionContext) _LinkedInGeoLocation(ctx context.Context, sel ast.SelectionSet, obj *model.LinkedInGeoLocation) graphql.Marshaler {
+	fields := graphql.CollectFields(ec.OperationContext, sel, linkedInGeoLocationImplementors)
+
+	out := graphql.NewFieldSet(fields)
+	deferred := make(map[string]*graphql.FieldSet)
+	for i, field := range fields {
+		switch field.Name {
+		case "__typename":
+			out.Values[i] = graphql.MarshalString("LinkedInGeoLocation")
+		case "geoId":
+			out.Values[i] = ec._LinkedInGeoLocation_geoId(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				out.Invalids++
+			}
+		case "label":
+			out.Values[i] = ec._LinkedInGeoLocation_label(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				out.Invalids++
+			}
+		default:
+			panic("unknown field " + strconv.Quote(field.Name))
+		}
+	}
+	out.Dispatch(ctx)
+	if out.Invalids > 0 {
+		return graphql.Null
+	}
+
+	atomic.AddInt32(&ec.deferred, int32(len(deferred)))
+
+	for label, dfs := range deferred {
+		ec.processDeferredGroup(graphql.DeferredGroup{
+			Label:    label,
+			Path:     graphql.GetPath(ctx),
+			FieldSet: dfs,
+			Context:  ctx,
+		})
+	}
+
+	return out
+}
+
 var linkedInJobCardImplementors = []string{"LinkedInJobCard"}
 
 func (ec *executionContext) _LinkedInJobCard(ctx context.Context, sel ast.SelectionSet, obj *model.LinkedInJobCard) graphql.Marshaler {
@@ -30828,6 +34330,47 @@ func (ec *executionContext) _LinkedInJobCard(ctx context.Context, sel ast.Select
 			if out.Values[i] == graphql.Null {
 				out.Invalids++
 			}
+		default:
+			panic("unknown field " + strconv.Quote(field.Name))
+		}
+	}
+	out.Dispatch(ctx)
+	if out.Invalids > 0 {
+		return graphql.Null
+	}
+
+	atomic.AddInt32(&ec.deferred, int32(len(deferred)))
+
+	for label, dfs := range deferred {
+		ec.processDeferredGroup(graphql.DeferredGroup{
+			Label:    label,
+			Path:     graphql.GetPath(ctx),
+			FieldSet: dfs,
+			Context:  ctx,
+		})
+	}
+
+	return out
+}
+
+var linkedInSessionStatusImplementors = []string{"LinkedInSessionStatus"}
+
+func (ec *executionContext) _LinkedInSessionStatus(ctx context.Context, sel ast.SelectionSet, obj *model.LinkedInSessionStatus) graphql.Marshaler {
+	fields := graphql.CollectFields(ec.OperationContext, sel, linkedInSessionStatusImplementors)
+
+	out := graphql.NewFieldSet(fields)
+	deferred := make(map[string]*graphql.FieldSet)
+	for i, field := range fields {
+		switch field.Name {
+		case "__typename":
+			out.Values[i] = graphql.MarshalString("LinkedInSessionStatus")
+		case "configured":
+			out.Values[i] = ec._LinkedInSessionStatus_configured(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				out.Invalids++
+			}
+		case "updatedAt":
+			out.Values[i] = ec._LinkedInSessionStatus_updatedAt(ctx, field, obj)
 		default:
 			panic("unknown field " + strconv.Quote(field.Name))
 		}
@@ -31265,6 +34808,48 @@ func (ec *executionContext) _Mutation(ctx context.Context, sel ast.SelectionSet)
 		case "updateInviteLink":
 			out.Values[i] = ec.OperationContext.RootResolverMiddleware(innerCtx, func(ctx context.Context) (res graphql.Marshaler) {
 				return ec._Mutation_updateInviteLink(ctx, field)
+			})
+			if out.Values[i] == graphql.Null {
+				out.Invalids++
+			}
+		case "createJobAutomation":
+			out.Values[i] = ec.OperationContext.RootResolverMiddleware(innerCtx, func(ctx context.Context) (res graphql.Marshaler) {
+				return ec._Mutation_createJobAutomation(ctx, field)
+			})
+			if out.Values[i] == graphql.Null {
+				out.Invalids++
+			}
+		case "updateJobAutomation":
+			out.Values[i] = ec.OperationContext.RootResolverMiddleware(innerCtx, func(ctx context.Context) (res graphql.Marshaler) {
+				return ec._Mutation_updateJobAutomation(ctx, field)
+			})
+			if out.Values[i] == graphql.Null {
+				out.Invalids++
+			}
+		case "deleteJobAutomation":
+			out.Values[i] = ec.OperationContext.RootResolverMiddleware(innerCtx, func(ctx context.Context) (res graphql.Marshaler) {
+				return ec._Mutation_deleteJobAutomation(ctx, field)
+			})
+			if out.Values[i] == graphql.Null {
+				out.Invalids++
+			}
+		case "saveLinkedInSession":
+			out.Values[i] = ec.OperationContext.RootResolverMiddleware(innerCtx, func(ctx context.Context) (res graphql.Marshaler) {
+				return ec._Mutation_saveLinkedInSession(ctx, field)
+			})
+			if out.Values[i] == graphql.Null {
+				out.Invalids++
+			}
+		case "clearLinkedInSession":
+			out.Values[i] = ec.OperationContext.RootResolverMiddleware(innerCtx, func(ctx context.Context) (res graphql.Marshaler) {
+				return ec._Mutation_clearLinkedInSession(ctx, field)
+			})
+			if out.Values[i] == graphql.Null {
+				out.Invalids++
+			}
+		case "runJobAutomationNow":
+			out.Values[i] = ec.OperationContext.RootResolverMiddleware(innerCtx, func(ctx context.Context) (res graphql.Marshaler) {
+				return ec._Mutation_runJobAutomationNow(ctx, field)
 			})
 			if out.Values[i] == graphql.Null {
 				out.Invalids++
@@ -32509,6 +36094,28 @@ func (ec *executionContext) _Query(ctx context.Context, sel ast.SelectionSet) gr
 			}
 
 			out.Concurrently(i, func(ctx context.Context) graphql.Marshaler { return rrm(innerCtx) })
+		case "adminLinkedInGeoSearch":
+			field := field
+
+			innerFunc := func(ctx context.Context, fs *graphql.FieldSet) (res graphql.Marshaler) {
+				defer func() {
+					if r := recover(); r != nil {
+						ec.Error(ctx, ec.Recover(ctx, r))
+					}
+				}()
+				res = ec._Query_adminLinkedInGeoSearch(ctx, field)
+				if res == graphql.Null {
+					atomic.AddUint32(&fs.Invalids, 1)
+				}
+				return res
+			}
+
+			rrm := func(ctx context.Context) graphql.Marshaler {
+				return ec.OperationContext.RootResolverMiddleware(ctx,
+					func(ctx context.Context) graphql.Marshaler { return innerFunc(ctx, out) })
+			}
+
+			out.Concurrently(i, func(ctx context.Context) graphql.Marshaler { return rrm(innerCtx) })
 		case "adminLinkedInJobSearch":
 			field := field
 
@@ -32541,6 +36148,91 @@ func (ec *executionContext) _Query(ctx context.Context, sel ast.SelectionSet) gr
 					}
 				}()
 				res = ec._Query_adminInviteLinks(ctx, field)
+				if res == graphql.Null {
+					atomic.AddUint32(&fs.Invalids, 1)
+				}
+				return res
+			}
+
+			rrm := func(ctx context.Context) graphql.Marshaler {
+				return ec.OperationContext.RootResolverMiddleware(ctx,
+					func(ctx context.Context) graphql.Marshaler { return innerFunc(ctx, out) })
+			}
+
+			out.Concurrently(i, func(ctx context.Context) graphql.Marshaler { return rrm(innerCtx) })
+		case "jobAutomations":
+			field := field
+
+			innerFunc := func(ctx context.Context, fs *graphql.FieldSet) (res graphql.Marshaler) {
+				defer func() {
+					if r := recover(); r != nil {
+						ec.Error(ctx, ec.Recover(ctx, r))
+					}
+				}()
+				res = ec._Query_jobAutomations(ctx, field)
+				if res == graphql.Null {
+					atomic.AddUint32(&fs.Invalids, 1)
+				}
+				return res
+			}
+
+			rrm := func(ctx context.Context) graphql.Marshaler {
+				return ec.OperationContext.RootResolverMiddleware(ctx,
+					func(ctx context.Context) graphql.Marshaler { return innerFunc(ctx, out) })
+			}
+
+			out.Concurrently(i, func(ctx context.Context) graphql.Marshaler { return rrm(innerCtx) })
+		case "jobAutomation":
+			field := field
+
+			innerFunc := func(ctx context.Context, _ *graphql.FieldSet) (res graphql.Marshaler) {
+				defer func() {
+					if r := recover(); r != nil {
+						ec.Error(ctx, ec.Recover(ctx, r))
+					}
+				}()
+				res = ec._Query_jobAutomation(ctx, field)
+				return res
+			}
+
+			rrm := func(ctx context.Context) graphql.Marshaler {
+				return ec.OperationContext.RootResolverMiddleware(ctx,
+					func(ctx context.Context) graphql.Marshaler { return innerFunc(ctx, out) })
+			}
+
+			out.Concurrently(i, func(ctx context.Context) graphql.Marshaler { return rrm(innerCtx) })
+		case "automationRuns":
+			field := field
+
+			innerFunc := func(ctx context.Context, fs *graphql.FieldSet) (res graphql.Marshaler) {
+				defer func() {
+					if r := recover(); r != nil {
+						ec.Error(ctx, ec.Recover(ctx, r))
+					}
+				}()
+				res = ec._Query_automationRuns(ctx, field)
+				if res == graphql.Null {
+					atomic.AddUint32(&fs.Invalids, 1)
+				}
+				return res
+			}
+
+			rrm := func(ctx context.Context) graphql.Marshaler {
+				return ec.OperationContext.RootResolverMiddleware(ctx,
+					func(ctx context.Context) graphql.Marshaler { return innerFunc(ctx, out) })
+			}
+
+			out.Concurrently(i, func(ctx context.Context) graphql.Marshaler { return rrm(innerCtx) })
+		case "linkedInSessionStatus":
+			field := field
+
+			innerFunc := func(ctx context.Context, fs *graphql.FieldSet) (res graphql.Marshaler) {
+				defer func() {
+					if r := recover(); r != nil {
+						ec.Error(ctx, ec.Recover(ctx, r))
+					}
+				}()
+				res = ec._Query_linkedInSessionStatus(ctx, field)
 				if res == graphql.Null {
 					atomic.AddUint32(&fs.Invalids, 1)
 				}
@@ -34534,6 +38226,70 @@ func (ec *executionContext) marshalNAssistantView2githubᚗcomᚋleoᚋaiᚑweek
 	return v
 }
 
+func (ec *executionContext) marshalNAutomationRun2ᚕᚖgithubᚗcomᚋleoᚋaiᚑweekendᚋbackendᚋgraphᚋmodelᚐAutomationRunᚄ(ctx context.Context, sel ast.SelectionSet, v []*model.AutomationRun) graphql.Marshaler {
+	ret := make(graphql.Array, len(v))
+	var wg sync.WaitGroup
+	isLen1 := len(v) == 1
+	if !isLen1 {
+		wg.Add(len(v))
+	}
+	for i := range v {
+		i := i
+		fc := &graphql.FieldContext{
+			Index:  &i,
+			Result: &v[i],
+		}
+		ctx := graphql.WithFieldContext(ctx, fc)
+		f := func(i int) {
+			defer func() {
+				if r := recover(); r != nil {
+					ec.Error(ctx, ec.Recover(ctx, r))
+					ret = nil
+				}
+			}()
+			if !isLen1 {
+				defer wg.Done()
+			}
+			ret[i] = ec.marshalNAutomationRun2ᚖgithubᚗcomᚋleoᚋaiᚑweekendᚋbackendᚋgraphᚋmodelᚐAutomationRun(ctx, sel, v[i])
+		}
+		if isLen1 {
+			f(i)
+		} else {
+			go f(i)
+		}
+
+	}
+	wg.Wait()
+
+	for _, e := range ret {
+		if e == graphql.Null {
+			return graphql.Null
+		}
+	}
+
+	return ret
+}
+
+func (ec *executionContext) marshalNAutomationRun2ᚖgithubᚗcomᚋleoᚋaiᚑweekendᚋbackendᚋgraphᚋmodelᚐAutomationRun(ctx context.Context, sel ast.SelectionSet, v *model.AutomationRun) graphql.Marshaler {
+	if v == nil {
+		if !graphql.HasFieldError(ctx, graphql.GetFieldContext(ctx)) {
+			ec.Errorf(ctx, "the requested element is null which the schema does not allow")
+		}
+		return graphql.Null
+	}
+	return ec._AutomationRun(ctx, sel, v)
+}
+
+func (ec *executionContext) unmarshalNAutomationRunStatus2githubᚗcomᚋleoᚋaiᚑweekendᚋbackendᚋgraphᚋmodelᚐAutomationRunStatus(ctx context.Context, v any) (model.AutomationRunStatus, error) {
+	var res model.AutomationRunStatus
+	err := res.UnmarshalGQL(v)
+	return res, graphql.ErrorOnPath(ctx, err)
+}
+
+func (ec *executionContext) marshalNAutomationRunStatus2githubᚗcomᚋleoᚋaiᚑweekendᚋbackendᚋgraphᚋmodelᚐAutomationRunStatus(ctx context.Context, sel ast.SelectionSet, v model.AutomationRunStatus) graphql.Marshaler {
+	return v
+}
+
 func (ec *executionContext) unmarshalNBoolean2bool(ctx context.Context, v any) (bool, error) {
 	res, err := graphql.UnmarshalBoolean(v)
 	return res, graphql.ErrorOnPath(ctx, err)
@@ -34739,6 +38495,11 @@ func (ec *executionContext) marshalNContactProfile2ᚖgithubᚗcomᚋleoᚋaiᚑ
 
 func (ec *executionContext) unmarshalNCreateInviteLinkInput2githubᚗcomᚋleoᚋaiᚑweekendᚋbackendᚋgraphᚋmodelᚐCreateInviteLinkInput(ctx context.Context, v any) (model.CreateInviteLinkInput, error) {
 	res, err := ec.unmarshalInputCreateInviteLinkInput(ctx, v)
+	return res, graphql.ErrorOnPath(ctx, err)
+}
+
+func (ec *executionContext) unmarshalNCreateJobAutomationInput2githubᚗcomᚋleoᚋaiᚑweekendᚋbackendᚋgraphᚋmodelᚐCreateJobAutomationInput(ctx context.Context, v any) (model.CreateJobAutomationInput, error) {
+	res, err := ec.unmarshalInputCreateJobAutomationInput(ctx, v)
 	return res, graphql.ErrorOnPath(ctx, err)
 }
 
@@ -35105,6 +38866,78 @@ func (ec *executionContext) marshalNJSON2map(ctx context.Context, sel ast.Select
 	return res
 }
 
+func (ec *executionContext) marshalNJobAutomation2githubᚗcomᚋleoᚋaiᚑweekendᚋbackendᚋgraphᚋmodelᚐJobAutomation(ctx context.Context, sel ast.SelectionSet, v model.JobAutomation) graphql.Marshaler {
+	return ec._JobAutomation(ctx, sel, &v)
+}
+
+func (ec *executionContext) marshalNJobAutomation2ᚕᚖgithubᚗcomᚋleoᚋaiᚑweekendᚋbackendᚋgraphᚋmodelᚐJobAutomationᚄ(ctx context.Context, sel ast.SelectionSet, v []*model.JobAutomation) graphql.Marshaler {
+	ret := make(graphql.Array, len(v))
+	var wg sync.WaitGroup
+	isLen1 := len(v) == 1
+	if !isLen1 {
+		wg.Add(len(v))
+	}
+	for i := range v {
+		i := i
+		fc := &graphql.FieldContext{
+			Index:  &i,
+			Result: &v[i],
+		}
+		ctx := graphql.WithFieldContext(ctx, fc)
+		f := func(i int) {
+			defer func() {
+				if r := recover(); r != nil {
+					ec.Error(ctx, ec.Recover(ctx, r))
+					ret = nil
+				}
+			}()
+			if !isLen1 {
+				defer wg.Done()
+			}
+			ret[i] = ec.marshalNJobAutomation2ᚖgithubᚗcomᚋleoᚋaiᚑweekendᚋbackendᚋgraphᚋmodelᚐJobAutomation(ctx, sel, v[i])
+		}
+		if isLen1 {
+			f(i)
+		} else {
+			go f(i)
+		}
+
+	}
+	wg.Wait()
+
+	for _, e := range ret {
+		if e == graphql.Null {
+			return graphql.Null
+		}
+	}
+
+	return ret
+}
+
+func (ec *executionContext) marshalNJobAutomation2ᚖgithubᚗcomᚋleoᚋaiᚑweekendᚋbackendᚋgraphᚋmodelᚐJobAutomation(ctx context.Context, sel ast.SelectionSet, v *model.JobAutomation) graphql.Marshaler {
+	if v == nil {
+		if !graphql.HasFieldError(ctx, graphql.GetFieldContext(ctx)) {
+			ec.Errorf(ctx, "the requested element is null which the schema does not allow")
+		}
+		return graphql.Null
+	}
+	return ec._JobAutomation(ctx, sel, v)
+}
+
+func (ec *executionContext) marshalNJobAutomationRunResult2githubᚗcomᚋleoᚋaiᚑweekendᚋbackendᚋgraphᚋmodelᚐJobAutomationRunResult(ctx context.Context, sel ast.SelectionSet, v model.JobAutomationRunResult) graphql.Marshaler {
+	return ec._JobAutomationRunResult(ctx, sel, &v)
+}
+
+func (ec *executionContext) marshalNJobAutomationRunResult2ᚖgithubᚗcomᚋleoᚋaiᚑweekendᚋbackendᚋgraphᚋmodelᚐJobAutomationRunResult(ctx context.Context, sel ast.SelectionSet, v *model.JobAutomationRunResult) graphql.Marshaler {
+	if v == nil {
+		if !graphql.HasFieldError(ctx, graphql.GetFieldContext(ctx)) {
+			ec.Errorf(ctx, "the requested element is null which the schema does not allow")
+		}
+		return graphql.Null
+	}
+	return ec._JobAutomationRunResult(ctx, sel, v)
+}
+
 func (ec *executionContext) unmarshalNJobStatus2githubᚗcomᚋleoᚋaiᚑweekendᚋbackendᚋgraphᚋmodelᚐJobStatus(ctx context.Context, v any) (model.JobStatus, error) {
 	var res model.JobStatus
 	err := res.UnmarshalGQL(v)
@@ -35213,6 +39046,65 @@ func (ec *executionContext) marshalNLinkedInEmploymentType2githubᚗcomᚋleoᚋ
 	return v
 }
 
+func (ec *executionContext) unmarshalNLinkedInEmploymentType2ᚕgithubᚗcomᚋleoᚋaiᚑweekendᚋbackendᚋgraphᚋmodelᚐLinkedInEmploymentTypeᚄ(ctx context.Context, v any) ([]model.LinkedInEmploymentType, error) {
+	var vSlice []any
+	vSlice = graphql.CoerceList(v)
+	var err error
+	res := make([]model.LinkedInEmploymentType, len(vSlice))
+	for i := range vSlice {
+		ctx := graphql.WithPathContext(ctx, graphql.NewPathWithIndex(i))
+		res[i], err = ec.unmarshalNLinkedInEmploymentType2githubᚗcomᚋleoᚋaiᚑweekendᚋbackendᚋgraphᚋmodelᚐLinkedInEmploymentType(ctx, vSlice[i])
+		if err != nil {
+			return nil, err
+		}
+	}
+	return res, nil
+}
+
+func (ec *executionContext) marshalNLinkedInEmploymentType2ᚕgithubᚗcomᚋleoᚋaiᚑweekendᚋbackendᚋgraphᚋmodelᚐLinkedInEmploymentTypeᚄ(ctx context.Context, sel ast.SelectionSet, v []model.LinkedInEmploymentType) graphql.Marshaler {
+	ret := make(graphql.Array, len(v))
+	var wg sync.WaitGroup
+	isLen1 := len(v) == 1
+	if !isLen1 {
+		wg.Add(len(v))
+	}
+	for i := range v {
+		i := i
+		fc := &graphql.FieldContext{
+			Index:  &i,
+			Result: &v[i],
+		}
+		ctx := graphql.WithFieldContext(ctx, fc)
+		f := func(i int) {
+			defer func() {
+				if r := recover(); r != nil {
+					ec.Error(ctx, ec.Recover(ctx, r))
+					ret = nil
+				}
+			}()
+			if !isLen1 {
+				defer wg.Done()
+			}
+			ret[i] = ec.marshalNLinkedInEmploymentType2githubᚗcomᚋleoᚋaiᚑweekendᚋbackendᚋgraphᚋmodelᚐLinkedInEmploymentType(ctx, sel, v[i])
+		}
+		if isLen1 {
+			f(i)
+		} else {
+			go f(i)
+		}
+
+	}
+	wg.Wait()
+
+	for _, e := range ret {
+		if e == graphql.Null {
+			return graphql.Null
+		}
+	}
+
+	return ret
+}
+
 func (ec *executionContext) unmarshalNLinkedInExperienceLevel2githubᚗcomᚋleoᚋaiᚑweekendᚋbackendᚋgraphᚋmodelᚐLinkedInExperienceLevel(ctx context.Context, v any) (model.LinkedInExperienceLevel, error) {
 	var res model.LinkedInExperienceLevel
 	err := res.UnmarshalGQL(v)
@@ -35221,6 +39113,119 @@ func (ec *executionContext) unmarshalNLinkedInExperienceLevel2githubᚗcomᚋleo
 
 func (ec *executionContext) marshalNLinkedInExperienceLevel2githubᚗcomᚋleoᚋaiᚑweekendᚋbackendᚋgraphᚋmodelᚐLinkedInExperienceLevel(ctx context.Context, sel ast.SelectionSet, v model.LinkedInExperienceLevel) graphql.Marshaler {
 	return v
+}
+
+func (ec *executionContext) unmarshalNLinkedInExperienceLevel2ᚕgithubᚗcomᚋleoᚋaiᚑweekendᚋbackendᚋgraphᚋmodelᚐLinkedInExperienceLevelᚄ(ctx context.Context, v any) ([]model.LinkedInExperienceLevel, error) {
+	var vSlice []any
+	vSlice = graphql.CoerceList(v)
+	var err error
+	res := make([]model.LinkedInExperienceLevel, len(vSlice))
+	for i := range vSlice {
+		ctx := graphql.WithPathContext(ctx, graphql.NewPathWithIndex(i))
+		res[i], err = ec.unmarshalNLinkedInExperienceLevel2githubᚗcomᚋleoᚋaiᚑweekendᚋbackendᚋgraphᚋmodelᚐLinkedInExperienceLevel(ctx, vSlice[i])
+		if err != nil {
+			return nil, err
+		}
+	}
+	return res, nil
+}
+
+func (ec *executionContext) marshalNLinkedInExperienceLevel2ᚕgithubᚗcomᚋleoᚋaiᚑweekendᚋbackendᚋgraphᚋmodelᚐLinkedInExperienceLevelᚄ(ctx context.Context, sel ast.SelectionSet, v []model.LinkedInExperienceLevel) graphql.Marshaler {
+	ret := make(graphql.Array, len(v))
+	var wg sync.WaitGroup
+	isLen1 := len(v) == 1
+	if !isLen1 {
+		wg.Add(len(v))
+	}
+	for i := range v {
+		i := i
+		fc := &graphql.FieldContext{
+			Index:  &i,
+			Result: &v[i],
+		}
+		ctx := graphql.WithFieldContext(ctx, fc)
+		f := func(i int) {
+			defer func() {
+				if r := recover(); r != nil {
+					ec.Error(ctx, ec.Recover(ctx, r))
+					ret = nil
+				}
+			}()
+			if !isLen1 {
+				defer wg.Done()
+			}
+			ret[i] = ec.marshalNLinkedInExperienceLevel2githubᚗcomᚋleoᚋaiᚑweekendᚋbackendᚋgraphᚋmodelᚐLinkedInExperienceLevel(ctx, sel, v[i])
+		}
+		if isLen1 {
+			f(i)
+		} else {
+			go f(i)
+		}
+
+	}
+	wg.Wait()
+
+	for _, e := range ret {
+		if e == graphql.Null {
+			return graphql.Null
+		}
+	}
+
+	return ret
+}
+
+func (ec *executionContext) marshalNLinkedInGeoLocation2ᚕᚖgithubᚗcomᚋleoᚋaiᚑweekendᚋbackendᚋgraphᚋmodelᚐLinkedInGeoLocationᚄ(ctx context.Context, sel ast.SelectionSet, v []*model.LinkedInGeoLocation) graphql.Marshaler {
+	ret := make(graphql.Array, len(v))
+	var wg sync.WaitGroup
+	isLen1 := len(v) == 1
+	if !isLen1 {
+		wg.Add(len(v))
+	}
+	for i := range v {
+		i := i
+		fc := &graphql.FieldContext{
+			Index:  &i,
+			Result: &v[i],
+		}
+		ctx := graphql.WithFieldContext(ctx, fc)
+		f := func(i int) {
+			defer func() {
+				if r := recover(); r != nil {
+					ec.Error(ctx, ec.Recover(ctx, r))
+					ret = nil
+				}
+			}()
+			if !isLen1 {
+				defer wg.Done()
+			}
+			ret[i] = ec.marshalNLinkedInGeoLocation2ᚖgithubᚗcomᚋleoᚋaiᚑweekendᚋbackendᚋgraphᚋmodelᚐLinkedInGeoLocation(ctx, sel, v[i])
+		}
+		if isLen1 {
+			f(i)
+		} else {
+			go f(i)
+		}
+
+	}
+	wg.Wait()
+
+	for _, e := range ret {
+		if e == graphql.Null {
+			return graphql.Null
+		}
+	}
+
+	return ret
+}
+
+func (ec *executionContext) marshalNLinkedInGeoLocation2ᚖgithubᚗcomᚋleoᚋaiᚑweekendᚋbackendᚋgraphᚋmodelᚐLinkedInGeoLocation(ctx context.Context, sel ast.SelectionSet, v *model.LinkedInGeoLocation) graphql.Marshaler {
+	if v == nil {
+		if !graphql.HasFieldError(ctx, graphql.GetFieldContext(ctx)) {
+			ec.Errorf(ctx, "the requested element is null which the schema does not allow")
+		}
+		return graphql.Null
+	}
+	return ec._LinkedInGeoLocation(ctx, sel, v)
 }
 
 func (ec *executionContext) marshalNLinkedInJobCard2ᚕᚖgithubᚗcomᚋleoᚋaiᚑweekendᚋbackendᚋgraphᚋmodelᚐLinkedInJobCardᚄ(ctx context.Context, sel ast.SelectionSet, v []*model.LinkedInJobCard) graphql.Marshaler {
@@ -35277,6 +39282,30 @@ func (ec *executionContext) marshalNLinkedInJobCard2ᚖgithubᚗcomᚋleoᚋai�
 	return ec._LinkedInJobCard(ctx, sel, v)
 }
 
+func (ec *executionContext) unmarshalNLinkedInJobSortBy2githubᚗcomᚋleoᚋaiᚑweekendᚋbackendᚋgraphᚋmodelᚐLinkedInJobSortBy(ctx context.Context, v any) (model.LinkedInJobSortBy, error) {
+	var res model.LinkedInJobSortBy
+	err := res.UnmarshalGQL(v)
+	return res, graphql.ErrorOnPath(ctx, err)
+}
+
+func (ec *executionContext) marshalNLinkedInJobSortBy2githubᚗcomᚋleoᚋaiᚑweekendᚋbackendᚋgraphᚋmodelᚐLinkedInJobSortBy(ctx context.Context, sel ast.SelectionSet, v model.LinkedInJobSortBy) graphql.Marshaler {
+	return v
+}
+
+func (ec *executionContext) marshalNLinkedInSessionStatus2githubᚗcomᚋleoᚋaiᚑweekendᚋbackendᚋgraphᚋmodelᚐLinkedInSessionStatus(ctx context.Context, sel ast.SelectionSet, v model.LinkedInSessionStatus) graphql.Marshaler {
+	return ec._LinkedInSessionStatus(ctx, sel, &v)
+}
+
+func (ec *executionContext) marshalNLinkedInSessionStatus2ᚖgithubᚗcomᚋleoᚋaiᚑweekendᚋbackendᚋgraphᚋmodelᚐLinkedInSessionStatus(ctx context.Context, sel ast.SelectionSet, v *model.LinkedInSessionStatus) graphql.Marshaler {
+	if v == nil {
+		if !graphql.HasFieldError(ctx, graphql.GetFieldContext(ctx)) {
+			ec.Errorf(ctx, "the requested element is null which the schema does not allow")
+		}
+		return graphql.Null
+	}
+	return ec._LinkedInSessionStatus(ctx, sel, v)
+}
+
 func (ec *executionContext) unmarshalNLinkedInWorkplaceType2githubᚗcomᚋleoᚋaiᚑweekendᚋbackendᚋgraphᚋmodelᚐLinkedInWorkplaceType(ctx context.Context, v any) (model.LinkedInWorkplaceType, error) {
 	var res model.LinkedInWorkplaceType
 	err := res.UnmarshalGQL(v)
@@ -35285,6 +39314,65 @@ func (ec *executionContext) unmarshalNLinkedInWorkplaceType2githubᚗcomᚋleo�
 
 func (ec *executionContext) marshalNLinkedInWorkplaceType2githubᚗcomᚋleoᚋaiᚑweekendᚋbackendᚋgraphᚋmodelᚐLinkedInWorkplaceType(ctx context.Context, sel ast.SelectionSet, v model.LinkedInWorkplaceType) graphql.Marshaler {
 	return v
+}
+
+func (ec *executionContext) unmarshalNLinkedInWorkplaceType2ᚕgithubᚗcomᚋleoᚋaiᚑweekendᚋbackendᚋgraphᚋmodelᚐLinkedInWorkplaceTypeᚄ(ctx context.Context, v any) ([]model.LinkedInWorkplaceType, error) {
+	var vSlice []any
+	vSlice = graphql.CoerceList(v)
+	var err error
+	res := make([]model.LinkedInWorkplaceType, len(vSlice))
+	for i := range vSlice {
+		ctx := graphql.WithPathContext(ctx, graphql.NewPathWithIndex(i))
+		res[i], err = ec.unmarshalNLinkedInWorkplaceType2githubᚗcomᚋleoᚋaiᚑweekendᚋbackendᚋgraphᚋmodelᚐLinkedInWorkplaceType(ctx, vSlice[i])
+		if err != nil {
+			return nil, err
+		}
+	}
+	return res, nil
+}
+
+func (ec *executionContext) marshalNLinkedInWorkplaceType2ᚕgithubᚗcomᚋleoᚋaiᚑweekendᚋbackendᚋgraphᚋmodelᚐLinkedInWorkplaceTypeᚄ(ctx context.Context, sel ast.SelectionSet, v []model.LinkedInWorkplaceType) graphql.Marshaler {
+	ret := make(graphql.Array, len(v))
+	var wg sync.WaitGroup
+	isLen1 := len(v) == 1
+	if !isLen1 {
+		wg.Add(len(v))
+	}
+	for i := range v {
+		i := i
+		fc := &graphql.FieldContext{
+			Index:  &i,
+			Result: &v[i],
+		}
+		ctx := graphql.WithFieldContext(ctx, fc)
+		f := func(i int) {
+			defer func() {
+				if r := recover(); r != nil {
+					ec.Error(ctx, ec.Recover(ctx, r))
+					ret = nil
+				}
+			}()
+			if !isLen1 {
+				defer wg.Done()
+			}
+			ret[i] = ec.marshalNLinkedInWorkplaceType2githubᚗcomᚋleoᚋaiᚑweekendᚋbackendᚋgraphᚋmodelᚐLinkedInWorkplaceType(ctx, sel, v[i])
+		}
+		if isLen1 {
+			f(i)
+		} else {
+			go f(i)
+		}
+
+	}
+	wg.Wait()
+
+	for _, e := range ret {
+		if e == graphql.Null {
+			return graphql.Null
+		}
+	}
+
+	return ret
 }
 
 func (ec *executionContext) unmarshalNLocationDisplay2githubᚗcomᚋleoᚋaiᚑweekendᚋbackendᚋgraphᚋmodelᚐLocationDisplay(ctx context.Context, v any) (model.LocationDisplay, error) {
@@ -36213,6 +40301,11 @@ func (ec *executionContext) unmarshalNUpdateInviteLinkInput2githubᚗcomᚋleo�
 	return res, graphql.ErrorOnPath(ctx, err)
 }
 
+func (ec *executionContext) unmarshalNUpdateJobAutomationInput2githubᚗcomᚋleoᚋaiᚑweekendᚋbackendᚋgraphᚋmodelᚐUpdateJobAutomationInput(ctx context.Context, v any) (model.UpdateJobAutomationInput, error) {
+	res, err := ec.unmarshalInputUpdateJobAutomationInput(ctx, v)
+	return res, graphql.ErrorOnPath(ctx, err)
+}
+
 func (ec *executionContext) unmarshalNUpdateKnowledgeEntryInput2githubᚗcomᚋleoᚋaiᚑweekendᚋbackendᚋgraphᚋmodelᚐUpdateKnowledgeEntryInput(ctx context.Context, v any) (model.UpdateKnowledgeEntryInput, error) {
 	res, err := ec.unmarshalInputUpdateKnowledgeEntryInput(ctx, v)
 	return res, graphql.ErrorOnPath(ctx, err)
@@ -37132,6 +41225,13 @@ func (ec *executionContext) marshalOJSON2map(ctx context.Context, sel ast.Select
 	return res
 }
 
+func (ec *executionContext) marshalOJobAutomation2ᚖgithubᚗcomᚋleoᚋaiᚑweekendᚋbackendᚋgraphᚋmodelᚐJobAutomation(ctx context.Context, sel ast.SelectionSet, v *model.JobAutomation) graphql.Marshaler {
+	if v == nil {
+		return graphql.Null
+	}
+	return ec._JobAutomation(ctx, sel, v)
+}
+
 func (ec *executionContext) unmarshalOJobStatus2ᚖgithubᚗcomᚋleoᚋaiᚑweekendᚋbackendᚋgraphᚋmodelᚐJobStatus(ctx context.Context, v any) (*model.JobStatus, error) {
 	if v == nil {
 		return nil, nil
@@ -37324,6 +41424,22 @@ func (ec *executionContext) marshalOLinkedInExperienceLevel2ᚕgithubᚗcomᚋle
 	}
 
 	return ret
+}
+
+func (ec *executionContext) unmarshalOLinkedInJobSortBy2ᚖgithubᚗcomᚋleoᚋaiᚑweekendᚋbackendᚋgraphᚋmodelᚐLinkedInJobSortBy(ctx context.Context, v any) (*model.LinkedInJobSortBy, error) {
+	if v == nil {
+		return nil, nil
+	}
+	var res = new(model.LinkedInJobSortBy)
+	err := res.UnmarshalGQL(v)
+	return res, graphql.ErrorOnPath(ctx, err)
+}
+
+func (ec *executionContext) marshalOLinkedInJobSortBy2ᚖgithubᚗcomᚋleoᚋaiᚑweekendᚋbackendᚋgraphᚋmodelᚐLinkedInJobSortBy(ctx context.Context, sel ast.SelectionSet, v *model.LinkedInJobSortBy) graphql.Marshaler {
+	if v == nil {
+		return graphql.Null
+	}
+	return v
 }
 
 func (ec *executionContext) unmarshalOLinkedInWorkplaceType2ᚕgithubᚗcomᚋleoᚋaiᚑweekendᚋbackendᚋgraphᚋmodelᚐLinkedInWorkplaceTypeᚄ(ctx context.Context, v any) ([]model.LinkedInWorkplaceType, error) {

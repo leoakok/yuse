@@ -389,6 +389,12 @@ type AdminAuditLogEntry {
   createdAt: DateTime!
 }
 
+"""LinkedIn geo location suggestion (admin tooling)."""
+type LinkedInGeoLocation {
+  geoId: String!
+  label: String!
+}
+
 """LinkedIn job search result (admin tooling)."""
 type LinkedInJobCard {
   jobId: String!
@@ -424,6 +430,103 @@ enum LinkedInEmploymentType {
   TEMPORARY
   INTERNSHIP
   VOLUNTEER
+  OTHER
+}
+
+enum LinkedInJobSortBy {
+  DATE_DESC
+  RELEVANCE
+}
+
+"""Admin-only scheduled LinkedIn job search automation."""
+type JobAutomation {
+  id: ID!
+  name: String!
+  enabled: Boolean!
+  keywords: String
+  geoId: String
+  geoLabel: String
+  timeFilter: String!
+  workplaceTypes: [LinkedInWorkplaceType!]!
+  experienceLevels: [LinkedInExperienceLevel!]!
+  employmentTypes: [LinkedInEmploymentType!]!
+  easyApply: Boolean!
+  sortBy: LinkedInJobSortBy!
+  maxResults: Int!
+  matchCriteria: String!
+  intervalMinutes: Int!
+  nextRunAt: DateTime
+  lastRunAt: DateTime
+  notifyEmail: String!
+  sessionInvalid: Boolean!
+  createdAt: DateTime!
+  updatedAt: DateTime!
+}
+
+enum AutomationRunStatus {
+  RUNNING
+  SUCCESS
+  FAILED
+  SKIPPED
+}
+
+type AutomationRun {
+  id: ID!
+  automationId: ID!
+  startedAt: DateTime!
+  finishedAt: DateTime
+  status: AutomationRunStatus!
+  jobsFetched: Int!
+  jobsMatched: Int!
+  jobsEmailed: Int!
+  error: String
+}
+
+type LinkedInSessionStatus {
+  configured: Boolean!
+  updatedAt: DateTime
+}
+
+type JobAutomationRunResult {
+  run: AutomationRun!
+  matches: [LinkedInJobCard!]!
+}
+
+input CreateJobAutomationInput {
+  name: String!
+  enabled: Boolean = true
+  keywords: String
+  geoId: String
+  geoLabel: String
+  timeFilter: String = "r86400"
+  workplaceTypes: [LinkedInWorkplaceType!]
+  experienceLevels: [LinkedInExperienceLevel!]
+  employmentTypes: [LinkedInEmploymentType!]
+  easyApply: Boolean
+  sortBy: LinkedInJobSortBy = DATE_DESC
+  maxResults: Int = 100
+  matchCriteria: String!
+  intervalMinutes: Int!
+  notifyEmail: String
+}
+
+input UpdateJobAutomationInput {
+  id: ID!
+  name: String
+  enabled: Boolean
+  keywords: String
+  geoId: String
+  geoLabel: String
+  timeFilter: String
+  workplaceTypes: [LinkedInWorkplaceType!]
+  experienceLevels: [LinkedInExperienceLevel!]
+  employmentTypes: [LinkedInEmploymentType!]
+  easyApply: Boolean
+  sortBy: LinkedInJobSortBy
+  maxResults: Int
+  matchCriteria: String
+  intervalMinutes: Int
+  notifyEmail: String
 }
 
 """A curated, tag-keyed guidance entry the agent injects into context based on the detected category."""
@@ -863,18 +966,31 @@ type Query {
   adminWaitlist(status: WaitlistStatus): [WaitlistEntry!]!
   """Admin only. Lists recent admin audit log entries."""
   adminAuditLog(limit: Int = 50, offset: Int = 0): [AdminAuditLogEntry!]!
+  """Admin only. Search LinkedIn geo locations by place name."""
+  adminLinkedInGeoSearch(keywords: String!): [LinkedInGeoLocation!]!
   """Admin only. Ephemeral LinkedIn job search test. sessionCookie is used for this request only and is never stored."""
   adminLinkedInJobSearch(
     keywords: String
     geoId: String
     timeFilter: String = "r86400"
+    sortBy: LinkedInJobSortBy = DATE_DESC
+    maxResults: Int = 100
     workplaceTypes: [LinkedInWorkplaceType!]
     experienceLevels: [LinkedInExperienceLevel!]
     employmentTypes: [LinkedInEmploymentType!]
+    easyApply: Boolean
     sessionCookie: String
   ): [LinkedInJobCard!]!
   """Admin only. Lists beta invite links."""
   adminInviteLinks: [InviteLink!]!
+  """Admin only. Lists job search automations for the signed-in user."""
+  jobAutomations: [JobAutomation!]!
+  """Admin only. Fetches one job search automation."""
+  jobAutomation(id: ID!): JobAutomation
+  """Admin only. Recent runs for an automation."""
+  automationRuns(automationId: ID!, limit: Int = 10): [AutomationRun!]!
+  """Admin only. Whether a LinkedIn session cookie is saved (never returns the cookie)."""
+  linkedInSessionStatus: LinkedInSessionStatus!
 }
 
 input CreateKnowledgeEntryInput {
@@ -1224,6 +1340,18 @@ type Mutation {
   createInviteLink(input: CreateInviteLinkInput!): InviteLink!
   """Admin only. Update a beta invite link."""
   updateInviteLink(input: UpdateInviteLinkInput!): InviteLink!
+  """Admin only. Create a job search automation."""
+  createJobAutomation(input: CreateJobAutomationInput!): JobAutomation!
+  """Admin only. Update a job search automation."""
+  updateJobAutomation(input: UpdateJobAutomationInput!): JobAutomation!
+  """Admin only. Delete a job search automation."""
+  deleteJobAutomation(id: ID!): Boolean!
+  """Admin only. Encrypt and save a LinkedIn session cookie for automations."""
+  saveLinkedInSession(cookie: String!): LinkedInSessionStatus!
+  """Admin only. Remove the saved LinkedIn session cookie."""
+  clearLinkedInSession: LinkedInSessionStatus!
+  """Admin only. Run an automation immediately (fetch, match, email)."""
+  runJobAutomationNow(id: ID!): JobAutomationRunResult!
 }
 
 input CreateInviteLinkInput {

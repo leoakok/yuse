@@ -7,6 +7,7 @@ import (
 
 	"github.com/jackc/pgx/v5/pgxpool"
 	"github.com/leo/ai-weekend/backend/internal/auth"
+	"github.com/leo/ai-weekend/backend/internal/automation"
 	"github.com/leo/ai-weekend/backend/internal/cv"
 	"github.com/leo/ai-weekend/backend/internal/email"
 	"github.com/leo/ai-weekend/backend/internal/llm"
@@ -29,6 +30,7 @@ type SessionMiddleware struct {
 	TestEmailLimiter          *ratelimit.Limiter
 	EmailCfg                  email.Config
 	AppOrigin                 string
+	AutomationRunner          *automation.Runner
 }
 
 func (m SessionMiddleware) Wrap(next http.Handler) http.Handler {
@@ -58,13 +60,20 @@ func (m SessionMiddleware) Wrap(next http.Handler) http.Handler {
 		}
 
 		scopedStore := m.Store.WithSession(session)
-		cvSvc := cv.NewService(scopedStore, m.LLM, m.Photos)
+		cvSvc := m.newCVService(scopedStore)
 		ctx := scope.With(r.Context(), m.scopeValue(session, cvSvc))
 		next.ServeHTTP(w, r.WithContext(ctx))
 	})
 }
 
-// WrapGraphQL validates auth when present and always attaches Postgres for public resolvers.
+func (m SessionMiddleware) newCVService(scopedStore store.Store) *cv.Service {
+	cvSvc := cv.NewService(scopedStore, m.LLM, m.Photos)
+	if m.AutomationRunner != nil {
+		cvSvc.ConfigureAutomationRunner(m.AutomationRunner)
+	}
+	return cvSvc
+}
+
 func (m SessionMiddleware) WrapGraphQL(next http.Handler) http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		authHeader := strings.TrimSpace(r.Header.Get("Authorization"))
@@ -98,7 +107,7 @@ func (m SessionMiddleware) WrapGraphQL(next http.Handler) http.Handler {
 		}
 
 		scopedStore := m.Store.WithSession(session)
-		cvSvc := cv.NewService(scopedStore, m.LLM, m.Photos)
+		cvSvc := m.newCVService(scopedStore)
 		ctx := scope.With(r.Context(), m.scopeValue(session, cvSvc))
 		next.ServeHTTP(w, r.WithContext(ctx))
 	})

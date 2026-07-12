@@ -1,4 +1,10 @@
 {
+  "crons": [
+    {
+      "path": "/_/backend/internal/cron/job-automations",
+      "schedule": "*/15 * * * *"
+    }
+  ],
   "experimentalServices": {
     "frontend": {
       "routePrefix": "/",

@@ -14,9 +14,17 @@ import type {
   WaitlistStatus,
   InviteLink,
   LinkedInJobCard,
+  LinkedInGeoLocation,
+  LinkedInJobSortBy,
   LinkedInWorkplaceType,
   LinkedInExperienceLevel,
   LinkedInEmploymentType,
+  JobAutomation,
+  AutomationRun,
+  LinkedInSessionStatus,
+  JobAutomationRunResult,
+  CreateJobAutomationInput,
+  UpdateJobAutomationInput,
 } from "@/lib/types/admin";
 import { graphqlRequest } from "@/lib/graphql/client";
 import {
@@ -37,6 +45,16 @@ import {
   CREATE_INVITE_LINK_MUTATION,
   UPDATE_INVITE_LINK_MUTATION,
   ADMIN_LINKEDIN_JOB_SEARCH_QUERY,
+  ADMIN_LINKEDIN_GEO_SEARCH_QUERY,
+  JOB_AUTOMATIONS_QUERY,
+  AUTOMATION_RUNS_QUERY,
+  LINKEDIN_SESSION_STATUS_QUERY,
+  CREATE_JOB_AUTOMATION_MUTATION,
+  UPDATE_JOB_AUTOMATION_MUTATION,
+  DELETE_JOB_AUTOMATION_MUTATION,
+  SAVE_LINKEDIN_SESSION_MUTATION,
+  CLEAR_LINKEDIN_SESSION_MUTATION,
+  RUN_JOB_AUTOMATION_NOW_MUTATION,
 } from "@/lib/graphql/operations";
 
 function mapAssistantContext(context: AssistantContext) {
@@ -207,13 +225,24 @@ export async function updateInviteLink(input: {
   return data.updateInviteLink;
 }
 
+export async function adminLinkedInGeoSearch(keywords: string): Promise<LinkedInGeoLocation[]> {
+  const data = await graphqlRequest<{ adminLinkedInGeoSearch: LinkedInGeoLocation[] }>(
+    ADMIN_LINKEDIN_GEO_SEARCH_QUERY,
+    { keywords: keywords.trim() },
+  );
+  return data.adminLinkedInGeoSearch;
+}
+
 export async function adminLinkedInJobSearch(input: {
   keywords?: string;
   geoId?: string;
   timeFilter?: string;
+  sortBy?: LinkedInJobSortBy;
+  maxResults?: number;
   workplaceTypes?: LinkedInWorkplaceType[];
   experienceLevels?: LinkedInExperienceLevel[];
   employmentTypes?: LinkedInEmploymentType[];
+  easyApply?: boolean;
   sessionCookie?: string;
 }): Promise<LinkedInJobCard[]> {
   const data = await graphqlRequest<{ adminLinkedInJobSearch: LinkedInJobCard[] }>(
@@ -222,11 +251,80 @@ export async function adminLinkedInJobSearch(input: {
       keywords: input.keywords?.trim() || null,
       geoId: input.geoId?.trim() || null,
       timeFilter: input.timeFilter || null,
+      sortBy: input.sortBy ?? null,
+      maxResults: input.maxResults ?? null,
       workplaceTypes: input.workplaceTypes?.length ? input.workplaceTypes : null,
       experienceLevels: input.experienceLevels?.length ? input.experienceLevels : null,
       employmentTypes: input.employmentTypes?.length ? input.employmentTypes : null,
+      easyApply: input.easyApply ?? null,
       sessionCookie: input.sessionCookie || null,
     },
   );
   return data.adminLinkedInJobSearch;
+}
+
+export async function listJobAutomations(): Promise<JobAutomation[]> {
+  const data = await graphqlRequest<{ jobAutomations: JobAutomation[] }>(JOB_AUTOMATIONS_QUERY);
+  return data.jobAutomations;
+}
+
+export async function listAutomationRuns(automationId: string, limit = 10): Promise<AutomationRun[]> {
+  const data = await graphqlRequest<{ automationRuns: AutomationRun[] }>(AUTOMATION_RUNS_QUERY, {
+    automationId,
+    limit,
+  });
+  return data.automationRuns;
+}
+
+export async function linkedInSessionStatus(): Promise<LinkedInSessionStatus> {
+  const data = await graphqlRequest<{ linkedInSessionStatus: LinkedInSessionStatus }>(
+    LINKEDIN_SESSION_STATUS_QUERY,
+  );
+  return data.linkedInSessionStatus;
+}
+
+export async function createJobAutomation(input: CreateJobAutomationInput): Promise<JobAutomation> {
+  const data = await graphqlRequest<{ createJobAutomation: JobAutomation }>(
+    CREATE_JOB_AUTOMATION_MUTATION,
+    { input },
+  );
+  return data.createJobAutomation;
+}
+
+export async function updateJobAutomation(input: UpdateJobAutomationInput): Promise<JobAutomation> {
+  const data = await graphqlRequest<{ updateJobAutomation: JobAutomation }>(
+    UPDATE_JOB_AUTOMATION_MUTATION,
+    { input },
+  );
+  return data.updateJobAutomation;
+}
+
+export async function deleteJobAutomation(id: string): Promise<boolean> {
+  const data = await graphqlRequest<{ deleteJobAutomation: boolean }>(DELETE_JOB_AUTOMATION_MUTATION, {
+    id,
+  });
+  return data.deleteJobAutomation;
+}
+
+export async function saveLinkedInSession(cookie: string): Promise<LinkedInSessionStatus> {
+  const data = await graphqlRequest<{ saveLinkedInSession: LinkedInSessionStatus }>(
+    SAVE_LINKEDIN_SESSION_MUTATION,
+    { cookie },
+  );
+  return data.saveLinkedInSession;
+}
+
+export async function clearLinkedInSession(): Promise<LinkedInSessionStatus> {
+  const data = await graphqlRequest<{ clearLinkedInSession: LinkedInSessionStatus }>(
+    CLEAR_LINKEDIN_SESSION_MUTATION,
+  );
+  return data.clearLinkedInSession;
+}
+
+export async function runJobAutomationNow(id: string): Promise<JobAutomationRunResult> {
+  const data = await graphqlRequest<{ runJobAutomationNow: JobAutomationRunResult }>(
+    RUN_JOB_AUTOMATION_NOW_MUTATION,
+    { id },
+  );
+  return data.runJobAutomationNow;
 }

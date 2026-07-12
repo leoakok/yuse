@@ -13,9 +13,12 @@ func (s *Service) AdminLinkedInJobSearch(
 	ctx context.Context,
 	keywords *string,
 	geoID, timeFilter, sessionCookie *string,
+	sortBy *model.LinkedInJobSortBy,
+	maxResults *int,
 	workplaceTypes []model.LinkedInWorkplaceType,
 	experienceLevels []model.LinkedInExperienceLevel,
 	employmentTypes []model.LinkedInEmploymentType,
+	easyApply *bool,
 ) ([]*model.LinkedInJobCard, error) {
 	if err := s.requireAdmin(); err != nil {
 		return nil, err
@@ -34,6 +37,12 @@ func (s *Service) AdminLinkedInJobSearch(
 	if sessionCookie != nil {
 		params.SessionCookie = *sessionCookie
 	}
+	if sortBy != nil {
+		params.SortBy = string(*sortBy)
+	}
+	if maxResults != nil {
+		params.MaxResults = *maxResults
+	}
 	for _, value := range workplaceTypes {
 		params.WorkplaceTypes = append(params.WorkplaceTypes, string(value))
 	}
@@ -42,6 +51,9 @@ func (s *Service) AdminLinkedInJobSearch(
 	}
 	for _, value := range employmentTypes {
 		params.EmploymentTypes = append(params.EmploymentTypes, string(value))
+	}
+	if easyApply != nil {
+		params.EasyApply = *easyApply
 	}
 
 	results, err := linkedin.SearchJobs(ctx, params)
@@ -75,6 +87,26 @@ func (s *Service) AdminLinkedInJobSearch(
 			card.Description = &j.Description
 		}
 		out = append(out, card)
+	}
+	return out, nil
+}
+
+// AdminLinkedInGeoSearch resolves place names to LinkedIn geoIds (admin only).
+func (s *Service) AdminLinkedInGeoSearch(ctx context.Context, keywords string) ([]*model.LinkedInGeoLocation, error) {
+	if err := s.requireAdmin(); err != nil {
+		return nil, err
+	}
+
+	results, err := linkedin.SearchGeoLocations(ctx, keywords)
+	if err != nil {
+		return nil, err
+	}
+	out := make([]*model.LinkedInGeoLocation, 0, len(results))
+	for _, item := range results {
+		out = append(out, &model.LinkedInGeoLocation{
+			GeoID: item.GeoID,
+			Label: item.Label,
+		})
 	}
 	return out, nil
 }
