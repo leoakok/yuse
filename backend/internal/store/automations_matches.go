@@ -87,9 +87,9 @@ func scanAutomationMatchedJob(row pgx.Row) (*AutomationMatchedJobRecord, error) 
 }
 
 const automationMatchedJobColumns = `
-	id, automation_id, run_id, job_id, title, company, location, workplace_type,
-	employment_type, listed_at, description, url, match_reason,
-	feedback, feedback_at, notified_at, first_matched_at
+	m.id, m.automation_id, m.run_id, m.job_id, m.title, m.company, m.location, m.workplace_type,
+	m.employment_type, m.listed_at, m.description, m.url, m.match_reason,
+	m.feedback, m.feedback_at, m.notified_at, m.first_matched_at
 `
 
 // UpsertAutomationMatches inserts new matches and returns job IDs that were newly inserted.
@@ -210,7 +210,9 @@ func (p *Postgres) SetAutomationMatchFeedback(automationID, jobID, feedback stri
 		SET feedback = $4, feedback_at = $5
 		FROM job_automations a
 		WHERE m.automation_id = $1 AND m.job_id = $2 AND a.id = m.automation_id AND a.user_id = $3
-		RETURNING `+automationMatchedJobColumns+`
+		RETURNING m.id, m.automation_id, m.run_id, m.job_id, m.title, m.company, m.location, m.workplace_type,
+			m.employment_type, m.listed_at, m.description, m.url, m.match_reason,
+			m.feedback, m.feedback_at, m.notified_at, m.first_matched_at
 	`, automationID, jobID, userID, feedbackVal, feedbackAt)
 	rec, err := scanAutomationMatchedJob(row)
 	if err != nil {
