@@ -28,13 +28,21 @@ type JobMatchResult struct {
 	Reason string `json:"reason"`
 }
 
+// MatchContext carries taste signals and bans for smarter matching.
+type MatchContext struct {
+	BannedCompanies  []string
+	LikedSummary     string
+	DislikedSummary  string
+	LikedExamples    []JobMatchInput
+	DislikedExamples []JobMatchInput
+}
+
 type jobMatchResponse struct {
 	Results []JobMatchResult `json:"results"`
 }
 
-// MatchJobs evaluates jobs against natural-language criteria. All fetched job IDs
-// should be marked seen regardless of match outcome.
-func (s *Service) MatchJobs(ctx context.Context, criteria string, jobs []linkedin.JobCard) ([]JobMatchResult, error) {
+// MatchJobs evaluates jobs against natural-language criteria with optional taste context.
+func (s *Service) MatchJobs(ctx context.Context, criteria string, jobs []linkedin.JobCard, taste MatchContext) ([]JobMatchResult, error) {
 	criteria = strings.TrimSpace(criteria)
 	if criteria == "" {
 		return nil, fmt.Errorf("match criteria is required")
@@ -63,7 +71,7 @@ func (s *Service) MatchJobs(ctx context.Context, criteria string, jobs []linkedi
 		if end > len(inputs) {
 			end = len(inputs)
 		}
-		batch, err := s.matchJobBatch(ctx, criteria, inputs[i:end])
+		batch, err := s.matchJobBatch(ctx, criteria, inputs[i:end], taste)
 		if err != nil {
 			return nil, err
 		}
@@ -72,16 +80,13 @@ func (s *Service) MatchJobs(ctx context.Context, criteria string, jobs []linkedi
 	return all, nil
 }
 
-func (s *Service) matchJobBatch(ctx context.Context, criteria string, jobs []JobMatchInput) ([]JobMatchResult, error) {
+func (s *Service) matchJobBatch(ctx context.Context, criteria string, jobs []JobMatchInput, taste MatchContext) ([]JobMatchResult, error) {
 	payload, err := json.Marshal(jobs)
 	if err != nil {
 		return nil, err
 	}
 
-	system := `You filter LinkedIn job listings against the user's criteria.
-Return strict JSON only: {"results":[{"jobId":"...","match":true|false,"reason":"one short sentence"}]}
-Include every job from the input. Match=true only when the role clearly fits the criteria.`
-
+	system := buildMatchSystemPrompt(taste)
 	user := fmt.Sprintf("Criteria:\n%s\n\nJobs JSON:\n%s", criteria, string(payload))
 
 	resp, err := s.client.CreateChatCompletion(ctx, openai.ChatCompletionRequest{
@@ -108,6 +113,38 @@ Include every job from the input. Match=true only when the role clearly fits the
 		return nil, fmt.Errorf("parse job match response: %w", err)
 	}
 	return parsed.Results, nil
+}
+
+func buildMatchSystemPrompt(taste MatchContext) string {
+	var b strings.Builder
+	b.WriteString(`You filter LinkedIn job listings against the user's criteria.
+Return strict JSON only: {"results":[{"jobId":"...","match":true|false,"reason":"one short sentence"}]}
+Include every job from the input. Match=true only when the role clearly fits the criteria.`)
+
+	if len(taste.BannedCompanies) > 0 {
+		b.WriteString("\n\nNever match jobs from these banned companies: ")
+		b.WriteString(strings.Join(taste.BannedCompanies, "; "))
+		b.WriteByte('.')
+	}
+	if strings.TrimSpace(taste.LikedSummary) != "" {
+		b.WriteString("\n\nUser taste — prefer: ")
+		b.WriteString(strings.TrimSpace(taste.LikedSummary))
+	}
+	if strings.TrimSpace(taste.DislikedSummary) != "" {
+		b.WriteString("\n\nUser taste — avoid: ")
+		b.WriteString(strings.TrimSpace(taste.DislikedSummary))
+	}
+	if len(taste.LikedExamples) > 0 {
+		raw, _ := json.Marshal(taste.LikedExamples)
+		b.WriteString("\n\nJobs the user liked:\n")
+		b.Write(raw)
+	}
+	if len(taste.DislikedExamples) > 0 {
+		raw, _ := json.Marshal(taste.DislikedExamples)
+		b.WriteString("\n\nJobs the user disliked (avoid similar):\n")
+		b.Write(raw)
+	}
+	return b.String()
 }
 
 func truncateForMatch(s string, max int) string {

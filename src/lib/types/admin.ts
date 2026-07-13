@@ -148,6 +148,31 @@ export type JobAutomationRunResult = {
   matches: LinkedInJobCard[];
 };
 
+export type AutomationMatchFeedback = "LIKED" | "DISLIKED" | "NONE";
+
+export type AutomationMatchedJob = {
+  jobId: string;
+  title: string;
+  company?: string | null;
+  location?: string | null;
+  workplaceType?: string | null;
+  employmentType?: string | null;
+  listedAt?: string | null;
+  description?: string | null;
+  url: string;
+  matchReason?: string | null;
+  feedback?: AutomationMatchFeedback | null;
+  feedbackAt?: string | null;
+  runId?: string | null;
+  firstMatchedAt: string;
+};
+
+export type AutomationCompanyBan = {
+  id: string;
+  companyDisplay: string;
+  createdAt: string;
+};
+
 export type CreateJobAutomationInput = {
   name: string;
   enabled?: boolean;

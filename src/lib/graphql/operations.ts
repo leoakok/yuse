@@ -1942,3 +1942,62 @@ export const RUN_JOB_AUTOMATION_NOW_MUTATION = `
     }
   }
 `;
+
+export const AUTOMATION_MATCHED_JOB_FIELDS = `
+  jobId
+  title
+  company
+  location
+  workplaceType
+  employmentType
+  listedAt
+  description
+  url
+  matchReason
+  feedback
+  feedbackAt
+  runId
+  firstMatchedAt
+`;
+
+export const AUTOMATION_MATCHES_QUERY = `
+  query AutomationMatches($automationId: ID!, $limit: Int, $offset: Int, $feedback: AutomationMatchFeedback) {
+    automationMatches(automationId: $automationId, limit: $limit, offset: $offset, feedback: $feedback) {
+      ${AUTOMATION_MATCHED_JOB_FIELDS}
+    }
+  }
+`;
+
+export const AUTOMATION_COMPANY_BANS_QUERY = `
+  query AutomationCompanyBans {
+    automationCompanyBans {
+      id
+      companyDisplay
+      createdAt
+    }
+  }
+`;
+
+export const SET_AUTOMATION_MATCH_FEEDBACK_MUTATION = `
+  mutation SetAutomationMatchFeedback($automationId: ID!, $jobId: ID!, $feedback: AutomationMatchFeedback!) {
+    setAutomationMatchFeedback(automationId: $automationId, jobId: $jobId, feedback: $feedback) {
+      ${AUTOMATION_MATCHED_JOB_FIELDS}
+    }
+  }
+`;
+
+export const BAN_AUTOMATION_COMPANY_MUTATION = `
+  mutation BanAutomationCompany($companyName: String!, $sourceJobId: ID, $sourceAutomationId: ID) {
+    banAutomationCompany(companyName: $companyName, sourceJobId: $sourceJobId, sourceAutomationId: $sourceAutomationId) {
+      id
+      companyDisplay
+      createdAt
+    }
+  }
+`;
+
+export const UNBAN_AUTOMATION_COMPANY_MUTATION = `
+  mutation UnbanAutomationCompany($id: ID!) {
+    unbanAutomationCompany(id: $id)
+  }
+`;

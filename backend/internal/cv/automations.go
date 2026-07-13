@@ -198,6 +198,86 @@ func (s *Service) RunJobAutomationNow(ctx context.Context, id string) (*model.Jo
 	return result, err
 }
 
+// ListAutomationMatches returns persisted matched jobs (admin only).
+func (s *Service) ListAutomationMatches(automationID string, limit, offset int, feedback *model.AutomationMatchFeedback) ([]*model.AutomationMatchedJob, error) {
+	if err := s.requireAdmin(); err != nil {
+		return nil, err
+	}
+	var feedbackFilter *string
+	if feedback != nil {
+		f := string(*feedback)
+		feedbackFilter = &f
+	}
+	rows, err := s.store.ListAutomationMatches(automationID, limit, offset, feedbackFilter)
+	if err != nil {
+		return nil, err
+	}
+	out := make([]*model.AutomationMatchedJob, 0, len(rows))
+	for _, row := range rows {
+		out = append(out, store.AutomationMatchedJobToModel(row))
+	}
+	return out, nil
+}
+
+// ListAutomationCompanyBans returns user-wide company bans (admin only).
+func (s *Service) ListAutomationCompanyBans() ([]*model.AutomationCompanyBan, error) {
+	if err := s.requireAdmin(); err != nil {
+		return nil, err
+	}
+	rows, err := s.store.ListCompanyBans()
+	if err != nil {
+		return nil, err
+	}
+	out := make([]*model.AutomationCompanyBan, 0, len(rows))
+	for _, row := range rows {
+		out = append(out, store.AutomationCompanyBanToModel(row))
+	}
+	return out, nil
+}
+
+// SetAutomationMatchFeedback records thumbs up/down on a match (admin only).
+func (s *Service) SetAutomationMatchFeedback(ctx context.Context, automationID, jobID string, feedback model.AutomationMatchFeedback) (*model.AutomationMatchedJob, error) {
+	if err := s.requireAdmin(); err != nil {
+		return nil, err
+	}
+	rec, err := s.store.SetAutomationMatchFeedback(automationID, jobID, string(feedback))
+	if err != nil {
+		return nil, err
+	}
+	if s.llm != nil && s.automationRunner != nil && s.automationRunner.Pool != nil {
+		user := s.store.User()
+		if user != nil {
+			_ = s.llm.RefreshTasteProfileIfNeeded(ctx, store.PoolTasteStore{Pool: s.automationRunner.Pool}, user.ID)
+		}
+	}
+	return store.AutomationMatchedJobToModel(rec), nil
+}
+
+// BanAutomationCompany adds a user-wide company ban (admin only).
+func (s *Service) BanAutomationCompany(companyName string, sourceJobID, sourceAutomationID *string) (*model.AutomationCompanyBan, error) {
+	if err := s.requireAdmin(); err != nil {
+		return nil, err
+	}
+	display := strings.TrimSpace(companyName)
+	if display == "" {
+		return nil, fmt.Errorf("company name is required")
+	}
+	key := automation.NormalizeCompanyKey(display)
+	rec, err := s.store.BanCompany(display, key, sourceJobID, sourceAutomationID)
+	if err != nil {
+		return nil, err
+	}
+	return store.AutomationCompanyBanToModel(rec), nil
+}
+
+// UnbanAutomationCompany removes a company ban (admin only).
+func (s *Service) UnbanAutomationCompany(id string) (bool, error) {
+	if err := s.requireAdmin(); err != nil {
+		return false, err
+	}
+	return s.store.UnbanCompany(id)
+}
+
 func buildJobAutomationRecord(input model.CreateJobAutomationInput, user *model.User) (*store.JobAutomationRecord, error) {
 	name := strings.TrimSpace(input.Name)
 	if name == "" {

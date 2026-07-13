@@ -492,6 +492,37 @@ type JobAutomationRunResult {
   matches: [LinkedInJobCard!]!
 }
 
+enum AutomationMatchFeedback {
+  LIKED
+  DISLIKED
+  NONE
+}
+
+"""A persisted job match from an automation run."""
+type AutomationMatchedJob {
+  jobId: ID!
+  title: String!
+  company: String
+  location: String
+  workplaceType: String
+  employmentType: String
+  listedAt: String
+  description: String
+  url: String!
+  matchReason: String
+  feedback: AutomationMatchFeedback
+  feedbackAt: DateTime
+  runId: ID
+  firstMatchedAt: DateTime!
+}
+
+"""User-wide banned company for job automations."""
+type AutomationCompanyBan {
+  id: ID!
+  companyDisplay: String!
+  createdAt: DateTime!
+}
+
 input CreateJobAutomationInput {
   name: String!
   enabled: Boolean = true
@@ -974,7 +1005,7 @@ type Query {
     geoId: String
     timeFilter: String = "r86400"
     sortBy: LinkedInJobSortBy = DATE_DESC
-    maxResults: Int = 100
+    maxResults: Int = 350
     workplaceTypes: [LinkedInWorkplaceType!]
     experienceLevels: [LinkedInExperienceLevel!]
     employmentTypes: [LinkedInEmploymentType!]
@@ -989,6 +1020,10 @@ type Query {
   jobAutomation(id: ID!): JobAutomation
   """Admin only. Recent runs for an automation."""
   automationRuns(automationId: ID!, limit: Int = 10): [AutomationRun!]!
+  """Admin only. Persisted matched jobs for an automation."""
+  automationMatches(automationId: ID!, limit: Int = 50, offset: Int = 0, feedback: AutomationMatchFeedback): [AutomationMatchedJob!]!
+  """Admin only. User-wide banned companies for job automations."""
+  automationCompanyBans: [AutomationCompanyBan!]!
   """Admin only. Whether a LinkedIn session cookie is saved (never returns the cookie)."""
   linkedInSessionStatus: LinkedInSessionStatus!
 }
@@ -1352,6 +1387,12 @@ type Mutation {
   clearLinkedInSession: LinkedInSessionStatus!
   """Admin only. Run an automation immediately (fetch, match, email)."""
   runJobAutomationNow(id: ID!): JobAutomationRunResult!
+  """Admin only. Set feedback on a persisted matched job."""
+  setAutomationMatchFeedback(automationId: ID!, jobId: ID!, feedback: AutomationMatchFeedback!): AutomationMatchedJob!
+  """Admin only. Ban a company from all automations."""
+  banAutomationCompany(companyName: String!, sourceJobId: ID, sourceAutomationId: ID): AutomationCompanyBan!
+  """Admin only. Remove a company ban."""
+  unbanAutomationCompany(id: ID!): Boolean!
 }
 
 input CreateInviteLinkInput {

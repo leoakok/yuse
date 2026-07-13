@@ -3,10 +3,10 @@ package linkedin
 import "fmt"
 
 const (
-	sortByDateDesc   = "DD"
-	sortByRelevance  = "R"
-	defaultMaxResults = 100
-	maxMaxResults     = 200
+	sortByDateDesc    = "DD"
+	sortByRelevance   = "R"
+	defaultMaxResults = 350
+	maxMaxResults     = 350
 )
 
 // NormalizeSortBy maps admin sort inputs to LinkedIn Voyager sort codes.

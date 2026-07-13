@@ -118,6 +118,29 @@ type ComplexityRoot struct {
 		ResumeWithContent    func(childComplexity int) int
 	}
 
+	AutomationCompanyBan struct {
+		CompanyDisplay func(childComplexity int) int
+		CreatedAt      func(childComplexity int) int
+		ID             func(childComplexity int) int
+	}
+
+	AutomationMatchedJob struct {
+		Company        func(childComplexity int) int
+		Description    func(childComplexity int) int
+		EmploymentType func(childComplexity int) int
+		Feedback       func(childComplexity int) int
+		FeedbackAt     func(childComplexity int) int
+		FirstMatchedAt func(childComplexity int) int
+		JobID          func(childComplexity int) int
+		ListedAt       func(childComplexity int) int
+		Location       func(childComplexity int) int
+		MatchReason    func(childComplexity int) int
+		RunID          func(childComplexity int) int
+		Title          func(childComplexity int) int
+		URL            func(childComplexity int) int
+		WorkplaceType  func(childComplexity int) int
+	}
+
 	AutomationRun struct {
 		AutomationID func(childComplexity int) int
 		Error        func(childComplexity int) int
@@ -249,6 +272,7 @@ type ComplexityRoot struct {
 		AddPortfolioTestimonial           func(childComplexity int, input model.AddPortfolioTestimonialInput) int
 		AddResumeSectionItem              func(childComplexity int, input model.AddResumeSectionItemInput) int
 		ApproveWaitlistEntry              func(childComplexity int, id string) int
+		BanAutomationCompany              func(childComplexity int, companyName string, sourceJobID *string, sourceAutomationID *string) int
 		ChangeEmail                       func(childComplexity int, currentPassword string, email string) int
 		ChangePassword                    func(childComplexity int, currentPassword string, newPassword string) int
 		ClearLinkedInSession              func(childComplexity int) int
@@ -283,12 +307,14 @@ type ComplexityRoot struct {
 		SaveLinkedInSession               func(childComplexity int, cookie string) int
 		SendAssistantMessage              func(childComplexity int, threadID string, text string, context model.AssistantContextInput, attachments []*model.AssistantAttachmentInput) int
 		SendTestEmail                     func(childComplexity int, typeArg model.TestEmailType, recipientEmail string) int
+		SetAutomationMatchFeedback        func(childComplexity int, automationID string, jobID string, feedback model.AutomationMatchFeedback) int
 		SetPortfolioProjectVisibility     func(childComplexity int, input model.SetPortfolioProjectVisibilityInput) int
 		SetPortfolioSlug                  func(childComplexity int, portfolioID string, slug string) int
 		SetResumeSlug                     func(childComplexity int, resumeID string, slug string) int
 		SetUserActive                     func(childComplexity int, userID string, active bool) int
 		SetUserRole                       func(childComplexity int, userID string, role model.UserRole) int
 		SetUsername                       func(childComplexity int, username string) int
+		UnbanAutomationCompany            func(childComplexity int, id string) int
 		UpdateContactProfile              func(childComplexity int, input model.UpdateContactProfileInput) int
 		UpdateInviteLink                  func(childComplexity int, input model.UpdateInviteLinkInput) int
 		UpdateJobAutomation               func(childComplexity int, input model.UpdateJobAutomationInput) int
@@ -401,6 +427,8 @@ type ComplexityRoot struct {
 		AdminWaitlist              func(childComplexity int, status *model.WaitlistStatus) int
 		AssistantMessages          func(childComplexity int, threadID string, limit *int) int
 		AssistantThreads           func(childComplexity int) int
+		AutomationCompanyBans      func(childComplexity int) int
+		AutomationMatches          func(childComplexity int, automationID string, limit *int, offset *int, feedback *model.AutomationMatchFeedback) int
 		AutomationRuns             func(childComplexity int, automationID string, limit *int) int
 		ClassifyAssistantMessage   func(childComplexity int, text string, context model.AssistantContextInput) int
 		ConnectionStatus           func(childComplexity int, provider model.ConnectionProvider) int
@@ -694,6 +722,9 @@ type MutationResolver interface {
 	SaveLinkedInSession(ctx context.Context, cookie string) (*model.LinkedInSessionStatus, error)
 	ClearLinkedInSession(ctx context.Context) (*model.LinkedInSessionStatus, error)
 	RunJobAutomationNow(ctx context.Context, id string) (*model.JobAutomationRunResult, error)
+	SetAutomationMatchFeedback(ctx context.Context, automationID string, jobID string, feedback model.AutomationMatchFeedback) (*model.AutomationMatchedJob, error)
+	BanAutomationCompany(ctx context.Context, companyName string, sourceJobID *string, sourceAutomationID *string) (*model.AutomationCompanyBan, error)
+	UnbanAutomationCompany(ctx context.Context, id string) (bool, error)
 }
 type QueryResolver interface {
 	Me(ctx context.Context) (*model.User, error)
@@ -734,6 +765,8 @@ type QueryResolver interface {
 	JobAutomations(ctx context.Context) ([]*model.JobAutomation, error)
 	JobAutomation(ctx context.Context, id string) (*model.JobAutomation, error)
 	AutomationRuns(ctx context.Context, automationID string, limit *int) ([]*model.AutomationRun, error)
+	AutomationMatches(ctx context.Context, automationID string, limit *int, offset *int, feedback *model.AutomationMatchFeedback) ([]*model.AutomationMatchedJob, error)
+	AutomationCompanyBans(ctx context.Context) ([]*model.AutomationCompanyBan, error)
 	LinkedInSessionStatus(ctx context.Context) (*model.LinkedInSessionStatus, error)
 }
 type UserResolver interface {
@@ -1095,6 +1128,125 @@ func (e *executableSchema) Complexity(ctx context.Context, typeName, field strin
 		}
 
 		return e.complexity.AssistantTurnResult.ResumeWithContent(childComplexity), true
+
+	case "AutomationCompanyBan.companyDisplay":
+		if e.complexity.AutomationCompanyBan.CompanyDisplay == nil {
+			break
+		}
+
+		return e.complexity.AutomationCompanyBan.CompanyDisplay(childComplexity), true
+
+	case "AutomationCompanyBan.createdAt":
+		if e.complexity.AutomationCompanyBan.CreatedAt == nil {
+			break
+		}
+
+		return e.complexity.AutomationCompanyBan.CreatedAt(childComplexity), true
+
+	case "AutomationCompanyBan.id":
+		if e.complexity.AutomationCompanyBan.ID == nil {
+			break
+		}
+
+		return e.complexity.AutomationCompanyBan.ID(childComplexity), true
+
+	case "AutomationMatchedJob.company":
+		if e.complexity.AutomationMatchedJob.Company == nil {
+			break
+		}
+
+		return e.complexity.AutomationMatchedJob.Company(childComplexity), true
+
+	case "AutomationMatchedJob.description":
+		if e.complexity.AutomationMatchedJob.Description == nil {
+			break
+		}
+
+		return e.complexity.AutomationMatchedJob.Description(childComplexity), true
+
+	case "AutomationMatchedJob.employmentType":
+		if e.complexity.AutomationMatchedJob.EmploymentType == nil {
+			break
+		}
+
+		return e.complexity.AutomationMatchedJob.EmploymentType(childComplexity), true
+
+	case "AutomationMatchedJob.feedback":
+		if e.complexity.AutomationMatchedJob.Feedback == nil {
+			break
+		}
+
+		return e.complexity.AutomationMatchedJob.Feedback(childComplexity), true
+
+	case "AutomationMatchedJob.feedbackAt":
+		if e.complexity.AutomationMatchedJob.FeedbackAt == nil {
+			break
+		}
+
+		return e.complexity.AutomationMatchedJob.FeedbackAt(childComplexity), true
+
+	case "AutomationMatchedJob.firstMatchedAt":
+		if e.complexity.AutomationMatchedJob.FirstMatchedAt == nil {
+			break
+		}
+
+		return e.complexity.AutomationMatchedJob.FirstMatchedAt(childComplexity), true
+
+	case "AutomationMatchedJob.jobId":
+		if e.complexity.AutomationMatchedJob.JobID == nil {
+			break
+		}
+
+		return e.complexity.AutomationMatchedJob.JobID(childComplexity), true
+
+	case "AutomationMatchedJob.listedAt":
+		if e.complexity.AutomationMatchedJob.ListedAt == nil {
+			break
+		}
+
+		return e.complexity.AutomationMatchedJob.ListedAt(childComplexity), true
+
+	case "AutomationMatchedJob.location":
+		if e.complexity.AutomationMatchedJob.Location == nil {
+			break
+		}
+
+		return e.complexity.AutomationMatchedJob.Location(childComplexity), true
+
+	case "AutomationMatchedJob.matchReason":
+		if e.complexity.AutomationMatchedJob.MatchReason == nil {
+			break
+		}
+
+		return e.complexity.AutomationMatchedJob.MatchReason(childComplexity), true
+
+	case "AutomationMatchedJob.runId":
+		if e.complexity.AutomationMatchedJob.RunID == nil {
+			break
+		}
+
+		return e.complexity.AutomationMatchedJob.RunID(childComplexity), true
+
+	case "AutomationMatchedJob.title":
+		if e.complexity.AutomationMatchedJob.Title == nil {
+			break
+		}
+
+		return e.complexity.AutomationMatchedJob.Title(childComplexity), true
+
+	case "AutomationMatchedJob.url":
+		if e.complexity.AutomationMatchedJob.URL == nil {
+			break
+		}
+
+		return e.complexity.AutomationMatchedJob.URL(childComplexity), true
+
+	case "AutomationMatchedJob.workplaceType":
+		if e.complexity.AutomationMatchedJob.WorkplaceType == nil {
+			break
+		}
+
+		return e.complexity.AutomationMatchedJob.WorkplaceType(childComplexity), true
 
 	case "AutomationRun.automationId":
 		if e.complexity.AutomationRun.AutomationID == nil {
@@ -1800,6 +1952,18 @@ func (e *executableSchema) Complexity(ctx context.Context, typeName, field strin
 
 		return e.complexity.Mutation.ApproveWaitlistEntry(childComplexity, args["id"].(string)), true
 
+	case "Mutation.banAutomationCompany":
+		if e.complexity.Mutation.BanAutomationCompany == nil {
+			break
+		}
+
+		args, err := ec.field_Mutation_banAutomationCompany_args(ctx, rawArgs)
+		if err != nil {
+			return 0, false
+		}
+
+		return e.complexity.Mutation.BanAutomationCompany(childComplexity, args["companyName"].(string), args["sourceJobId"].(*string), args["sourceAutomationId"].(*string)), true
+
 	case "Mutation.changeEmail":
 		if e.complexity.Mutation.ChangeEmail == nil {
 			break
@@ -2193,6 +2357,18 @@ func (e *executableSchema) Complexity(ctx context.Context, typeName, field strin
 
 		return e.complexity.Mutation.SendTestEmail(childComplexity, args["type"].(model.TestEmailType), args["recipientEmail"].(string)), true
 
+	case "Mutation.setAutomationMatchFeedback":
+		if e.complexity.Mutation.SetAutomationMatchFeedback == nil {
+			break
+		}
+
+		args, err := ec.field_Mutation_setAutomationMatchFeedback_args(ctx, rawArgs)
+		if err != nil {
+			return 0, false
+		}
+
+		return e.complexity.Mutation.SetAutomationMatchFeedback(childComplexity, args["automationId"].(string), args["jobId"].(string), args["feedback"].(model.AutomationMatchFeedback)), true
+
 	case "Mutation.setPortfolioProjectVisibility":
 		if e.complexity.Mutation.SetPortfolioProjectVisibility == nil {
 			break
@@ -2264,6 +2440,18 @@ func (e *executableSchema) Complexity(ctx context.Context, typeName, field strin
 		}
 
 		return e.complexity.Mutation.SetUsername(childComplexity, args["username"].(string)), true
+
+	case "Mutation.unbanAutomationCompany":
+		if e.complexity.Mutation.UnbanAutomationCompany == nil {
+			break
+		}
+
+		args, err := ec.field_Mutation_unbanAutomationCompany_args(ctx, rawArgs)
+		if err != nil {
+			return 0, false
+		}
+
+		return e.complexity.Mutation.UnbanAutomationCompany(childComplexity, args["id"].(string)), true
 
 	case "Mutation.updateContactProfile":
 		if e.complexity.Mutation.UpdateContactProfile == nil {
@@ -2995,6 +3183,25 @@ func (e *executableSchema) Complexity(ctx context.Context, typeName, field strin
 		}
 
 		return e.complexity.Query.AssistantThreads(childComplexity), true
+
+	case "Query.automationCompanyBans":
+		if e.complexity.Query.AutomationCompanyBans == nil {
+			break
+		}
+
+		return e.complexity.Query.AutomationCompanyBans(childComplexity), true
+
+	case "Query.automationMatches":
+		if e.complexity.Query.AutomationMatches == nil {
+			break
+		}
+
+		args, err := ec.field_Query_automationMatches_args(ctx, rawArgs)
+		if err != nil {
+			return 0, false
+		}
+
+		return e.complexity.Query.AutomationMatches(childComplexity, args["automationId"].(string), args["limit"].(*int), args["offset"].(*int), args["feedback"].(*model.AutomationMatchFeedback)), true
 
 	case "Query.automationRuns":
 		if e.complexity.Query.AutomationRuns == nil {
@@ -4571,6 +4778,27 @@ func (ec *executionContext) field_Mutation_approveWaitlistEntry_args(ctx context
 	return args, nil
 }
 
+func (ec *executionContext) field_Mutation_banAutomationCompany_args(ctx context.Context, rawArgs map[string]any) (map[string]any, error) {
+	var err error
+	args := map[string]any{}
+	arg0, err := graphql.ProcessArgField(ctx, rawArgs, "companyName", ec.unmarshalNString2string)
+	if err != nil {
+		return nil, err
+	}
+	args["companyName"] = arg0
+	arg1, err := graphql.ProcessArgField(ctx, rawArgs, "sourceJobId", ec.unmarshalOID2ᚖstring)
+	if err != nil {
+		return nil, err
+	}
+	args["sourceJobId"] = arg1
+	arg2, err := graphql.ProcessArgField(ctx, rawArgs, "sourceAutomationId", ec.unmarshalOID2ᚖstring)
+	if err != nil {
+		return nil, err
+	}
+	args["sourceAutomationId"] = arg2
+	return args, nil
+}
+
 func (ec *executionContext) field_Mutation_changeEmail_args(ctx context.Context, rawArgs map[string]any) (map[string]any, error) {
 	var err error
 	args := map[string]any{}
@@ -4967,6 +5195,27 @@ func (ec *executionContext) field_Mutation_sendTestEmail_args(ctx context.Contex
 	return args, nil
 }
 
+func (ec *executionContext) field_Mutation_setAutomationMatchFeedback_args(ctx context.Context, rawArgs map[string]any) (map[string]any, error) {
+	var err error
+	args := map[string]any{}
+	arg0, err := graphql.ProcessArgField(ctx, rawArgs, "automationId", ec.unmarshalNID2string)
+	if err != nil {
+		return nil, err
+	}
+	args["automationId"] = arg0
+	arg1, err := graphql.ProcessArgField(ctx, rawArgs, "jobId", ec.unmarshalNID2string)
+	if err != nil {
+		return nil, err
+	}
+	args["jobId"] = arg1
+	arg2, err := graphql.ProcessArgField(ctx, rawArgs, "feedback", ec.unmarshalNAutomationMatchFeedback2githubᚗcomᚋleoᚋaiᚑweekendᚋbackendᚋgraphᚋmodelᚐAutomationMatchFeedback)
+	if err != nil {
+		return nil, err
+	}
+	args["feedback"] = arg2
+	return args, nil
+}
+
 func (ec *executionContext) field_Mutation_setPortfolioProjectVisibility_args(ctx context.Context, rawArgs map[string]any) (map[string]any, error) {
 	var err error
 	args := map[string]any{}
@@ -5050,6 +5299,17 @@ func (ec *executionContext) field_Mutation_setUsername_args(ctx context.Context,
 		return nil, err
 	}
 	args["username"] = arg0
+	return args, nil
+}
+
+func (ec *executionContext) field_Mutation_unbanAutomationCompany_args(ctx context.Context, rawArgs map[string]any) (map[string]any, error) {
+	var err error
+	args := map[string]any{}
+	arg0, err := graphql.ProcessArgField(ctx, rawArgs, "id", ec.unmarshalNID2string)
+	if err != nil {
+		return nil, err
+	}
+	args["id"] = arg0
 	return args, nil
 }
 
@@ -5399,6 +5659,32 @@ func (ec *executionContext) field_Query_assistantMessages_args(ctx context.Conte
 		return nil, err
 	}
 	args["limit"] = arg1
+	return args, nil
+}
+
+func (ec *executionContext) field_Query_automationMatches_args(ctx context.Context, rawArgs map[string]any) (map[string]any, error) {
+	var err error
+	args := map[string]any{}
+	arg0, err := graphql.ProcessArgField(ctx, rawArgs, "automationId", ec.unmarshalNID2string)
+	if err != nil {
+		return nil, err
+	}
+	args["automationId"] = arg0
+	arg1, err := graphql.ProcessArgField(ctx, rawArgs, "limit", ec.unmarshalOInt2ᚖint)
+	if err != nil {
+		return nil, err
+	}
+	args["limit"] = arg1
+	arg2, err := graphql.ProcessArgField(ctx, rawArgs, "offset", ec.unmarshalOInt2ᚖint)
+	if err != nil {
+		return nil, err
+	}
+	args["offset"] = arg2
+	arg3, err := graphql.ProcessArgField(ctx, rawArgs, "feedback", ec.unmarshalOAutomationMatchFeedback2ᚖgithubᚗcomᚋleoᚋaiᚑweekendᚋbackendᚋgraphᚋmodelᚐAutomationMatchFeedback)
+	if err != nil {
+		return nil, err
+	}
+	args["feedback"] = arg3
 	return args, nil
 }
 
@@ -7855,6 +8141,724 @@ func (ec *executionContext) fieldContext_AssistantTurnResult_portfolioWithConten
 				return ec.fieldContext_PortfolioWithContent_testimonials(ctx, field)
 			}
 			return nil, fmt.Errorf("no field named %q was found under type PortfolioWithContent", field.Name)
+		},
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _AutomationCompanyBan_id(ctx context.Context, field graphql.CollectedField, obj *model.AutomationCompanyBan) (ret graphql.Marshaler) {
+	fc, err := ec.fieldContext_AutomationCompanyBan_id(ctx, field)
+	if err != nil {
+		return graphql.Null
+	}
+	ctx = graphql.WithFieldContext(ctx, fc)
+	defer func() {
+		if r := recover(); r != nil {
+			ec.Error(ctx, ec.Recover(ctx, r))
+			ret = graphql.Null
+		}
+	}()
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (any, error) {
+		ctx = rctx // use context from middleware stack in children
+		return obj.ID, nil
+	})
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	if resTmp == nil {
+		if !graphql.HasFieldError(ctx, fc) {
+			ec.Errorf(ctx, "must not be null")
+		}
+		return graphql.Null
+	}
+	res := resTmp.(string)
+	fc.Result = res
+	return ec.marshalNID2string(ctx, field.Selections, res)
+}
+
+func (ec *executionContext) fieldContext_AutomationCompanyBan_id(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "AutomationCompanyBan",
+		Field:      field,
+		IsMethod:   false,
+		IsResolver: false,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return nil, errors.New("field of type ID does not have child fields")
+		},
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _AutomationCompanyBan_companyDisplay(ctx context.Context, field graphql.CollectedField, obj *model.AutomationCompanyBan) (ret graphql.Marshaler) {
+	fc, err := ec.fieldContext_AutomationCompanyBan_companyDisplay(ctx, field)
+	if err != nil {
+		return graphql.Null
+	}
+	ctx = graphql.WithFieldContext(ctx, fc)
+	defer func() {
+		if r := recover(); r != nil {
+			ec.Error(ctx, ec.Recover(ctx, r))
+			ret = graphql.Null
+		}
+	}()
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (any, error) {
+		ctx = rctx // use context from middleware stack in children
+		return obj.CompanyDisplay, nil
+	})
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	if resTmp == nil {
+		if !graphql.HasFieldError(ctx, fc) {
+			ec.Errorf(ctx, "must not be null")
+		}
+		return graphql.Null
+	}
+	res := resTmp.(string)
+	fc.Result = res
+	return ec.marshalNString2string(ctx, field.Selections, res)
+}
+
+func (ec *executionContext) fieldContext_AutomationCompanyBan_companyDisplay(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "AutomationCompanyBan",
+		Field:      field,
+		IsMethod:   false,
+		IsResolver: false,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return nil, errors.New("field of type String does not have child fields")
+		},
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _AutomationCompanyBan_createdAt(ctx context.Context, field graphql.CollectedField, obj *model.AutomationCompanyBan) (ret graphql.Marshaler) {
+	fc, err := ec.fieldContext_AutomationCompanyBan_createdAt(ctx, field)
+	if err != nil {
+		return graphql.Null
+	}
+	ctx = graphql.WithFieldContext(ctx, fc)
+	defer func() {
+		if r := recover(); r != nil {
+			ec.Error(ctx, ec.Recover(ctx, r))
+			ret = graphql.Null
+		}
+	}()
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (any, error) {
+		ctx = rctx // use context from middleware stack in children
+		return obj.CreatedAt, nil
+	})
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	if resTmp == nil {
+		if !graphql.HasFieldError(ctx, fc) {
+			ec.Errorf(ctx, "must not be null")
+		}
+		return graphql.Null
+	}
+	res := resTmp.(string)
+	fc.Result = res
+	return ec.marshalNDateTime2string(ctx, field.Selections, res)
+}
+
+func (ec *executionContext) fieldContext_AutomationCompanyBan_createdAt(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "AutomationCompanyBan",
+		Field:      field,
+		IsMethod:   false,
+		IsResolver: false,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return nil, errors.New("field of type DateTime does not have child fields")
+		},
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _AutomationMatchedJob_jobId(ctx context.Context, field graphql.CollectedField, obj *model.AutomationMatchedJob) (ret graphql.Marshaler) {
+	fc, err := ec.fieldContext_AutomationMatchedJob_jobId(ctx, field)
+	if err != nil {
+		return graphql.Null
+	}
+	ctx = graphql.WithFieldContext(ctx, fc)
+	defer func() {
+		if r := recover(); r != nil {
+			ec.Error(ctx, ec.Recover(ctx, r))
+			ret = graphql.Null
+		}
+	}()
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (any, error) {
+		ctx = rctx // use context from middleware stack in children
+		return obj.JobID, nil
+	})
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	if resTmp == nil {
+		if !graphql.HasFieldError(ctx, fc) {
+			ec.Errorf(ctx, "must not be null")
+		}
+		return graphql.Null
+	}
+	res := resTmp.(string)
+	fc.Result = res
+	return ec.marshalNID2string(ctx, field.Selections, res)
+}
+
+func (ec *executionContext) fieldContext_AutomationMatchedJob_jobId(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "AutomationMatchedJob",
+		Field:      field,
+		IsMethod:   false,
+		IsResolver: false,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return nil, errors.New("field of type ID does not have child fields")
+		},
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _AutomationMatchedJob_title(ctx context.Context, field graphql.CollectedField, obj *model.AutomationMatchedJob) (ret graphql.Marshaler) {
+	fc, err := ec.fieldContext_AutomationMatchedJob_title(ctx, field)
+	if err != nil {
+		return graphql.Null
+	}
+	ctx = graphql.WithFieldContext(ctx, fc)
+	defer func() {
+		if r := recover(); r != nil {
+			ec.Error(ctx, ec.Recover(ctx, r))
+			ret = graphql.Null
+		}
+	}()
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (any, error) {
+		ctx = rctx // use context from middleware stack in children
+		return obj.Title, nil
+	})
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	if resTmp == nil {
+		if !graphql.HasFieldError(ctx, fc) {
+			ec.Errorf(ctx, "must not be null")
+		}
+		return graphql.Null
+	}
+	res := resTmp.(string)
+	fc.Result = res
+	return ec.marshalNString2string(ctx, field.Selections, res)
+}
+
+func (ec *executionContext) fieldContext_AutomationMatchedJob_title(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "AutomationMatchedJob",
+		Field:      field,
+		IsMethod:   false,
+		IsResolver: false,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return nil, errors.New("field of type String does not have child fields")
+		},
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _AutomationMatchedJob_company(ctx context.Context, field graphql.CollectedField, obj *model.AutomationMatchedJob) (ret graphql.Marshaler) {
+	fc, err := ec.fieldContext_AutomationMatchedJob_company(ctx, field)
+	if err != nil {
+		return graphql.Null
+	}
+	ctx = graphql.WithFieldContext(ctx, fc)
+	defer func() {
+		if r := recover(); r != nil {
+			ec.Error(ctx, ec.Recover(ctx, r))
+			ret = graphql.Null
+		}
+	}()
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (any, error) {
+		ctx = rctx // use context from middleware stack in children
+		return obj.Company, nil
+	})
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	if resTmp == nil {
+		return graphql.Null
+	}
+	res := resTmp.(*string)
+	fc.Result = res
+	return ec.marshalOString2ᚖstring(ctx, field.Selections, res)
+}
+
+func (ec *executionContext) fieldContext_AutomationMatchedJob_company(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "AutomationMatchedJob",
+		Field:      field,
+		IsMethod:   false,
+		IsResolver: false,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return nil, errors.New("field of type String does not have child fields")
+		},
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _AutomationMatchedJob_location(ctx context.Context, field graphql.CollectedField, obj *model.AutomationMatchedJob) (ret graphql.Marshaler) {
+	fc, err := ec.fieldContext_AutomationMatchedJob_location(ctx, field)
+	if err != nil {
+		return graphql.Null
+	}
+	ctx = graphql.WithFieldContext(ctx, fc)
+	defer func() {
+		if r := recover(); r != nil {
+			ec.Error(ctx, ec.Recover(ctx, r))
+			ret = graphql.Null
+		}
+	}()
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (any, error) {
+		ctx = rctx // use context from middleware stack in children
+		return obj.Location, nil
+	})
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	if resTmp == nil {
+		return graphql.Null
+	}
+	res := resTmp.(*string)
+	fc.Result = res
+	return ec.marshalOString2ᚖstring(ctx, field.Selections, res)
+}
+
+func (ec *executionContext) fieldContext_AutomationMatchedJob_location(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "AutomationMatchedJob",
+		Field:      field,
+		IsMethod:   false,
+		IsResolver: false,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return nil, errors.New("field of type String does not have child fields")
+		},
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _AutomationMatchedJob_workplaceType(ctx context.Context, field graphql.CollectedField, obj *model.AutomationMatchedJob) (ret graphql.Marshaler) {
+	fc, err := ec.fieldContext_AutomationMatchedJob_workplaceType(ctx, field)
+	if err != nil {
+		return graphql.Null
+	}
+	ctx = graphql.WithFieldContext(ctx, fc)
+	defer func() {
+		if r := recover(); r != nil {
+			ec.Error(ctx, ec.Recover(ctx, r))
+			ret = graphql.Null
+		}
+	}()
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (any, error) {
+		ctx = rctx // use context from middleware stack in children
+		return obj.WorkplaceType, nil
+	})
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	if resTmp == nil {
+		return graphql.Null
+	}
+	res := resTmp.(*string)
+	fc.Result = res
+	return ec.marshalOString2ᚖstring(ctx, field.Selections, res)
+}
+
+func (ec *executionContext) fieldContext_AutomationMatchedJob_workplaceType(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "AutomationMatchedJob",
+		Field:      field,
+		IsMethod:   false,
+		IsResolver: false,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return nil, errors.New("field of type String does not have child fields")
+		},
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _AutomationMatchedJob_employmentType(ctx context.Context, field graphql.CollectedField, obj *model.AutomationMatchedJob) (ret graphql.Marshaler) {
+	fc, err := ec.fieldContext_AutomationMatchedJob_employmentType(ctx, field)
+	if err != nil {
+		return graphql.Null
+	}
+	ctx = graphql.WithFieldContext(ctx, fc)
+	defer func() {
+		if r := recover(); r != nil {
+			ec.Error(ctx, ec.Recover(ctx, r))
+			ret = graphql.Null
+		}
+	}()
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (any, error) {
+		ctx = rctx // use context from middleware stack in children
+		return obj.EmploymentType, nil
+	})
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	if resTmp == nil {
+		return graphql.Null
+	}
+	res := resTmp.(*string)
+	fc.Result = res
+	return ec.marshalOString2ᚖstring(ctx, field.Selections, res)
+}
+
+func (ec *executionContext) fieldContext_AutomationMatchedJob_employmentType(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "AutomationMatchedJob",
+		Field:      field,
+		IsMethod:   false,
+		IsResolver: false,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return nil, errors.New("field of type String does not have child fields")
+		},
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _AutomationMatchedJob_listedAt(ctx context.Context, field graphql.CollectedField, obj *model.AutomationMatchedJob) (ret graphql.Marshaler) {
+	fc, err := ec.fieldContext_AutomationMatchedJob_listedAt(ctx, field)
+	if err != nil {
+		return graphql.Null
+	}
+	ctx = graphql.WithFieldContext(ctx, fc)
+	defer func() {
+		if r := recover(); r != nil {
+			ec.Error(ctx, ec.Recover(ctx, r))
+			ret = graphql.Null
+		}
+	}()
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (any, error) {
+		ctx = rctx // use context from middleware stack in children
+		return obj.ListedAt, nil
+	})
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	if resTmp == nil {
+		return graphql.Null
+	}
+	res := resTmp.(*string)
+	fc.Result = res
+	return ec.marshalOString2ᚖstring(ctx, field.Selections, res)
+}
+
+func (ec *executionContext) fieldContext_AutomationMatchedJob_listedAt(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "AutomationMatchedJob",
+		Field:      field,
+		IsMethod:   false,
+		IsResolver: false,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return nil, errors.New("field of type String does not have child fields")
+		},
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _AutomationMatchedJob_description(ctx context.Context, field graphql.CollectedField, obj *model.AutomationMatchedJob) (ret graphql.Marshaler) {
+	fc, err := ec.fieldContext_AutomationMatchedJob_description(ctx, field)
+	if err != nil {
+		return graphql.Null
+	}
+	ctx = graphql.WithFieldContext(ctx, fc)
+	defer func() {
+		if r := recover(); r != nil {
+			ec.Error(ctx, ec.Recover(ctx, r))
+			ret = graphql.Null
+		}
+	}()
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (any, error) {
+		ctx = rctx // use context from middleware stack in children
+		return obj.Description, nil
+	})
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	if resTmp == nil {
+		return graphql.Null
+	}
+	res := resTmp.(*string)
+	fc.Result = res
+	return ec.marshalOString2ᚖstring(ctx, field.Selections, res)
+}
+
+func (ec *executionContext) fieldContext_AutomationMatchedJob_description(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "AutomationMatchedJob",
+		Field:      field,
+		IsMethod:   false,
+		IsResolver: false,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return nil, errors.New("field of type String does not have child fields")
+		},
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _AutomationMatchedJob_url(ctx context.Context, field graphql.CollectedField, obj *model.AutomationMatchedJob) (ret graphql.Marshaler) {
+	fc, err := ec.fieldContext_AutomationMatchedJob_url(ctx, field)
+	if err != nil {
+		return graphql.Null
+	}
+	ctx = graphql.WithFieldContext(ctx, fc)
+	defer func() {
+		if r := recover(); r != nil {
+			ec.Error(ctx, ec.Recover(ctx, r))
+			ret = graphql.Null
+		}
+	}()
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (any, error) {
+		ctx = rctx // use context from middleware stack in children
+		return obj.URL, nil
+	})
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	if resTmp == nil {
+		if !graphql.HasFieldError(ctx, fc) {
+			ec.Errorf(ctx, "must not be null")
+		}
+		return graphql.Null
+	}
+	res := resTmp.(string)
+	fc.Result = res
+	return ec.marshalNString2string(ctx, field.Selections, res)
+}
+
+func (ec *executionContext) fieldContext_AutomationMatchedJob_url(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "AutomationMatchedJob",
+		Field:      field,
+		IsMethod:   false,
+		IsResolver: false,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return nil, errors.New("field of type String does not have child fields")
+		},
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _AutomationMatchedJob_matchReason(ctx context.Context, field graphql.CollectedField, obj *model.AutomationMatchedJob) (ret graphql.Marshaler) {
+	fc, err := ec.fieldContext_AutomationMatchedJob_matchReason(ctx, field)
+	if err != nil {
+		return graphql.Null
+	}
+	ctx = graphql.WithFieldContext(ctx, fc)
+	defer func() {
+		if r := recover(); r != nil {
+			ec.Error(ctx, ec.Recover(ctx, r))
+			ret = graphql.Null
+		}
+	}()
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (any, error) {
+		ctx = rctx // use context from middleware stack in children
+		return obj.MatchReason, nil
+	})
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	if resTmp == nil {
+		return graphql.Null
+	}
+	res := resTmp.(*string)
+	fc.Result = res
+	return ec.marshalOString2ᚖstring(ctx, field.Selections, res)
+}
+
+func (ec *executionContext) fieldContext_AutomationMatchedJob_matchReason(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "AutomationMatchedJob",
+		Field:      field,
+		IsMethod:   false,
+		IsResolver: false,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return nil, errors.New("field of type String does not have child fields")
+		},
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _AutomationMatchedJob_feedback(ctx context.Context, field graphql.CollectedField, obj *model.AutomationMatchedJob) (ret graphql.Marshaler) {
+	fc, err := ec.fieldContext_AutomationMatchedJob_feedback(ctx, field)
+	if err != nil {
+		return graphql.Null
+	}
+	ctx = graphql.WithFieldContext(ctx, fc)
+	defer func() {
+		if r := recover(); r != nil {
+			ec.Error(ctx, ec.Recover(ctx, r))
+			ret = graphql.Null
+		}
+	}()
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (any, error) {
+		ctx = rctx // use context from middleware stack in children
+		return obj.Feedback, nil
+	})
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	if resTmp == nil {
+		return graphql.Null
+	}
+	res := resTmp.(*model.AutomationMatchFeedback)
+	fc.Result = res
+	return ec.marshalOAutomationMatchFeedback2ᚖgithubᚗcomᚋleoᚋaiᚑweekendᚋbackendᚋgraphᚋmodelᚐAutomationMatchFeedback(ctx, field.Selections, res)
+}
+
+func (ec *executionContext) fieldContext_AutomationMatchedJob_feedback(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "AutomationMatchedJob",
+		Field:      field,
+		IsMethod:   false,
+		IsResolver: false,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return nil, errors.New("field of type AutomationMatchFeedback does not have child fields")
+		},
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _AutomationMatchedJob_feedbackAt(ctx context.Context, field graphql.CollectedField, obj *model.AutomationMatchedJob) (ret graphql.Marshaler) {
+	fc, err := ec.fieldContext_AutomationMatchedJob_feedbackAt(ctx, field)
+	if err != nil {
+		return graphql.Null
+	}
+	ctx = graphql.WithFieldContext(ctx, fc)
+	defer func() {
+		if r := recover(); r != nil {
+			ec.Error(ctx, ec.Recover(ctx, r))
+			ret = graphql.Null
+		}
+	}()
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (any, error) {
+		ctx = rctx // use context from middleware stack in children
+		return obj.FeedbackAt, nil
+	})
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	if resTmp == nil {
+		return graphql.Null
+	}
+	res := resTmp.(*string)
+	fc.Result = res
+	return ec.marshalODateTime2ᚖstring(ctx, field.Selections, res)
+}
+
+func (ec *executionContext) fieldContext_AutomationMatchedJob_feedbackAt(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "AutomationMatchedJob",
+		Field:      field,
+		IsMethod:   false,
+		IsResolver: false,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return nil, errors.New("field of type DateTime does not have child fields")
+		},
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _AutomationMatchedJob_runId(ctx context.Context, field graphql.CollectedField, obj *model.AutomationMatchedJob) (ret graphql.Marshaler) {
+	fc, err := ec.fieldContext_AutomationMatchedJob_runId(ctx, field)
+	if err != nil {
+		return graphql.Null
+	}
+	ctx = graphql.WithFieldContext(ctx, fc)
+	defer func() {
+		if r := recover(); r != nil {
+			ec.Error(ctx, ec.Recover(ctx, r))
+			ret = graphql.Null
+		}
+	}()
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (any, error) {
+		ctx = rctx // use context from middleware stack in children
+		return obj.RunID, nil
+	})
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	if resTmp == nil {
+		return graphql.Null
+	}
+	res := resTmp.(*string)
+	fc.Result = res
+	return ec.marshalOID2ᚖstring(ctx, field.Selections, res)
+}
+
+func (ec *executionContext) fieldContext_AutomationMatchedJob_runId(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "AutomationMatchedJob",
+		Field:      field,
+		IsMethod:   false,
+		IsResolver: false,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return nil, errors.New("field of type ID does not have child fields")
+		},
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _AutomationMatchedJob_firstMatchedAt(ctx context.Context, field graphql.CollectedField, obj *model.AutomationMatchedJob) (ret graphql.Marshaler) {
+	fc, err := ec.fieldContext_AutomationMatchedJob_firstMatchedAt(ctx, field)
+	if err != nil {
+		return graphql.Null
+	}
+	ctx = graphql.WithFieldContext(ctx, fc)
+	defer func() {
+		if r := recover(); r != nil {
+			ec.Error(ctx, ec.Recover(ctx, r))
+			ret = graphql.Null
+		}
+	}()
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (any, error) {
+		ctx = rctx // use context from middleware stack in children
+		return obj.FirstMatchedAt, nil
+	})
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	if resTmp == nil {
+		if !graphql.HasFieldError(ctx, fc) {
+			ec.Errorf(ctx, "must not be null")
+		}
+		return graphql.Null
+	}
+	res := resTmp.(string)
+	fc.Result = res
+	return ec.marshalNDateTime2string(ctx, field.Selections, res)
+}
+
+func (ec *executionContext) fieldContext_AutomationMatchedJob_firstMatchedAt(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "AutomationMatchedJob",
+		Field:      field,
+		IsMethod:   false,
+		IsResolver: false,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return nil, errors.New("field of type DateTime does not have child fields")
 		},
 	}
 	return fc, nil
@@ -16304,6 +17308,209 @@ func (ec *executionContext) fieldContext_Mutation_runJobAutomationNow(ctx contex
 	return fc, nil
 }
 
+func (ec *executionContext) _Mutation_setAutomationMatchFeedback(ctx context.Context, field graphql.CollectedField) (ret graphql.Marshaler) {
+	fc, err := ec.fieldContext_Mutation_setAutomationMatchFeedback(ctx, field)
+	if err != nil {
+		return graphql.Null
+	}
+	ctx = graphql.WithFieldContext(ctx, fc)
+	defer func() {
+		if r := recover(); r != nil {
+			ec.Error(ctx, ec.Recover(ctx, r))
+			ret = graphql.Null
+		}
+	}()
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (any, error) {
+		ctx = rctx // use context from middleware stack in children
+		return ec.resolvers.Mutation().SetAutomationMatchFeedback(rctx, fc.Args["automationId"].(string), fc.Args["jobId"].(string), fc.Args["feedback"].(model.AutomationMatchFeedback))
+	})
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	if resTmp == nil {
+		if !graphql.HasFieldError(ctx, fc) {
+			ec.Errorf(ctx, "must not be null")
+		}
+		return graphql.Null
+	}
+	res := resTmp.(*model.AutomationMatchedJob)
+	fc.Result = res
+	return ec.marshalNAutomationMatchedJob2ᚖgithubᚗcomᚋleoᚋaiᚑweekendᚋbackendᚋgraphᚋmodelᚐAutomationMatchedJob(ctx, field.Selections, res)
+}
+
+func (ec *executionContext) fieldContext_Mutation_setAutomationMatchFeedback(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "Mutation",
+		Field:      field,
+		IsMethod:   true,
+		IsResolver: true,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			switch field.Name {
+			case "jobId":
+				return ec.fieldContext_AutomationMatchedJob_jobId(ctx, field)
+			case "title":
+				return ec.fieldContext_AutomationMatchedJob_title(ctx, field)
+			case "company":
+				return ec.fieldContext_AutomationMatchedJob_company(ctx, field)
+			case "location":
+				return ec.fieldContext_AutomationMatchedJob_location(ctx, field)
+			case "workplaceType":
+				return ec.fieldContext_AutomationMatchedJob_workplaceType(ctx, field)
+			case "employmentType":
+				return ec.fieldContext_AutomationMatchedJob_employmentType(ctx, field)
+			case "listedAt":
+				return ec.fieldContext_AutomationMatchedJob_listedAt(ctx, field)
+			case "description":
+				return ec.fieldContext_AutomationMatchedJob_description(ctx, field)
+			case "url":
+				return ec.fieldContext_AutomationMatchedJob_url(ctx, field)
+			case "matchReason":
+				return ec.fieldContext_AutomationMatchedJob_matchReason(ctx, field)
+			case "feedback":
+				return ec.fieldContext_AutomationMatchedJob_feedback(ctx, field)
+			case "feedbackAt":
+				return ec.fieldContext_AutomationMatchedJob_feedbackAt(ctx, field)
+			case "runId":
+				return ec.fieldContext_AutomationMatchedJob_runId(ctx, field)
+			case "firstMatchedAt":
+				return ec.fieldContext_AutomationMatchedJob_firstMatchedAt(ctx, field)
+			}
+			return nil, fmt.Errorf("no field named %q was found under type AutomationMatchedJob", field.Name)
+		},
+	}
+	defer func() {
+		if r := recover(); r != nil {
+			err = ec.Recover(ctx, r)
+			ec.Error(ctx, err)
+		}
+	}()
+	ctx = graphql.WithFieldContext(ctx, fc)
+	if fc.Args, err = ec.field_Mutation_setAutomationMatchFeedback_args(ctx, field.ArgumentMap(ec.Variables)); err != nil {
+		ec.Error(ctx, err)
+		return fc, err
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _Mutation_banAutomationCompany(ctx context.Context, field graphql.CollectedField) (ret graphql.Marshaler) {
+	fc, err := ec.fieldContext_Mutation_banAutomationCompany(ctx, field)
+	if err != nil {
+		return graphql.Null
+	}
+	ctx = graphql.WithFieldContext(ctx, fc)
+	defer func() {
+		if r := recover(); r != nil {
+			ec.Error(ctx, ec.Recover(ctx, r))
+			ret = graphql.Null
+		}
+	}()
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (any, error) {
+		ctx = rctx // use context from middleware stack in children
+		return ec.resolvers.Mutation().BanAutomationCompany(rctx, fc.Args["companyName"].(string), fc.Args["sourceJobId"].(*string), fc.Args["sourceAutomationId"].(*string))
+	})
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	if resTmp == nil {
+		if !graphql.HasFieldError(ctx, fc) {
+			ec.Errorf(ctx, "must not be null")
+		}
+		return graphql.Null
+	}
+	res := resTmp.(*model.AutomationCompanyBan)
+	fc.Result = res
+	return ec.marshalNAutomationCompanyBan2ᚖgithubᚗcomᚋleoᚋaiᚑweekendᚋbackendᚋgraphᚋmodelᚐAutomationCompanyBan(ctx, field.Selections, res)
+}
+
+func (ec *executionContext) fieldContext_Mutation_banAutomationCompany(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "Mutation",
+		Field:      field,
+		IsMethod:   true,
+		IsResolver: true,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			switch field.Name {
+			case "id":
+				return ec.fieldContext_AutomationCompanyBan_id(ctx, field)
+			case "companyDisplay":
+				return ec.fieldContext_AutomationCompanyBan_companyDisplay(ctx, field)
+			case "createdAt":
+				return ec.fieldContext_AutomationCompanyBan_createdAt(ctx, field)
+			}
+			return nil, fmt.Errorf("no field named %q was found under type AutomationCompanyBan", field.Name)
+		},
+	}
+	defer func() {
+		if r := recover(); r != nil {
+			err = ec.Recover(ctx, r)
+			ec.Error(ctx, err)
+		}
+	}()
+	ctx = graphql.WithFieldContext(ctx, fc)
+	if fc.Args, err = ec.field_Mutation_banAutomationCompany_args(ctx, field.ArgumentMap(ec.Variables)); err != nil {
+		ec.Error(ctx, err)
+		return fc, err
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _Mutation_unbanAutomationCompany(ctx context.Context, field graphql.CollectedField) (ret graphql.Marshaler) {
+	fc, err := ec.fieldContext_Mutation_unbanAutomationCompany(ctx, field)
+	if err != nil {
+		return graphql.Null
+	}
+	ctx = graphql.WithFieldContext(ctx, fc)
+	defer func() {
+		if r := recover(); r != nil {
+			ec.Error(ctx, ec.Recover(ctx, r))
+			ret = graphql.Null
+		}
+	}()
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (any, error) {
+		ctx = rctx // use context from middleware stack in children
+		return ec.resolvers.Mutation().UnbanAutomationCompany(rctx, fc.Args["id"].(string))
+	})
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	if resTmp == nil {
+		if !graphql.HasFieldError(ctx, fc) {
+			ec.Errorf(ctx, "must not be null")
+		}
+		return graphql.Null
+	}
+	res := resTmp.(bool)
+	fc.Result = res
+	return ec.marshalNBoolean2bool(ctx, field.Selections, res)
+}
+
+func (ec *executionContext) fieldContext_Mutation_unbanAutomationCompany(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "Mutation",
+		Field:      field,
+		IsMethod:   true,
+		IsResolver: true,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return nil, errors.New("field of type Boolean does not have child fields")
+		},
+	}
+	defer func() {
+		if r := recover(); r != nil {
+			err = ec.Recover(ctx, r)
+			ec.Error(ctx, err)
+		}
+	}()
+	ctx = graphql.WithFieldContext(ctx, fc)
+	if fc.Args, err = ec.field_Mutation_unbanAutomationCompany_args(ctx, field.ArgumentMap(ec.Variables)); err != nil {
+		ec.Error(ctx, err)
+		return fc, err
+	}
+	return fc, nil
+}
+
 func (ec *executionContext) _Portfolio_id(ctx context.Context, field graphql.CollectedField, obj *model.Portfolio) (ret graphql.Marshaler) {
 	fc, err := ec.fieldContext_Portfolio_id(ctx, field)
 	if err != nil {
@@ -21832,6 +23039,143 @@ func (ec *executionContext) fieldContext_Query_automationRuns(ctx context.Contex
 	if fc.Args, err = ec.field_Query_automationRuns_args(ctx, field.ArgumentMap(ec.Variables)); err != nil {
 		ec.Error(ctx, err)
 		return fc, err
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _Query_automationMatches(ctx context.Context, field graphql.CollectedField) (ret graphql.Marshaler) {
+	fc, err := ec.fieldContext_Query_automationMatches(ctx, field)
+	if err != nil {
+		return graphql.Null
+	}
+	ctx = graphql.WithFieldContext(ctx, fc)
+	defer func() {
+		if r := recover(); r != nil {
+			ec.Error(ctx, ec.Recover(ctx, r))
+			ret = graphql.Null
+		}
+	}()
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (any, error) {
+		ctx = rctx // use context from middleware stack in children
+		return ec.resolvers.Query().AutomationMatches(rctx, fc.Args["automationId"].(string), fc.Args["limit"].(*int), fc.Args["offset"].(*int), fc.Args["feedback"].(*model.AutomationMatchFeedback))
+	})
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	if resTmp == nil {
+		if !graphql.HasFieldError(ctx, fc) {
+			ec.Errorf(ctx, "must not be null")
+		}
+		return graphql.Null
+	}
+	res := resTmp.([]*model.AutomationMatchedJob)
+	fc.Result = res
+	return ec.marshalNAutomationMatchedJob2ᚕᚖgithubᚗcomᚋleoᚋaiᚑweekendᚋbackendᚋgraphᚋmodelᚐAutomationMatchedJobᚄ(ctx, field.Selections, res)
+}
+
+func (ec *executionContext) fieldContext_Query_automationMatches(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "Query",
+		Field:      field,
+		IsMethod:   true,
+		IsResolver: true,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			switch field.Name {
+			case "jobId":
+				return ec.fieldContext_AutomationMatchedJob_jobId(ctx, field)
+			case "title":
+				return ec.fieldContext_AutomationMatchedJob_title(ctx, field)
+			case "company":
+				return ec.fieldContext_AutomationMatchedJob_company(ctx, field)
+			case "location":
+				return ec.fieldContext_AutomationMatchedJob_location(ctx, field)
+			case "workplaceType":
+				return ec.fieldContext_AutomationMatchedJob_workplaceType(ctx, field)
+			case "employmentType":
+				return ec.fieldContext_AutomationMatchedJob_employmentType(ctx, field)
+			case "listedAt":
+				return ec.fieldContext_AutomationMatchedJob_listedAt(ctx, field)
+			case "description":
+				return ec.fieldContext_AutomationMatchedJob_description(ctx, field)
+			case "url":
+				return ec.fieldContext_AutomationMatchedJob_url(ctx, field)
+			case "matchReason":
+				return ec.fieldContext_AutomationMatchedJob_matchReason(ctx, field)
+			case "feedback":
+				return ec.fieldContext_AutomationMatchedJob_feedback(ctx, field)
+			case "feedbackAt":
+				return ec.fieldContext_AutomationMatchedJob_feedbackAt(ctx, field)
+			case "runId":
+				return ec.fieldContext_AutomationMatchedJob_runId(ctx, field)
+			case "firstMatchedAt":
+				return ec.fieldContext_AutomationMatchedJob_firstMatchedAt(ctx, field)
+			}
+			return nil, fmt.Errorf("no field named %q was found under type AutomationMatchedJob", field.Name)
+		},
+	}
+	defer func() {
+		if r := recover(); r != nil {
+			err = ec.Recover(ctx, r)
+			ec.Error(ctx, err)
+		}
+	}()
+	ctx = graphql.WithFieldContext(ctx, fc)
+	if fc.Args, err = ec.field_Query_automationMatches_args(ctx, field.ArgumentMap(ec.Variables)); err != nil {
+		ec.Error(ctx, err)
+		return fc, err
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _Query_automationCompanyBans(ctx context.Context, field graphql.CollectedField) (ret graphql.Marshaler) {
+	fc, err := ec.fieldContext_Query_automationCompanyBans(ctx, field)
+	if err != nil {
+		return graphql.Null
+	}
+	ctx = graphql.WithFieldContext(ctx, fc)
+	defer func() {
+		if r := recover(); r != nil {
+			ec.Error(ctx, ec.Recover(ctx, r))
+			ret = graphql.Null
+		}
+	}()
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (any, error) {
+		ctx = rctx // use context from middleware stack in children
+		return ec.resolvers.Query().AutomationCompanyBans(rctx)
+	})
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	if resTmp == nil {
+		if !graphql.HasFieldError(ctx, fc) {
+			ec.Errorf(ctx, "must not be null")
+		}
+		return graphql.Null
+	}
+	res := resTmp.([]*model.AutomationCompanyBan)
+	fc.Result = res
+	return ec.marshalNAutomationCompanyBan2ᚕᚖgithubᚗcomᚋleoᚋaiᚑweekendᚋbackendᚋgraphᚋmodelᚐAutomationCompanyBanᚄ(ctx, field.Selections, res)
+}
+
+func (ec *executionContext) fieldContext_Query_automationCompanyBans(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "Query",
+		Field:      field,
+		IsMethod:   true,
+		IsResolver: true,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			switch field.Name {
+			case "id":
+				return ec.fieldContext_AutomationCompanyBan_id(ctx, field)
+			case "companyDisplay":
+				return ec.fieldContext_AutomationCompanyBan_companyDisplay(ctx, field)
+			case "createdAt":
+				return ec.fieldContext_AutomationCompanyBan_createdAt(ctx, field)
+			}
+			return nil, fmt.Errorf("no field named %q was found under type AutomationCompanyBan", field.Name)
+		},
 	}
 	return fc, nil
 }
@@ -33631,6 +34975,129 @@ func (ec *executionContext) _AssistantTurnResult(ctx context.Context, sel ast.Se
 	return out
 }
 
+var automationCompanyBanImplementors = []string{"AutomationCompanyBan"}
+
+func (ec *executionContext) _AutomationCompanyBan(ctx context.Context, sel ast.SelectionSet, obj *model.AutomationCompanyBan) graphql.Marshaler {
+	fields := graphql.CollectFields(ec.OperationContext, sel, automationCompanyBanImplementors)
+
+	out := graphql.NewFieldSet(fields)
+	deferred := make(map[string]*graphql.FieldSet)
+	for i, field := range fields {
+		switch field.Name {
+		case "__typename":
+			out.Values[i] = graphql.MarshalString("AutomationCompanyBan")
+		case "id":
+			out.Values[i] = ec._AutomationCompanyBan_id(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				out.Invalids++
+			}
+		case "companyDisplay":
+			out.Values[i] = ec._AutomationCompanyBan_companyDisplay(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				out.Invalids++
+			}
+		case "createdAt":
+			out.Values[i] = ec._AutomationCompanyBan_createdAt(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				out.Invalids++
+			}
+		default:
+			panic("unknown field " + strconv.Quote(field.Name))
+		}
+	}
+	out.Dispatch(ctx)
+	if out.Invalids > 0 {
+		return graphql.Null
+	}
+
+	atomic.AddInt32(&ec.deferred, int32(len(deferred)))
+
+	for label, dfs := range deferred {
+		ec.processDeferredGroup(graphql.DeferredGroup{
+			Label:    label,
+			Path:     graphql.GetPath(ctx),
+			FieldSet: dfs,
+			Context:  ctx,
+		})
+	}
+
+	return out
+}
+
+var automationMatchedJobImplementors = []string{"AutomationMatchedJob"}
+
+func (ec *executionContext) _AutomationMatchedJob(ctx context.Context, sel ast.SelectionSet, obj *model.AutomationMatchedJob) graphql.Marshaler {
+	fields := graphql.CollectFields(ec.OperationContext, sel, automationMatchedJobImplementors)
+
+	out := graphql.NewFieldSet(fields)
+	deferred := make(map[string]*graphql.FieldSet)
+	for i, field := range fields {
+		switch field.Name {
+		case "__typename":
+			out.Values[i] = graphql.MarshalString("AutomationMatchedJob")
+		case "jobId":
+			out.Values[i] = ec._AutomationMatchedJob_jobId(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				out.Invalids++
+			}
+		case "title":
+			out.Values[i] = ec._AutomationMatchedJob_title(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				out.Invalids++
+			}
+		case "company":
+			out.Values[i] = ec._AutomationMatchedJob_company(ctx, field, obj)
+		case "location":
+			out.Values[i] = ec._AutomationMatchedJob_location(ctx, field, obj)
+		case "workplaceType":
+			out.Values[i] = ec._AutomationMatchedJob_workplaceType(ctx, field, obj)
+		case "employmentType":
+			out.Values[i] = ec._AutomationMatchedJob_employmentType(ctx, field, obj)
+		case "listedAt":
+			out.Values[i] = ec._AutomationMatchedJob_listedAt(ctx, field, obj)
+		case "description":
+			out.Values[i] = ec._AutomationMatchedJob_description(ctx, field, obj)
+		case "url":
+			out.Values[i] = ec._AutomationMatchedJob_url(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				out.Invalids++
+			}
+		case "matchReason":
+			out.Values[i] = ec._AutomationMatchedJob_matchReason(ctx, field, obj)
+		case "feedback":
+			out.Values[i] = ec._AutomationMatchedJob_feedback(ctx, field, obj)
+		case "feedbackAt":
+			out.Values[i] = ec._AutomationMatchedJob_feedbackAt(ctx, field, obj)
+		case "runId":
+			out.Values[i] = ec._AutomationMatchedJob_runId(ctx, field, obj)
+		case "firstMatchedAt":
+			out.Values[i] = ec._AutomationMatchedJob_firstMatchedAt(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				out.Invalids++
+			}
+		default:
+			panic("unknown field " + strconv.Quote(field.Name))
+		}
+	}
+	out.Dispatch(ctx)
+	if out.Invalids > 0 {
+		return graphql.Null
+	}
+
+	atomic.AddInt32(&ec.deferred, int32(len(deferred)))
+
+	for label, dfs := range deferred {
+		ec.processDeferredGroup(graphql.DeferredGroup{
+			Label:    label,
+			Path:     graphql.GetPath(ctx),
+			FieldSet: dfs,
+			Context:  ctx,
+		})
+	}
+
+	return out
+}
+
 var automationRunImplementors = []string{"AutomationRun"}
 
 func (ec *executionContext) _AutomationRun(ctx context.Context, sel ast.SelectionSet, obj *model.AutomationRun) graphql.Marshaler {
@@ -34850,6 +36317,27 @@ func (ec *executionContext) _Mutation(ctx context.Context, sel ast.SelectionSet)
 		case "runJobAutomationNow":
 			out.Values[i] = ec.OperationContext.RootResolverMiddleware(innerCtx, func(ctx context.Context) (res graphql.Marshaler) {
 				return ec._Mutation_runJobAutomationNow(ctx, field)
+			})
+			if out.Values[i] == graphql.Null {
+				out.Invalids++
+			}
+		case "setAutomationMatchFeedback":
+			out.Values[i] = ec.OperationContext.RootResolverMiddleware(innerCtx, func(ctx context.Context) (res graphql.Marshaler) {
+				return ec._Mutation_setAutomationMatchFeedback(ctx, field)
+			})
+			if out.Values[i] == graphql.Null {
+				out.Invalids++
+			}
+		case "banAutomationCompany":
+			out.Values[i] = ec.OperationContext.RootResolverMiddleware(innerCtx, func(ctx context.Context) (res graphql.Marshaler) {
+				return ec._Mutation_banAutomationCompany(ctx, field)
+			})
+			if out.Values[i] == graphql.Null {
+				out.Invalids++
+			}
+		case "unbanAutomationCompany":
+			out.Values[i] = ec.OperationContext.RootResolverMiddleware(innerCtx, func(ctx context.Context) (res graphql.Marshaler) {
+				return ec._Mutation_unbanAutomationCompany(ctx, field)
 			})
 			if out.Values[i] == graphql.Null {
 				out.Invalids++
@@ -36211,6 +37699,50 @@ func (ec *executionContext) _Query(ctx context.Context, sel ast.SelectionSet) gr
 					}
 				}()
 				res = ec._Query_automationRuns(ctx, field)
+				if res == graphql.Null {
+					atomic.AddUint32(&fs.Invalids, 1)
+				}
+				return res
+			}
+
+			rrm := func(ctx context.Context) graphql.Marshaler {
+				return ec.OperationContext.RootResolverMiddleware(ctx,
+					func(ctx context.Context) graphql.Marshaler { return innerFunc(ctx, out) })
+			}
+
+			out.Concurrently(i, func(ctx context.Context) graphql.Marshaler { return rrm(innerCtx) })
+		case "automationMatches":
+			field := field
+
+			innerFunc := func(ctx context.Context, fs *graphql.FieldSet) (res graphql.Marshaler) {
+				defer func() {
+					if r := recover(); r != nil {
+						ec.Error(ctx, ec.Recover(ctx, r))
+					}
+				}()
+				res = ec._Query_automationMatches(ctx, field)
+				if res == graphql.Null {
+					atomic.AddUint32(&fs.Invalids, 1)
+				}
+				return res
+			}
+
+			rrm := func(ctx context.Context) graphql.Marshaler {
+				return ec.OperationContext.RootResolverMiddleware(ctx,
+					func(ctx context.Context) graphql.Marshaler { return innerFunc(ctx, out) })
+			}
+
+			out.Concurrently(i, func(ctx context.Context) graphql.Marshaler { return rrm(innerCtx) })
+		case "automationCompanyBans":
+			field := field
+
+			innerFunc := func(ctx context.Context, fs *graphql.FieldSet) (res graphql.Marshaler) {
+				defer func() {
+					if r := recover(); r != nil {
+						ec.Error(ctx, ec.Recover(ctx, r))
+					}
+				}()
+				res = ec._Query_automationCompanyBans(ctx, field)
 				if res == graphql.Null {
 					atomic.AddUint32(&fs.Invalids, 1)
 				}
@@ -38224,6 +39756,132 @@ func (ec *executionContext) unmarshalNAssistantView2githubᚗcomᚋleoᚋaiᚑwe
 
 func (ec *executionContext) marshalNAssistantView2githubᚗcomᚋleoᚋaiᚑweekendᚋbackendᚋgraphᚋmodelᚐAssistantView(ctx context.Context, sel ast.SelectionSet, v model.AssistantView) graphql.Marshaler {
 	return v
+}
+
+func (ec *executionContext) marshalNAutomationCompanyBan2githubᚗcomᚋleoᚋaiᚑweekendᚋbackendᚋgraphᚋmodelᚐAutomationCompanyBan(ctx context.Context, sel ast.SelectionSet, v model.AutomationCompanyBan) graphql.Marshaler {
+	return ec._AutomationCompanyBan(ctx, sel, &v)
+}
+
+func (ec *executionContext) marshalNAutomationCompanyBan2ᚕᚖgithubᚗcomᚋleoᚋaiᚑweekendᚋbackendᚋgraphᚋmodelᚐAutomationCompanyBanᚄ(ctx context.Context, sel ast.SelectionSet, v []*model.AutomationCompanyBan) graphql.Marshaler {
+	ret := make(graphql.Array, len(v))
+	var wg sync.WaitGroup
+	isLen1 := len(v) == 1
+	if !isLen1 {
+		wg.Add(len(v))
+	}
+	for i := range v {
+		i := i
+		fc := &graphql.FieldContext{
+			Index:  &i,
+			Result: &v[i],
+		}
+		ctx := graphql.WithFieldContext(ctx, fc)
+		f := func(i int) {
+			defer func() {
+				if r := recover(); r != nil {
+					ec.Error(ctx, ec.Recover(ctx, r))
+					ret = nil
+				}
+			}()
+			if !isLen1 {
+				defer wg.Done()
+			}
+			ret[i] = ec.marshalNAutomationCompanyBan2ᚖgithubᚗcomᚋleoᚋaiᚑweekendᚋbackendᚋgraphᚋmodelᚐAutomationCompanyBan(ctx, sel, v[i])
+		}
+		if isLen1 {
+			f(i)
+		} else {
+			go f(i)
+		}
+
+	}
+	wg.Wait()
+
+	for _, e := range ret {
+		if e == graphql.Null {
+			return graphql.Null
+		}
+	}
+
+	return ret
+}
+
+func (ec *executionContext) marshalNAutomationCompanyBan2ᚖgithubᚗcomᚋleoᚋaiᚑweekendᚋbackendᚋgraphᚋmodelᚐAutomationCompanyBan(ctx context.Context, sel ast.SelectionSet, v *model.AutomationCompanyBan) graphql.Marshaler {
+	if v == nil {
+		if !graphql.HasFieldError(ctx, graphql.GetFieldContext(ctx)) {
+			ec.Errorf(ctx, "the requested element is null which the schema does not allow")
+		}
+		return graphql.Null
+	}
+	return ec._AutomationCompanyBan(ctx, sel, v)
+}
+
+func (ec *executionContext) unmarshalNAutomationMatchFeedback2githubᚗcomᚋleoᚋaiᚑweekendᚋbackendᚋgraphᚋmodelᚐAutomationMatchFeedback(ctx context.Context, v any) (model.AutomationMatchFeedback, error) {
+	var res model.AutomationMatchFeedback
+	err := res.UnmarshalGQL(v)
+	return res, graphql.ErrorOnPath(ctx, err)
+}
+
+func (ec *executionContext) marshalNAutomationMatchFeedback2githubᚗcomᚋleoᚋaiᚑweekendᚋbackendᚋgraphᚋmodelᚐAutomationMatchFeedback(ctx context.Context, sel ast.SelectionSet, v model.AutomationMatchFeedback) graphql.Marshaler {
+	return v
+}
+
+func (ec *executionContext) marshalNAutomationMatchedJob2githubᚗcomᚋleoᚋaiᚑweekendᚋbackendᚋgraphᚋmodelᚐAutomationMatchedJob(ctx context.Context, sel ast.SelectionSet, v model.AutomationMatchedJob) graphql.Marshaler {
+	return ec._AutomationMatchedJob(ctx, sel, &v)
+}
+
+func (ec *executionContext) marshalNAutomationMatchedJob2ᚕᚖgithubᚗcomᚋleoᚋaiᚑweekendᚋbackendᚋgraphᚋmodelᚐAutomationMatchedJobᚄ(ctx context.Context, sel ast.SelectionSet, v []*model.AutomationMatchedJob) graphql.Marshaler {
+	ret := make(graphql.Array, len(v))
+	var wg sync.WaitGroup
+	isLen1 := len(v) == 1
+	if !isLen1 {
+		wg.Add(len(v))
+	}
+	for i := range v {
+		i := i
+		fc := &graphql.FieldContext{
+			Index:  &i,
+			Result: &v[i],
+		}
+		ctx := graphql.WithFieldContext(ctx, fc)
+		f := func(i int) {
+			defer func() {
+				if r := recover(); r != nil {
+					ec.Error(ctx, ec.Recover(ctx, r))
+					ret = nil
+				}
+			}()
+			if !isLen1 {
+				defer wg.Done()
+			}
+			ret[i] = ec.marshalNAutomationMatchedJob2ᚖgithubᚗcomᚋleoᚋaiᚑweekendᚋbackendᚋgraphᚋmodelᚐAutomationMatchedJob(ctx, sel, v[i])
+		}
+		if isLen1 {
+			f(i)
+		} else {
+			go f(i)
+		}
+
+	}
+	wg.Wait()
+
+	for _, e := range ret {
+		if e == graphql.Null {
+			return graphql.Null
+		}
+	}
+
+	return ret
+}
+
+func (ec *executionContext) marshalNAutomationMatchedJob2ᚖgithubᚗcomᚋleoᚋaiᚑweekendᚋbackendᚋgraphᚋmodelᚐAutomationMatchedJob(ctx context.Context, sel ast.SelectionSet, v *model.AutomationMatchedJob) graphql.Marshaler {
+	if v == nil {
+		if !graphql.HasFieldError(ctx, graphql.GetFieldContext(ctx)) {
+			ec.Errorf(ctx, "the requested element is null which the schema does not allow")
+		}
+		return graphql.Null
+	}
+	return ec._AutomationMatchedJob(ctx, sel, v)
 }
 
 func (ec *executionContext) marshalNAutomationRun2ᚕᚖgithubᚗcomᚋleoᚋaiᚑweekendᚋbackendᚋgraphᚋmodelᚐAutomationRunᚄ(ctx context.Context, sel ast.SelectionSet, v []*model.AutomationRun) graphql.Marshaler {
@@ -40772,6 +42430,22 @@ func (ec *executionContext) unmarshalOAssistantCategory2ᚖgithubᚗcomᚋleoᚋ
 }
 
 func (ec *executionContext) marshalOAssistantCategory2ᚖgithubᚗcomᚋleoᚋaiᚑweekendᚋbackendᚋgraphᚋmodelᚐAssistantCategory(ctx context.Context, sel ast.SelectionSet, v *model.AssistantCategory) graphql.Marshaler {
+	if v == nil {
+		return graphql.Null
+	}
+	return v
+}
+
+func (ec *executionContext) unmarshalOAutomationMatchFeedback2ᚖgithubᚗcomᚋleoᚋaiᚑweekendᚋbackendᚋgraphᚋmodelᚐAutomationMatchFeedback(ctx context.Context, v any) (*model.AutomationMatchFeedback, error) {
+	if v == nil {
+		return nil, nil
+	}
+	var res = new(model.AutomationMatchFeedback)
+	err := res.UnmarshalGQL(v)
+	return res, graphql.ErrorOnPath(ctx, err)
+}
+
+func (ec *executionContext) marshalOAutomationMatchFeedback2ᚖgithubᚗcomᚋleoᚋaiᚑweekendᚋbackendᚋgraphᚋmodelᚐAutomationMatchFeedback(ctx context.Context, sel ast.SelectionSet, v *model.AutomationMatchFeedback) graphql.Marshaler {
 	if v == nil {
 		return graphql.Null
 	}

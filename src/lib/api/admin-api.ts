@@ -25,6 +25,9 @@ import type {
   JobAutomationRunResult,
   CreateJobAutomationInput,
   UpdateJobAutomationInput,
+  AutomationMatchedJob,
+  AutomationMatchFeedback,
+  AutomationCompanyBan,
 } from "@/lib/types/admin";
 import { graphqlRequest } from "@/lib/graphql/client";
 import {
@@ -55,6 +58,11 @@ import {
   SAVE_LINKEDIN_SESSION_MUTATION,
   CLEAR_LINKEDIN_SESSION_MUTATION,
   RUN_JOB_AUTOMATION_NOW_MUTATION,
+  AUTOMATION_MATCHES_QUERY,
+  AUTOMATION_COMPANY_BANS_QUERY,
+  SET_AUTOMATION_MATCH_FEEDBACK_MUTATION,
+  BAN_AUTOMATION_COMPANY_MUTATION,
+  UNBAN_AUTOMATION_COMPANY_MUTATION,
 } from "@/lib/graphql/operations";
 
 function mapAssistantContext(context: AssistantContext) {
@@ -327,4 +335,62 @@ export async function runJobAutomationNow(id: string): Promise<JobAutomationRunR
     { id },
   );
   return data.runJobAutomationNow;
+}
+
+export async function listAutomationMatches(
+  automationId: string,
+  options?: { limit?: number; offset?: number; feedback?: AutomationMatchFeedback | null },
+): Promise<AutomationMatchedJob[]> {
+  const data = await graphqlRequest<{ automationMatches: AutomationMatchedJob[] }>(
+    AUTOMATION_MATCHES_QUERY,
+    {
+      automationId,
+      limit: options?.limit ?? 50,
+      offset: options?.offset ?? 0,
+      feedback: options?.feedback ?? null,
+    },
+  );
+  return data.automationMatches;
+}
+
+export async function listAutomationCompanyBans(): Promise<AutomationCompanyBan[]> {
+  const data = await graphqlRequest<{ automationCompanyBans: AutomationCompanyBan[] }>(
+    AUTOMATION_COMPANY_BANS_QUERY,
+  );
+  return data.automationCompanyBans;
+}
+
+export async function setAutomationMatchFeedback(
+  automationId: string,
+  jobId: string,
+  feedback: AutomationMatchFeedback,
+): Promise<AutomationMatchedJob> {
+  const data = await graphqlRequest<{ setAutomationMatchFeedback: AutomationMatchedJob }>(
+    SET_AUTOMATION_MATCH_FEEDBACK_MUTATION,
+    { automationId, jobId, feedback },
+  );
+  return data.setAutomationMatchFeedback;
+}
+
+export async function banAutomationCompany(
+  companyName: string,
+  source?: { jobId?: string; automationId?: string },
+): Promise<AutomationCompanyBan> {
+  const data = await graphqlRequest<{ banAutomationCompany: AutomationCompanyBan }>(
+    BAN_AUTOMATION_COMPANY_MUTATION,
+    {
+      companyName,
+      sourceJobId: source?.jobId ?? null,
+      sourceAutomationId: source?.automationId ?? null,
+    },
+  );
+  return data.banAutomationCompany;
+}
+
+export async function unbanAutomationCompany(id: string): Promise<boolean> {
+  const data = await graphqlRequest<{ unbanAutomationCompany: boolean }>(
+    UNBAN_AUTOMATION_COMPANY_MUTATION,
+    { id },
+  );
+  return data.unbanAutomationCompany;
 }

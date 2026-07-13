@@ -36,7 +36,6 @@ func (r *Runner) RunDue(ctx context.Context) (int, error) {
 	processed := 0
 	for _, auto := range due {
 		if _, err := r.RunOne(ctx, auto); err != nil {
-			// Continue with other automations; error is recorded on the run row.
 			continue
 		}
 		processed++
@@ -79,7 +78,7 @@ func (r *Runner) runWithAudit(ctx context.Context, auto *store.JobAutomationReco
 		return nil, err
 	}
 
-	outcome, runErr := r.execute(ctx, auto)
+	outcome, runErr := r.execute(ctx, auto, run.ID)
 	run.JobsFetched = outcome.Run.JobsFetched
 	run.JobsMatched = outcome.Run.JobsMatched
 	run.JobsEmailed = outcome.Run.JobsEmailed
@@ -113,7 +112,7 @@ func (r *Runner) runWithAudit(ctx context.Context, auto *store.JobAutomationReco
 	return outcome, nil
 }
 
-func (r *Runner) execute(ctx context.Context, auto *store.JobAutomationRecord) (*RunOutcome, error) {
+func (r *Runner) execute(ctx context.Context, auto *store.JobAutomationRecord, runID string) (*RunOutcome, error) {
 	outcome := &RunOutcome{
 		Run: &store.AutomationRunRecord{AutomationID: auto.ID},
 	}
@@ -129,6 +128,12 @@ func (r *Runner) execute(ctx context.Context, auto *store.JobAutomationRecord) (
 		return outcome, err
 	}
 	outcome.Run.JobsFetched = len(jobs)
+
+	bans, err := store.ListCompanyBansForUser(ctx, r.Pool, auto.UserID)
+	if err != nil {
+		return outcome, err
+	}
+	jobs = FilterBannedJobCards(jobs, bans)
 
 	jobIDs := make([]string, 0, len(jobs))
 	for _, job := range jobs {
@@ -151,20 +156,25 @@ func (r *Runner) execute(ctx context.Context, auto *store.JobAutomationRecord) (
 		}
 	}
 
+	matchContext, err := r.loadMatchContext(ctx, auto.UserID, bans)
+	if err != nil {
+		return outcome, err
+	}
+
 	var matches []linkedin.JobCard
+	matchReasons := make(map[string]string)
 	if len(newJobs) > 0 {
-		results, err := r.LLM.MatchJobs(ctx, auto.MatchCriteria, newJobs)
+		results, err := r.LLM.MatchJobs(ctx, auto.MatchCriteria, newJobs, matchContext)
 		if err != nil {
 			return outcome, err
 		}
-		matchSet := make(map[string]string, len(results))
 		for _, res := range results {
 			if res.Match {
-				matchSet[res.JobID] = res.Reason
+				matchReasons[res.JobID] = res.Reason
 			}
 		}
 		for _, job := range newJobs {
-			if _, ok := matchSet[job.JobID]; ok {
+			if _, ok := matchReasons[job.JobID]; ok {
 				matches = append(matches, job)
 			}
 		}
@@ -178,17 +188,29 @@ func (r *Runner) execute(ctx context.Context, auto *store.JobAutomationRecord) (
 	outcome.Run.JobsMatched = len(matches)
 
 	if len(matches) > 0 {
-		to := strings.TrimSpace(auto.NotifyEmail)
-		if to == "" {
-			to, err = store.GetUserEmail(ctx, r.Pool, auto.UserID)
-			if err != nil {
-				return outcome, err
-			}
-		}
-		if err := email.SendJobAutomationMatchesEmail(r.Email, to, auto.Name, jobMatchItems(matches)); err != nil {
+		matchInputs := jobCardsToMatchInputs(matches, matchReasons)
+		newMatchIDs, err := store.UpsertAutomationMatches(ctx, r.Pool, auto.ID, runID, matchInputs)
+		if err != nil {
 			return outcome, err
 		}
-		outcome.Run.JobsEmailed = len(matches)
+
+		newMatches := filterJobsByID(matches, newMatchIDs)
+		if len(newMatches) > 0 {
+			to := strings.TrimSpace(auto.NotifyEmail)
+			if to == "" {
+				to, err = store.GetUserEmail(ctx, r.Pool, auto.UserID)
+				if err != nil {
+					return outcome, err
+				}
+			}
+			if err := email.SendJobAutomationMatchesEmail(r.Email, to, auto.Name, jobMatchItems(newMatches)); err != nil {
+				return outcome, err
+			}
+			if err := store.MarkAutomationMatchesNotified(ctx, r.Pool, auto.ID, newMatchIDs); err != nil {
+				return outcome, err
+			}
+			outcome.Run.JobsEmailed = len(newMatches)
+		}
 	}
 
 	if auto.SessionInvalid {
@@ -196,6 +218,56 @@ func (r *Runner) execute(ctx context.Context, auto *store.JobAutomationRecord) (
 	}
 
 	return outcome, nil
+}
+
+func (r *Runner) loadMatchContext(ctx context.Context, userID string, bans []*store.AutomationCompanyBanRecord) (llm.MatchContext, error) {
+	_ = r.LLM.RefreshTasteProfileIfNeeded(ctx, store.PoolTasteStore{Pool: r.Pool}, userID)
+
+	profile, err := store.GetTasteProfile(ctx, r.Pool, userID)
+	if err != nil {
+		return llm.MatchContext{}, err
+	}
+	liked, disliked, err := store.ListRecentFeedbackExamples(ctx, r.Pool, userID, 5)
+	if err != nil {
+		return llm.MatchContext{}, err
+	}
+	return llm.BuildMatchContext(profile, bans, liked, disliked), nil
+}
+
+func jobCardsToMatchInputs(jobs []linkedin.JobCard, reasons map[string]string) []store.AutomationMatchInput {
+	out := make([]store.AutomationMatchInput, 0, len(jobs))
+	for _, job := range jobs {
+		out = append(out, store.AutomationMatchInput{
+			JobID:          job.JobID,
+			Title:          job.Title,
+			Company:        job.Company,
+			Location:       job.Location,
+			WorkplaceType:  job.WorkplaceType,
+			EmploymentType: job.EmploymentType,
+			ListedAt:       job.ListedAt,
+			Description:    job.Description,
+			URL:            job.URL,
+			MatchReason:    reasons[job.JobID],
+		})
+	}
+	return out
+}
+
+func filterJobsByID(jobs []linkedin.JobCard, ids []string) []linkedin.JobCard {
+	if len(ids) == 0 {
+		return nil
+	}
+	set := make(map[string]struct{}, len(ids))
+	for _, id := range ids {
+		set[id] = struct{}{}
+	}
+	out := make([]linkedin.JobCard, 0, len(ids))
+	for _, job := range jobs {
+		if _, ok := set[job.JobID]; ok {
+			out = append(out, job)
+		}
+	}
+	return out
 }
 
 func automationSearchParams(auto *store.JobAutomationRecord, session string) linkedin.SearchParams {

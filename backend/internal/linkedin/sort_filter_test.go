@@ -39,7 +39,7 @@ func TestNormalizeMaxResults(t *testing.T) {
 		t.Fatalf("zero: got %d", got)
 	}
 	if got := normalizeMaxResults(500); got != maxMaxResults {
-		t.Fatalf("cap: got %d", got)
+		t.Fatalf("cap: got %d want %d", got, maxMaxResults)
 	}
 	if got := normalizeMaxResults(75); got != 75 {
 		t.Fatalf("custom: got %d", got)

@@ -425,6 +425,21 @@ func (r *mutationResolver) RunJobAutomationNow(ctx context.Context, id string) (
 	return scope.CV(ctx).RunJobAutomationNow(ctx, id)
 }
 
+// SetAutomationMatchFeedback is the resolver for the setAutomationMatchFeedback field.
+func (r *mutationResolver) SetAutomationMatchFeedback(ctx context.Context, automationID string, jobID string, feedback model.AutomationMatchFeedback) (*model.AutomationMatchedJob, error) {
+	return scope.CV(ctx).SetAutomationMatchFeedback(ctx, automationID, jobID, feedback)
+}
+
+// BanAutomationCompany is the resolver for the banAutomationCompany field.
+func (r *mutationResolver) BanAutomationCompany(ctx context.Context, companyName string, sourceJobID *string, sourceAutomationID *string) (*model.AutomationCompanyBan, error) {
+	return scope.CV(ctx).BanAutomationCompany(companyName, sourceJobID, sourceAutomationID)
+}
+
+// UnbanAutomationCompany is the resolver for the unbanAutomationCompany field.
+func (r *mutationResolver) UnbanAutomationCompany(ctx context.Context, id string) (bool, error) {
+	return scope.CV(ctx).UnbanAutomationCompany(id)
+}
+
 // Me is the resolver for the me field.
 func (r *queryResolver) Me(ctx context.Context) (*model.User, error) {
 	return scope.CV(ctx).Me(), nil
@@ -696,6 +711,24 @@ func (r *queryResolver) AutomationRuns(ctx context.Context, automationID string,
 		l = *limit
 	}
 	return scope.CV(ctx).ListAutomationRuns(automationID, l)
+}
+
+// AutomationMatches is the resolver for the automationMatches field.
+func (r *queryResolver) AutomationMatches(ctx context.Context, automationID string, limit *int, offset *int, feedback *model.AutomationMatchFeedback) ([]*model.AutomationMatchedJob, error) {
+	l := 50
+	if limit != nil {
+		l = *limit
+	}
+	o := 0
+	if offset != nil {
+		o = *offset
+	}
+	return scope.CV(ctx).ListAutomationMatches(automationID, l, o, feedback)
+}
+
+// AutomationCompanyBans is the resolver for the automationCompanyBans field.
+func (r *queryResolver) AutomationCompanyBans(ctx context.Context) ([]*model.AutomationCompanyBan, error) {
+	return scope.CV(ctx).ListAutomationCompanyBans()
 }
 
 // LinkedInSessionStatus is the resolver for the linkedInSessionStatus field.

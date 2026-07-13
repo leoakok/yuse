@@ -26,6 +26,8 @@ import { LinkedInGeoPicker } from "@/components/admin/linkedin-geo-picker";
 import { LinkedInTimeFilter } from "@/components/admin/linkedin-time-filter";
 import { LinkedInFilterDropdown } from "@/components/admin/linkedin-filter-dropdown";
 import { LinkedInSortDropdown } from "@/components/admin/linkedin-sort-dropdown";
+import { AutomationMatchesPanel } from "@/components/admin/automation-matches-panel";
+import { AutomationCompanyBansPanel } from "@/components/admin/automation-company-bans-panel";
 import {
   clearLinkedInSession,
   createJobAutomation,
@@ -134,6 +136,9 @@ export function AdminAutomationsPanel() {
   const [editingId, setEditingId] = useState<string | null>(null);
   const [busyId, setBusyId] = useState<string | null>(null);
   const [saving, setSaving] = useState(false);
+  const [matchesRefreshKey, setMatchesRefreshKey] = useState(0);
+  const [bansRefreshKey, setBansRefreshKey] = useState(0);
+  const [newMatchJobIds, setNewMatchJobIds] = useState<string[]>([]);
 
   const selected = automations.find((row) => row.id === selectedId) ?? null;
 
@@ -271,6 +276,8 @@ export function AdminAutomationsPanel() {
       toast.success(`Run finished: ${result.run.jobsMatched} matches, ${result.run.jobsEmailed} emailed.`);
       const history = await listAutomationRuns(row.id, 10);
       setRuns(history);
+      setNewMatchJobIds(result.matches.map((match) => match.jobId));
+      setMatchesRefreshKey((value) => value + 1);
       void load();
     } catch (err) {
       toast.error(err instanceof Error ? err.message : "Run failed.");
@@ -459,6 +466,15 @@ export function AdminAutomationsPanel() {
                   </div>
                 )}
               </div>
+
+              <AutomationMatchesPanel
+                automationId={selected.id}
+                refreshKey={matchesRefreshKey}
+                highlightJobIds={newMatchJobIds}
+                onBanCompany={() => setBansRefreshKey((value) => value + 1)}
+              />
+
+              <AutomationCompanyBansPanel refreshKey={bansRefreshKey} />
             </div>
           ) : null}
         </div>

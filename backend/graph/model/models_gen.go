@@ -137,6 +137,31 @@ type AssistantTurnResult struct {
 	PortfolioWithContent *PortfolioWithContent `json:"portfolioWithContent,omitempty"`
 }
 
+// User-wide banned company for job automations.
+type AutomationCompanyBan struct {
+	ID             string `json:"id"`
+	CompanyDisplay string `json:"companyDisplay"`
+	CreatedAt      string `json:"createdAt"`
+}
+
+// A persisted job match from an automation run.
+type AutomationMatchedJob struct {
+	JobID          string                   `json:"jobId"`
+	Title          string                   `json:"title"`
+	Company        *string                  `json:"company,omitempty"`
+	Location       *string                  `json:"location,omitempty"`
+	WorkplaceType  *string                  `json:"workplaceType,omitempty"`
+	EmploymentType *string                  `json:"employmentType,omitempty"`
+	ListedAt       *string                  `json:"listedAt,omitempty"`
+	Description    *string                  `json:"description,omitempty"`
+	URL            string                   `json:"url"`
+	MatchReason    *string                  `json:"matchReason,omitempty"`
+	Feedback       *AutomationMatchFeedback `json:"feedback,omitempty"`
+	FeedbackAt     *string                  `json:"feedbackAt,omitempty"`
+	RunID          *string                  `json:"runId,omitempty"`
+	FirstMatchedAt string                   `json:"firstMatchedAt"`
+}
+
 type AutomationRun struct {
 	ID           string              `json:"id"`
 	AutomationID string              `json:"automationId"`
@@ -1033,6 +1058,63 @@ func (e *AssistantView) UnmarshalJSON(b []byte) error {
 }
 
 func (e AssistantView) MarshalJSON() ([]byte, error) {
+	var buf bytes.Buffer
+	e.MarshalGQL(&buf)
+	return buf.Bytes(), nil
+}
+
+type AutomationMatchFeedback string
+
+const (
+	AutomationMatchFeedbackLiked    AutomationMatchFeedback = "LIKED"
+	AutomationMatchFeedbackDisliked AutomationMatchFeedback = "DISLIKED"
+	AutomationMatchFeedbackNone     AutomationMatchFeedback = "NONE"
+)
+
+var AllAutomationMatchFeedback = []AutomationMatchFeedback{
+	AutomationMatchFeedbackLiked,
+	AutomationMatchFeedbackDisliked,
+	AutomationMatchFeedbackNone,
+}
+
+func (e AutomationMatchFeedback) IsValid() bool {
+	switch e {
+	case AutomationMatchFeedbackLiked, AutomationMatchFeedbackDisliked, AutomationMatchFeedbackNone:
+		return true
+	}
+	return false
+}
+
+func (e AutomationMatchFeedback) String() string {
+	return string(e)
+}
+
+func (e *AutomationMatchFeedback) UnmarshalGQL(v any) error {
+	str, ok := v.(string)
+	if !ok {
+		return fmt.Errorf("enums must be strings")
+	}
+
+	*e = AutomationMatchFeedback(str)
+	if !e.IsValid() {
+		return fmt.Errorf("%s is not a valid AutomationMatchFeedback", str)
+	}
+	return nil
+}
+
+func (e AutomationMatchFeedback) MarshalGQL(w io.Writer) {
+	fmt.Fprint(w, strconv.Quote(e.String()))
+}
+
+func (e *AutomationMatchFeedback) UnmarshalJSON(b []byte) error {
+	s, err := strconv.Unquote(string(b))
+	if err != nil {
+		return err
+	}
+	return e.UnmarshalGQL(s)
+}
+
+func (e AutomationMatchFeedback) MarshalJSON() ([]byte, error) {
 	var buf bytes.Buffer
 	e.MarshalGQL(&buf)
 	return buf.Bytes(), nil
