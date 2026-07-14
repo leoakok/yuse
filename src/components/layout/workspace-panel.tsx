@@ -46,7 +46,7 @@ export function WorkspacePanelScrollViewport({
   const { top: scrollFadeTop, bottom: scrollFadeBottom } = resolveScrollFadeEdges(scrollFade);
 
   return (
-    <div className={cn("relative isolate flex min-h-0 flex-1 flex-col overflow-hidden", className)}>
+    <div className={cn("relative isolate flex h-full min-h-0 flex-1 flex-col overflow-hidden", className)}>
       {scrollFadeTop ? <WorkspacePanelScrollFade edge="top" /> : null}
       {scrollFadeBottom ? <WorkspacePanelScrollFade edge="bottom" /> : null}
       <div className={cn("min-h-0 flex-1 overflow-y-auto", viewportClassName)}>{children}</div>
@@ -87,7 +87,7 @@ export function WorkspacePanelScrollAreaFrame({
   return (
     <div
       className={cn(
-        "relative flex min-h-0 flex-1 flex-col overflow-hidden",
+        "relative flex h-full min-h-0 flex-1 flex-col overflow-hidden",
         hasScrollFade && "isolate",
         className
       )}
