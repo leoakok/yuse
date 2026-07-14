@@ -190,6 +190,10 @@ func portfolioLayoutEnum() map[string]any {
 }
 
 func toolDefinitions() []toolDef {
+	return publicToolDefinitions()
+}
+
+func publicToolDefinitions() []toolDef {
 	object := func(props map[string]any, required ...string) map[string]any {
 		schema := map[string]any{
 			"type":       "object",

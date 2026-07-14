@@ -32,7 +32,7 @@ func TestAddExperienceItemRejectsMetadataDumpInBody(t *testing.T) {
 	dataStore := store.NewMemory()
 	llmSvc := llm.NewService(config.Config{})
 	cvSvc := cv.NewService(dataStore, llmSvc, nil)
-	registry := mcp.NewRegistry(cvSvc)
+	registry := mcp.NewRegistry(cvSvc, false)
 
 	args, _ := json.Marshal(map[string]any{
 		"resumeId":  "resume-swe",
@@ -53,7 +53,7 @@ func TestAddExperienceItemAcceptsStructuredFields(t *testing.T) {
 	dataStore := store.NewMemory()
 	llmSvc := llm.NewService(config.Config{})
 	cvSvc := cv.NewService(dataStore, llmSvc, nil)
-	registry := mcp.NewRegistry(cvSvc)
+	registry := mcp.NewRegistry(cvSvc, false)
 
 	args, _ := json.Marshal(map[string]any{
 		"resumeId":   "resume-swe",
@@ -84,7 +84,7 @@ func TestAddExperienceItemReturnsHintsWhenFieldsMissing(t *testing.T) {
 	dataStore := store.NewMemory()
 	llmSvc := llm.NewService(config.Config{})
 	cvSvc := cv.NewService(dataStore, llmSvc, nil)
-	registry := mcp.NewRegistry(cvSvc)
+	registry := mcp.NewRegistry(cvSvc, false)
 
 	args, _ := json.Marshal(map[string]any{
 		"resumeId":  "resume-swe",
@@ -108,7 +108,7 @@ func TestNormalizeSplitsHeadlineAtCompany(t *testing.T) {
 	dataStore := store.NewMemory()
 	llmSvc := llm.NewService(config.Config{})
 	cvSvc := cv.NewService(dataStore, llmSvc, nil)
-	registry := mcp.NewRegistry(cvSvc)
+	registry := mcp.NewRegistry(cvSvc, false)
 
 	args, _ := json.Marshal(map[string]any{
 		"resumeId":  "resume-swe",
@@ -147,7 +147,7 @@ func TestGetResumeContentStructuredFieldGuide(t *testing.T) {
 	dataStore := store.NewMemory()
 	llmSvc := llm.NewService(config.Config{})
 	cvSvc := cv.NewService(dataStore, llmSvc, nil)
-	registry := mcp.NewRegistry(cvSvc)
+	registry := mcp.NewRegistry(cvSvc, false)
 
 	content := registry.Execute("get_resume_content", []byte(`{"id":"resume-swe"}`))
 	if content.Error != "" {

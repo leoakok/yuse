@@ -4,6 +4,14 @@ import { useCallback, useEffect, useState } from "react";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import {
+  DataTable,
+  DataTableBody,
+  DataTableCell,
+  DataTableHead,
+  DataTableHeader,
+  DataTableRow,
+} from "@/components/ui/data-table";
+import {
   approveWaitlistEntry,
   listAdminWaitlist,
   rejectWaitlistEntry,
@@ -106,54 +114,52 @@ export function AdminWaitlistPanel() {
       ) : entries.length === 0 ? (
         <p className="text-sm text-muted-foreground">No waitlist entries in this view.</p>
       ) : (
-        <div className="overflow-x-auto rounded-lg border border-border">
-          <table className="w-full min-w-[560px] text-left text-sm">
-            <thead className="border-b border-border bg-muted/40 text-muted-foreground">
-              <tr>
-                <th className="px-4 py-3 font-medium">Email</th>
-                <th className="px-4 py-3 font-medium">Status</th>
-                <th className="px-4 py-3 font-medium">Submitted</th>
-                <th className="px-4 py-3 font-medium">Actions</th>
-              </tr>
-            </thead>
-            <tbody>
-              {entries.map((entry) => (
-                <tr key={entry.id} className="border-b border-border/60 last:border-0">
-                  <td className="px-4 py-3">{entry.email}</td>
-                  <td className="px-4 py-3">
-                    <Badge variant={statusBadgeVariant(entry.status)}>{entry.status}</Badge>
-                  </td>
-                  <td className="px-4 py-3 text-muted-foreground">
-                    {new Date(entry.submittedAt).toLocaleString()}
-                  </td>
-                  <td className="px-4 py-3">
-                    {entry.status === "PENDING" ? (
-                      <div className="flex flex-wrap gap-2">
-                        <Button
-                          size="sm"
-                          disabled={busyId === entry.id}
-                          onClick={() => void review(entry, true)}
-                        >
-                          Approve
-                        </Button>
-                        <Button
-                          variant="outline"
-                          size="sm"
-                          disabled={busyId === entry.id}
-                          onClick={() => void review(entry, false)}
-                        >
-                          Reject
-                        </Button>
-                      </div>
-                    ) : (
-                      <span className="text-muted-foreground">Reviewed</span>
-                    )}
-                  </td>
-                </tr>
-              ))}
-            </tbody>
-          </table>
-        </div>
+        <DataTable minWidth="560px">
+          <DataTableHeader>
+            <tr>
+              <DataTableHead>Email</DataTableHead>
+              <DataTableHead>Status</DataTableHead>
+              <DataTableHead>Submitted</DataTableHead>
+              <DataTableHead>Actions</DataTableHead>
+            </tr>
+          </DataTableHeader>
+          <DataTableBody>
+            {entries.map((entry) => (
+              <DataTableRow key={entry.id}>
+                <DataTableCell>{entry.email}</DataTableCell>
+                <DataTableCell>
+                  <Badge variant={statusBadgeVariant(entry.status)}>{entry.status}</Badge>
+                </DataTableCell>
+                <DataTableCell muted>
+                  {new Date(entry.submittedAt).toLocaleString()}
+                </DataTableCell>
+                <DataTableCell>
+                  {entry.status === "PENDING" ? (
+                    <div className="flex flex-wrap gap-2">
+                      <Button
+                        size="sm"
+                        disabled={busyId === entry.id}
+                        onClick={() => void review(entry, true)}
+                      >
+                        Approve
+                      </Button>
+                      <Button
+                        variant="outline"
+                        size="sm"
+                        disabled={busyId === entry.id}
+                        onClick={() => void review(entry, false)}
+                      >
+                        Reject
+                      </Button>
+                    </div>
+                  ) : (
+                    <span className="text-muted-foreground">Reviewed</span>
+                  )}
+                </DataTableCell>
+              </DataTableRow>
+            ))}
+          </DataTableBody>
+        </DataTable>
       )}
     </div>
   );

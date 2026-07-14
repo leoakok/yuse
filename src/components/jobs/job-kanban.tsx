@@ -20,7 +20,7 @@ import { JobLinkButton } from "@/components/jobs/job-link-button";
 import { Badge } from "@/components/ui/badge";
 import { Card } from "@/components/ui/card";
 import { cn } from "@/lib/utils";
-import { JOB_STATUS_LABELS, JOB_STATUS_ORDER } from "@/lib/types/job";
+import { JOB_STATUS_LABELS, JOB_STATUS_ORDER, getLinkedInStatus } from "@/lib/types/job";
 import type { JobStatus, TrackedJob } from "@/lib/types/job";
 
 interface JobKanbanProps {
@@ -107,6 +107,11 @@ function JobCardContent({
       </div>
       <div className="flex items-center gap-2">
         <JobLinkButton url={job.url} />
+        {getLinkedInStatus(job) ? (
+          <Badge variant="secondary" className="text-[10px] font-normal">
+            {getLinkedInStatus(job)}
+          </Badge>
+        ) : null}
       </div>
       {(job.resumeId || job.coverLetter.trim()) && (
         <div className="flex flex-wrap gap-1.5">

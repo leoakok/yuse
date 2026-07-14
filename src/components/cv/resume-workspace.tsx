@@ -32,6 +32,7 @@ import type {
 } from "@/lib/types/cv";
 import { DEFAULT_RESUME_ACCENT_COLOR } from "@/lib/cv/accent";
 import { DEFAULT_CONTACT_FIELDS } from "@/lib/cv/contact-header";
+import { DEFAULT_DESIGN_PRESET_ID } from "@/lib/cv/design-presets";
 import { DEFAULT_CV_FONT_FAMILY } from "@/lib/cv/fonts";
 import { DEFAULT_PHOTO_POSITION, DEFAULT_PHOTO_SIZE } from "@/lib/cv/photo";
 import {
@@ -274,10 +275,10 @@ export function ResumeWorkspace({
     content.settings.sidebarWidth ?? "MEDIUM"
   );
   const [designPresetId, setDesignPresetId] = useState<DesignPresetId>(
-    content.settings.designPresetId ?? "MODERN"
+    content.settings.designPresetId ?? DEFAULT_DESIGN_PRESET_ID
   );
   const [savedDesignPresetId, setSavedDesignPresetId] = useState<DesignPresetId>(
-    content.settings.designPresetId ?? "MODERN"
+    content.settings.designPresetId ?? DEFAULT_DESIGN_PRESET_ID
   );
   const [photoPosition, setPhotoPosition] = useState<PhotoPosition>(
     content.settings.photoPosition ?? DEFAULT_PHOTO_POSITION

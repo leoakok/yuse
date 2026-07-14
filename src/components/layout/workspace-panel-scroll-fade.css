@@ -1,14 +1,16 @@
 :root {
   --workspace-panel-footer-pad: calc(5.5rem + var(--workspace-safe-area-bottom, 0px));
+  --workspace-panel-scroll-fade-height: 2.5rem;
+  --workspace-panel-scroll-fade-bottom-height: 3.5rem;
 }
 
-/* Top / generic edge fade (floating headers). */
+/* Edge fades: same idea as landing carousel (page color → clear). No frost plate. */
 .workspace-panel-scroll-fade {
   pointer-events: none;
   position: absolute;
   inset-inline: 0;
   z-index: 10;
-  height: var(--scroll-fade-height, 2.5rem);
+  height: var(--scroll-fade-height, var(--workspace-panel-scroll-fade-height));
 }
 
 .workspace-panel-scroll-fade-top {
@@ -17,48 +19,39 @@
 
 .workspace-panel-scroll-fade-bottom {
   bottom: 0;
+  height: var(--scroll-fade-height, var(--workspace-panel-scroll-fade-bottom-height));
 }
 
-.workspace-panel-scroll-fade::before {
+.workspace-panel-scroll-fade-top::before,
+.workspace-panel-scroll-fade-bottom::before {
   content: "";
   position: absolute;
   inset: 0;
-  z-index: 0;
+}
+
+.workspace-panel-scroll-fade-top::before {
   background: linear-gradient(
     to bottom,
-    color-mix(in oklch, var(--background) 1%, transparent) 0%,
-    color-mix(in oklch, var(--background) 10%, transparent) 18%,
-    color-mix(in oklch, var(--background) 50%, transparent) 52%,
-    color-mix(in oklch, var(--background) 78%, transparent) 100%
-  );
-  -webkit-backdrop-filter: blur(12px) saturate(1.02);
-  backdrop-filter: blur(12px) saturate(1.02);
-  -webkit-mask-image: linear-gradient(
-    to bottom,
-    color-mix(in oklch, black 1%, transparent) 0%,
-    color-mix(in oklch, black 10%, transparent) 18%,
-    color-mix(in oklch, black 50%, transparent) 52%,
-    black 100%
-  );
-  mask-image: linear-gradient(
-    to bottom,
-    color-mix(in oklch, black 1%, transparent) 0%,
-    color-mix(in oklch, black 10%, transparent) 18%,
-    color-mix(in oklch, black 50%, transparent) 52%,
-    black 100%
+    var(--background) 0%,
+    color-mix(in oklch, var(--background) 72%, transparent) 45%,
+    transparent 100%
   );
 }
 
 .workspace-panel-scroll-fade-bottom::before {
-  transform: scaleY(-1);
+  background: linear-gradient(
+    to top,
+    var(--background) 0%,
+    color-mix(in oklch, var(--background) 72%, transparent) 45%,
+    transparent 100%
+  );
 }
 
 .workspace-panel-scroll-under-footer {
   padding-bottom: var(--workspace-panel-footer-pad);
 }
 
-@media (prefers-reduced-motion: reduce) {
-  .workspace-panel-scroll-fade::before {
-    transition: none;
-  }
+/* Full-width composer: sit the bottom fade above the input row. */
+.workspace-panel-scroll-under-composer .workspace-panel-scroll-fade-bottom {
+  bottom: var(--workspace-panel-footer-pad);
 }

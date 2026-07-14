@@ -1,12 +1,30 @@
 "use client";
 
 import { useCallback, useEffect, useState } from "react";
-import { Cookie, Play, Plus, Trash2 } from "lucide-react";
+import {
+  ArrowLeft,
+  Ban,
+  Cookie,
+  Heart,
+  History,
+  Info,
+  MoreHorizontal,
+  Play,
+  Plus,
+  Trash2,
+} from "lucide-react";
 import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { Badge } from "@/components/ui/badge";
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuSeparator,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu";
 import {
   ResponsiveDialog,
   ResponsiveDialogContent,
@@ -28,19 +46,41 @@ import { LinkedInFilterDropdown } from "@/components/admin/linkedin-filter-dropd
 import { LinkedInSortDropdown } from "@/components/admin/linkedin-sort-dropdown";
 import { AutomationMatchesPanel } from "@/components/admin/automation-matches-panel";
 import { AutomationCompanyBansPanel } from "@/components/admin/automation-company-bans-panel";
+import { AutomationLiveRunDialog } from "@/components/admin/automation-live-run-dialog";
+import { AutomationRunHistoryPanel } from "@/components/admin/automation-run-history-panel";
+import {
+  ShellAside,
+  WorkspacePanel,
+  WorkspacePanelBody,
+  WorkspacePanelHeader,
+  WorkspacePanelScrollViewport,
+} from "@/components/layout/workspace-panel";
+import {
+  ResizeHandle,
+  useStoredWidth,
+  clamp,
+} from "@/components/layout/resize-handle";
+import { useMediaQuery } from "@/lib/hooks/use-media-query";
+import {
+  workspaceRowClassName,
+  workspaceRowListClassName,
+} from "@/lib/ui/workspace-section";
+import { cn } from "@/lib/utils";
+
 import {
   clearLinkedInSession,
   createJobAutomation,
   deleteJobAutomation,
   linkedInSessionStatus,
-  listAutomationRuns,
   listJobAutomations,
-  runJobAutomationNow,
   saveLinkedInSession,
   updateJobAutomation,
 } from "@/lib/api/admin-api";
+import {
+  streamAutomationRun,
+  type AutomationRunStep,
+} from "@/lib/api/automation-run-stream";
 import type {
-  AutomationRun,
   JobAutomation,
   LinkedInEmploymentType,
   LinkedInExperienceLevel,
@@ -48,6 +88,24 @@ import type {
   LinkedInSessionStatus,
   LinkedInWorkplaceType,
 } from "@/lib/types/admin";
+
+const LIST_WIDTH_KEY = "admin-automations-list-width";
+const LIST_WIDTH_DEFAULT = 260;
+const LIST_WIDTH_MIN = 220;
+const LIST_WIDTH_MAX = 360;
+
+type DetailTab = "overview" | "matches" | "history" | "banned";
+
+const DETAIL_VIEWS: Array<{
+  id: DetailTab;
+  label: string;
+  icon: typeof History;
+}> = [
+  { id: "overview", label: "Overview", icon: Info },
+  { id: "matches", label: "Matches", icon: Heart },
+  { id: "history", label: "Run history", icon: History },
+  { id: "banned", label: "Banned companies", icon: Ban },
+];
 
 const WORKPLACE_FILTERS: Array<{ value: LinkedInWorkplaceType; label: string }> = [
   { value: "REMOTE", label: "Remote" },
@@ -74,7 +132,7 @@ const EMPLOYMENT_FILTERS: Array<{ value: LinkedInEmploymentType; label: string }
   { value: "OTHER", label: "Other" },
 ];
 
-const MORE_FILTERS = [{ value: "EASY_APPLY", label: "Easy Apply", description: "LinkedIn Easy Apply only" }] as const;
+const MORE_FILTERS = [{ value: "EASY_APPLY", label: "Easy Apply" }] as const;
 
 const INTERVAL_OPTIONS = [
   { value: 60, label: "Every hour" },
@@ -89,10 +147,14 @@ function normalizeSessionCookie(raw: string): string {
 }
 
 function formatWhen(value?: string | null): string {
-  if (!value) return "—";
+  if (!value) return "Not set";
   const date = new Date(value);
-  if (Number.isNaN(date.getTime())) return "—";
+  if (Number.isNaN(date.getTime())) return "Not set";
   return date.toLocaleString();
+}
+
+function formatInterval(minutes: number): string {
+  return INTERVAL_OPTIONS.find((option) => option.value === minutes)?.label ?? `Every ${minutes} min`;
 }
 
 type FormState = {
@@ -127,7 +189,7 @@ export function AdminAutomationsPanel() {
   const [automations, setAutomations] = useState<JobAutomation[]>([]);
   const [session, setSession] = useState<LinkedInSessionStatus | null>(null);
   const [selectedId, setSelectedId] = useState<string | null>(null);
-  const [runs, setRuns] = useState<AutomationRun[]>([]);
+  const [detailTab, setDetailTab] = useState<DetailTab>("overview");
   const [loading, setLoading] = useState(true);
   const [dialogOpen, setDialogOpen] = useState(false);
   const [cookieDialogOpen, setCookieDialogOpen] = useState(false);
@@ -137,8 +199,17 @@ export function AdminAutomationsPanel() {
   const [busyId, setBusyId] = useState<string | null>(null);
   const [saving, setSaving] = useState(false);
   const [matchesRefreshKey, setMatchesRefreshKey] = useState(0);
+  const [runsRefreshKey, setRunsRefreshKey] = useState(0);
   const [bansRefreshKey, setBansRefreshKey] = useState(0);
   const [newMatchJobIds, setNewMatchJobIds] = useState<string[]>([]);
+  const [mobileShowDetail, setMobileShowDetail] = useState(false);
+  const [liveRunOpen, setLiveRunOpen] = useState(false);
+  const [liveRunName, setLiveRunName] = useState("");
+  const [liveRunSteps, setLiveRunSteps] = useState<AutomationRunStep[]>([]);
+  const [liveRunError, setLiveRunError] = useState<string | null>(null);
+
+  const isLargeScreen = useMediaQuery("(min-width: 1024px)");
+  const [listWidth, setListWidth] = useStoredWidth(LIST_WIDTH_KEY, LIST_WIDTH_DEFAULT);
 
   const selected = automations.find((row) => row.id === selectedId) ?? null;
 
@@ -162,13 +233,17 @@ export function AdminAutomationsPanel() {
 
   useEffect(() => {
     if (!selectedId) {
-      setRuns([]);
-      return;
+      setMobileShowDetail(false);
     }
-    void listAutomationRuns(selectedId, 10)
-      .then(setRuns)
-      .catch(() => setRuns([]));
-  }, [selectedId, automations]);
+  }, [selectedId]);
+
+  function selectAutomation(id: string) {
+    setSelectedId(id);
+    setDetailTab("overview");
+    if (!isLargeScreen) {
+      setMobileShowDetail(true);
+    }
+  }
 
   function openCreate() {
     setEditingId(null);
@@ -271,16 +346,35 @@ export function AdminAutomationsPanel() {
 
   async function handleRunNow(row: JobAutomation) {
     setBusyId(row.id);
+    setLiveRunName(row.name);
+    setLiveRunSteps([]);
+    setLiveRunError(null);
+    setLiveRunOpen(true);
     try {
-      const result = await runJobAutomationNow(row.id);
-      toast.success(`Run finished: ${result.run.jobsMatched} matches, ${result.run.jobsEmailed} emailed.`);
-      const history = await listAutomationRuns(row.id, 10);
-      setRuns(history);
+      const result = await streamAutomationRun(row.id, {
+        onStep: (step) => {
+          setLiveRunSteps((current) => {
+            const index = current.findIndex((entry) => entry.id === step.id);
+            if (index === -1) return [...current, step];
+            const next = [...current];
+            next[index] = step;
+            return next;
+          });
+        },
+      });
+      toast.success(
+        `Run finished: ${result.run.jobsMatched} matches, ${result.run.jobsEmailed} emailed.`,
+      );
       setNewMatchJobIds(result.matches.map((match) => match.jobId));
       setMatchesRefreshKey((value) => value + 1);
+      setRunsRefreshKey((value) => value + 1);
+      setDetailTab("matches");
       void load();
+      setLiveRunOpen(false);
     } catch (err) {
-      toast.error(err instanceof Error ? err.message : "Run failed.");
+      const message = err instanceof Error ? err.message : "Run failed.";
+      setLiveRunError(message);
+      toast.error(message);
     } finally {
       setBusyId(null);
     }
@@ -315,170 +409,290 @@ export function AdminAutomationsPanel() {
     }
   }
 
-  return (
-    <div className="space-y-6">
-      <div className="flex flex-wrap items-start justify-between gap-3">
-        <div>
-          <h2 className="text-lg font-semibold">Job search automations</h2>
-          <p className="mt-1 max-w-2xl text-sm text-muted-foreground">
-            Save LinkedIn search criteria once. Yuse fetches new jobs on a schedule, filters them with
-            your criteria, and emails matches. Your LinkedIn cookie is encrypted and never shown again
-            after saving.
-          </p>
-        </div>
-        <div className="flex flex-wrap gap-2">
-          <Button variant="outline" size="sm" onClick={() => setCookieDialogOpen(true)}>
-            <Cookie className="mr-2 size-4" />
-            {session?.configured ? "Update session" : "Save LinkedIn session"}
-          </Button>
-          <Button size="sm" onClick={openCreate}>
-            <Plus className="mr-2 size-4" />
-            New automation
-          </Button>
-        </div>
-      </div>
-
-      <div className="rounded-lg border border-border/60 bg-muted/20 p-3 text-sm">
-        {session?.configured ? (
-          <span>
-            LinkedIn session configured
-            {session.updatedAt ? ` · updated ${formatWhen(session.updatedAt)}` : ""}
-          </span>
-        ) : (
-          <span className="text-muted-foreground">No LinkedIn session saved yet.</span>
-        )}
-      </div>
-
-      {loading ? (
-        <p className="text-sm text-muted-foreground">Loading automations…</p>
-      ) : automations.length === 0 ? (
-        <p className="text-sm text-muted-foreground">No automations yet. Create one to get started.</p>
-      ) : (
-        <div className="grid gap-4 lg:grid-cols-[minmax(0,1fr)_minmax(0,1.1fr)]">
-          <div className="space-y-2">
-            {automations.map((row) => (
-              <button
-                key={row.id}
-                type="button"
-                onClick={() => setSelectedId(row.id)}
-                className={`w-full rounded-lg border p-3 text-left transition-colors ${
-                  selectedId === row.id ? "border-primary bg-primary/5" : "border-border/60 hover:bg-muted/30"
-                }`}
-              >
-                <div className="flex items-start justify-between gap-2">
-                  <div>
-                    <div className="font-medium">{row.name}</div>
-                    <div className="mt-1 text-xs text-muted-foreground">
-                      Every {row.intervalMinutes} min · last run {formatWhen(row.lastRunAt)}
-                    </div>
-                  </div>
-                  <div className="flex flex-wrap justify-end gap-1">
-                    {!row.enabled ? <Badge variant="secondary">Paused</Badge> : null}
-                    {row.sessionInvalid ? <Badge variant="destructive">Session expired</Badge> : null}
-                  </div>
-                </div>
-              </button>
-            ))}
-          </div>
-
-          {selected ? (
-            <div className="space-y-4 rounded-lg border border-border/60 p-4">
-              <div className="flex flex-wrap items-center justify-between gap-2">
-                <h3 className="font-semibold">{selected.name}</h3>
-                <div className="flex flex-wrap gap-2">
-                  <Button variant="outline" size="sm" onClick={() => openEdit(selected)}>
-                    Edit
-                  </Button>
-                  <Button
-                    variant="outline"
-                    size="sm"
-                    disabled={busyId === selected.id}
-                    onClick={() => void handleRunNow(selected)}
-                  >
-                    <Play className="mr-2 size-4" />
-                    Run now
-                  </Button>
-                  <Button
-                    variant="outline"
-                    size="sm"
-                    disabled={busyId === selected.id}
-                    onClick={() => void handleDelete(selected)}
-                  >
-                    <Trash2 className="size-4" />
-                  </Button>
-                </div>
+  const automationList = (
+    <ul className={workspaceRowListClassName}>
+      {automations.map((row) => {
+        const subtitle = row.geoLabel || formatInterval(row.intervalMinutes);
+        return (
+          <li key={row.id}>
+            <button
+              type="button"
+              onClick={() => selectAutomation(row.id)}
+              className={cn(
+                "flex w-full items-start justify-between gap-2 text-left",
+                workspaceRowClassName,
+                selectedId === row.id && "bg-primary/5 hover:bg-primary/5",
+              )}
+            >
+              <div className="min-w-0">
+                <div className="truncate font-medium">{row.name}</div>
+                <div className="mt-0.5 truncate text-xs text-muted-foreground">{subtitle}</div>
               </div>
+              {!row.enabled || row.sessionInvalid ? (
+                <div className="flex shrink-0 flex-col items-end gap-1">
+                  {!row.enabled ? <Badge variant="secondary">Paused</Badge> : null}
+                  {row.sessionInvalid ? <Badge variant="destructive">Session</Badge> : null}
+                </div>
+              ) : null}
+            </button>
+          </li>
+        );
+      })}
+    </ul>
+  );
 
-              <div className="flex items-center gap-3 text-sm">
-                <Button
-                  variant="outline"
-                  size="sm"
+  const overviewContent = selected ? (
+    <div className="space-y-4 px-4 py-4">
+      <dl className="grid gap-3 text-sm sm:grid-cols-2">
+        <div>
+          <dt className="text-muted-foreground">Schedule</dt>
+          <dd>{formatInterval(selected.intervalMinutes)}</dd>
+        </div>
+        {selected.nextRunAt ? (
+          <div>
+            <dt className="text-muted-foreground">Next run</dt>
+            <dd>{formatWhen(selected.nextRunAt)}</dd>
+          </div>
+        ) : null}
+        {selected.lastRunAt ? (
+          <div>
+            <dt className="text-muted-foreground">Last run</dt>
+            <dd>{formatWhen(selected.lastRunAt)}</dd>
+          </div>
+        ) : null}
+        {selected.keywords ? (
+          <div>
+            <dt className="text-muted-foreground">Keywords</dt>
+            <dd>{selected.keywords}</dd>
+          </div>
+        ) : null}
+        {selected.geoLabel || selected.geoId ? (
+          <div>
+            <dt className="text-muted-foreground">Location</dt>
+            <dd>{selected.geoLabel || selected.geoId}</dd>
+          </div>
+        ) : null}
+      </dl>
+      <div>
+        <div className="mb-2 text-sm font-medium">Match criteria</div>
+        <p className="whitespace-pre-wrap text-sm text-muted-foreground">{selected.matchCriteria}</p>
+      </div>
+    </div>
+  ) : null;
+
+  const detailContent = selected ? (
+    <div className="flex min-h-0 flex-1 flex-col overflow-hidden">
+      <div className="shrink-0 border-b border-border/60 px-4 py-3">
+        <div className="flex flex-wrap items-start justify-between gap-3">
+          <div className="min-w-0">
+            <h2 className="truncate text-base font-semibold">{selected.name}</h2>
+            <div className="mt-1 flex flex-wrap items-center gap-2 text-xs text-muted-foreground">
+              <span>{formatInterval(selected.intervalMinutes)}</span>
+              {!selected.enabled ? <Badge variant="secondary">Paused</Badge> : null}
+              {selected.sessionInvalid ? <Badge variant="destructive">Session expired</Badge> : null}
+            </div>
+          </div>
+          <div className="flex shrink-0 items-center gap-2">
+            <Button
+              size="sm"
+              disabled={busyId === selected.id}
+              onClick={() => void handleRunNow(selected)}
+            >
+              <Play className="mr-1.5 size-3.5" />
+              Run now
+            </Button>
+            <div className="flex items-center">
+              {DETAIL_VIEWS.map((view) => {
+                const Icon = view.icon;
+                const active = detailTab === view.id;
+                return (
+                  <Button
+                    key={view.id}
+                    variant={active ? "secondary" : "ghost"}
+                    size="icon"
+                    className="size-8"
+                    aria-label={view.label}
+                    aria-pressed={active}
+                    onClick={() => setDetailTab(view.id)}
+                  >
+                    <Icon className="size-4" />
+                  </Button>
+                );
+              })}
+            </div>
+            <DropdownMenu>
+              <DropdownMenuTrigger
+                render={
+                  <Button variant="outline" size="icon" className="size-8" aria-label="More actions">
+                    <MoreHorizontal className="size-4" />
+                  </Button>
+                }
+              />
+              <DropdownMenuContent align="end">
+                <DropdownMenuItem onClick={() => openEdit(selected)}>Edit</DropdownMenuItem>
+                <DropdownMenuItem
                   disabled={busyId === selected.id}
                   onClick={() => void toggleEnabled(selected)}
                 >
                   {selected.enabled ? "Pause" : "Enable"}
-                </Button>
-                <span>{selected.enabled ? "Runs on schedule" : "Paused"}</span>
-              </div>
+                </DropdownMenuItem>
+                <DropdownMenuSeparator />
+                <DropdownMenuItem
+                  variant="destructive"
+                  disabled={busyId === selected.id}
+                  onClick={() => void handleDelete(selected)}
+                >
+                  <Trash2 className="size-3.5" />
+                  Delete
+                </DropdownMenuItem>
+              </DropdownMenuContent>
+            </DropdownMenu>
+          </div>
+        </div>
+      </div>
 
-              <dl className="grid gap-2 text-sm sm:grid-cols-2">
-                <div>
-                  <dt className="text-muted-foreground">Keywords</dt>
-                  <dd>{selected.keywords || "—"}</dd>
-                </div>
-                <div>
-                  <dt className="text-muted-foreground">Location</dt>
-                  <dd>{selected.geoLabel || selected.geoId || "—"}</dd>
-                </div>
-                <div>
-                  <dt className="text-muted-foreground">Notifications</dt>
-                  <dd>Your account email</dd>
-                </div>
-                <div>
-                  <dt className="text-muted-foreground">Next run</dt>
-                  <dd>{formatWhen(selected.nextRunAt)}</dd>
-                </div>
-              </dl>
+      <div className="min-h-0 flex-1 overflow-hidden">
+        {detailTab === "overview" ? (
+          <WorkspacePanelScrollViewport scrollFade="bottom">{overviewContent}</WorkspacePanelScrollViewport>
+        ) : null}
+        {detailTab === "matches" ? (
+          <div className="flex min-h-0 flex-1 flex-col overflow-hidden">
+            <AutomationMatchesPanel
+              automationId={selected.id}
+              refreshKey={matchesRefreshKey}
+              highlightJobIds={newMatchJobIds}
+              layout="split"
+              embedded
+              onBanCompany={() => setBansRefreshKey((value) => value + 1)}
+            />
+          </div>
+        ) : null}
+        {detailTab === "history" ? (
+          <AutomationRunHistoryPanel
+            automationId={selected.id}
+            refreshKey={runsRefreshKey}
+          />
+        ) : null}
+        {detailTab === "banned" ? (
+          <WorkspacePanelScrollViewport scrollFade="bottom">
+            <AutomationCompanyBansPanel refreshKey={bansRefreshKey} embedded />
+          </WorkspacePanelScrollViewport>
+        ) : null}
+      </div>
+    </div>
+  ) : null;
 
-              <div>
-                <div className="mb-2 text-sm font-medium">Match criteria</div>
-                <p className="rounded-md bg-muted/30 p-3 text-sm whitespace-pre-wrap">{selected.matchCriteria}</p>
-              </div>
+  return (
+    <div className="flex min-h-0 flex-1 flex-col overflow-hidden">
+      {loading ? (
+        <p className="px-4 py-6 text-sm text-muted-foreground">Loading automations…</p>
+      ) : automations.length === 0 ? (
+        <div className="flex flex-1 flex-col items-center justify-center gap-4 px-4 py-12 text-center">
+          <p className="max-w-sm text-sm text-muted-foreground">
+            Create a scheduled LinkedIn search. Yuse will email you when jobs match your criteria.
+          </p>
+          <div className="flex flex-wrap justify-center gap-2">
+            <Button variant="outline" size="sm" onClick={() => setCookieDialogOpen(true)}>
+              <Cookie className="mr-2 size-4" />
+              {session?.configured ? "Update session" : "Connect LinkedIn"}
+            </Button>
+            <Button size="sm" onClick={openCreate}>
+              <Plus className="mr-2 size-4" />
+              New automation
+            </Button>
+          </div>
+        </div>
+      ) : (
+        <div className="flex min-h-0 flex-1 overflow-hidden">
+          {(!isLargeScreen && mobileShowDetail) ? null : (
+            <>
+              <ShellAside side="left" width={listWidth} compact={!isLargeScreen}>
+                <WorkspacePanel>
+                  <WorkspacePanelHeader
+                    leading={
+                      <Button
+                        variant="ghost"
+                        size="icon"
+                        className="size-8"
+                        onClick={() => setCookieDialogOpen(true)}
+                        aria-label={session?.configured ? "Update LinkedIn session" : "Connect LinkedIn"}
+                      >
+                        <Cookie className={cn("size-4", session?.configured && "text-primary")} />
+                      </Button>
+                    }
+                    trailing={
+                      <Button size="icon" className="size-8" onClick={openCreate} aria-label="New automation">
+                        <Plus className="size-4" />
+                      </Button>
+                    }
+                  />
+                  <WorkspacePanelBody>
+                    <WorkspacePanelScrollViewport viewportClassName="px-0" scrollFade="bottom">
+                      {automationList}
+                    </WorkspacePanelScrollViewport>
+                  </WorkspacePanelBody>
+                </WorkspacePanel>
+              </ShellAside>
 
-              <div>
-                <div className="mb-2 text-sm font-medium">Recent runs</div>
-                {runs.length === 0 ? (
-                  <p className="text-sm text-muted-foreground">No runs yet.</p>
-                ) : (
-                  <div className="space-y-2">
-                    {runs.map((run) => (
-                      <div key={run.id} className="rounded-md border border-border/50 px-3 py-2 text-sm">
-                        <div className="flex flex-wrap items-center justify-between gap-2">
-                          <span>{formatWhen(run.startedAt)}</span>
-                          <Badge variant={run.status === "SUCCESS" ? "default" : "secondary"}>{run.status}</Badge>
-                        </div>
-                        <div className="mt-1 text-muted-foreground">
-                          Fetched {run.jobsFetched} · matched {run.jobsMatched} · emailed {run.jobsEmailed}
-                        </div>
-                        {run.error ? <div className="mt-1 text-destructive">{run.error}</div> : null}
-                      </div>
-                    ))}
-                  </div>
-                )}
-              </div>
+              {isLargeScreen ? (
+                <ResizeHandle
+                  label="Resize automation list"
+                  className="hidden lg:block"
+                  onResize={(delta) =>
+                    setListWidth((width) => clamp(width + delta, LIST_WIDTH_MIN, LIST_WIDTH_MAX))
+                  }
+                />
+              ) : null}
+            </>
+          )}
 
-              <AutomationMatchesPanel
-                automationId={selected.id}
-                refreshKey={matchesRefreshKey}
-                highlightJobIds={newMatchJobIds}
-                onBanCompany={() => setBansRefreshKey((value) => value + 1)}
+          <div
+            className={cn(
+              "flex min-h-0 min-w-0 flex-1 flex-col overflow-hidden bg-background",
+              !isLargeScreen && !mobileShowDetail && "hidden lg:flex",
+            )}
+          >
+            {!isLargeScreen && mobileShowDetail ? (
+              <WorkspacePanelHeader
+                leading={
+                  <Button
+                    variant="ghost"
+                    size="sm"
+                    className="h-8 gap-1.5 px-2"
+                    onClick={() => setMobileShowDetail(false)}
+                  >
+                    <ArrowLeft className="size-4" />
+                    Back
+                  </Button>
+                }
               />
+            ) : null}
 
-              <AutomationCompanyBansPanel refreshKey={bansRefreshKey} />
-            </div>
-          ) : null}
+            {selected ? (
+              <WorkspacePanel className="min-h-0 flex-1">{detailContent}</WorkspacePanel>
+            ) : (
+              <div className="flex flex-1 items-center justify-center p-6 text-sm text-muted-foreground">
+                Select an automation.
+              </div>
+            )}
+          </div>
         </div>
       )}
+
+      <AutomationLiveRunDialog
+        open={liveRunOpen}
+        automationName={liveRunName}
+        steps={liveRunSteps}
+        error={liveRunError}
+        onDismiss={
+          busyId
+            ? undefined
+            : () => {
+                setLiveRunOpen(false);
+                setLiveRunError(null);
+              }
+        }
+      />
 
       <ResponsiveDialog open={dialogOpen} onOpenChange={setDialogOpen}>
         <ResponsiveDialogContent className="max-h-[90vh] overflow-y-auto sm:max-w-2xl">
@@ -546,7 +760,7 @@ export function AdminAutomationsPanel() {
             <Textarea
               value={form.matchCriteria}
               onChange={(event) => setForm((current) => ({ ...current, matchCriteria: event.target.value }))}
-              placeholder='Match criteria — e.g. "Senior backend roles in Go, no agencies"'
+              placeholder='Match criteria, e.g. "Senior backend roles in Go, no agencies"'
               rows={4}
               required
             />
@@ -585,7 +799,7 @@ export function AdminAutomationsPanel() {
       <ResponsiveDialog open={cookieDialogOpen} onOpenChange={setCookieDialogOpen}>
         <ResponsiveDialogContent className="max-h-[85vh] sm:max-w-lg">
           <ResponsiveDialogHeader>
-            <ResponsiveDialogTitle>Save LinkedIn session</ResponsiveDialogTitle>
+            <ResponsiveDialogTitle>LinkedIn session</ResponsiveDialogTitle>
             <ResponsiveDialogDescription>
               Paste the Cookie header from a linkedin.com request in DevTools. It is encrypted at rest
               and never shown again in the UI.

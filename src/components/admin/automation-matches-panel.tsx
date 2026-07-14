@@ -1,9 +1,10 @@
 "use client";
 
 import { useCallback, useEffect, useMemo, useState } from "react";
-import { Ban, ExternalLink, ThumbsDown, ThumbsUp } from "lucide-react";
+import { Ban, ThumbsDown, ThumbsUp } from "lucide-react";
 import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
+import { OffsetPagination } from "@/components/ui/offset-pagination";
 import {
   ResponsiveDialog,
   ResponsiveDialogContent,
@@ -15,6 +16,12 @@ import {
 import { LinkedInJobDetail } from "@/components/admin/linkedin-job-detail";
 import { banAutomationCompany, listAutomationMatches, setAutomationMatchFeedback } from "@/lib/api/admin-api";
 import type { AutomationMatchFeedback, AutomationMatchedJob, LinkedInJobCard } from "@/lib/types/admin";
+import {
+  workspaceRowActionButtonClassName,
+  workspaceRowActionsClassName,
+  workspaceRowClassName,
+  workspaceRowListClassName,
+} from "@/lib/ui/workspace-section";
 import { cn } from "@/lib/utils";
 
 type FeedbackFilter = "ALL" | "LIKED" | "DISLIKED" | "UNRATED";
@@ -25,6 +32,8 @@ const FILTER_TABS: Array<{ value: FeedbackFilter; label: string }> = [
   { value: "DISLIKED", label: "Not interested" },
   { value: "UNRATED", label: "Unrated" },
 ];
+
+const MATCH_PAGE_SIZE = 20;
 
 function toJobCard(match: AutomationMatchedJob): LinkedInJobCard {
   return {
@@ -41,9 +50,9 @@ function toJobCard(match: AutomationMatchedJob): LinkedInJobCard {
 }
 
 function formatWhen(value?: string | null): string {
-  if (!value) return "—";
+  if (!value) return "Not set";
   const date = new Date(value);
-  if (Number.isNaN(date.getTime())) return "—";
+  if (Number.isNaN(date.getTime())) return "Not set";
   return date.toLocaleString();
 }
 
@@ -52,6 +61,10 @@ type AutomationMatchesPanelProps = {
   refreshKey?: number;
   highlightJobIds?: string[];
   onBanCompany?: () => void;
+  /** split: list beside detail (default). stack: list above detail for narrow sidebars. */
+  layout?: "split" | "stack";
+  /** Hide section title when embedded in a parent tab. */
+  embedded?: boolean;
 };
 
 export function AutomationMatchesPanel({
@@ -59,8 +72,11 @@ export function AutomationMatchesPanel({
   refreshKey = 0,
   highlightJobIds = [],
   onBanCompany,
+  layout = "split",
+  embedded = false,
 }: AutomationMatchesPanelProps) {
   const [filter, setFilter] = useState<FeedbackFilter>("ALL");
+  const [offset, setOffset] = useState(0);
   const [matches, setMatches] = useState<AutomationMatchedJob[]>([]);
   const [loading, setLoading] = useState(true);
   const [selectedJobId, setSelectedJobId] = useState<string | null>(null);
@@ -76,15 +92,26 @@ export function AutomationMatchesPanel({
           : filter === "UNRATED"
             ? ("NONE" as AutomationMatchFeedback)
             : (filter as AutomationMatchFeedback);
-      const rows = await listAutomationMatches(automationId, { limit: 100, feedback });
+      const rows = await listAutomationMatches(automationId, {
+        limit: MATCH_PAGE_SIZE,
+        offset,
+        feedback,
+      });
       setMatches(rows);
-      setSelectedJobId((current) => current ?? rows[0]?.jobId ?? null);
+      setSelectedJobId((current) => {
+        if (current && rows.some((row) => row.jobId === current)) return current;
+        return rows[0]?.jobId ?? null;
+      });
     } catch {
       toast.error("Could not load matched jobs.");
     } finally {
       setLoading(false);
     }
-  }, [automationId, filter]);
+  }, [automationId, filter, offset]);
+
+  useEffect(() => {
+    setOffset(0);
+  }, [automationId]);
 
   useEffect(() => {
     void load();
@@ -129,60 +156,71 @@ export function AutomationMatchesPanel({
   }
 
   return (
-    <div className="space-y-3">
-      <div className="flex flex-wrap items-center justify-between gap-2">
-        <div>
-          <div className="text-sm font-medium">Matched jobs</div>
-          <p className="text-xs text-muted-foreground">
-            Saved matches from this automation. Rate them to improve future recommendations.
-          </p>
-        </div>
-        <div className="flex flex-wrap gap-1">
-          {FILTER_TABS.map((tab) => (
-            <Button
-              key={tab.value}
-              type="button"
-              size="sm"
-              variant={filter === tab.value ? "default" : "outline"}
-              className="h-7 px-2.5 text-xs"
-              onClick={() => setFilter(tab.value)}
-            >
-              {tab.label}
-            </Button>
-          ))}
-        </div>
+    <div className="flex min-h-0 flex-1 flex-col overflow-hidden">
+      <div
+        className={cn(
+          "flex shrink-0 flex-wrap items-center gap-1 border-b border-border/60 px-4 py-2.5 lg:px-5",
+          embedded ? "justify-end" : "justify-between",
+        )}
+      >
+        {!embedded ? <div className="mr-auto text-sm font-medium">Matched jobs</div> : null}
+        {FILTER_TABS.map((tab) => (
+          <button
+            key={tab.value}
+            type="button"
+            onClick={() => {
+              setFilter(tab.value);
+              setOffset(0);
+            }}
+            className={cn(
+              "rounded-md px-2.5 py-1 text-xs font-medium transition-colors",
+              filter === tab.value
+                ? "bg-primary text-primary-foreground"
+                : "text-muted-foreground hover:bg-muted/50 hover:text-foreground",
+            )}
+          >
+            {tab.label}
+          </button>
+        ))}
       </div>
 
       {loading ? (
-        <p className="text-sm text-muted-foreground">Loading matches…</p>
+        <p className="px-4 py-6 text-sm text-muted-foreground lg:px-5">Loading matches…</p>
       ) : matches.length === 0 ? (
-        <p className="rounded-md border border-dashed border-border/60 p-4 text-sm text-muted-foreground">
+        <p className="px-4 py-6 text-sm text-muted-foreground lg:px-5">
           No matched jobs yet. Run the automation or wait for the next scheduled run.
         </p>
       ) : (
-        <div className="flex min-h-[280px] flex-col gap-3 overflow-hidden lg:grid lg:grid-cols-[minmax(0,2fr)_minmax(0,3fr)]">
-          <div className="flex min-h-0 max-h-80 flex-col overflow-hidden rounded-md border border-border/60 lg:max-h-[420px]">
-            <ul className="min-h-0 flex-1 divide-y divide-border/60 overflow-y-auto">
+        <div
+          className={cn(
+            "flex min-h-0 flex-1 flex-col overflow-hidden",
+            layout === "split" && "lg:grid lg:grid-cols-[minmax(0,2fr)_minmax(0,3fr)]",
+          )}
+        >
+          <div
+            className={cn(
+              "flex min-h-0 flex-col overflow-hidden border-border/60",
+              layout === "split" ? "max-h-80 border-b lg:max-h-none lg:border-b-0 lg:border-r" : "max-h-56 border-b",
+            )}
+          >
+            <ul className={cn("min-h-0 flex-1 overflow-y-auto", workspaceRowListClassName)}>
               {matches.map((match) => {
                 const isSelected = match.jobId === selectedJobId;
                 const meta = [match.company, match.location].filter(Boolean).join(" · ");
                 return (
-                  <li
-                    key={match.jobId}
-                    className={cn(
-                      highlightSet.has(match.jobId) && "bg-primary/5",
-                    )}
-                  >
+                  <li key={match.jobId}>
                     <div
                       className={cn(
-                        "flex gap-2 px-3 py-2.5",
-                        isSelected && "bg-muted/50",
+                        "flex items-start gap-2",
+                        workspaceRowClassName,
+                        isSelected && "bg-primary/5 hover:bg-primary/5",
+                        highlightSet.has(match.jobId) && !isSelected && "bg-primary/5",
                       )}
                     >
                       <button
                         type="button"
                         onClick={() => setSelectedJobId(match.jobId)}
-                        className="min-w-0 flex-1 text-left text-sm"
+                        className="min-w-0 flex-1 text-left"
                       >
                         <div className="line-clamp-2 font-medium leading-snug">{match.title}</div>
                         {meta ? (
@@ -192,14 +230,15 @@ export function AutomationMatchesPanel({
                           Matched {formatWhen(match.firstMatchedAt)}
                         </div>
                       </button>
-                      <div className="flex shrink-0 flex-col gap-1">
+                      <div className={workspaceRowActionsClassName}>
                         <Button
                           type="button"
                           size="icon"
-                          variant={match.feedback === "LIKED" ? "default" : "outline"}
-                          className="size-7"
+                          variant="ghost"
+                          className={cn("size-8", workspaceRowActionButtonClassName)}
                           disabled={busyJobId === match.jobId}
                           aria-label="Like match"
+                          aria-pressed={match.feedback === "LIKED"}
                           onClick={() =>
                             void handleFeedback(
                               match,
@@ -207,15 +246,21 @@ export function AutomationMatchesPanel({
                             )
                           }
                         >
-                          <ThumbsUp className="size-3.5" />
+                          <ThumbsUp
+                            className={cn(
+                              "size-3.5",
+                              match.feedback === "LIKED" && "text-primary",
+                            )}
+                          />
                         </Button>
                         <Button
                           type="button"
                           size="icon"
-                          variant={match.feedback === "DISLIKED" ? "destructive" : "outline"}
-                          className="size-7"
+                          variant="ghost"
+                          className={cn("size-8", workspaceRowActionButtonClassName)}
                           disabled={busyJobId === match.jobId}
                           aria-label="Not interested"
+                          aria-pressed={match.feedback === "DISLIKED"}
                           onClick={() =>
                             void handleFeedback(
                               match,
@@ -223,7 +268,12 @@ export function AutomationMatchesPanel({
                             )
                           }
                         >
-                          <ThumbsDown className="size-3.5" />
+                          <ThumbsDown
+                            className={cn(
+                              "size-3.5",
+                              match.feedback === "DISLIKED" && "text-destructive",
+                            )}
+                          />
                         </Button>
                       </div>
                     </div>
@@ -231,36 +281,31 @@ export function AutomationMatchesPanel({
                 );
               })}
             </ul>
+            <OffsetPagination
+              offset={offset}
+              pageSize={MATCH_PAGE_SIZE}
+              itemCount={matches.length}
+              onOffsetChange={setOffset}
+              disabled={loading}
+              className="shrink-0 border-t border-border/60 px-4 py-2 lg:px-5"
+            />
           </div>
 
-          <div className="flex min-h-0 min-h-48 flex-col overflow-hidden rounded-md border border-border/60">
+          <div className="flex min-h-0 min-h-48 flex-col overflow-hidden">
             {selected ? (
               <div className="flex min-h-0 flex-1 flex-col overflow-hidden">
                 {selected.matchReason ? (
-                  <div className="shrink-0 border-b border-border/60 bg-muted/20 px-4 py-2 text-sm">
-                    <span className="text-xs font-medium uppercase tracking-wide text-muted-foreground">
-                      Why it matched
-                    </span>
+                  <div className="shrink-0 border-b border-border/60 px-4 py-2.5 text-sm lg:px-5">
+                    <span className="text-xs text-muted-foreground">Why it matched</span>
                     <p className="mt-1">{selected.matchReason}</p>
                   </div>
                 ) : null}
                 <div className="min-h-0 flex-1 overflow-hidden">
                   <LinkedInJobDetail job={toJobCard(selected)} />
                 </div>
-                <div className="shrink-0 border-t border-border/60 px-4 py-2">
-                  <a
-                    href={selected.url}
-                    target="_blank"
-                    rel="noopener noreferrer"
-                    className="inline-flex items-center gap-1 text-sm text-primary underline-offset-4 hover:underline"
-                  >
-                    Open on LinkedIn
-                    <ExternalLink className="size-3.5" />
-                  </a>
-                </div>
               </div>
             ) : (
-              <div className="flex h-full items-center justify-center p-6 text-sm text-muted-foreground">
+              <div className="flex h-full items-center justify-center px-4 py-6 text-sm text-muted-foreground lg:px-5">
                 Select a match to view details.
               </div>
             )}

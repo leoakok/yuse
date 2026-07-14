@@ -318,6 +318,27 @@ type KnowledgeEntry struct {
 	UpdatedAt string            `json:"updatedAt"`
 }
 
+// Synced LinkedIn job application with recruiter status.
+type LinkedInApplication struct {
+	JobID              string  `json:"jobId"`
+	Title              string  `json:"title"`
+	Company            *string `json:"company,omitempty"`
+	URL                string  `json:"url"`
+	AppliedAt          *string `json:"appliedAt,omitempty"`
+	LinkedInStatus     *string `json:"linkedInStatus,omitempty"`
+	ViewedAt           *string `json:"viewedAt,omitempty"`
+	ResumeDownloadedAt *string `json:"resumeDownloadedAt,omitempty"`
+	RejectedAt         *string `json:"rejectedAt,omitempty"`
+	TrackedJobID       *string `json:"trackedJobId,omitempty"`
+	LastSyncedAt       string  `json:"lastSyncedAt"`
+}
+
+type LinkedInApplicationSyncResult struct {
+	Synced  int `json:"synced"`
+	Linked  int `json:"linked"`
+	Created int `json:"created"`
+}
+
 // LinkedIn geo location suggestion (admin tooling).
 type LinkedInGeoLocation struct {
 	GeoID string `json:"geoId"`
@@ -836,6 +857,8 @@ type User struct {
 	Role      UserRole `json:"role"`
 	// True when the account has a local password (email sign-in).
 	HasPasswordCredential bool `json:"hasPasswordCredential"`
+	// True when Google is linked for sign-in.
+	HasGoogleCredential bool `json:"hasGoogleCredential"`
 	// True when the signed-in user may change their login email in settings.
 	CanChangeEmail bool `json:"canChangeEmail"`
 	// True when the account email address has been verified.

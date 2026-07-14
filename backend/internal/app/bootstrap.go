@@ -47,7 +47,7 @@ func Bootstrap(ctx context.Context, cfg config.Config) (*Stack, error) {
 		return nil, fmt.Errorf("init profile photo upload: %w", err)
 	}
 	cvSvc := cv.NewService(dataStore, llmSvc, photos)
-	tools := mcp.NewRegistry(cvSvc)
+	tools := mcp.NewRegistry(cvSvc, false)
 	llmSvc.SetTools(tools)
 
 	return &Stack{

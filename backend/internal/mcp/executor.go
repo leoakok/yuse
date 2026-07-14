@@ -60,4 +60,7 @@ type Executor interface {
 	DeleteTrackedJob(id string) (bool, error)
 	GitHubAccessToken() string
 	UserEmail() string
+	IsAdmin() bool
+	AgentSearchLinkedInJobs(ctx context.Context, args map[string]any) (map[string]any, error)
+	AgentListLinkedInApplications(limit, offset int) (map[string]any, error)
 }

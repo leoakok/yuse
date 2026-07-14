@@ -10,6 +10,14 @@ import {
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import {
+  DataTable,
+  DataTableBody,
+  DataTableCell,
+  DataTableHead,
+  DataTableHeader,
+  DataTableRow,
+} from "@/components/ui/data-table";
+import {
   WorkspaceSection,
 } from "@/components/layout/workspace-section";
 import {
@@ -27,7 +35,6 @@ import {
   updateKnowledgeEntry,
 } from "@/lib/api/admin-api";
 import { CATEGORY_LABELS, type KnowledgeEntry } from "@/lib/types/knowledge";
-import { cn } from "@/lib/utils";
 
 export function KnowledgeDictionary() {
   const [entries, setEntries] = useState<KnowledgeEntry[]>([]);
@@ -154,82 +161,76 @@ export function KnowledgeDictionary() {
               </p>
             </div>
           ) : (
-            <div className="-mx-4 overflow-x-auto lg:-mx-5">
-                <table className="w-full min-w-[760px] text-sm">
-                  <thead className="border-b border-border/60 bg-muted/30 text-left text-xs uppercase tracking-wide text-muted-foreground">
-                    <tr>
-                      <th className="px-4 py-3 font-medium">Title</th>
-                      <th className="px-4 py-3 font-medium">Slug</th>
-                      <th className="px-4 py-3 font-medium">Category</th>
-                      <th className="px-4 py-3 font-medium">Tags</th>
-                      <th className="px-4 py-3 font-medium">Status</th>
-                      <th className="px-4 py-3 font-medium text-right">Actions</th>
-                    </tr>
-                  </thead>
-                  <tbody>
-                    {entries.map((entry) => (
-                      <tr key={entry.id} className="border-b last:border-b-0">
-                        <td className="px-4 py-3 font-medium">{entry.title}</td>
-                        <td className="px-4 py-3 text-muted-foreground">{entry.slug}</td>
-                        <td className="px-4 py-3">
-                          <Badge variant="outline">{CATEGORY_LABELS[entry.category]}</Badge>
-                        </td>
-                        <td className="px-4 py-3">
-                          {entry.tags.length > 0 ? (
-                            <div className="flex flex-wrap gap-1">
-                              {entry.tags.map((tag) => (
-                                <Badge key={tag} variant="secondary">
-                                  {tag}
-                                </Badge>
-                              ))}
-                            </div>
-                          ) : (
-                            "-"
-                          )}
-                        </td>
-                        <td className="px-4 py-3">
-                          <button
-                            type="button"
-                            disabled={togglingId === entry.id}
-                            onClick={() => void handleToggleEnabled(entry)}
-                            className={cn(
-                              "inline-flex items-center rounded-full px-2.5 py-0.5 text-xs font-medium transition-colors",
-                              entry.enabled
-                                ? "bg-emerald-100 text-emerald-800 dark:bg-emerald-950 dark:text-emerald-200"
-                                : "bg-muted text-muted-foreground"
-                            )}
-                          >
-                            {entry.enabled ? "Enabled" : "Disabled"}
-                          </button>
-                        </td>
-                        <td className="px-4 py-3 text-right">
-                          <div className="inline-flex items-center gap-1">
-                            <Button
-                              type="button"
-                              variant="ghost"
-                              size="icon"
-                              aria-label={`Edit ${entry.title}`}
-                              onClick={() => setDialogState({ mode: "edit", entry })}
-                            >
-                              <Pencil className="size-4" />
-                            </Button>
-                            <Button
-                              type="button"
-                              variant="ghost"
-                              size="icon"
-                              className="text-muted-foreground hover:text-destructive"
-                              aria-label={`Delete ${entry.title}`}
-                              onClick={() => setDeleteTarget(entry)}
-                            >
-                              <Trash2 className="size-4" />
-                            </Button>
-                          </div>
-                        </td>
-                      </tr>
-                    ))}
-                  </tbody>
-                </table>
-            </div>
+            <DataTable minWidth="760px">
+              <DataTableHeader>
+                <tr>
+                  <DataTableHead>Title</DataTableHead>
+                  <DataTableHead>Slug</DataTableHead>
+                  <DataTableHead>Category</DataTableHead>
+                  <DataTableHead>Tags</DataTableHead>
+                  <DataTableHead>Status</DataTableHead>
+                  <DataTableHead className="text-right">Actions</DataTableHead>
+                </tr>
+              </DataTableHeader>
+              <DataTableBody>
+                {entries.map((entry) => (
+                  <DataTableRow key={entry.id}>
+                    <DataTableCell className="font-medium">{entry.title}</DataTableCell>
+                    <DataTableCell muted>{entry.slug}</DataTableCell>
+                    <DataTableCell>
+                      <Badge variant="secondary">{CATEGORY_LABELS[entry.category]}</Badge>
+                    </DataTableCell>
+                    <DataTableCell>
+                      {entry.tags.length > 0 ? (
+                        <div className="flex flex-wrap gap-1">
+                          {entry.tags.map((tag) => (
+                            <Badge key={tag} variant="outline">
+                              {tag}
+                            </Badge>
+                          ))}
+                        </div>
+                      ) : (
+                        <span className="text-muted-foreground">-</span>
+                      )}
+                    </DataTableCell>
+                    <DataTableCell>
+                      <Button
+                        type="button"
+                        variant="outline"
+                        size="sm"
+                        disabled={togglingId === entry.id}
+                        onClick={() => void handleToggleEnabled(entry)}
+                      >
+                        {entry.enabled ? "Enabled" : "Disabled"}
+                      </Button>
+                    </DataTableCell>
+                    <DataTableCell className="text-right">
+                      <div className="inline-flex items-center gap-1">
+                        <Button
+                          type="button"
+                          variant="ghost"
+                          size="icon"
+                          aria-label={`Edit ${entry.title}`}
+                          onClick={() => setDialogState({ mode: "edit", entry })}
+                        >
+                          <Pencil className="size-4" />
+                        </Button>
+                        <Button
+                          type="button"
+                          variant="ghost"
+                          size="icon"
+                          className="text-muted-foreground hover:text-destructive"
+                          aria-label={`Delete ${entry.title}`}
+                          onClick={() => setDeleteTarget(entry)}
+                        >
+                          <Trash2 className="size-4" />
+                        </Button>
+                      </div>
+                    </DataTableCell>
+                  </DataTableRow>
+                ))}
+              </DataTableBody>
+            </DataTable>
           )}
       </WorkspaceSection>
 

@@ -135,6 +135,51 @@ func (r *mutationResolver) ChangePassword(ctx context.Context, currentPassword s
 	return true, nil
 }
 
+// SetPassword is the resolver for the setPassword field.
+func (r *mutationResolver) SetPassword(ctx context.Context, newPassword string) (bool, error) {
+	if err := scope.CheckAccountSensitiveAction(ctx); err != nil {
+		return false, err
+	}
+	svc, err := requireCV(ctx)
+	if err != nil {
+		return false, err
+	}
+	if err := svc.SetPassword(newPassword); err != nil {
+		return false, err
+	}
+	return true, nil
+}
+
+// RemovePassword is the resolver for the removePassword field.
+func (r *mutationResolver) RemovePassword(ctx context.Context) (bool, error) {
+	if err := scope.CheckAccountSensitiveAction(ctx); err != nil {
+		return false, err
+	}
+	svc, err := requireCV(ctx)
+	if err != nil {
+		return false, err
+	}
+	if err := svc.RemovePassword(); err != nil {
+		return false, err
+	}
+	return true, nil
+}
+
+// UnlinkGoogle is the resolver for the unlinkGoogle field.
+func (r *mutationResolver) UnlinkGoogle(ctx context.Context) (bool, error) {
+	if err := scope.CheckAccountSensitiveAction(ctx); err != nil {
+		return false, err
+	}
+	svc, err := requireCV(ctx)
+	if err != nil {
+		return false, err
+	}
+	if err := svc.UnlinkGoogle(); err != nil {
+		return false, err
+	}
+	return true, nil
+}
+
 // ChangeEmail is the resolver for the changeEmail field.
 func (r *mutationResolver) ChangeEmail(ctx context.Context, currentPassword string, email string) (*model.User, error) {
 	if err := scope.CheckAccountSensitiveAction(ctx); err != nil {
@@ -440,6 +485,11 @@ func (r *mutationResolver) UnbanAutomationCompany(ctx context.Context, id string
 	return scope.CV(ctx).UnbanAutomationCompany(id)
 }
 
+// SyncLinkedInApplicationsNow is the resolver for the syncLinkedInApplicationsNow field.
+func (r *mutationResolver) SyncLinkedInApplicationsNow(ctx context.Context) (*model.LinkedInApplicationSyncResult, error) {
+	return scope.CV(ctx).SyncLinkedInApplicationsNow(ctx)
+}
+
 // Me is the resolver for the me field.
 func (r *queryResolver) Me(ctx context.Context) (*model.User, error) {
 	return scope.CV(ctx).Me(), nil
@@ -705,12 +755,16 @@ func (r *queryResolver) JobAutomation(ctx context.Context, id string) (*model.Jo
 }
 
 // AutomationRuns is the resolver for the automationRuns field.
-func (r *queryResolver) AutomationRuns(ctx context.Context, automationID string, limit *int) ([]*model.AutomationRun, error) {
+func (r *queryResolver) AutomationRuns(ctx context.Context, automationID string, limit *int, offset *int) ([]*model.AutomationRun, error) {
 	l := 10
 	if limit != nil {
 		l = *limit
 	}
-	return scope.CV(ctx).ListAutomationRuns(automationID, l)
+	o := 0
+	if offset != nil {
+		o = *offset
+	}
+	return scope.CV(ctx).ListAutomationRuns(automationID, l, o)
 }
 
 // AutomationMatches is the resolver for the automationMatches field.
@@ -736,6 +790,19 @@ func (r *queryResolver) LinkedInSessionStatus(ctx context.Context) (*model.Linke
 	return scope.CV(ctx).LinkedInSessionStatus()
 }
 
+// LinkedInApplications is the resolver for the linkedInApplications field.
+func (r *queryResolver) LinkedInApplications(ctx context.Context, limit *int, offset *int) ([]*model.LinkedInApplication, error) {
+	lim := 50
+	off := 0
+	if limit != nil {
+		lim = *limit
+	}
+	if offset != nil {
+		off = *offset
+	}
+	return scope.CV(ctx).ListLinkedInApplications(lim, off)
+}
+
 // HasPasswordCredential is the resolver for the hasPasswordCredential field.
 func (r *userResolver) HasPasswordCredential(ctx context.Context, obj *model.User) (bool, error) {
 	if obj == nil {
@@ -752,12 +819,32 @@ func (r *userResolver) HasPasswordCredential(ctx context.Context, obj *model.Use
 	return has, nil
 }
 
+// HasGoogleCredential is the resolver for the hasGoogleCredential field.
+func (r *userResolver) HasGoogleCredential(ctx context.Context, obj *model.User) (bool, error) {
+	if obj == nil {
+		return false, nil
+	}
+	value, ok := scope.From(ctx)
+	if !ok || value.Security.Pool == nil {
+		return strings.HasPrefix(obj.ID, "google-"), nil
+	}
+	has, err := store.UserHasGoogleCredential(ctx, value.Security.Pool, obj.ID)
+	if err != nil {
+		return false, err
+	}
+	return has, nil
+}
+
 // CanChangeEmail is the resolver for the canChangeEmail field.
 func (r *userResolver) CanChangeEmail(ctx context.Context, obj *model.User) (bool, error) {
 	if obj == nil {
 		return false, nil
 	}
-	return store.UserCanChangeEmail(obj.ID), nil
+	value, ok := scope.From(ctx)
+	if !ok || value.Security.Pool == nil {
+		return store.IsCredentialsAccount(obj.ID), nil
+	}
+	return store.UserCanChangeEmail(ctx, value.Security.Pool, obj.ID)
 }
 
 // ContactProfile returns ContactProfileResolver implementation.

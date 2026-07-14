@@ -13,6 +13,7 @@ interface MobileNavProps {
 export function MobileNav({ showAccount: _showAccount = true }: MobileNavProps) {
   const { toggleDrawer, isDrawerOpen } = useWorkspaceMobileDrawer();
   const navOpen = isDrawerOpen("nav");
+  const label = navOpen ? "Close menu" : "Open menu";
 
   return (
     <div className={cn(topbarTrackClassName, "md:hidden")}>
@@ -20,9 +21,10 @@ export function MobileNav({ showAccount: _showAccount = true }: MobileNavProps) 
         type="button"
         variant="ghost"
         className={topbarIconSegmentClassName(
-          "border-transparent bg-transparent shadow-none"
+          "border-transparent bg-transparent shadow-none",
         )}
-        aria-label={navOpen ? "Close menu" : "Open menu"}
+        aria-label={label}
+        tooltip={label}
         aria-pressed={navOpen}
         onClick={() => toggleDrawer("nav")}
       >

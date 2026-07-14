@@ -25,6 +25,7 @@ import {
   listTrackedJobs,
   updateTrackedJob,
 } from "@/lib/api/cv-api";
+import { syncLinkedInApplicationsNow } from "@/lib/api/admin-api";
 import { getCachedJobs, setCachedJobs } from "@/lib/cache/workspace-cache";
 import { useStaleWhileRevalidate } from "@/lib/hooks/use-stale-while-revalidate";
 import { getJobDescription } from "@/lib/types/job";
@@ -68,6 +69,19 @@ export function JobTrackerWorkspace({
     () => jobs.find((job) => job.id === selectedJobId) ?? null,
     [jobs, selectedJobId]
   );
+  const isAdmin = user.role === "ADMIN";
+
+  async function handleSyncLinkedIn() {
+    await syncLinkedInApplicationsNow();
+    const refreshed = await listTrackedJobs();
+    setJobs(refreshed);
+    if (selectedJobId) {
+      const updated = refreshed.find((job) => job.id === selectedJobId);
+      if (updated) {
+        setSelectedJobId(updated.id);
+      }
+    }
+  }
 
   const loadResumes = useCallback(() => {
     void listResumes().then(setResumes);
@@ -215,6 +229,8 @@ export function JobTrackerWorkspace({
         onRegenerateCoverLetter={handleRegenerateCoverLetter}
         onDelete={setDeleteTarget}
         isRegenerating={isRegenerating}
+        isAdmin={isAdmin}
+        onSyncLinkedIn={isAdmin ? handleSyncLinkedIn : undefined}
       />
 
       {onTrackDialogOpenChange ? (

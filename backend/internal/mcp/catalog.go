@@ -6,8 +6,8 @@ import (
 )
 
 // ToolCatalog returns a concise list of tool names and descriptions for system prompts.
-func ToolCatalog() string {
-	defs := toolDefinitions()
+func ToolCatalog(isAdmin bool) string {
+	defs := visibleToolDefinitions(isAdmin)
 	var b strings.Builder
 	b.WriteString("Available tools:\n")
 	for _, def := range defs {

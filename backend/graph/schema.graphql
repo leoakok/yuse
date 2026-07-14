@@ -327,6 +327,8 @@ type User {
   role: UserRole!
   """True when the account has a local password (email sign-in)."""
   hasPasswordCredential: Boolean!
+  """True when Google is linked for sign-in."""
+  hasGoogleCredential: Boolean!
   """True when the signed-in user may change their login email in settings."""
   canChangeEmail: Boolean!
   """True when the account email address has been verified."""
@@ -406,6 +408,27 @@ type LinkedInJobCard {
   listedAt: String
   description: String
   url: String!
+}
+
+"""Synced LinkedIn job application with recruiter status."""
+type LinkedInApplication {
+  jobId: ID!
+  title: String!
+  company: String
+  url: String!
+  appliedAt: DateTime
+  linkedInStatus: String
+  viewedAt: DateTime
+  resumeDownloadedAt: DateTime
+  rejectedAt: DateTime
+  trackedJobId: ID
+  lastSyncedAt: DateTime!
+}
+
+type LinkedInApplicationSyncResult {
+  synced: Int!
+  linked: Int!
+  created: Int!
 }
 
 enum LinkedInWorkplaceType {
@@ -1019,13 +1042,15 @@ type Query {
   """Admin only. Fetches one job search automation."""
   jobAutomation(id: ID!): JobAutomation
   """Admin only. Recent runs for an automation."""
-  automationRuns(automationId: ID!, limit: Int = 10): [AutomationRun!]!
+  automationRuns(automationId: ID!, limit: Int = 10, offset: Int = 0): [AutomationRun!]!
   """Admin only. Persisted matched jobs for an automation."""
   automationMatches(automationId: ID!, limit: Int = 50, offset: Int = 0, feedback: AutomationMatchFeedback): [AutomationMatchedJob!]!
   """Admin only. User-wide banned companies for job automations."""
   automationCompanyBans: [AutomationCompanyBan!]!
   """Admin only. Whether a LinkedIn session cookie is saved (never returns the cookie)."""
   linkedInSessionStatus: LinkedInSessionStatus!
+  """Admin only. Synced LinkedIn job applications with recruiter status."""
+  linkedInApplications(limit: Int = 50, offset: Int = 0): [LinkedInApplication!]!
 }
 
 input CreateKnowledgeEntryInput {
@@ -1322,9 +1347,15 @@ type Mutation {
   deletePortfolio(id: ID!): Boolean!
   updatePortfolio(id: ID!, title: String, tagline: String, about: String, contactProfileId: ID): Portfolio!
   setUsername(username: String!): User!
-  """Change password for email/password accounts."""
+  """Change password for accounts that already have a local password."""
   changePassword(currentPassword: String!, newPassword: String!): Boolean!
-  """Change login email for email/password accounts."""
+  """Add a local password so you can also sign in with email (Google-only accounts)."""
+  setPassword(newPassword: String!): Boolean!
+  """Remove the local password. Requires Google to stay linked."""
+  removePassword: Boolean!
+  """Disconnect Google. Requires a local password to stay signed in."""
+  unlinkGoogle: Boolean!
+  """Change login email for accounts that have a local password."""
   changeEmail(currentPassword: String!, email: String!): User!
   """Send a fresh email verification link to the signed-in user."""
   resendVerificationEmail: Boolean!
@@ -1393,6 +1424,8 @@ type Mutation {
   banAutomationCompany(companyName: String!, sourceJobId: ID, sourceAutomationId: ID): AutomationCompanyBan!
   """Admin only. Remove a company ban."""
   unbanAutomationCompany(id: ID!): Boolean!
+  """Admin only. Pull applied jobs from LinkedIn and merge into Job Tracker."""
+  syncLinkedInApplicationsNow: LinkedInApplicationSyncResult!
 }
 
 input CreateInviteLinkInput {

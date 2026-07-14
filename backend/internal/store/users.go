@@ -320,7 +320,7 @@ func AuthenticateEmailUser(ctx context.Context, pool *pgxpool.Pool, email, passw
 		}
 		return auth.Claims{}, fmt.Errorf("lookup user: %w", err)
 	}
-	if !strings.HasPrefix(userID, "email-") {
+	if strings.TrimSpace(passwordHash) == "" {
 		return auth.Claims{}, fmt.Errorf("invalid credentials")
 	}
 	if !isActive {

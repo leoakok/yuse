@@ -25,7 +25,7 @@ import type {
 } from "@/lib/types/cv";
 import { DEFAULT_RESUME_ACCENT_COLOR } from "@/lib/cv/accent";
 import { CONTACT_FIELD_OPTIONS, DEFAULT_CONTACT_FIELDS } from "@/lib/cv/contact-header";
-import { getDesignPresetBundle } from "@/lib/cv/design-presets";
+import { getDesignPresetBundle, DEFAULT_DESIGN_PRESET_ID } from "@/lib/cv/design-presets";
 import { ResumeThemePicker } from "@/components/cv/resume-theme-picker";
 import { DEFAULT_PHOTO_POSITION, DEFAULT_PHOTO_SIZE } from "@/lib/cv/photo";
 import { DEFAULT_CV_FONT_FAMILY, CV_FONT_FAMILY_OPTIONS } from "@/lib/cv/fonts";
@@ -420,8 +420,8 @@ export function ResumeDesignSettings({
   savedSidebarPosition = "LEFT",
   sidebarWidth = "MEDIUM",
   savedSidebarWidth = "MEDIUM",
-  designPresetId = "MODERN",
-  savedDesignPresetId = "MODERN",
+  designPresetId = DEFAULT_DESIGN_PRESET_ID,
+  savedDesignPresetId = DEFAULT_DESIGN_PRESET_ID,
   photoPosition = DEFAULT_PHOTO_POSITION,
   savedPhotoPosition = DEFAULT_PHOTO_POSITION,
   photoSize = DEFAULT_PHOTO_SIZE,

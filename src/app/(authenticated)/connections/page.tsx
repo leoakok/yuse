@@ -3,11 +3,7 @@ import { ConnectionsWorkspace } from "@/components/connections/connections-works
 
 export default function ConnectionsPage() {
   return (
-    <CatalogShell
-      title="Connections"
-      description="Link accounts so Yuse can read your projects with better access and rate limits."
-      width="narrow"
-    >
+    <CatalogShell title="Connections" width="narrow">
       <ConnectionsWorkspace />
     </CatalogShell>
   );

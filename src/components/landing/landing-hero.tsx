@@ -1,92 +1,65 @@
-import Link from "next/link";
-import { ArrowRight } from "lucide-react";
-import { buttonVariants } from "@/components/ui/button";
-import { cn } from "@/lib/utils";
+"use client";
+
+import { useEffect, useState } from "react";
+import { ChevronDown } from "lucide-react";
+import { YuseLogo } from "@/components/brand/yuse-logo";
 import { Reveal } from "@/components/landing/reveal";
-import { WaitlistForm } from "@/components/landing/waitlist-form";
+import { cn } from "@/lib/utils";
 
-type LandingHeroProps = {
-  isSignedIn?: boolean;
-};
+/**
+ * First viewport: brand + Why only.
+ * Rams / Ive: less but better. No CTAs, no feature copy, one scroll cue.
+ */
+export function LandingHero() {
+  const [scrolled, setScrolled] = useState(false);
 
-export function LandingHero({ isSignedIn = false }: LandingHeroProps) {
+  useEffect(() => {
+    const onScroll = () => setScrolled(window.scrollY > 48);
+    onScroll();
+    window.addEventListener("scroll", onScroll, { passive: true });
+    return () => window.removeEventListener("scroll", onScroll);
+  }, []);
+
   return (
-    <section className="relative overflow-hidden">
-      {/* Soft accent glow, reusing the app's primary tone. */}
-      <div
-        aria-hidden
-        className="pointer-events-none absolute inset-x-0 -top-40 h-[480px] bg-[radial-gradient(ellipse_60%_50%_at_50%_0%,color-mix(in_oklch,var(--primary)_18%,transparent),transparent)]"
-      />
-
-      <div className="relative mx-auto flex w-full max-w-4xl flex-col items-center px-5 pt-24 pb-20 text-center sm:px-8 sm:pt-32 sm:pb-28">
+    <section
+      aria-label="Welcome"
+      className="relative flex min-h-dvh w-full flex-col"
+    >
+      <div className="mx-auto flex w-full max-w-6xl flex-1 flex-col justify-center px-5 py-16 sm:px-8 sm:py-20">
         <Reveal>
-          <span className="inline-flex items-center gap-2 rounded-full border border-border bg-background/60 px-3 py-1 text-xs font-medium text-muted-foreground">
-            <span className="size-1.5 rounded-full bg-primary" />
-            Your CV, the way it should have always been
-          </span>
-        </Reveal>
-
-        <Reveal delay={80}>
-          <h1 className="mt-6 text-balance font-serif text-4xl leading-[1.05] tracking-tight sm:text-6xl">
-            You are more than a
-            <br className="hidden sm:block" />{" "}
-            <span className="text-primary">one-page summary.</span>
-          </h1>
-        </Reveal>
-
-        <Reveal delay={160}>
-          <p className="mt-6 max-w-xl text-balance text-lg leading-relaxed text-muted-foreground">
-            I believe every application deserves a CV that actually reflects who
-            you are. Generic resumes flatten years of real work into tired
-            bullet points. I&apos;m here to change that, for every single role
-            you go after.
-          </p>
-        </Reveal>
-
-        <Reveal delay={240}>
-          <div id="waitlist" className="mt-9 flex w-full flex-col items-center gap-4">
-            {isSignedIn ? (
-              <Link
-                href="/home"
-                className={cn(buttonVariants({ size: "lg" }), "px-5")}
-              >
-                Go to app
-                <ArrowRight />
-              </Link>
-            ) : (
-              <>
-                <WaitlistForm />
-                <Link
-                  href="/login"
-                  className={cn(
-                    buttonVariants({ variant: "ghost", size: "lg" }),
-                    "px-5",
-                  )}
-                >
-                  Already invited? Sign in
-                </Link>
-              </>
-            )}
-            <Link
-              href="#how"
-              className={cn(
-                buttonVariants({ variant: "ghost", size: "lg" }),
-                "px-5",
-              )}
-            >
-              See how it works
-            </Link>
+          <div className="flex items-center gap-3">
+            <YuseLogo
+              className="size-10 sm:size-11"
+              role="img"
+              aria-label="Yuse"
+            />
+            <span className="font-serif text-3xl tracking-tight sm:text-4xl">
+              Yuse
+            </span>
           </div>
         </Reveal>
 
-        {!isSignedIn ? (
-          <Reveal delay={320}>
-            <p className="mt-4 text-xs text-muted-foreground">
-              Beta access is invite only. We review requests in order.
-            </p>
-          </Reveal>
-        ) : null}
+        <Reveal delay={120}>
+          <h1 className="mt-10 max-w-[18ch] text-balance font-serif text-[2.5rem] leading-[1.05] tracking-tight sm:mt-12 sm:text-6xl sm:leading-[1.02] lg:text-7xl">
+            You are more than a one-page summary.
+          </h1>
+        </Reveal>
       </div>
+
+      <a
+        href="#how"
+        className={cn(
+          "absolute inset-x-0 bottom-0 flex flex-col items-center gap-2 pb-10 pt-4 outline-none transition-opacity duration-500 focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-4",
+          scrolled ? "pointer-events-none opacity-0" : "opacity-100",
+        )}
+        aria-label="Scroll to how it works"
+      >
+        <span className="text-sm text-muted-foreground">Scroll</span>
+        <ChevronDown
+          className="size-5 text-muted-foreground motion-safe:animate-[landing-scroll-cue_2.2s_ease-in-out_infinite]"
+          aria-hidden
+        />
+      </a>
     </section>
   );
 }

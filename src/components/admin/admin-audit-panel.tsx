@@ -2,11 +2,23 @@
 
 import { useCallback, useEffect, useState } from "react";
 import { Button } from "@/components/ui/button";
+import { OffsetPagination } from "@/components/ui/offset-pagination";
+import {
+  DataTable,
+  DataTableBody,
+  DataTableCell,
+  DataTableHead,
+  DataTableHeader,
+  DataTableRow,
+} from "@/components/ui/data-table";
 import { listAdminAuditLog } from "@/lib/api/admin-api";
 import type { AdminAuditLogEntry } from "@/lib/types/admin";
 
+const PAGE_SIZE = 25;
+
 export function AdminAuditPanel() {
   const [entries, setEntries] = useState<AdminAuditLogEntry[]>([]);
+  const [offset, setOffset] = useState(0);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
@@ -14,30 +26,17 @@ export function AdminAuditPanel() {
     setLoading(true);
     setError(null);
     try {
-      setEntries(await listAdminAuditLog(100));
+      setEntries(await listAdminAuditLog(PAGE_SIZE, offset));
     } catch {
       setError("Could not load audit log.");
     } finally {
       setLoading(false);
     }
-  }, []);
+  }, [offset]);
 
   useEffect(() => {
-    let cancelled = false;
-    void listAdminAuditLog(100)
-      .then((data) => {
-        if (!cancelled) setEntries(data);
-      })
-      .catch(() => {
-        if (!cancelled) setError("Could not load audit log.");
-      })
-      .finally(() => {
-        if (!cancelled) setLoading(false);
-      });
-    return () => {
-      cancelled = true;
-    };
-  }, []);
+    void load();
+  }, [load]);
 
   if (loading && entries.length === 0) {
     return (
@@ -51,9 +50,9 @@ export function AdminAuditPanel() {
     <div className="space-y-4">
       <div className="flex items-center justify-between gap-3">
         <p className="text-sm text-muted-foreground">
-          {entries.length} event{entries.length === 1 ? "" : "s"}
+          {entries.length} event{entries.length === 1 ? "" : "s"} on this page
         </p>
-        <Button variant="outline" size="sm" onClick={() => void load()}>
+        <Button variant="outline" size="sm" onClick={() => void load()} disabled={loading}>
           Refresh
         </Button>
       </div>
@@ -64,37 +63,43 @@ export function AdminAuditPanel() {
         </p>
       ) : null}
 
-      <div className="overflow-x-auto rounded-lg border border-border">
-        <table className="w-full min-w-[720px] text-left text-sm">
-          <thead className="border-b border-border bg-muted/40 text-muted-foreground">
-            <tr>
-              <th className="px-4 py-3 font-medium">When</th>
-              <th className="px-4 py-3 font-medium">Actor</th>
-              <th className="px-4 py-3 font-medium">Action</th>
-              <th className="px-4 py-3 font-medium">Target</th>
-            </tr>
-          </thead>
-          <tbody>
-            {entries.map((entry) => (
-              <tr key={entry.id} className="border-b border-border/60 last:border-0">
-                <td className="px-4 py-3 text-muted-foreground">
-                  {new Date(entry.createdAt).toLocaleString()}
-                </td>
-                <td className="px-4 py-3">{entry.actorEmail}</td>
-                <td className="px-4 py-3 font-medium">{entry.action}</td>
-                <td className="px-4 py-3 text-muted-foreground">
-                  {entry.targetType}
-                  {entry.targetId ? ` · ${entry.targetId}` : ""}
-                </td>
-              </tr>
-            ))}
-          </tbody>
-        </table>
-      </div>
+      <DataTable minWidth="720px">
+        <DataTableHeader>
+          <tr>
+            <DataTableHead>When</DataTableHead>
+            <DataTableHead>Actor</DataTableHead>
+            <DataTableHead>Action</DataTableHead>
+            <DataTableHead>Target</DataTableHead>
+          </tr>
+        </DataTableHeader>
+        <DataTableBody>
+          {entries.map((entry) => (
+            <DataTableRow key={entry.id}>
+              <DataTableCell muted>
+                {new Date(entry.createdAt).toLocaleString()}
+              </DataTableCell>
+              <DataTableCell>{entry.actorEmail}</DataTableCell>
+              <DataTableCell className="font-medium">{entry.action}</DataTableCell>
+              <DataTableCell muted>
+                {entry.targetType}
+                {entry.targetId ? ` · ${entry.targetId}` : ""}
+              </DataTableCell>
+            </DataTableRow>
+          ))}
+        </DataTableBody>
+      </DataTable>
 
       {entries.length === 0 ? (
         <p className="text-sm text-muted-foreground">No audit events yet.</p>
-      ) : null}
+      ) : (
+        <OffsetPagination
+          offset={offset}
+          pageSize={PAGE_SIZE}
+          itemCount={entries.length}
+          onOffsetChange={setOffset}
+          disabled={loading}
+        />
+      )}
     </div>
   );
 }

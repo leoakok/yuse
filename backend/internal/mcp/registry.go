@@ -25,12 +25,13 @@ type Execution struct {
 // Registry holds MCP/OpenAI tool definitions and dispatches execution to the platform.
 type Registry struct {
 	exec     Executor
+	isAdmin  bool
 	web      *WebClient
 	github   *GitHubClient
 	linkedin *LinkedInProfileClient
 }
 
-func NewRegistry(exec Executor) *Registry {
+func NewRegistry(exec Executor, isAdmin bool) *Registry {
 	token := strings.TrimSpace(exec.GitHubAccessToken())
 	var gh *GitHubClient
 	if token != "" {
@@ -40,14 +41,19 @@ func NewRegistry(exec Executor) *Registry {
 	}
 	return &Registry{
 		exec:     exec,
+		isAdmin:  isAdmin,
 		web:      NewWebClientFromEnv(),
 		github:   gh,
 		linkedin: NewLinkedInProfileClientFromEnv(),
 	}
 }
 
+func (r *Registry) IsAdmin() bool {
+	return r.isAdmin
+}
+
 func (r *Registry) OpenAITools() []openai.Tool {
-	defs := toolDefinitions()
+	defs := visibleToolDefinitions(r.isAdmin)
 	out := make([]openai.Tool, 0, len(defs))
 	for _, def := range defs {
 		out = append(out, openai.Tool{
@@ -81,6 +87,11 @@ func (r *Registry) ExecuteWithProgress(toolName string, argsJSON []byte, progres
 	}
 
 	exec = Execution{Tool: toolName, Arguments: args}
+
+	if isAdminOnlyTool(toolName) && !r.isAdmin {
+		exec.Error = fmt.Sprintf("unknown tool: %s", toolName)
+		return exec
+	}
 
 	switch toolName {
 	case "list_resumes":
@@ -874,6 +885,30 @@ func (r *Registry) ExecuteWithProgress(toolName string, argsJSON []byte, progres
 			return exec
 		}
 		enrichLinkedInProfileResult(result)
+		exec.Result = result
+
+	case "search_linkedin_jobs":
+		result, err := r.exec.AgentSearchLinkedInJobs(context.Background(), args)
+		if err != nil {
+			exec.Error = err.Error()
+			return exec
+		}
+		exec.Result = result
+
+	case "list_linkedin_applications":
+		limit := 50
+		offset := 0
+		if v, ok := optionalInt(args, "limit"); ok && v > 0 {
+			limit = v
+		}
+		if v, ok := optionalInt(args, "offset"); ok && v >= 0 {
+			offset = v
+		}
+		result, err := r.exec.AgentListLinkedInApplications(limit, offset)
+		if err != nil {
+			exec.Error = err.Error()
+			return exec
+		}
 		exec.Result = result
 
 	default:

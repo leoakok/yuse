@@ -37,6 +37,7 @@ import { EditableFieldRow } from "@/components/settings/editable-field-row";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { ScrollArea } from "@/components/ui/scroll-area";
+import { WorkspacePanelScrollAreaFrame } from "@/components/layout/workspace-panel";
 import {
   addPortfolioProject,
   addPortfolioSkill,
@@ -199,6 +200,7 @@ export function PortfolioWorkspace({
         }
       />
 
+      <WorkspacePanelScrollAreaFrame>
       <ScrollArea className="min-h-0 flex-1">
         <WorkspaceSections>
           {mode === "design" ? (
@@ -342,6 +344,7 @@ export function PortfolioWorkspace({
           )}
         </WorkspaceSections>
       </ScrollArea>
+      </WorkspacePanelScrollAreaFrame>
 
       <PortfolioProjectEditDialog
         state={projectDialog}

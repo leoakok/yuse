@@ -7,6 +7,7 @@ import { CvPreview } from "@/components/cv/cv-preview";
 import { useRegisterPreviewDrawerShellHeader } from "@/components/layout/preview-drawer-header-actions";
 import { useWorkspacePreviewStageClassName } from "@/components/ui/drawer-shell";
 import { ScrollArea } from "@/components/ui/scroll-area";
+import { WorkspacePanelScrollAreaFrame } from "@/components/layout/workspace-panel";
 import { cn } from "@/lib/utils";
 
 interface CvLivePreviewProps {
@@ -69,30 +70,32 @@ export function CvLivePreview({ content }: CvLivePreviewProps) {
   return (
     <div className="flex min-h-0 flex-1 flex-col overflow-hidden">
       {exportRoot}
-      <ScrollArea className={cn("min-h-0 flex-1", previewStageClassName)}>
-        <div className="min-h-full w-full">
-          <div
-            ref={containerRef}
-            className="flex min-h-full w-full justify-center p-4"
-          >
+      <WorkspacePanelScrollAreaFrame>
+        <ScrollArea className={cn("min-h-0 flex-1", previewStageClassName)}>
+          <div className="min-h-full w-full">
             <div
-              className="resume-print-scale"
-              style={{
-                transform: `scale(${scale})`,
-                transformOrigin: "top center",
-                height: scale < 1 ? stackHeight : undefined,
-              }}
+              ref={containerRef}
+              className="flex min-h-full w-full justify-center p-4"
             >
-              <div ref={stackRef} className="resume-print-target">
-                <CvPreview
-                  content={content}
-                  className="rounded-sm shadow-[0_12px_40px_-8px_rgba(0,0,0,0.18),0_4px_12px_-4px_rgba(0,0,0,0.1)] ring-1 ring-black/5 dark:shadow-[0_12px_40px_-8px_rgba(0,0,0,0.5),0_4px_12px_-4px_rgba(0,0,0,0.3)] dark:ring-white/10"
-                />
+              <div
+                className="resume-print-scale"
+                style={{
+                  transform: `scale(${scale})`,
+                  transformOrigin: "top center",
+                  height: scale < 1 ? stackHeight : undefined,
+                }}
+              >
+                <div ref={stackRef} className="resume-print-target">
+                  <CvPreview
+                    content={content}
+                    className="rounded-sm shadow-[0_12px_40px_-8px_rgba(0,0,0,0.18),0_4px_12px_-4px_rgba(0,0,0,0.1)] ring-1 ring-black/5 dark:shadow-[0_12px_40px_-8px_rgba(0,0,0,0.5),0_4px_12px_-4px_rgba(0,0,0,0.3)] dark:ring-white/10"
+                  />
+                </div>
               </div>
             </div>
           </div>
-        </div>
-      </ScrollArea>
+        </ScrollArea>
+      </WorkspacePanelScrollAreaFrame>
     </div>
   );
 }

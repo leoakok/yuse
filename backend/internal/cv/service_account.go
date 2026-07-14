@@ -15,10 +15,42 @@ func (s *Service) ChangePassword(currentPassword, newPassword string) error {
 	}
 	err := s.store.ChangePassword(user.ID, currentPassword, newPassword)
 	if errors.Is(err, store.ErrPasswordManagedExternally) {
-		return fmt.Errorf("password is managed by your sign-in provider")
+		return fmt.Errorf("set a password first, then you can change it")
 	}
 	if errors.Is(err, store.ErrIncorrectPassword) {
 		return fmt.Errorf("current password is incorrect")
+	}
+	return err
+}
+
+func (s *Service) SetPassword(newPassword string) error {
+	user := s.store.User()
+	if user == nil {
+		return fmt.Errorf("not signed in")
+	}
+	return s.store.SetPassword(user.ID, newPassword)
+}
+
+func (s *Service) RemovePassword() error {
+	user := s.store.User()
+	if user == nil {
+		return fmt.Errorf("not signed in")
+	}
+	err := s.store.RemovePassword(user.ID)
+	if errors.Is(err, store.ErrLastSignInMethod) {
+		return fmt.Errorf("connect Google before removing your password")
+	}
+	return err
+}
+
+func (s *Service) UnlinkGoogle() error {
+	user := s.store.User()
+	if user == nil {
+		return fmt.Errorf("not signed in")
+	}
+	err := s.store.UnlinkGoogle(user.ID)
+	if errors.Is(err, store.ErrLastSignInMethod) {
+		return fmt.Errorf("set a password before disconnecting Google")
 	}
 	return err
 }
@@ -30,7 +62,7 @@ func (s *Service) ChangeEmail(currentPassword, newEmail string, verificationRequ
 	}
 	updated, err := s.store.ChangeEmail(user.ID, currentPassword, newEmail, verificationRequired)
 	if errors.Is(err, store.ErrEmailManagedExternally) {
-		return nil, fmt.Errorf("email is managed by your sign-in provider")
+		return nil, fmt.Errorf("set a password before changing your email")
 	}
 	if errors.Is(err, store.ErrIncorrectPassword) {
 		return nil, fmt.Errorf("current password is incorrect")

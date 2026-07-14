@@ -21,12 +21,13 @@ func TestNormalizeCompanyKey(t *testing.T) {
 	}
 }
 
-func TestCompanyKeysMatch(t *testing.T) {
-	if !companyKeysMatch("acme corp", "acme") {
-		t.Fatal("expected acme corp to match acme")
+func TestCompanyMatchesBanPartialKey(t *testing.T) {
+	bans := []*store.AutomationCompanyBanRecord{{CompanyKey: "acme"}}
+	if !CompanyMatchesBan("Acme Corp", bans) {
+		t.Fatal("expected acme corp to match acme ban")
 	}
-	if companyKeysMatch("beta", "acme") {
-		t.Fatal("expected beta not to match acme")
+	if CompanyMatchesBan("Beta Labs", bans) {
+		t.Fatal("expected beta not to match acme ban")
 	}
 }
 

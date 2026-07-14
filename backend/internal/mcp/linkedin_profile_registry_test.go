@@ -29,7 +29,7 @@ func TestFetchLinkedInProfileRegistry(t *testing.T) {
 
 	dataStore := store.NewMemory()
 	cvSvc := cv.NewService(dataStore, llm.NewService(config.Config{}), nil)
-	registry := mcp.NewRegistry(cvSvc)
+	registry := mcp.NewRegistry(cvSvc, false)
 
 	args, _ := json.Marshal(map[string]any{
 		"profileUrl": "https://www.linkedin.com/in/alexmorgan",
@@ -47,7 +47,7 @@ func TestFetchLinkedInProfileRegistry(t *testing.T) {
 func TestFetchLinkedInProfileRejectsNonProfileURL(t *testing.T) {
 	dataStore := store.NewMemory()
 	cvSvc := cv.NewService(dataStore, llm.NewService(config.Config{}), nil)
-	registry := mcp.NewRegistry(cvSvc)
+	registry := mcp.NewRegistry(cvSvc, false)
 
 	args, _ := json.Marshal(map[string]any{
 		"profileUrl": "https://evil.example/in/user",

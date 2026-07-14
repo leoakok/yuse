@@ -1,13 +1,12 @@
 "use client";
 
 import { useCallback, useEffect, useState } from "react";
-import { MessageCircle, Sparkles } from "lucide-react";
+import { MessageCircle } from "lucide-react";
 import { toast } from "sonner";
 import { TwinEntryCard } from "@/components/twin/twin-entry-card";
 import { TwinEntryDialog } from "@/components/twin/twin-entry-dialog";
 import { useCvAssistant } from "@/components/agent/cv-assistant-provider";
 import { Button } from "@/components/ui/button";
-import { workspaceIntroClassName } from "@/lib/ui/workspace-section";
 import {
   ResponsiveDialog,
   ResponsiveDialogContent,
@@ -17,6 +16,7 @@ import {
   ResponsiveDialogTitle,
 } from "@/components/ui/responsive-dialog";
 import { ScrollArea } from "@/components/ui/scroll-area";
+import { WorkspacePanelScrollAreaFrame } from "@/components/layout/workspace-panel";
 import {
   createTwinEntry,
   deleteTwinEntry,
@@ -100,29 +100,6 @@ export function TwinWorkspace({ addOpen = false, onAddOpenChange }: TwinWorkspac
 
   return (
     <div className="space-y-4">
-      <div className={workspaceIntroClassName}>
-        <div className="flex items-start gap-3">
-          <Sparkles className="mt-0.5 size-4 shrink-0 text-primary" aria-hidden />
-          <div className="space-y-1">
-            <p className="text-sm font-medium">Your complete career story</p>
-            <p className="text-sm text-muted-foreground">
-              Yuse builds this as you chat, roles, projects, and skills stored in detail.
-              When you need a CV, Yuse pulls only what fits the job. Talk to Yuse to add depth;
-              you can review entries here anytime.
-            </p>
-            <Button
-              type="button"
-              variant="link"
-              className="h-auto p-0 text-sm"
-              onClick={() => setOpen(true)}
-            >
-              <MessageCircle className="mr-1.5 inline size-3.5" />
-              Chat with Yuse to grow your twin
-            </Button>
-          </div>
-        </div>
-      </div>
-
       {entries.length === 0 ? (
         <div className="flex flex-col items-center justify-center rounded-lg border border-dashed px-6 py-16 text-center">
           <p className="text-sm font-medium">Nothing here yet</p>
@@ -136,19 +113,21 @@ export function TwinWorkspace({ addOpen = false, onAddOpenChange }: TwinWorkspac
           </Button>
         </div>
       ) : (
-        <ScrollArea className="max-h-[calc(100dvh-18rem)] pr-3">
-          <ul className="grid gap-3 sm:grid-cols-2">
-            {entries.map((entry) => (
-              <li key={entry.id}>
-                <TwinEntryCard
-                  entry={entry}
-                  onEdit={() => openEditDialog(entry)}
-                  onDeleteRequest={() => setDeleteTarget(entry)}
-                />
-              </li>
-            ))}
-          </ul>
-        </ScrollArea>
+        <WorkspacePanelScrollAreaFrame className="max-h-[calc(100dvh-18rem)]">
+          <ScrollArea className="h-full max-h-[calc(100dvh-18rem)] pr-3">
+            <ul className="grid gap-3 sm:grid-cols-2">
+              {entries.map((entry) => (
+                <li key={entry.id}>
+                  <TwinEntryCard
+                    entry={entry}
+                    onEdit={() => openEditDialog(entry)}
+                    onDeleteRequest={() => setDeleteTarget(entry)}
+                  />
+                </li>
+              ))}
+            </ul>
+          </ScrollArea>
+        </WorkspacePanelScrollAreaFrame>
       )}
 
       <TwinEntryDialog

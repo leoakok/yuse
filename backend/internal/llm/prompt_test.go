@@ -8,7 +8,7 @@ import (
 )
 
 func TestSystemPromptIncludesRoleTailorWorkflow(t *testing.T) {
-	prompt := buildAgentSystemPrompt(model.AssistantContextInput{View: model.AssistantViewResumes}, "", false, "")
+	prompt := buildAgentSystemPrompt(model.AssistantContextInput{View: model.AssistantViewResumes}, "", false, "", false)
 	required := []string{
 		"Role-targeted CV workflow",
 		"web_search",

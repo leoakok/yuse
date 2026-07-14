@@ -228,9 +228,9 @@ export function CvAssistantPanel({
               variant="ghost"
               size="icon-sm"
               onClick={() => setHistoryOpen(false)}
+              aria-label="Back to chat"
             >
               <ArrowLeft className="size-4" />
-              <span className="sr-only">Back to chat</span>
             </Button>
           ) : null}
           <Button
@@ -252,9 +252,9 @@ export function CvAssistantPanel({
               size="icon-sm"
               disabled={isThreadsLoading}
               onClick={() => setHistoryOpen(true)}
+              aria-label="Past chats"
             >
               <History className="size-4" />
-              <span className="sr-only">Past chats</span>
             </Button>
           ) : null}
         </>
@@ -292,11 +292,12 @@ export function CvAssistantPanel({
   const panelContent = (
     <WorkspacePanel>
       <WorkspacePanelBody>
-        <WorkspacePanelScrollAreaFrame scrollFade={false}>
+        <WorkspacePanelScrollAreaFrame>
           <ScrollArea className="min-h-0 flex-1">
             {!isDrawer ? (
               <WorkspaceFloatingHeader
                 className="px-3"
+                scrollFade={false}
                 onBack={compactInlineWithFabs ? handleCloseAssistant : undefined}
                 backLabel="Back to editor"
                 trailing={
@@ -307,9 +308,9 @@ export function CvAssistantPanel({
                       size="icon"
                       className={floatingChipIconButtonClassName}
                       onClick={() => setHistoryOpen(false)}
+                      aria-label="Back to chat"
                     >
                       <ArrowLeft className="size-4" />
-                      <span className="sr-only">Back to chat</span>
                     </Button>
                   ) : null}
                   <Button
@@ -332,9 +333,9 @@ export function CvAssistantPanel({
                       className={floatingChipIconButtonClassName}
                       disabled={isThreadsLoading}
                       onClick={() => setHistoryOpen(true)}
+                      aria-label="Past chats"
                     >
                       <History className="size-4" />
-                      <span className="sr-only">Past chats</span>
                     </Button>
                   ) : null}
                   {showHideAssistantButton ? (
@@ -343,9 +344,9 @@ export function CvAssistantPanel({
                       size="icon"
                       className={floatingChipIconButtonClassName}
                       onClick={handleCloseAssistant}
+                      aria-label="Hide assistant"
                     >
                       <PanelRightClose className="size-4" />
-                      <span className="sr-only">Hide assistant</span>
                     </Button>
                   ) : null}
                 </>

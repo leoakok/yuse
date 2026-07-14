@@ -32,7 +32,7 @@ func TestAddEducationItemRejectsSectionTitleHeadline(t *testing.T) {
 	dataStore := store.NewMemory()
 	llmSvc := llm.NewService(config.Config{})
 	cvSvc := cv.NewService(dataStore, llmSvc, nil)
-	registry := mcp.NewRegistry(cvSvc)
+	registry := mcp.NewRegistry(cvSvc, false)
 
 	args, _ := json.Marshal(map[string]any{
 		"resumeId":  "resume-swe",
@@ -53,7 +53,7 @@ func TestAddEducationItemAcceptsFlatFields(t *testing.T) {
 	dataStore := store.NewMemory()
 	llmSvc := llm.NewService(config.Config{})
 	cvSvc := cv.NewService(dataStore, llmSvc, nil)
-	registry := mcp.NewRegistry(cvSvc)
+	registry := mcp.NewRegistry(cvSvc, false)
 
 	args, _ := json.Marshal(map[string]any{
 		"resumeId":    "resume-swe",
@@ -95,7 +95,7 @@ func TestAddEducationItemAcceptsStructuredFields(t *testing.T) {
 	dataStore := store.NewMemory()
 	llmSvc := llm.NewService(config.Config{})
 	cvSvc := cv.NewService(dataStore, llmSvc, nil)
-	registry := mcp.NewRegistry(cvSvc)
+	registry := mcp.NewRegistry(cvSvc, false)
 
 	args, _ := json.Marshal(map[string]any{
 		"resumeId":  "resume-swe",
@@ -136,7 +136,7 @@ func TestGetResumeContentIncludesFieldGuideAndMetadata(t *testing.T) {
 	dataStore := store.NewMemory()
 	llmSvc := llm.NewService(config.Config{})
 	cvSvc := cv.NewService(dataStore, llmSvc, nil)
-	registry := mcp.NewRegistry(cvSvc)
+	registry := mcp.NewRegistry(cvSvc, false)
 
 	content := registry.Execute("get_resume_content", []byte(`{"id":"resume-swe"}`))
 	if content.Error != "" {

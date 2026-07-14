@@ -16,7 +16,7 @@ func TestAddSectionItemPersists(t *testing.T) {
 	dataStore := store.NewMemory()
 	llmSvc := llm.NewService(config.Config{})
 	cvSvc := cv.NewService(dataStore, llmSvc, nil)
-	registry := mcp.NewRegistry(cvSvc)
+	registry := mcp.NewRegistry(cvSvc, false)
 
 	sections := registry.Execute("list_sections", []byte(`{"type":"EXPERIENCE"}`))
 	if sections.Error != "" {
@@ -57,7 +57,7 @@ func TestUpdateContactProfileAcceptsAliases(t *testing.T) {
 	dataStore := store.NewMemory()
 	llmSvc := llm.NewService(config.Config{})
 	cvSvc := cv.NewService(dataStore, llmSvc, nil)
-	registry := mcp.NewRegistry(cvSvc)
+	registry := mcp.NewRegistry(cvSvc, false)
 
 	args, _ := json.Marshal(map[string]any{
 		"resume_id": "resume-swe",

@@ -67,7 +67,7 @@ func TestAgentLoopPostToolNudgeAfterPrematureCreate(t *testing.T) {
 	dataStore := store.NewMemory()
 	llmSvc := llm.NewService(config.Config{})
 	cvSvc := cv.NewService(dataStore, llmSvc, nil)
-	tools := mcp.NewRegistry(cvSvc)
+	tools := mcp.NewRegistry(cvSvc, false)
 	turn, err := llm.RunAgentLoopForTest(
 		llmSvc,
 		context.Background(),

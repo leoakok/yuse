@@ -1,0 +1,23 @@
+{
+  "data": {
+    "data": {
+      "searchDashClustersByAll": {
+        "paging": { "total": 1 },
+        "elements": []
+      }
+    }
+  },
+  "included": [
+    {
+      "$type": "com.linkedin.voyager.dash.jobs.JobPostingCard",
+      "navigationUrl": "https://www.linkedin.com/jobs/view/1234567890/",
+      "jobPostingUrn": "urn:li:fsd_jobPosting:1234567890",
+      "title": { "text": "Software Engineer" },
+      "primaryDescription": { "text": "Acme Corp" },
+      "secondaryDescription": { "text": "Istanbul, Turkey" },
+      "insightsResolutionResults": [
+        { "text": { "text": "Application viewed" } }
+      ]
+    }
+  ]
+}

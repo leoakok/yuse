@@ -19,7 +19,7 @@ func setupRuleAgent(t *testing.T) (*llm.Service, *cv.Service) {
 	dataStore := store.NewMemory()
 	llmSvc := llm.NewService(config.Config{})
 	cvSvc := cv.NewService(dataStore, llmSvc, nil)
-	llmSvc.SetTools(mcp.NewRegistry(cvSvc))
+	llmSvc.SetTools(mcp.NewRegistry(cvSvc, false))
 	return llmSvc, cvSvc
 }
 
@@ -33,7 +33,7 @@ func resumeContext(resumeID string) model.AssistantContextInput {
 func TestRunAgentRequiresAPIKey(t *testing.T) {
 	llmSvc, cvSvc := setupRuleAgent(t)
 
-	_, err := llmSvc.RunAgent(context.Background(), "add experience", resumeContext("resume-swe"), nil, nil, "", false, "", mcp.NewRegistry(cvSvc), nil)
+	_, err := llmSvc.RunAgent(context.Background(), "add experience", resumeContext("resume-swe"), nil, nil, "", false, "", mcp.NewRegistry(cvSvc, false), nil)
 	if !errors.Is(err, llm.ErrMissingAPIKey) {
 		t.Fatalf("expected ErrMissingAPIKey, got %v", err)
 	}
@@ -43,7 +43,7 @@ func TestRuleAgentAddsExperience(t *testing.T) {
 	llmSvc, cvSvc := setupRuleAgent(t)
 	resumeID := "resume-swe"
 
-	turn, err := llm.RunRuleAgentForTest(llmSvc, "add experience at Contoso as lead engineer", resumeContext(resumeID), mcp.NewRegistry(cvSvc))
+	turn, err := llm.RunRuleAgentForTest(llmSvc, "add experience at Contoso as lead engineer", resumeContext(resumeID), mcp.NewRegistry(cvSvc, false))
 	if err != nil {
 		t.Fatalf("RunRuleAgentForTest: %v", err)
 	}
@@ -65,7 +65,7 @@ func TestRuleAgentAddsSeniorEngineerAtGoogle(t *testing.T) {
 	llmSvc, cvSvc := setupRuleAgent(t)
 	resumeID := "resume-swe"
 
-	turn, err := llm.RunRuleAgentForTest(llmSvc, "Add a senior engineer role at Google to my resume", resumeContext(resumeID), mcp.NewRegistry(cvSvc))
+	turn, err := llm.RunRuleAgentForTest(llmSvc, "Add a senior engineer role at Google to my resume", resumeContext(resumeID), mcp.NewRegistry(cvSvc, false))
 	if err != nil {
 		t.Fatalf("RunRuleAgentForTest: %v", err)
 	}
@@ -87,7 +87,7 @@ func TestRuleAgentHidesBrightLabs(t *testing.T) {
 	llmSvc, cvSvc := setupRuleAgent(t)
 	resumeID := "resume-swe"
 
-	turn, err := llm.RunRuleAgentForTest(llmSvc, "Hide the Bright Labs job from my CV", resumeContext(resumeID), mcp.NewRegistry(cvSvc))
+	turn, err := llm.RunRuleAgentForTest(llmSvc, "Hide the Bright Labs job from my CV", resumeContext(resumeID), mcp.NewRegistry(cvSvc, false))
 	if err != nil {
 		t.Fatalf("RunRuleAgentForTest: %v", err)
 	}
@@ -116,7 +116,7 @@ func TestRuleAgentUpdatesProfileName(t *testing.T) {
 	llmSvc, cvSvc := setupRuleAgent(t)
 	resumeID := "resume-swe"
 
-	turn, err := llm.RunRuleAgentForTest(llmSvc, "Update my profile name to Jane Doe", resumeContext(resumeID), mcp.NewRegistry(cvSvc))
+	turn, err := llm.RunRuleAgentForTest(llmSvc, "Update my profile name to Jane Doe", resumeContext(resumeID), mcp.NewRegistry(cvSvc, false))
 	if err != nil {
 		t.Fatalf("RunRuleAgentForTest: %v", err)
 	}
@@ -151,7 +151,7 @@ func TestRuleAgentUpdatesNamedResumeLocation(t *testing.T) {
 		llmSvc,
 		"update elon musks resume, he lives in mars from now on",
 		resumeContext(openResumeID),
-		mcp.NewRegistry(cvSvc),
+		mcp.NewRegistry(cvSvc, false),
 	)
 	if err != nil {
 		t.Fatalf("RunRuleAgentForTest: %v", err)
@@ -194,7 +194,7 @@ func TestRuleAgentUpdatesEmail(t *testing.T) {
 	llmSvc, cvSvc := setupRuleAgent(t)
 	resumeID := "resume-swe"
 
-	turn, err := llm.RunRuleAgentForTest(llmSvc, "Update my email to alex.new@example.com", resumeContext(resumeID), mcp.NewRegistry(cvSvc))
+	turn, err := llm.RunRuleAgentForTest(llmSvc, "Update my email to alex.new@example.com", resumeContext(resumeID), mcp.NewRegistry(cvSvc, false))
 	if err != nil {
 		t.Fatalf("RunRuleAgentForTest: %v", err)
 	}
@@ -216,7 +216,7 @@ func TestRuleAgentCreatesTwinEntry(t *testing.T) {
 
 	turn, err := llm.RunRuleAgentForTest(llmSvc, "Add to my twin: I led a team of 10 at Contoso", model.AssistantContextInput{
 		View: model.AssistantViewResumeDetail,
-	}, mcp.NewRegistry(cvSvc))
+	}, mcp.NewRegistry(cvSvc, false))
 	if err != nil {
 		t.Fatalf("RunRuleAgentForTest: %v", err)
 	}

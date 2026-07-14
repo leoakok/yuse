@@ -38,6 +38,8 @@ export const DESIGN_PRESET_OPTIONS: DesignPresetOption[] = [
   { id: "BOLD", label: "Bold", description: "Strong accent, visual hierarchy" },
 ];
 
+export const DEFAULT_DESIGN_PRESET_ID: DesignPresetId = "MODERN";
+
 export const DESIGN_PRESET_IDS: DesignPresetId[] = DESIGN_PRESET_OPTIONS.map((option) => option.id);
 
 export interface DesignPresetBundle {
@@ -328,11 +330,15 @@ const PRESETS: Record<DesignPresetId, DesignPresetBundle> = {
 };
 
 export function getDesignPresetBundle(id: DesignPresetId): DesignPresetBundle {
-  return PRESETS[id] ?? PRESETS.MODERN;
+  return PRESETS[id] ?? PRESETS[DEFAULT_DESIGN_PRESET_ID];
 }
 
 export function getDesignPresetLabel(id: DesignPresetId): string {
-  return DESIGN_PRESET_OPTIONS.find((option) => option.id === id)?.label ?? "Modern";
+  return (
+    DESIGN_PRESET_OPTIONS.find((option) => option.id === id)?.label ??
+    DESIGN_PRESET_OPTIONS.find((option) => option.id === DEFAULT_DESIGN_PRESET_ID)?.label ??
+    "Modern"
+  );
 }
 
 export function normalizeDesignPresetId(value: string | undefined): DesignPresetId {
@@ -340,7 +346,7 @@ export function normalizeDesignPresetId(value: string | undefined): DesignPreset
   if (upper && DESIGN_PRESET_IDS.includes(upper)) {
     return upper;
   }
-  return "MODERN";
+  return DEFAULT_DESIGN_PRESET_ID;
 }
 
 export function applyDesignPreset(

@@ -8,6 +8,7 @@ import { JobLinkButton } from "@/components/jobs/job-link-button";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { ScrollArea } from "@/components/ui/scroll-area";
+import { WorkspacePanelScrollAreaFrame } from "@/components/layout/workspace-panel";
 import {
   Select,
   SelectContent,
@@ -28,6 +29,9 @@ import { resumePath } from "@/lib/cv/routes";
 import type { Resume } from "@/lib/types/cv";
 import {
   getJobDescription,
+  getLastLinkedInSyncAt,
+  getLinkedInStatus,
+  formatLinkedInSyncTime,
   isJobFetchIncomplete,
   JOB_STATUS_LABELS,
   JOB_STATUS_ORDER,
@@ -36,6 +40,7 @@ import {
   type TrackedJob,
   type UpdateTrackedJobInput,
 } from "@/lib/types/job";
+import { Badge } from "@/components/ui/badge";
 
 interface JobDetailPanelProps {
   job: TrackedJob | null;
@@ -46,6 +51,8 @@ interface JobDetailPanelProps {
   onRegenerateCoverLetter: (job: TrackedJob) => Promise<void>;
   onDelete?: (job: TrackedJob) => void;
   isRegenerating?: boolean;
+  isAdmin?: boolean;
+  onSyncLinkedIn?: () => Promise<void>;
 }
 
 function displayTitle(job: TrackedJob) {
@@ -65,6 +72,8 @@ export function JobDetailPanel({
   onRegenerateCoverLetter,
   onDelete,
   isRegenerating = false,
+  isAdmin = false,
+  onSyncLinkedIn,
 }: JobDetailPanelProps) {
   const [title, setTitle] = useState("");
   const [company, setCompany] = useState("");
@@ -74,6 +83,7 @@ export function JobDetailPanel({
   const [jobDescription, setJobDescription] = useState("");
   const [resumeId, setResumeId] = useState<string>("");
   const [isSaving, setIsSaving] = useState(false);
+  const [isSyncing, setIsSyncing] = useState(false);
 
   useEffect(() => {
     if (!job || !open) return;
@@ -92,6 +102,21 @@ export function JobDetailPanel({
   );
 
   const showDescriptionHint = job ? isJobFetchIncomplete(job) : false;
+  const linkedInStatus = job ? getLinkedInStatus(job) : null;
+  const lastLinkedInSyncAt = job ? getLastLinkedInSyncAt(job) : null;
+
+  async function handleSyncLinkedIn() {
+    if (!onSyncLinkedIn) return;
+    setIsSyncing(true);
+    try {
+      await onSyncLinkedIn();
+      toast.success("LinkedIn applications synced.");
+    } catch (error) {
+      toast.error(error instanceof Error ? error.message : "Could not sync from LinkedIn.");
+    } finally {
+      setIsSyncing(false);
+    }
+  }
 
   async function handleSave() {
     if (!job) return;
@@ -156,6 +181,7 @@ export function JobDetailPanel({
               </ResponsiveDialogDescription>
             </ResponsiveDialogHeader>
 
+            <WorkspacePanelScrollAreaFrame>
             <ScrollArea className="flex-1">
               <div className="space-y-5 px-4 py-4">
                 <div className="grid gap-3 sm:grid-cols-2">
@@ -181,13 +207,63 @@ export function JobDetailPanel({
                       </SelectContent>
                     </Select>
                   </div>
-                  <div className="space-y-1.5">
-                    <span className="text-sm font-medium">Posting</span>
-                    <div className="flex h-9 items-center">
-                      <JobLinkButton url={job.url} />
-                    </div>
+                  <div className="flex items-end">
+                    <JobLinkButton url={job.url} />
                   </div>
                 </div>
+
+                {linkedInStatus || lastLinkedInSyncAt ? (
+                  <div className="space-y-2 rounded-md border border-border/60 bg-muted/20 p-3">
+                    <div className="flex flex-wrap items-center justify-between gap-2">
+                      <span className="text-sm font-medium">LinkedIn</span>
+                      {isAdmin && onSyncLinkedIn ? (
+                        <Button
+                          type="button"
+                          variant="outline"
+                          size="sm"
+                          onClick={() => void handleSyncLinkedIn()}
+                          disabled={isSyncing}
+                        >
+                          {isSyncing ? (
+                            <>
+                              <Loader2 className="mr-1.5 size-3.5 animate-spin" />
+                              Syncing
+                            </>
+                          ) : (
+                            "Sync from LinkedIn"
+                          )}
+                        </Button>
+                      ) : null}
+                    </div>
+                    {linkedInStatus ? (
+                      <Badge variant="secondary">{linkedInStatus}</Badge>
+                    ) : null}
+                    {lastLinkedInSyncAt ? (
+                      <p className="text-xs text-muted-foreground">
+                        Last sync: {formatLinkedInSyncTime(lastLinkedInSyncAt)}
+                      </p>
+                    ) : null}
+                  </div>
+                ) : isAdmin && onSyncLinkedIn ? (
+                  <div className="flex justify-end">
+                    <Button
+                      type="button"
+                      variant="outline"
+                      size="sm"
+                      onClick={() => void handleSyncLinkedIn()}
+                      disabled={isSyncing}
+                    >
+                      {isSyncing ? (
+                        <>
+                          <Loader2 className="mr-1.5 size-3.5 animate-spin" />
+                          Syncing
+                        </>
+                      ) : (
+                        "Sync from LinkedIn"
+                      )}
+                    </Button>
+                  </div>
+                ) : null}
 
                 <div className="grid gap-3 sm:grid-cols-2">
                   <div className="space-y-1.5">
@@ -316,6 +392,7 @@ export function JobDetailPanel({
                 </div>
               </div>
             </ScrollArea>
+            </WorkspacePanelScrollAreaFrame>
 
             <ResponsiveDialogFooter className="flex-row justify-between border-t px-4 py-3 sm:justify-between">
               {onDelete ? (

@@ -32,18 +32,23 @@ interface WorkspacePanelScrollViewportProps {
   children: ReactNode;
   className?: string;
   viewportClassName?: string;
+  /** Edge fades. true or "both" = top and bottom (default). false = none. "bottom" = bottom only. */
+  scrollFade?: boolean | WorkspacePanelScrollFadeMode;
 }
 
-/** Scroll container with top and bottom edge fades (sections tab). */
+/** Scroll container with optional top and bottom edge fades (sections tab). */
 export function WorkspacePanelScrollViewport({
   children,
   className,
   viewportClassName,
+  scrollFade = true,
 }: WorkspacePanelScrollViewportProps) {
+  const { top: scrollFadeTop, bottom: scrollFadeBottom } = resolveScrollFadeEdges(scrollFade);
+
   return (
     <div className={cn("relative isolate flex min-h-0 flex-1 flex-col overflow-hidden", className)}>
-      <WorkspacePanelScrollFade edge="top" />
-      <WorkspacePanelScrollFade edge="bottom" />
+      {scrollFadeTop ? <WorkspacePanelScrollFade edge="top" /> : null}
+      {scrollFadeBottom ? <WorkspacePanelScrollFade edge="bottom" /> : null}
       <div className={cn("min-h-0 flex-1 overflow-y-auto", viewportClassName)}>{children}</div>
     </div>
   );
@@ -96,6 +101,9 @@ export function WorkspacePanelScrollAreaFrame({
 
 export const workspacePanelScrollUnderFooterClassName =
   "workspace-panel-scroll-under-footer";
+
+export const workspacePanelScrollUnderComposerClassName =
+  "workspace-panel-scroll-under-composer";
 
 export const workspacePanelFloatingChipClassName = floatingChipClassName;
 

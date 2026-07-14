@@ -14,7 +14,7 @@ import (
 func TestUpdateResumeSettingsAllDesignFields(t *testing.T) {
 	dataStore := store.NewMemory()
 	cvSvc := cv.NewService(dataStore, llm.NewService(config.Config{}), nil)
-	registry := mcp.NewRegistry(cvSvc)
+	registry := mcp.NewRegistry(cvSvc, false)
 
 	args, _ := json.Marshal(map[string]any{
 		"resumeId":               "resume-swe",
@@ -61,7 +61,7 @@ func TestUpdateResumeSettingsAllDesignFields(t *testing.T) {
 func TestReorderResumeSections(t *testing.T) {
 	dataStore := store.NewMemory()
 	cvSvc := cv.NewService(dataStore, llm.NewService(config.Config{}), nil)
-	registry := mcp.NewRegistry(cvSvc)
+	registry := mcp.NewRegistry(cvSvc, false)
 
 	content, err := cvSvc.GetResumeWithContent("resume-swe")
 	if err != nil {
@@ -99,7 +99,7 @@ func TestReorderResumeSections(t *testing.T) {
 func TestSetSectionVisibilityAndDisplayTitle(t *testing.T) {
 	dataStore := store.NewMemory()
 	cvSvc := cv.NewService(dataStore, llm.NewService(config.Config{}), nil)
-	registry := mcp.NewRegistry(cvSvc)
+	registry := mcp.NewRegistry(cvSvc, false)
 
 	content, err := cvSvc.GetResumeWithContent("resume-swe")
 	if err != nil {
@@ -147,7 +147,7 @@ func TestSetSectionVisibilityAndDisplayTitle(t *testing.T) {
 func TestGetResumeContentIncludesDesignSettings(t *testing.T) {
 	dataStore := store.NewMemory()
 	cvSvc := cv.NewService(dataStore, llm.NewService(config.Config{}), nil)
-	registry := mcp.NewRegistry(cvSvc)
+	registry := mcp.NewRegistry(cvSvc, false)
 
 	exec := registry.Execute("get_resume_content", []byte(`{"id":"resume-swe"}`))
 	if exec.Error != "" {

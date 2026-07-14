@@ -17,6 +17,7 @@ import {
   ResponsiveDropdownMenuSeparator,
   ResponsiveDropdownMenuTrigger,
 } from "@/components/ui/responsive-dropdown-menu";
+import { IconTooltip } from "@/components/ui/tooltip";
 import {
   topbarIconSegmentClassName,
   topbarTrackClassName,
@@ -64,17 +65,19 @@ export function DevToolsMenu() {
       aria-label="Developer tools"
     >
       <ResponsiveDropdownMenu>
-        <ResponsiveDropdownMenuTrigger
-          render={
-            <button
-              type="button"
-              className={topbarIconSegmentClassName()}
-              aria-label="Developer tools"
-            >
-              <Wrench className="size-4" aria-hidden />
-            </button>
-          }
-        />
+        <IconTooltip label="Developer tools">
+          <ResponsiveDropdownMenuTrigger
+            render={
+              <button
+                type="button"
+                className={topbarIconSegmentClassName()}
+                aria-label="Developer tools"
+              >
+                <Wrench className="size-4" aria-hidden />
+              </button>
+            }
+          />
+        </IconTooltip>
         <ResponsiveDropdownMenuContent align="end" className="w-52">
           <ResponsiveDropdownMenuItem onClick={handleClearCache}>
             <Database className="size-4" />

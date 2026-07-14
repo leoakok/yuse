@@ -290,6 +290,7 @@ export const ME_QUERY = `
       avatarUrl
       role
       hasPasswordCredential
+      hasGoogleCredential
       canChangeEmail
       emailVerified
       createdAt
@@ -308,6 +309,7 @@ export const WORKSPACE_BOOTSTRAP_QUERY = `
       avatarUrl
       role
       hasPasswordCredential
+      hasGoogleCredential
       canChangeEmail
       emailVerified
       createdAt
@@ -1478,6 +1480,24 @@ export const CHANGE_PASSWORD_MUTATION = `
   }
 `;
 
+export const SET_PASSWORD_MUTATION = `
+  mutation SetPassword($newPassword: String!) {
+    setPassword(newPassword: $newPassword)
+  }
+`;
+
+export const REMOVE_PASSWORD_MUTATION = `
+  mutation RemovePassword {
+    removePassword
+  }
+`;
+
+export const UNLINK_GOOGLE_MUTATION = `
+  mutation UnlinkGoogle {
+    unlinkGoogle
+  }
+`;
+
 export const CHANGE_EMAIL_MUTATION = `
   mutation ChangeEmail($currentPassword: String!, $email: String!) {
     changeEmail(currentPassword: $currentPassword, email: $email) {
@@ -1870,8 +1890,8 @@ export const JOB_AUTOMATIONS_QUERY = `
 `;
 
 export const AUTOMATION_RUNS_QUERY = `
-  query AutomationRuns($automationId: ID!, $limit: Int) {
-    automationRuns(automationId: $automationId, limit: $limit) {
+  query AutomationRuns($automationId: ID!, $limit: Int, $offset: Int) {
+    automationRuns(automationId: $automationId, limit: $limit, offset: $offset) {
       ${AUTOMATION_RUN_FIELDS}
     }
   }
@@ -1922,6 +1942,16 @@ export const CLEAR_LINKEDIN_SESSION_MUTATION = `
     clearLinkedInSession {
       configured
       updatedAt
+    }
+  }
+`;
+
+export const SYNC_LINKEDIN_APPLICATIONS_NOW_MUTATION = `
+  mutation SyncLinkedInApplicationsNow {
+    syncLinkedInApplicationsNow {
+      synced
+      linked
+      created
     }
   }
 `;

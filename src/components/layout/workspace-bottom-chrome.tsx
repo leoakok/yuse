@@ -16,6 +16,7 @@ export function WorkspaceFabFog({ assistantOpen }: { assistantOpen?: boolean }) 
 
 /**
  * Panel-anchored bottom shell for the assistant composer.
+ * No frost overlay. Only positions the composer above the panel bottom.
  */
 export function WorkspacePanelComposerChrome({
   children,
@@ -31,14 +32,8 @@ export function WorkspacePanelComposerChrome({
         className
       )}
     >
-      <div className="workspace-fab-row-pad relative w-full">
-        <div
-          aria-hidden
-          className="pointer-events-none absolute inset-0 backdrop-blur-md bg-background/80 supports-[backdrop-filter]:bg-background/60"
-        />
-        <div className="relative z-10 px-4">
-          <div className="pointer-events-auto w-full">{children}</div>
-        </div>
+      <div className="workspace-fab-row-pad relative w-full px-4">
+        <div className="pointer-events-auto w-full">{children}</div>
       </div>
     </div>
   );

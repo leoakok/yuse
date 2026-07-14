@@ -10,6 +10,7 @@ export interface User {
   avatarUrl?: string;
   role: UserRole;
   hasPasswordCredential: boolean;
+  hasGoogleCredential: boolean;
   canChangeEmail: boolean;
   emailVerified: boolean;
   createdAt: string;

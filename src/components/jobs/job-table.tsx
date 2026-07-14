@@ -3,6 +3,14 @@
 import { Trash2 } from "lucide-react";
 import { JobLinkButton } from "@/components/jobs/job-link-button";
 import { Button } from "@/components/ui/button";
+import {
+  DataTable,
+  DataTableBody,
+  DataTableCell,
+  DataTableHead,
+  DataTableHeader,
+  DataTableRow,
+} from "@/components/ui/data-table";
 import { cn } from "@/lib/utils";
 import { JOB_STATUS_BADGE_CLASS, JOB_STATUS_LABELS } from "@/lib/types/job";
 import type { TrackedJob } from "@/lib/types/job";
@@ -38,83 +46,75 @@ function StatusBadge({ status }: { status: TrackedJob["status"] }) {
   );
 }
 
-
 export function JobTable({ jobs, loading = false, onDelete, onSelect, selectedJobId }: JobTableProps) {
   if (!loading && jobs.length === 0) {
     return (
-      <div className="rounded-xl border border-dashed px-6 py-16 text-center">
+      <div className="rounded-lg border border-dashed px-6 py-16 text-center">
         <p className="text-sm font-medium">No tracked jobs yet</p>
         <p className="mt-1 text-sm text-muted-foreground">
-          Paste a job URL above to get started.
+          Use Track job to add an application.
         </p>
       </div>
     );
   }
 
   return (
-    <div className="overflow-hidden rounded-xl border shadow-sm">
-      <div className="overflow-x-auto">
-        <table className="w-full min-w-[720px] text-sm" aria-busy={loading || undefined}>
-          <thead className="border-b bg-muted/40 text-left text-xs uppercase tracking-wide text-muted-foreground">
-            <tr>
-              <th className="px-4 py-3 font-medium">Company</th>
-              <th className="px-4 py-3 font-medium">Role</th>
-              <th className="px-4 py-3 font-medium">Status</th>
-              <th className="px-4 py-3 font-medium">URL</th>
-              <th className="px-4 py-3 font-medium">Added</th>
-              <th className="px-4 py-3 font-medium text-right">Actions</th>
-            </tr>
-          </thead>
-          <tbody>
-            {loading && jobs.length === 0 ? (
-              <tr>
-                <td
-                  colSpan={6}
-                  className="px-4 py-16 text-center text-sm text-muted-foreground"
+    <DataTable minWidth="720px" aria-busy={loading || undefined}>
+      <DataTableHeader>
+        <tr>
+          <DataTableHead>Company</DataTableHead>
+          <DataTableHead>Role</DataTableHead>
+          <DataTableHead>Status</DataTableHead>
+          <DataTableHead>URL</DataTableHead>
+          <DataTableHead>Added</DataTableHead>
+          <DataTableHead className="text-right">Actions</DataTableHead>
+        </tr>
+      </DataTableHeader>
+      <DataTableBody>
+        {loading && jobs.length === 0 ? (
+          <DataTableRow>
+            <DataTableCell colSpan={6} className="py-16 text-center text-muted-foreground">
+              Loading jobs…
+            </DataTableCell>
+          </DataTableRow>
+        ) : (
+          jobs.map((job) => (
+            <DataTableRow
+              key={job.id}
+              onClick={() => onSelect(job)}
+              className={cn(
+                "cursor-pointer transition-colors hover:bg-muted/20",
+                job.id === selectedJobId && "bg-primary/5 hover:bg-primary/10"
+              )}
+            >
+              <DataTableCell>{job.company.trim() || "-"}</DataTableCell>
+              <DataTableCell className="font-medium">{job.title.trim() || "Untitled role"}</DataTableCell>
+              <DataTableCell>
+                <StatusBadge status={job.status} />
+              </DataTableCell>
+              <DataTableCell>
+                <JobLinkButton url={job.url} />
+              </DataTableCell>
+              <DataTableCell muted>{formatDate(job.createdAt)}</DataTableCell>
+              <DataTableCell className="text-right">
+                <Button
+                  type="button"
+                  variant="ghost"
+                  size="icon"
+                  className="text-muted-foreground hover:text-destructive"
+                  onClick={(event) => {
+                    event.stopPropagation();
+                    onDelete(job);
+                  }}
+                  aria-label="Delete application"
                 >
-                  Loading jobs…
-                </td>
-              </tr>
-            ) : (
-              jobs.map((job) => (
-              <tr
-                key={job.id}
-                onClick={() => onSelect(job)}
-                className={cn(
-                  "cursor-pointer border-b transition-colors last:border-b-0 hover:bg-muted/20",
-                  job.id === selectedJobId && "bg-primary/5 hover:bg-primary/10"
-                )}
-              >
-                <td className="px-4 py-3">{job.company.trim() || "-"}</td>
-                <td className="px-4 py-3 font-medium">{job.title.trim() || "Untitled role"}</td>
-                <td className="px-4 py-3">
-                  <StatusBadge status={job.status} />
-                </td>
-                <td className="px-4 py-3">
-                  <JobLinkButton url={job.url} />
-                </td>
-                <td className="px-4 py-3 text-muted-foreground">{formatDate(job.createdAt)}</td>
-                <td className="px-4 py-3 text-right">
-                  <Button
-                    type="button"
-                    variant="ghost"
-                    size="icon"
-                    className="text-muted-foreground hover:text-destructive"
-                    onClick={(event) => {
-                      event.stopPropagation();
-                      onDelete(job);
-                    }}
-                    aria-label="Delete application"
-                  >
-                    <Trash2 className="size-4" />
-                  </Button>
-                </td>
-              </tr>
-              ))
-            )}
-          </tbody>
-        </table>
-      </div>
-    </div>
+                  <Trash2 className="size-4" />
+                </Button>
+              </DataTableCell>
+            </DataTableRow>
+          ))
+        )}
+      </DataTableBody>
+    </DataTable>
   );
 }

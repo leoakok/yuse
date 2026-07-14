@@ -1,7 +1,11 @@
 import type { ResumeSettings, ResumeWithContent } from "@/lib/types/cv";
 import { DEFAULT_RESUME_ACCENT_COLOR } from "@/lib/cv/accent";
 import { normalizeContactFields } from "@/lib/cv/contact-header";
-import { normalizeDesignPresetId } from "@/lib/cv/design-presets";
+import {
+  applyDesignPreset,
+  DEFAULT_DESIGN_PRESET_ID,
+  normalizeDesignPresetId,
+} from "@/lib/cv/design-presets";
 import { DEFAULT_CV_FONT_FAMILY } from "@/lib/cv/fonts";
 import { DEFAULT_PAGE_MARGIN_MM } from "@/lib/cv/page-format";
 import {
@@ -15,8 +19,8 @@ import { mapSectionDividerStyle } from "@/lib/cv/accent";
 import { normalizeFontFamily } from "@/lib/cv/fonts";
 import { normalizeFontSize } from "@/lib/cv/typography";
 
-/** Default resume settings matching backend `defaultResumeSettings` in helpers.go. */
-export const DEFAULT_RESUME_SETTINGS: Omit<ResumeSettings, "resumeId"> = {
+/** Base shell before the default design preset (Bold) is applied. */
+const RESUME_SETTINGS_SHELL: Omit<ResumeSettings, "resumeId"> = {
   themeId: "theme-modern",
   ...DEFAULT_CV_TYPOGRAPHY_SETTINGS,
   pageFormat: "A4",
@@ -36,13 +40,22 @@ export const DEFAULT_RESUME_SETTINGS: Omit<ResumeSettings, "resumeId"> = {
   columnLayout: "SINGLE",
   sidebarPosition: "LEFT",
   sidebarWidth: "MEDIUM",
-  designPresetId: "MODERN",
+  designPresetId: DEFAULT_DESIGN_PRESET_ID,
   photoPosition: "HEADER_LEFT",
   photoSize: "M",
   contactLayout: "INLINE",
   contactFields: normalizeContactFields(undefined),
   ...DEFAULT_RESUME_DESIGN_EXTENSION,
   locale: "en-US",
+};
+
+/** Default resume settings matching backend `defaultResumeSettings` (Bold preset). */
+export const DEFAULT_RESUME_SETTINGS: Omit<ResumeSettings, "resumeId"> = {
+  ...RESUME_SETTINGS_SHELL,
+  ...applyDesignPreset(
+    { resumeId: "", ...RESUME_SETTINGS_SHELL },
+    DEFAULT_DESIGN_PRESET_ID,
+  ),
 };
 
 export function defaultResumeSettings(resumeId: string): ResumeSettings {

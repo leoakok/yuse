@@ -13,7 +13,15 @@ func textFromViewModel(value any) string {
 	if !ok {
 		return ""
 	}
-	return strings.TrimSpace(firstString(m, "text"))
+	if text := firstString(m, "text"); text != "" {
+		return text
+	}
+	if nested, ok := m["text"]; ok && nested != nil {
+		if s := textFromViewModel(nested); s != "" {
+			return s
+		}
+	}
+	return ""
 }
 
 func parseJobCards(body []byte) ([]JobCard, error) {

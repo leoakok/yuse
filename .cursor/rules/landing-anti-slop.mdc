@@ -1,0 +1,40 @@
+---
+description: Keep the marketing landing free of generic AI SaaS visual and copy patterns
+globs: src/components/landing/**
+alwaysApply: false
+---
+
+# Landing anti-slop
+
+Never ship the centroid SaaS look. Prefer specificity over “clean template.”
+
+## Forbidden on the landing
+
+- Pill / chip badges above the hero (`rounded-full border … text-xs`, status dots, slogan chips)
+- Uppercase tracked “eyebrow” labels (`text-xs uppercase tracking-wider`) as section intros, demo labels (“Try it”), or card headers
+- Identical feature cards (`rounded-2xl border bg-card` + icon tile + title + two lines), especially in equal grids
+- Soft purple / indigo / blue brand gradients and decorative radial glow blobs as the main atmosphere
+- Grandiose empty slogans (“the way it should have always been,” “reimagine,” “unlock your potential”)
+- Hero stacks with more than one primary CTA group plus multiple ghost links competing
+- Long muted “supporting” paragraphs that restate the headline
+- Hero copy that leads with What (features, integrations, “connect X and Y”) instead of Why
+
+## Prefer instead
+
+- Golden Circle (Simon Sinek): lead with **Why**, then **How**, then **What**. Never open the hero with features or integrations
+- First screen (`min-h-dvh`): brand + Why headline + scroll cue only. Rams / Ive restraint. No waitlist form, no supporting blurb in the hero body
+- Floating auth CTA top-right always (Sign in / Sign up, or Go to app). Header logo + blur + border reveal only after scroll
+- Brand first in the hero stage, then a Why headline (belief / purpose). No supporting paragraph under it
+- Quiet scroll indicator (sentence case “Scroll”, subtle motion, fade after user scrolls). Never uppercase eyebrows
+- How section: short step titles only (the process), not product pitches
+- What surfaces later as demos, boards, and CTAs (GitHub, LinkedIn, tailor, track), not as the first-viewport pitch
+- Flat sections, numbered lists, or asymmetric layouts instead of card grids
+- Serif display for headings (existing landing pattern), concrete verbs, section padding that varies
+- Open source / GitHub as a real strip with repo CTAs, not marketing copy
+- Shared `max-w-6xl` page width across landing sections
+
+## Copy test
+
+If the first viewport could belong to another AI career product after removing the logo, rewrite it.
+If the hero names tools or features (GitHub, LinkedIn, tailor a CV), you are in What. Move that down and rewrite as Why.
+If you need a second sentence under a headline to explain the product, put How/What into later sections, not under the hero.

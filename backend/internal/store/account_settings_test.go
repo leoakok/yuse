@@ -51,7 +51,7 @@ func TestChangePasswordWrongCurrent(t *testing.T) {
 	}
 }
 
-func TestChangePasswordGoogleUserRejected(t *testing.T) {
+func TestChangePasswordGoogleUserWithoutPasswordRejected(t *testing.T) {
 	pool := testPool(t)
 	defer pool.Close()
 
@@ -72,6 +72,63 @@ func TestChangePasswordGoogleUserRejected(t *testing.T) {
 	err := store.ChangePassword(ctx, pool, userID, "any", "new-password-1")
 	if !errors.Is(err, store.ErrPasswordManagedExternally) {
 		t.Fatalf("expected ErrPasswordManagedExternally, got %v", err)
+	}
+}
+
+func TestSetPasswordAndAuthenticateGoogleUser(t *testing.T) {
+	pool := testPool(t)
+	defer pool.Close()
+
+	ctx := context.Background()
+	userID := "google-setpw-" + uuid.NewString()[:8]
+	email := userID + "@example.com"
+	claims := auth.Claims{
+		Sub:       userID,
+		Email:     email,
+		Name:      "Google Set PW",
+		GoogleID:  userID + "-gid",
+		Bootstrap: true,
+	}
+	if _, err := store.EnsureSession(ctx, pool, claims); err != nil {
+		t.Fatalf("EnsureSession: %v", err)
+	}
+
+	if err := store.SetPassword(ctx, pool, userID, "local-password-1"); err != nil {
+		t.Fatalf("SetPassword: %v", err)
+	}
+
+	_, err := store.AuthenticateEmailUser(ctx, pool, email, "local-password-1")
+	if err != nil {
+		t.Fatalf("AuthenticateEmailUser: %v", err)
+	}
+}
+
+func TestResolveGoogleLinksExistingEmailUser(t *testing.T) {
+	pool := testPool(t)
+	defer pool.Close()
+
+	ctx := context.Background()
+	email := "link-google-" + time.Now().Format("150405") + "@example.com"
+	scope, err := store.RegisterEmailUser(ctx, pool, email, "initial-password", "Link Google")
+	if err != nil {
+		t.Fatalf("RegisterEmailUser: %v", err)
+	}
+
+	googleID := "gid-" + uuid.NewString()[:8]
+	resolved, err := store.ResolveGoogleIdentity(ctx, pool, googleID, email)
+	if err != nil {
+		t.Fatalf("ResolveGoogleIdentity: %v", err)
+	}
+	if resolved != scope.UserID {
+		t.Fatalf("resolved = %q, want %q", resolved, scope.UserID)
+	}
+
+	hasGoogle, err := store.UserHasGoogleCredential(ctx, pool, scope.UserID)
+	if err != nil {
+		t.Fatalf("UserHasGoogleCredential: %v", err)
+	}
+	if !hasGoogle {
+		t.Fatal("expected google linked")
 	}
 }
 

@@ -15,7 +15,7 @@ func TestDeleteResumeRemovesCV(t *testing.T) {
 	dataStore := store.NewMemory()
 	llmSvc := llm.NewService(config.Config{})
 	cvSvc := cv.NewService(dataStore, llmSvc, nil)
-	registry := mcp.NewRegistry(cvSvc)
+	registry := mcp.NewRegistry(cvSvc, false)
 
 	list := registry.Execute("list_resumes", []byte(`{}`))
 	if list.Error != "" {
@@ -52,7 +52,7 @@ func TestDeleteSectionItemAndBulkClear(t *testing.T) {
 	dataStore := store.NewMemory()
 	llmSvc := llm.NewService(config.Config{})
 	cvSvc := cv.NewService(dataStore, llmSvc, nil)
-	registry := mcp.NewRegistry(cvSvc)
+	registry := mcp.NewRegistry(cvSvc, false)
 
 	sections := registry.Execute("list_sections", []byte(`{"type":"SKILLS"}`))
 	if sections.Error != "" {

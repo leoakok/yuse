@@ -54,7 +54,7 @@ const EMPLOYMENT_FILTERS: Array<{ value: LinkedInEmploymentType; label: string; 
   { value: "OTHER", label: "Other" },
 ];
 
-const MORE_FILTERS = [{ value: "EASY_APPLY", label: "Easy Apply", description: "LinkedIn Easy Apply only" }] as const;
+const MORE_FILTERS = [{ value: "EASY_APPLY", label: "Easy Apply" }] as const;
 
 function normalizeSessionCookie(raw: string): string {
   return raw.replace(/[\r\n\t]+/g, "").trim();
@@ -163,8 +163,8 @@ export function AdminLinkedInPanel() {
   }
 
   return (
-    <div className="flex h-full min-h-[60vh] flex-col gap-3 overflow-hidden">
-      <div className="flex shrink-0 flex-wrap items-center gap-2 border-b border-border/60 pb-3">
+    <div className="flex h-full min-h-[60vh] flex-col gap-4 overflow-hidden p-4 lg:p-5">
+      <div className="flex shrink-0 flex-wrap items-center gap-2 border-b border-border/60 pb-4">
         <Input
           value={keywords}
           onChange={(event) => setKeywords(event.target.value)}
@@ -207,14 +207,9 @@ export function AdminLinkedInPanel() {
             Cookies
           </Button>
           {cookieIsSet ? (
-            <>
-              <span className="text-xs text-muted-foreground">
-                Set ({normalizedCookie.length.toLocaleString()} chars)
-              </span>
-              <Button type="button" variant="ghost" size="sm" className="h-7 px-2 text-xs" onClick={clearCookies}>
-                Clear
-              </Button>
-            </>
+            <Button type="button" variant="ghost" size="sm" className="h-7 px-2 text-xs" onClick={clearCookies}>
+              Clear
+            </Button>
           ) : null}
         </div>
 

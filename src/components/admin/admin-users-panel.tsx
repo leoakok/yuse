@@ -4,6 +4,14 @@ import { useCallback, useEffect, useState } from "react";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import {
+  DataTable,
+  DataTableBody,
+  DataTableCell,
+  DataTableHead,
+  DataTableHeader,
+  DataTableRow,
+} from "@/components/ui/data-table";
+import {
   listAdminUsers,
   setUserActive,
   setUserRole,
@@ -95,61 +103,59 @@ export function AdminUsersPanel() {
         </p>
       ) : null}
 
-      <div className="overflow-x-auto rounded-lg border border-border">
-        <table className="w-full min-w-[640px] text-left text-sm">
-          <thead className="border-b border-border bg-muted/40 text-muted-foreground">
-            <tr>
-              <th className="px-4 py-3 font-medium">Email</th>
-              <th className="px-4 py-3 font-medium">Name</th>
-              <th className="px-4 py-3 font-medium">Role</th>
-              <th className="px-4 py-3 font-medium">Status</th>
-              <th className="px-4 py-3 font-medium">Joined</th>
-              <th className="px-4 py-3 font-medium">Actions</th>
-            </tr>
-          </thead>
-          <tbody>
-            {users.map((user) => (
-              <tr key={user.id} className="border-b border-border/60 last:border-0">
-                <td className="px-4 py-3">{user.email}</td>
-                <td className="px-4 py-3">{user.displayName}</td>
-                <td className="px-4 py-3">
-                  <Badge variant={user.role === "ADMIN" ? "default" : "secondary"}>
-                    {user.role}
-                  </Badge>
-                </td>
-                <td className="px-4 py-3">
-                  <Badge variant={user.isActive ? "secondary" : "destructive"}>
-                    {user.isActive ? "Active" : "Inactive"}
-                  </Badge>
-                </td>
-                <td className="px-4 py-3 text-muted-foreground">
-                  {new Date(user.createdAt).toLocaleDateString()}
-                </td>
-                <td className="px-4 py-3">
-                  <div className="flex flex-wrap gap-2">
-                    <Button
-                      variant="outline"
-                      size="sm"
-                      disabled={busyId === user.id}
-                      onClick={() => void toggleActive(user)}
-                    >
-                      {user.isActive ? "Deactivate" : "Activate"}
-                    </Button>
-                    <Button
-                      variant="outline"
-                      size="sm"
-                      disabled={busyId === user.id}
-                      onClick={() => void toggleRole(user)}
-                    >
-                      {user.role === "ADMIN" ? "Demote" : "Make admin"}
-                    </Button>
-                  </div>
-                </td>
-              </tr>
-            ))}
-          </tbody>
-        </table>
-      </div>
+      <DataTable minWidth="640px">
+        <DataTableHeader>
+          <tr>
+            <DataTableHead>Email</DataTableHead>
+            <DataTableHead>Name</DataTableHead>
+            <DataTableHead>Role</DataTableHead>
+            <DataTableHead>Status</DataTableHead>
+            <DataTableHead>Joined</DataTableHead>
+            <DataTableHead>Actions</DataTableHead>
+          </tr>
+        </DataTableHeader>
+        <DataTableBody>
+          {users.map((user) => (
+            <DataTableRow key={user.id}>
+              <DataTableCell>{user.email}</DataTableCell>
+              <DataTableCell>{user.displayName}</DataTableCell>
+              <DataTableCell>
+                <Badge variant={user.role === "ADMIN" ? "default" : "secondary"}>
+                  {user.role}
+                </Badge>
+              </DataTableCell>
+              <DataTableCell>
+                <Badge variant={user.isActive ? "secondary" : "destructive"}>
+                  {user.isActive ? "Active" : "Inactive"}
+                </Badge>
+              </DataTableCell>
+              <DataTableCell muted>
+                {new Date(user.createdAt).toLocaleDateString()}
+              </DataTableCell>
+              <DataTableCell>
+                <div className="flex flex-wrap gap-2">
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    disabled={busyId === user.id}
+                    onClick={() => void toggleActive(user)}
+                  >
+                    {user.isActive ? "Deactivate" : "Activate"}
+                  </Button>
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    disabled={busyId === user.id}
+                    onClick={() => void toggleRole(user)}
+                  >
+                    {user.role === "ADMIN" ? "Demote" : "Make admin"}
+                  </Button>
+                </div>
+              </DataTableCell>
+            </DataTableRow>
+          ))}
+        </DataTableBody>
+      </DataTable>
     </div>
   );
 }

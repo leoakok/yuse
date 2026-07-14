@@ -1,9 +1,19 @@
 "use client";
 
-import { useEffect, useMemo, useRef, useState } from "react";
+import { useEffect, useMemo, useRef, useState, type ReactNode } from "react";
+import { useRouter } from "next/navigation";
+import { toast } from "sonner";
 import { CvPreview } from "@/components/cv/cv-preview";
+import { Button } from "@/components/ui/button";
 import { getPageSizePx } from "@/lib/cv/page-format";
+import { resumePath } from "@/lib/cv/routes";
 import { TAILOR_SHOWCASE_EXAMPLES } from "@/lib/landing/tailor-demo-content";
+import type { TailorShowcaseExample } from "@/lib/landing/tailor-demo-content";
+import {
+  createResumeFromShowcaseDesign,
+  pendingDesignFromShowcase,
+  stashPendingShowcaseDesign,
+} from "@/lib/landing/start-with-design";
 import type { ResumeWithContent } from "@/lib/types/cv";
 import { cn } from "@/lib/utils";
 
@@ -12,11 +22,13 @@ function LandingA4CvPreview({
   label,
   styleLabel,
   className,
+  footer,
 }: {
   content: ResumeWithContent;
   label: string;
   styleLabel: string;
   className?: string;
+  footer?: ReactNode;
 }) {
   const pageFormat = content.settings?.pageFormat ?? "A4";
   const fallbackPageSize = useMemo(() => getPageSizePx(pageFormat), [pageFormat]);
@@ -58,7 +70,7 @@ function LandingA4CvPreview({
         <span className="text-sm font-medium text-foreground">{styleLabel}</span>
         <span className="mt-0.5 block text-xs text-muted-foreground">{label}</span>
       </figcaption>
-      <div ref={containerRef} className="flex w-full justify-center overflow-hidden px-2 pb-3 pt-1">
+      <div ref={containerRef} className="flex w-full justify-center overflow-hidden px-2 pb-1 pt-1">
         <div
           className="relative shrink-0 overflow-hidden rounded-sm shadow-lg ring-1 ring-black/5"
           style={{
@@ -79,19 +91,46 @@ function LandingA4CvPreview({
           </div>
         </div>
       </div>
+      {footer}
     </figure>
   );
 }
 
-export function TailorCvShowcase() {
+type TailorCvShowcaseProps = {
+  isSignedIn?: boolean;
+};
+
+export function TailorCvShowcase({ isSignedIn = false }: TailorCvShowcaseProps) {
+  const router = useRouter();
+  const [startingId, setStartingId] = useState<string | null>(null);
+
+  async function handleStartWith(example: TailorShowcaseExample) {
+    const design = pendingDesignFromShowcase(example);
+
+    if (!isSignedIn) {
+      stashPendingShowcaseDesign(design);
+      toast.message(`Sign in to start with ${example.styleLabel}`);
+      router.push("/login");
+      return;
+    }
+
+    setStartingId(example.id);
+    try {
+      const resume = await createResumeFromShowcaseDesign(design);
+      toast.success(`Started a ${example.styleLabel} resume`);
+      router.push(resumePath(resume.id));
+    } catch {
+      toast.error("Could not create that resume. Try again.");
+    } finally {
+      setStartingId(null);
+    }
+  }
+
   return (
     <div className="w-full">
-      <div className="mx-auto mb-6 max-w-5xl text-center">
-        <span className="text-xs font-medium uppercase tracking-wider text-primary">
-          See what&apos;s possible
-        </span>
-        <p className="mt-2 text-balance text-lg font-medium tracking-tight">
-          Full A4 CVs, tailored, print-ready
+      <div className="mx-auto mb-6 max-w-5xl">
+        <p className="text-balance font-serif text-xl tracking-tight sm:text-2xl">
+          Full A4 CVs, tailored and print-ready
         </p>
       </div>
 
@@ -113,6 +152,22 @@ export function TailorCvShowcase() {
               label={example.label}
               styleLabel={example.styleLabel}
               className="w-[min(78vw,360px)] shrink-0 snap-center md:w-[380px]"
+              footer={
+                <div className="flex justify-center px-2 pb-2 pt-1">
+                  <Button
+                    type="button"
+                    variant="outline"
+                    size="sm"
+                    className="rounded-full px-4"
+                    disabled={startingId === example.id}
+                    onClick={() => void handleStartWith(example)}
+                  >
+                    {startingId === example.id
+                      ? "Starting…"
+                      : `Start with ${example.styleLabel}`}
+                  </Button>
+                </div>
+              }
             />
           ))}
         </div>

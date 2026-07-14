@@ -67,3 +67,19 @@ export function mergeTrackedJobMetadata(
 ): Record<string, unknown> {
   return { ...job.metadata, ...patch };
 }
+
+export function getLinkedInStatus(job: TrackedJob): string | null {
+  const value = job.metadata?.linkedinStatus;
+  return typeof value === "string" && value.trim() ? value.trim() : null;
+}
+
+export function getLastLinkedInSyncAt(job: TrackedJob): string | null {
+  const value = job.metadata?.lastLinkedInSyncAt;
+  return typeof value === "string" && value.trim() ? value.trim() : null;
+}
+
+export function formatLinkedInSyncTime(iso: string): string {
+  const date = new Date(iso);
+  if (Number.isNaN(date.getTime())) return iso;
+  return date.toLocaleString();
+}

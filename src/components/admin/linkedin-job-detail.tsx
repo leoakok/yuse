@@ -63,9 +63,7 @@ export function LinkedInJobDetail({ job }: LinkedInJobDetailProps) {
                 {description}
               </p>
             </div>
-          ) : (
-            <p className="text-sm text-muted-foreground">No description available.</p>
-          )}
+          ) : null}
         </div>
       </div>
     </div>

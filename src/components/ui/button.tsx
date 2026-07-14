@@ -1,13 +1,21 @@
-import { Button as ButtonPrimitive } from "@base-ui/react/button"
-import { cva, type VariantProps } from "class-variance-authority"
+"use client";
 
-import { motionButton } from "@/lib/ui/motion"
-import { cn } from "@/lib/utils"
+import * as React from "react";
+import { Button as ButtonPrimitive } from "@base-ui/react/button";
+import { cva, type VariantProps } from "class-variance-authority";
+
+import {
+  Tooltip,
+  TooltipContent,
+  TooltipTrigger,
+} from "@/components/ui/tooltip";
+import { motionButton } from "@/lib/ui/motion";
+import { cn } from "@/lib/utils";
 
 const buttonVariants = cva(
   cn(
     "group/button inline-flex shrink-0 items-center justify-center rounded-lg border border-transparent bg-clip-padding text-sm font-medium whitespace-nowrap outline-none select-none focus-visible:border-ring focus-visible:ring-3 focus-visible:ring-ring/50 motion-safe:active:not-aria-[haspopup]:translate-y-px disabled:pointer-events-none disabled:opacity-50 aria-invalid:border-destructive aria-invalid:ring-3 aria-invalid:ring-destructive/20 dark:aria-invalid:border-destructive/50 dark:aria-invalid:ring-destructive/40 [&_svg]:pointer-events-none [&_svg]:shrink-0 [&_svg:not([class*='size-'])]:size-4",
-    motionButton
+    motionButton,
   ),
   {
     variants: {
@@ -43,22 +51,50 @@ const buttonVariants = cva(
       variant: "default",
       size: "default",
     },
-  }
-)
+  },
+);
 
-function Button({
-  className,
-  variant = "default",
-  size = "default",
-  ...props
-}: ButtonPrimitive.Props & VariantProps<typeof buttonVariants>) {
-  return (
+function isIconSize(size: VariantProps<typeof buttonVariants>["size"]): boolean {
+  return typeof size === "string" && size.startsWith("icon");
+}
+
+type ButtonProps = ButtonPrimitive.Props &
+  VariantProps<typeof buttonVariants> & {
+    /** Tooltip label. Icon-sized buttons also fall back to `aria-label`. Pass `false` to disable. */
+    tooltip?: string | false;
+  };
+
+const Button = React.forwardRef<HTMLButtonElement, ButtonProps>(function Button(
+  { className, variant = "default", size = "default", tooltip, ...props },
+  ref,
+) {
+  const ariaLabel =
+    typeof props["aria-label"] === "string" ? props["aria-label"] : undefined;
+  const tip =
+    tooltip === false
+      ? undefined
+      : tooltip ?? (isIconSize(size) ? ariaLabel : undefined);
+
+  const button = (
     <ButtonPrimitive
+      ref={ref}
       data-slot="button"
       className={cn(buttonVariants({ variant, size, className }))}
       {...props}
     />
-  )
-}
+  );
 
-export { Button, buttonVariants }
+  if (!tip) {
+    return button;
+  }
+
+  return (
+    <Tooltip>
+      <TooltipTrigger render={button} />
+      <TooltipContent side="bottom">{tip}</TooltipContent>
+    </Tooltip>
+  );
+});
+
+export { Button, buttonVariants };
+export type { ButtonProps };

@@ -48,11 +48,11 @@ func (s *Service) GetJobAutomation(id string) (*model.JobAutomation, error) {
 }
 
 // ListAutomationRuns returns recent runs for an automation (admin only).
-func (s *Service) ListAutomationRuns(automationID string, limit int) ([]*model.AutomationRun, error) {
+func (s *Service) ListAutomationRuns(automationID string, limit, offset int) ([]*model.AutomationRun, error) {
 	if err := s.requireAdmin(); err != nil {
 		return nil, err
 	}
-	rows, err := s.store.ListAutomationRuns(automationID, limit)
+	rows, err := s.store.ListAutomationRuns(automationID, limit, offset)
 	if err != nil {
 		return nil, err
 	}
@@ -174,6 +174,15 @@ func (s *Service) ClearLinkedInSession() (*model.LinkedInSessionStatus, error) {
 
 // RunJobAutomationNow runs fetch → match → email immediately (admin only).
 func (s *Service) RunJobAutomationNow(ctx context.Context, id string) (*model.JobAutomationRunResult, error) {
+	return s.RunJobAutomationNowWithProgress(ctx, id, automation.NopProgressSink{})
+}
+
+// RunJobAutomationNowWithProgress is RunJobAutomationNow with live step updates.
+func (s *Service) RunJobAutomationNowWithProgress(
+	ctx context.Context,
+	id string,
+	sink automation.ProgressSink,
+) (*model.JobAutomationRunResult, error) {
 	if err := s.requireAdmin(); err != nil {
 		return nil, err
 	}
@@ -187,7 +196,7 @@ func (s *Service) RunJobAutomationNow(ctx context.Context, id string) (*model.Jo
 	if rec == nil {
 		return nil, fmt.Errorf("automation not found")
 	}
-	outcome, err := s.automationRunner.RunByID(ctx, id)
+	outcome, err := s.automationRunner.RunByIDWithProgress(ctx, id, sink)
 	if err != nil && outcome == nil {
 		return nil, err
 	}

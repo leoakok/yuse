@@ -97,6 +97,7 @@ func main() {
 	ipKey := func(r *http.Request) string { return "ip:" + httpapi.ClientIP(r) }
 	mux.Handle("POST /auth/register", registerLimiter.Middleware(ipKey)(httpapi.Register(pgStore.Pool(), emailCfg, strings.TrimRight(cfg.CORSOrigin, "/"), verificationRequired)))
 	mux.Handle("POST /auth/login", loginLimiter.Middleware(ipKey)(httpapi.Login(pgStore.Pool())))
+	mux.Handle("POST /auth/resolve-google", loginLimiter.Middleware(ipKey)(httpapi.ResolveGoogle(pgStore.Pool())))
 	mux.Handle("POST /auth/forgot-password", loginLimiter.Middleware(ipKey)(httpapi.ForgotPassword(pgStore.Pool(), emailCfg, strings.TrimRight(cfg.CORSOrigin, "/"))))
 	mux.Handle("POST /auth/reset-password", loginLimiter.Middleware(ipKey)(httpapi.ResetPassword(pgStore.Pool())))
 	mux.Handle("GET /auth/verify-email", httpapi.VerifyEmail(pgStore.Pool()))
@@ -120,11 +121,15 @@ func main() {
 	}
 
 	mux.Handle("POST /assistant/stream", sessionMiddleware.Wrap(httpapi.AssistantStream()))
+	mux.Handle("POST /automations/run/stream", sessionMiddleware.Wrap(httpapi.AutomationRunStream()))
 	mux.Handle("GET /public/{username}", httpapi.PublicPortfolio(pgStore))
 	mux.Handle("GET /public/{username}/{slug}", httpapi.PublicPortfolio(pgStore))
 	cronHandler := httpapi.JobAutomationsCron(autoRunner, cfg.CronSecret)
 	mux.Handle("GET /internal/cron/job-automations", cronHandler)
 	mux.Handle("POST /internal/cron/job-automations", cronHandler)
+	liAppsCron := httpapi.LinkedInApplicationsCron(pgStore.Pool(), cfg.CronSecret)
+	mux.Handle("GET /internal/cron/linkedin-applications-sync", liAppsCron)
+	mux.Handle("POST /internal/cron/linkedin-applications-sync", liAppsCron)
 
 	corsHandler := cors.New(cors.Options{
 		AllowedOrigins:   []string{cfg.CORSOrigin},
@@ -138,7 +143,7 @@ func main() {
 		Handler:           corsHandler,
 		ReadHeaderTimeout: 10 * time.Second,
 		ReadTimeout:       30 * time.Second,
-		WriteTimeout:      120 * time.Second,
+		WriteTimeout:      5 * time.Minute,
 		IdleTimeout:       120 * time.Second,
 	}
 

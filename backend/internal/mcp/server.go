@@ -7,9 +7,9 @@ import (
 	sdkmcp "github.com/modelcontextprotocol/go-sdk/mcp"
 )
 
-// RegisterTools attaches all CV Builder tools to an MCP server instance.
+// RegisterTools attaches CV Builder tools to an MCP server instance.
 func RegisterTools(server *sdkmcp.Server, registry *Registry) {
-	for _, def := range toolDefinitions() {
+	for _, def := range visibleToolDefinitions(registry.isAdmin) {
 		name := def.Name
 		description := def.Description
 		sdkmcp.AddTool(server, &sdkmcp.Tool{Name: name, Description: description}, func(ctx context.Context, req *sdkmcp.CallToolRequest, args map[string]any) (*sdkmcp.CallToolResult, any, error) {

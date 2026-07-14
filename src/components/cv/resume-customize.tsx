@@ -148,7 +148,6 @@ export function ResumeCustomize({ content }: ResumeCustomizeProps) {
         <div className="flex min-h-0 flex-col rounded-lg border bg-muted/10">
           <div className="border-b px-4 py-3">
             <p className="text-sm font-medium">Preview</p>
-            <p className="text-xs text-muted-foreground">Actual page dimensions</p>
           </div>
           <div className="flex flex-1 justify-center overflow-auto p-4">
             <CvPreview content={previewContent} />

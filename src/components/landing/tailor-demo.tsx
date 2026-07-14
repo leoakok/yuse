@@ -81,9 +81,6 @@ export function TailorDemo() {
         {/* Left: the job link input */}
         <div className="flex flex-col gap-5">
           <div className="flex flex-col gap-2">
-            <span className="text-xs font-medium uppercase tracking-wider text-muted-foreground">
-              Try it
-            </span>
             <p className="text-lg font-medium tracking-tight">
               Paste a job link. I&apos;ll do the rest.
             </p>
@@ -185,7 +182,7 @@ export function TailorDemo() {
               )}
             >
               <header className="flex flex-col gap-1">
-                <span className="text-xs font-medium uppercase tracking-wider text-primary">
+                <span className="text-sm text-muted-foreground">
                   Tailored for {activeExample.company}
                 </span>
                 <h3 className="text-xl font-semibold tracking-tight">

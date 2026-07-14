@@ -30,7 +30,7 @@ export type AdminAuditLogEntry = {
   createdAt: string;
 };
 
-export type AdminSection = "users" | "waitlist" | "invites" | "audit" | "emails" | "linkedin" | "automations" | "agent" | "system";
+export type AdminSection = "users" | "waitlist" | "invites" | "audit" | "emails" | "linkedin" | "automations" | "agent";
 
 export type LinkedInWorkplaceType = "REMOTE" | "HYBRID" | "ON_SITE";
 export type LinkedInExperienceLevel =
@@ -141,6 +141,12 @@ export type AutomationRun = {
 export type LinkedInSessionStatus = {
   configured: boolean;
   updatedAt?: string | null;
+};
+
+export type LinkedInApplicationSyncResult = {
+  synced: number;
+  linked: number;
+  created: number;
 };
 
 export type JobAutomationRunResult = {

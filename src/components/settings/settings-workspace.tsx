@@ -1,10 +1,11 @@
 "use client";
 
-import { FileText, LogOut } from "lucide-react";
-import { YuseLogo } from "@/components/brand/yuse-logo";
-import { signOut } from "next-auth/react";
-import Link from "next/link";
+import { useEffect, useState } from "react";
+import { LogOut, Star } from "lucide-react";
+import { signIn, signOut } from "next-auth/react";
+import { useSearchParams } from "next/navigation";
 import { toast } from "sonner";
+import { GitHubMark } from "@/components/brand/github-mark";
 import { useWorkspace } from "@/components/layout/workspace-provider";
 import {
   WorkspaceSection,
@@ -14,15 +15,29 @@ import { EditableFieldRow } from "@/components/settings/editable-field-row";
 import { EmailChangeRow } from "@/components/settings/email-change-sheet";
 import {
   PasswordChangeRow,
+  PasswordSetSheet,
   type PasswordChangeValues,
+  type PasswordSetValues,
 } from "@/components/settings/password-change-sheet";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Button, buttonVariants } from "@/components/ui/button";
 import { Separator } from "@/components/ui/separator";
-import { changeEmail, changePassword, resendVerificationEmail } from "@/lib/api/settings-api";
+import {
+  changeEmail,
+  changePassword,
+  removePassword,
+  resendVerificationEmail,
+  setPassword,
+  unlinkGoogle,
+} from "@/lib/api/settings-api";
 import { setUsername } from "@/lib/api/portfolio-api";
 import { portfolioSiteOrigin } from "@/lib/portfolio/share-url";
 import { validateSlug } from "@/lib/portfolio/slug";
+import {
+  YUSE_GITHUB_CONTRIBUTING_URL,
+  YUSE_GITHUB_ISSUES_URL,
+  YUSE_GITHUB_URL,
+} from "@/lib/site/github";
 import { SUPPORT_MAILTO } from "@/lib/support";
 import { cn } from "@/lib/utils";
 
@@ -45,19 +60,32 @@ function planLabel(plan: string) {
   return plan === "pro" ? "Pro" : "Free";
 }
 
-function accountDescription(user: { canChangeEmail: boolean; hasPasswordCredential: boolean }) {
-  if (user.canChangeEmail) {
-    return "Signed in with email";
-  }
-  if (!user.hasPasswordCredential) {
-    return "Signed in with Google";
-  }
-  return "Your account";
+function GoogleMark({ className }: { className?: string }) {
+  return (
+    <svg viewBox="0 0 24 24" className={cn("size-4 shrink-0", className)} aria-hidden>
+      <path
+        fill="#EA4335"
+        d="M12 10.2v3.9h5.5c-.2 1.3-1.6 3.9-5.5 3.9-3.3 0-6-2.7-6-6s2.7-6 6-6c1.9 0 3.1.8 3.8 1.5l2.6-2.5C16.9 3.3 14.7 2.4 12 2.4 6.8 2.4 2.6 6.6 2.6 11.8S6.8 21.2 12 21.2c5.7 0 9.4-4 9.4-9.6 0-.6-.1-1.1-.2-1.6H12z"
+      />
+    </svg>
+  );
 }
 
 export function SettingsWorkspace() {
   const { user, workspace, updateUser } = useWorkspace();
+  const searchParams = useSearchParams();
   const siteHost = portfolioSiteOrigin().replace(/^https?:\/\//, "");
+  const [setPasswordOpen, setSetPasswordOpen] = useState(false);
+  const [linkingGoogle, setLinkingGoogle] = useState(false);
+  const [busyMethod, setBusyMethod] = useState<"google" | "password" | null>(null);
+
+  useEffect(() => {
+    if (searchParams.get("linked") === "google") {
+      toast.success("Google connected.");
+      updateUser({ hasGoogleCredential: true });
+      window.history.replaceState({}, "", "/settings");
+    }
+  }, [searchParams, updateUser]);
 
   async function handleSaveUsername(next: string) {
     const updated = await setUsername(next);
@@ -95,110 +123,250 @@ export function SettingsWorkspace() {
     toast.success("Password updated.");
   }
 
+  async function handlePasswordSet(values: PasswordSetValues) {
+    await setPassword(values.newPassword);
+    updateUser({ hasPasswordCredential: true, canChangeEmail: true });
+    toast.success("Password added. You can also sign in with email.");
+  }
+
+  async function handleConnectGoogle() {
+    setLinkingGoogle(true);
+    try {
+      await signIn("google", { callbackUrl: "/settings?linked=google" });
+    } catch {
+      setLinkingGoogle(false);
+      toast.error("Could not start Google sign-in.");
+    }
+  }
+
+  async function handleDisconnectGoogle() {
+    if (!user.hasPasswordCredential) {
+      toast.error("Add a password before disconnecting Google.");
+      return;
+    }
+    setBusyMethod("google");
+    try {
+      await unlinkGoogle();
+      updateUser({ hasGoogleCredential: false });
+      toast.success("Google disconnected.");
+    } catch (error) {
+      toast.error(error instanceof Error ? error.message : "Could not disconnect Google.");
+    } finally {
+      setBusyMethod(null);
+    }
+  }
+
+  async function handleRemovePassword() {
+    if (!user.hasGoogleCredential) {
+      toast.error("Connect Google before removing your password.");
+      return;
+    }
+    setBusyMethod("password");
+    try {
+      await removePassword();
+      updateUser({ hasPasswordCredential: false, canChangeEmail: false });
+      toast.success("Password removed. Sign in with Google.");
+    } catch (error) {
+      toast.error(error instanceof Error ? error.message : "Could not remove password.");
+    } finally {
+      setBusyMethod(null);
+    }
+  }
+
   return (
     <WorkspaceSections>
-      <WorkspaceSection title="Account" description={accountDescription(user)}>
+      <WorkspaceSection title="Account">
         <div className="flex items-center gap-3">
-            <Avatar size="lg">
-              {user.avatarUrl ? <AvatarImage src={user.avatarUrl} alt="" /> : null}
-              <AvatarFallback>{getInitials(user.displayName)}</AvatarFallback>
-            </Avatar>
-            <div className="min-w-0">
-              <p className="font-medium">{user.displayName}</p>
-              {!user.canChangeEmail ? (
-                <p className="truncate text-sm text-muted-foreground">{user.email}</p>
-              ) : null}
+          <Avatar size="lg">
+            {user.avatarUrl ? <AvatarImage src={user.avatarUrl} alt="" /> : null}
+            <AvatarFallback>{getInitials(user.displayName)}</AvatarFallback>
+          </Avatar>
+          <div className="min-w-0">
+            <p className="font-medium">{user.displayName}</p>
+            <p className="truncate text-sm text-muted-foreground">{user.email}</p>
+          </div>
+        </div>
+        <Separator />
+        <dl className="grid gap-3 text-sm sm:grid-cols-2">
+          <div>
+            <dt className="text-muted-foreground">Member since</dt>
+            <dd className="font-medium">{formatDate(user.createdAt)}</dd>
+          </div>
+          <div>
+            <dt className="text-muted-foreground">Plan</dt>
+            <dd className="font-medium">
+              {workspace ? planLabel(workspace.plan) : "Free"}
+            </dd>
+          </div>
+        </dl>
+        <Separator />
+        {user.canChangeEmail ? (
+          <EmailChangeRow email={user.email} onSave={handleSaveEmail} />
+        ) : (
+          <div className="flex items-center justify-between gap-3 text-sm">
+            <div>
+              <p className="font-medium">Email</p>
+              <p className="text-muted-foreground">{user.email}</p>
             </div>
           </div>
-          <Separator />
-          <dl className="grid gap-3 text-sm sm:grid-cols-2">
-            <div>
-              <dt className="text-muted-foreground">Member since</dt>
-              <dd className="font-medium">{formatDate(user.createdAt)}</dd>
-            </div>
-            <div>
-              <dt className="text-muted-foreground">Workspace</dt>
-              <dd className="font-medium">
-                {workspace ? workspace.name : "Loading…"}
-              </dd>
-            </div>
-            <div>
-              <dt className="text-muted-foreground">Plan</dt>
-              <dd className="font-medium">
-                {workspace ? planLabel(workspace.plan) : "Loading…"}
-              </dd>
-            </div>
-          </dl>
-          <Separator />
-          {user.canChangeEmail ? (
-            <EmailChangeRow email={user.email} onSave={handleSaveEmail} />
-          ) : null}
-          {user.canChangeEmail && !user.emailVerified ? (
-            <div className="flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between">
-              <p className="text-sm text-muted-foreground">
-                Verify your email to use the assistant.
-              </p>
-              <Button type="button" variant="outline" size="sm" onClick={() => void handleResendVerification()}>
-                Resend verification email
-              </Button>
-            </div>
-          ) : null}
-          <EditableFieldRow
-            id="username"
-            label="Username"
-            value={user.username ?? ""}
-            placeholder="leo"
-            emptyValueLabel="Set a username"
-            autoComplete="off"
-            spellCheck={false}
-            validate={(raw) => {
-              const result = validateSlug(raw);
-              if (!result.ok) return result;
-              return { ok: true, value: result.value };
-            }}
-            onSave={handleSaveUsername}
-            description={(draft) =>
-              `Your public portfolio URL: ${siteHost}/${draft.trim() || "username"}`
-            }
-          />
-          {user.hasPasswordCredential ? (
-            <PasswordChangeRow onSave={handlePasswordChange} />
-          ) : !user.canChangeEmail ? (
+        )}
+        {user.canChangeEmail && !user.emailVerified ? (
+          <div className="flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between">
             <p className="text-sm text-muted-foreground">
-              Sign in with Google. Your password is managed there.
+              Verify your email to use the assistant.
             </p>
-          ) : null}
+            <Button type="button" variant="outline" size="sm" onClick={() => void handleResendVerification()}>
+              Resend verification email
+            </Button>
+          </div>
+        ) : null}
+        <EditableFieldRow
+          id="username"
+          label="Username"
+          value={user.username ?? ""}
+          placeholder="leo"
+          emptyValueLabel="Set a username"
+          autoComplete="off"
+          spellCheck={false}
+          validate={(raw) => {
+            const result = validateSlug(raw);
+            if (!result.ok) return result;
+            return { ok: true, value: result.value };
+          }}
+          onSave={handleSaveUsername}
+          description={(draft) =>
+            `Your public portfolio URL: ${siteHost}/${draft.trim() || "username"}`
+          }
+        />
+        {user.hasPasswordCredential ? (
+          <PasswordChangeRow onSave={handlePasswordChange} />
+        ) : null}
       </WorkspaceSection>
 
-      <WorkspaceSection title="How Yuse works" description="Main parts of the platform.">
-        <div className="flex gap-3 text-sm">
-            <FileText className="mt-0.5 size-4 shrink-0 text-muted-foreground" />
-            <div>
-              <p className="font-medium">Resumes</p>
-              <p className="text-muted-foreground">
-                Each resume is a tailored CV with its own title, contact details, and
-                design. Sections and items are shared across resumes, you choose what
-                shows on each one.
-              </p>
-              <Link
-                href="/resumes"
-                className={cn(buttonVariants({ variant: "link" }), "h-auto p-0")}
+      <WorkspaceSection
+        title="Sign-in methods"
+        description="Use email, Google, or both. Keep at least one way to sign in."
+      >
+        <div className="space-y-3">
+          <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+            <div className="flex items-start gap-3">
+              <div className="mt-0.5 flex size-8 items-center justify-center rounded-md border border-border/60 bg-muted/30">
+                <GoogleMark />
+              </div>
+              <div>
+                <p className="text-sm font-medium">Google</p>
+                <p className="text-sm text-muted-foreground">
+                  {user.hasGoogleCredential ? "Connected" : "Not connected"}
+                </p>
+              </div>
+            </div>
+            {user.hasGoogleCredential ? (
+              <Button
+                type="button"
+                variant="outline"
+                size="sm"
+                disabled={busyMethod === "google" || !user.hasPasswordCredential}
+                onClick={() => void handleDisconnectGoogle()}
               >
-                Open resumes
-              </Link>
-            </div>
+                {busyMethod === "google" ? "Disconnecting…" : "Disconnect"}
+              </Button>
+            ) : (
+              <Button
+                type="button"
+                size="sm"
+                disabled={linkingGoogle}
+                onClick={() => void handleConnectGoogle()}
+              >
+                {linkingGoogle ? "Opening Google…" : "Connect Google"}
+              </Button>
+            )}
           </div>
+
           <Separator />
-          <div className="flex gap-3">
-            <YuseLogo className="mt-0.5 size-4 shrink-0" />
+
+          <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
             <div>
-              <p className="font-medium">Yuse</p>
-              <p className="text-muted-foreground">
-                Ask Yuse to create a resume, add experience, tailor for a job, or
-                update your twin. It edits your real data.
+              <p className="text-sm font-medium">Email and password</p>
+              <p className="text-sm text-muted-foreground">
+                {user.hasPasswordCredential
+                  ? "You can sign in with your email and password"
+                  : "Add a password to sign in with email"}
               </p>
             </div>
+            {user.hasPasswordCredential ? (
+              <Button
+                type="button"
+                variant="outline"
+                size="sm"
+                disabled={busyMethod === "password" || !user.hasGoogleCredential}
+                onClick={() => void handleRemovePassword()}
+              >
+                {busyMethod === "password" ? "Removing…" : "Remove password"}
+              </Button>
+            ) : (
+              <Button type="button" size="sm" onClick={() => setSetPasswordOpen(true)}>
+                Add password
+              </Button>
+            )}
           </div>
+        </div>
+
+        <PasswordSetSheet
+          open={setPasswordOpen}
+          onOpenChange={setSetPasswordOpen}
+          onSave={handlePasswordSet}
+        />
+      </WorkspaceSection>
+
+      <WorkspaceSection title="Open source">
+        <div className="flex gap-3">
+          <GitHubMark className="mt-0.5 size-5 text-foreground" />
+          <div className="min-w-0 space-y-3">
+            <div>
+              <p className="text-sm font-medium">Yuse is open source</p>
+              <p className="mt-1 text-sm text-muted-foreground">
+                Star the repo if you like it, open an issue for bugs, or contribute a fix.
+                We welcome pull requests.
+              </p>
+            </div>
+            <div className="flex flex-wrap gap-2">
+              <a
+                href={YUSE_GITHUB_URL}
+                target="_blank"
+                rel="noopener noreferrer"
+                className={buttonVariants({ variant: "outline", size: "sm" })}
+              >
+                <GitHubMark className="size-3.5" />
+                View on GitHub
+              </a>
+              <a
+                href={YUSE_GITHUB_URL}
+                target="_blank"
+                rel="noopener noreferrer"
+                className={buttonVariants({ variant: "outline", size: "sm" })}
+              >
+                <Star className="size-3.5" />
+                Star
+              </a>
+              <a
+                href={YUSE_GITHUB_CONTRIBUTING_URL}
+                target="_blank"
+                rel="noopener noreferrer"
+                className={buttonVariants({ variant: "ghost", size: "sm" })}
+              >
+                Contribute
+              </a>
+              <a
+                href={YUSE_GITHUB_ISSUES_URL}
+                target="_blank"
+                rel="noopener noreferrer"
+                className={buttonVariants({ variant: "ghost", size: "sm" })}
+              >
+                Report an issue
+              </a>
+            </div>
+          </div>
+        </div>
       </WorkspaceSection>
 
       <WorkspaceSection

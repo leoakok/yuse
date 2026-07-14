@@ -107,16 +107,20 @@ type Store interface {
 	CreateJobAutomation(rec *JobAutomationRecord) (*JobAutomationRecord, error)
 	UpdateJobAutomation(id string, update func(*JobAutomationRecord) error) (*JobAutomationRecord, error)
 	DeleteJobAutomation(id string) (bool, error)
-	ListAutomationRuns(automationID string, limit int) ([]*AutomationRunRecord, error)
+	ListAutomationRuns(automationID string, limit, offset int) ([]*AutomationRunRecord, error)
 	ListAutomationMatches(automationID string, limit, offset int, feedback *string) ([]*AutomationMatchedJobRecord, error)
 	SetAutomationMatchFeedback(automationID, jobID, feedback string) (*AutomationMatchedJobRecord, error)
 	ListCompanyBans() ([]*AutomationCompanyBanRecord, error)
 	BanCompany(companyDisplay, companyKey string, sourceJobID, sourceAutomationID *string) (*AutomationCompanyBanRecord, error)
 	UnbanCompany(banID string) (bool, error)
+	ListLinkedInApplications(limit, offset int) ([]*LinkedInApplicationRecord, error)
 	SaveLinkedInSession(cookie string) (bool, *time.Time, error)
 	ClearLinkedInSession() (bool, error)
 	LinkedInSessionConfigured() (bool, *time.Time, error)
 	ChangePassword(userID, currentPassword, newPassword string) error
+	SetPassword(userID, newPassword string) error
+	RemovePassword(userID string) error
+	UnlinkGoogle(userID string) error
 	ChangeEmail(userID, currentPassword, newEmail string, verificationRequired bool) (*model.User, error)
 }
 

@@ -1,5 +1,6 @@
 import type { Metadata, Viewport } from "next";
 import { Analytics } from "@vercel/analytics/next";
+import { Providers } from "@/components/providers";
 import { Toaster } from "@/components/ui/sonner";
 import { buildRootMetadata } from "@/lib/site/metadata";
 import "./globals.css";
@@ -24,7 +25,7 @@ export default function RootLayout({
   return (
     <html lang="en-GB" className="h-full">
       <body className="flex min-h-full flex-col antialiased">
-        {children}
+        <Providers>{children}</Providers>
         <Toaster richColors closeButton position="top-center" />
         <Analytics />
       </body>

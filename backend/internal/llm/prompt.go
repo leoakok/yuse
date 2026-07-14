@@ -9,11 +9,11 @@ import (
 	"github.com/leo/ai-weekend/backend/internal/mcp"
 )
 
-func buildAgentSystemPrompt(assistantContext model.AssistantContextInput, twinContext string, githubConnected bool, githubLogin string) string {
+func buildAgentSystemPrompt(assistantContext model.AssistantContextInput, twinContext string, githubConnected bool, githubLogin string, isAdmin bool) string {
 	var b strings.Builder
 	b.WriteString(systemPrompt)
 	b.WriteString("\n\n")
-	b.WriteString(mcp.ToolCatalog())
+	b.WriteString(mcp.ToolCatalog(isAdmin))
 	if githubConnected {
 		loginHint := ""
 		if githubLogin != "" {
@@ -68,6 +68,10 @@ func buildAgentSystemPrompt(assistantContext model.AssistantContextInput, twinCo
 		b.WriteString("Browsing section library. Use list_sections / list_resumes to target a CV.\n")
 	default:
 		b.WriteString("When create/build intent is clear → tools this turn. Role-target create (\"CV for [role]\") → Role-targeted CV workflow: know user (Twin + resumes), research role, assess fit, create with tailored new items, verify content. If the message is short or unclear, ask one clarifying question first, never a chat-only CV draft.\n")
+	}
+	if isAdmin {
+		b.WriteString("\n## LinkedIn job search (admin)\n")
+		b.WriteString("Use search_linkedin_jobs for LinkedIn job discovery (not web_search). Results already exclude banned companies and jobs you applied to. Save your LinkedIn session in Admin Automations first. Use list_linkedin_applications to check application status.\n")
 	}
 	if twinContext != "" {
 		b.WriteString("\n")

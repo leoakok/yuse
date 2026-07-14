@@ -676,7 +676,7 @@ func (s *Service) sendAssistantMessage(
 	}
 	s.store.AppendAssistantMessage(userMessage)
 
-	tools := mcp.NewRegistry(s)
+	tools := mcp.NewRegistry(s, s.IsAdmin())
 	githubConnected := s.GitHubAccessToken() != ""
 	githubLogin := ""
 	if githubConnected {

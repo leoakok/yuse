@@ -3,6 +3,10 @@
     {
       "path": "/_/backend/internal/cron/job-automations",
       "schedule": "0 8 * * *"
+    },
+    {
+      "path": "/_/backend/internal/cron/linkedin-applications-sync",
+      "schedule": "0 */6 * * *"
     }
   ],
   "experimentalServices": {

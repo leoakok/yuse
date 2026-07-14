@@ -88,6 +88,7 @@ export function DrawerShellClose({
           size="icon-sm"
           className={cn("shrink-0", !inline && "absolute top-0 right-3", className)}
           disabled={disabled}
+          aria-label="Close"
         />
       }
     >

@@ -112,7 +112,7 @@ func (s *Service) agentLoop(
 	guidance string,
 	sink StreamSink,
 ) (*AgentTurn, error) {
-	systemPrompt := buildAgentSystemPrompt(assistantContext, twinContext, githubConnected, githubLogin)
+	systemPrompt := buildAgentSystemPrompt(assistantContext, twinContext, githubConnected, githubLogin, tools.IsAdmin())
 	if guidance != "" {
 		systemPrompt += "\n" + guidance
 	}

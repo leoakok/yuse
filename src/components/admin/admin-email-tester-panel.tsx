@@ -64,7 +64,6 @@ export function AdminEmailTesterPanel() {
             Email tester
           </span>
         }
-        description="Send a preview to your inbox"
       >
         <div className="flex max-w-md flex-col gap-4">
           <div className="space-y-2">

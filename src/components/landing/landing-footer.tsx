@@ -1,5 +1,7 @@
 import Link from "next/link";
 import { YuseLogo } from "@/components/brand/yuse-logo";
+import { GitHubMark } from "@/components/landing/brand-icons";
+import { YUSE_GITHUB_URL } from "@/lib/site/github";
 
 type LandingFooterProps = {
   isSignedIn?: boolean;
@@ -12,10 +14,17 @@ export function LandingFooter({ isSignedIn = false }: LandingFooterProps) {
         <div className="flex items-center gap-2 text-sm text-muted-foreground">
           <YuseLogo className="size-5" role="img" aria-label="Yuse" />
           <span className="font-medium text-foreground">Yuse</span>
-          <span aria-hidden>·</span>
-          <span>More than a one-page summary.</span>
         </div>
         <nav className="flex items-center gap-5 text-sm text-muted-foreground">
+          <a
+            href={YUSE_GITHUB_URL}
+            target="_blank"
+            rel="noopener noreferrer"
+            className="inline-flex items-center gap-1.5 rounded-md outline-none hover:text-foreground focus-visible:ring-2 focus-visible:ring-ring"
+          >
+            <GitHubMark className="size-3.5" />
+            GitHub
+          </a>
           {isSignedIn ? (
             <Link
               href="/home"

@@ -1391,7 +1391,7 @@ func (m *Memory) DeleteJobAutomation(_ string) (bool, error) {
 	return false, fmt.Errorf("not supported in memory store")
 }
 
-func (m *Memory) ListAutomationRuns(_ string, _ int) ([]*AutomationRunRecord, error) {
+func (m *Memory) ListAutomationRuns(_ string, _, _ int) ([]*AutomationRunRecord, error) {
 	return nil, nil
 }
 
@@ -1413,6 +1413,10 @@ func (m *Memory) BanCompany(_, _ string, _, _ *string) (*AutomationCompanyBanRec
 
 func (m *Memory) UnbanCompany(_ string) (bool, error) {
 	return false, fmt.Errorf("not supported in memory store")
+}
+
+func (m *Memory) ListLinkedInApplications(_, _ int) ([]*LinkedInApplicationRecord, error) {
+	return []*LinkedInApplicationRecord{}, nil
 }
 
 func (m *Memory) SaveLinkedInSession(_ string) (bool, *time.Time, error) {

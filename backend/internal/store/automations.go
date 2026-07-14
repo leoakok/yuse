@@ -222,13 +222,19 @@ func (p *Postgres) DeleteJobAutomation(id string) (bool, error) {
 	return tag.RowsAffected() > 0, nil
 }
 
-func (p *Postgres) ListAutomationRuns(automationID string, limit int) ([]*AutomationRunRecord, error) {
+func (p *Postgres) ListAutomationRuns(automationID string, limit, offset int) ([]*AutomationRunRecord, error) {
 	userID := p.activeUserID()
 	if userID == "" {
 		return nil, fmt.Errorf("not authenticated")
 	}
 	if limit <= 0 {
 		limit = 10
+	}
+	if limit > 50 {
+		limit = 50
+	}
+	if offset < 0 {
+		offset = 0
 	}
 	rows, err := p.pool.Query(p.ctx(), `
 		SELECT r.id, r.automation_id, r.started_at, r.finished_at, r.status,
@@ -237,8 +243,8 @@ func (p *Postgres) ListAutomationRuns(automationID string, limit int) ([]*Automa
 		JOIN job_automations a ON a.id = r.automation_id
 		WHERE r.automation_id = $1 AND a.user_id = $2
 		ORDER BY r.started_at DESC
-		LIMIT $3
-	`, automationID, userID, limit)
+		LIMIT $3 OFFSET $4
+	`, automationID, userID, limit, offset)
 	if err != nil {
 		return nil, fmt.Errorf("list automation runs: %w", err)
 	}

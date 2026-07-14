@@ -124,6 +124,41 @@ func Login(pool *pgxpool.Pool) http.HandlerFunc {
 	}
 }
 
+type resolveGoogleRequest struct {
+	GoogleID string `json:"googleId"`
+	Email    string `json:"email"`
+}
+
+func ResolveGoogle(pool *pgxpool.Pool) http.HandlerFunc {
+	return func(w http.ResponseWriter, r *http.Request) {
+		if r.Method != http.MethodPost {
+			http.Error(w, "method not allowed", http.StatusMethodNotAllowed)
+			return
+		}
+		LimitRequestBody(w, r, MaxAuthBodyBytes)
+
+		var req resolveGoogleRequest
+		if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
+			writeAuthError(w, "invalid json", http.StatusBadRequest)
+			return
+		}
+
+		userID, err := store.ResolveGoogleIdentity(r.Context(), pool, req.GoogleID, req.Email)
+		if err != nil {
+			status := http.StatusBadRequest
+			message := err.Error()
+			if errors.Is(err, store.ErrGoogleAlreadyLinked) {
+				status = http.StatusConflict
+				message = "google account already linked"
+			}
+			writeAuthError(w, message, status)
+			return
+		}
+
+		writeAuthJSON(w, http.StatusOK, map[string]string{"userId": userID})
+	}
+}
+
 func writeAuthJSON(w http.ResponseWriter, status int, payload any) {
 	w.Header().Set("Content-Type", "application/json")
 	w.WriteHeader(status)

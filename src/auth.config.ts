@@ -49,7 +49,7 @@ export const authConfig = {
 
       return true;
     },
-    jwt({ token, account, profile, user, trigger, session }) {
+    async jwt({ token, account, profile, user, trigger, session }) {
       if (trigger === "update" && session?.clearSessionBootstrap) {
         token.sessionBootstrap = false;
       }
@@ -65,8 +65,36 @@ export const authConfig = {
         return token;
       }
       if (account?.provider === "google" && account.providerAccountId) {
+        const googleProfile = profile as { email?: string; name?: string; picture?: string } | undefined;
+        const email = googleProfile?.email?.trim();
+        if (email) {
+          try {
+            const res = await fetch(`${backendBaseUrl()}/auth/resolve-google`, {
+              method: "POST",
+              headers: { "Content-Type": "application/json" },
+              body: JSON.stringify({
+                googleId: account.providerAccountId,
+                email,
+              }),
+              cache: "no-store",
+            });
+            if (res.ok) {
+              const data = (await res.json()) as { userId?: string };
+              if (data.userId) {
+                token.sub = data.userId;
+              } else {
+                token.sub = `google-${account.providerAccountId}`;
+              }
+            } else {
+              token.sub = `google-${account.providerAccountId}`;
+            }
+          } catch {
+            token.sub = `google-${account.providerAccountId}`;
+          }
+        } else {
+          token.sub = `google-${account.providerAccountId}`;
+        }
         token.googleId = account.providerAccountId;
-        token.sub = `google-${account.providerAccountId}`;
       }
       if (profile) {
         const googleProfile = profile as { email?: string; name?: string; picture?: string };

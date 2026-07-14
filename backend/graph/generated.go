@@ -244,6 +244,26 @@ type ComplexityRoot struct {
 		UpdatedAt func(childComplexity int) int
 	}
 
+	LinkedInApplication struct {
+		AppliedAt          func(childComplexity int) int
+		Company            func(childComplexity int) int
+		JobID              func(childComplexity int) int
+		LastSyncedAt       func(childComplexity int) int
+		LinkedInStatus     func(childComplexity int) int
+		RejectedAt         func(childComplexity int) int
+		ResumeDownloadedAt func(childComplexity int) int
+		Title              func(childComplexity int) int
+		TrackedJobID       func(childComplexity int) int
+		URL                func(childComplexity int) int
+		ViewedAt           func(childComplexity int) int
+	}
+
+	LinkedInApplicationSyncResult struct {
+		Created func(childComplexity int) int
+		Linked  func(childComplexity int) int
+		Synced  func(childComplexity int) int
+	}
+
 	LinkedInGeoLocation struct {
 		GeoID func(childComplexity int) int
 		Label func(childComplexity int) int
@@ -300,6 +320,7 @@ type ComplexityRoot struct {
 		DuplicatePortfolio                func(childComplexity int, id string) int
 		DuplicateResume                   func(childComplexity int, id string) int
 		RejectWaitlistEntry               func(childComplexity int, id string) int
+		RemovePassword                    func(childComplexity int) int
 		ReorderResumeSections             func(childComplexity int, input model.ReorderResumeSectionsInput) int
 		RequestProfilePhotoUpload         func(childComplexity int, contentType string, fileName string) int
 		ResendVerificationEmail           func(childComplexity int) int
@@ -308,13 +329,16 @@ type ComplexityRoot struct {
 		SendAssistantMessage              func(childComplexity int, threadID string, text string, context model.AssistantContextInput, attachments []*model.AssistantAttachmentInput) int
 		SendTestEmail                     func(childComplexity int, typeArg model.TestEmailType, recipientEmail string) int
 		SetAutomationMatchFeedback        func(childComplexity int, automationID string, jobID string, feedback model.AutomationMatchFeedback) int
+		SetPassword                       func(childComplexity int, newPassword string) int
 		SetPortfolioProjectVisibility     func(childComplexity int, input model.SetPortfolioProjectVisibilityInput) int
 		SetPortfolioSlug                  func(childComplexity int, portfolioID string, slug string) int
 		SetResumeSlug                     func(childComplexity int, resumeID string, slug string) int
 		SetUserActive                     func(childComplexity int, userID string, active bool) int
 		SetUserRole                       func(childComplexity int, userID string, role model.UserRole) int
 		SetUsername                       func(childComplexity int, username string) int
+		SyncLinkedInApplicationsNow       func(childComplexity int) int
 		UnbanAutomationCompany            func(childComplexity int, id string) int
+		UnlinkGoogle                      func(childComplexity int) int
 		UpdateContactProfile              func(childComplexity int, input model.UpdateContactProfileInput) int
 		UpdateInviteLink                  func(childComplexity int, input model.UpdateInviteLinkInput) int
 		UpdateJobAutomation               func(childComplexity int, input model.UpdateJobAutomationInput) int
@@ -429,7 +453,7 @@ type ComplexityRoot struct {
 		AssistantThreads           func(childComplexity int) int
 		AutomationCompanyBans      func(childComplexity int) int
 		AutomationMatches          func(childComplexity int, automationID string, limit *int, offset *int, feedback *model.AutomationMatchFeedback) int
-		AutomationRuns             func(childComplexity int, automationID string, limit *int) int
+		AutomationRuns             func(childComplexity int, automationID string, limit *int, offset *int) int
 		ClassifyAssistantMessage   func(childComplexity int, text string, context model.AssistantContextInput) int
 		ConnectionStatus           func(childComplexity int, provider model.ConnectionProvider) int
 		ContactProfiles            func(childComplexity int) int
@@ -437,6 +461,7 @@ type ComplexityRoot struct {
 		JobAutomation              func(childComplexity int, id string) int
 		JobAutomations             func(childComplexity int) int
 		KnowledgeEntries           func(childComplexity int, includeDisabled *bool) int
+		LinkedInApplications       func(childComplexity int, limit *int, offset *int) int
 		LinkedInSessionStatus      func(childComplexity int) int
 		Me                         func(childComplexity int) int
 		MyWorkspace                func(childComplexity int) int
@@ -621,6 +646,7 @@ type ComplexityRoot struct {
 		DisplayName           func(childComplexity int) int
 		Email                 func(childComplexity int) int
 		EmailVerified         func(childComplexity int) int
+		HasGoogleCredential   func(childComplexity int) int
 		HasPasswordCredential func(childComplexity int) int
 		ID                    func(childComplexity int) int
 		Role                  func(childComplexity int) int
@@ -679,6 +705,9 @@ type MutationResolver interface {
 	UpdatePortfolio(ctx context.Context, id string, title *string, tagline *string, about *string, contactProfileID *string) (*model.Portfolio, error)
 	SetUsername(ctx context.Context, username string) (*model.User, error)
 	ChangePassword(ctx context.Context, currentPassword string, newPassword string) (bool, error)
+	SetPassword(ctx context.Context, newPassword string) (bool, error)
+	RemovePassword(ctx context.Context) (bool, error)
+	UnlinkGoogle(ctx context.Context) (bool, error)
 	ChangeEmail(ctx context.Context, currentPassword string, email string) (*model.User, error)
 	ResendVerificationEmail(ctx context.Context) (bool, error)
 	SetPortfolioSlug(ctx context.Context, portfolioID string, slug string) (*model.Portfolio, error)
@@ -725,6 +754,7 @@ type MutationResolver interface {
 	SetAutomationMatchFeedback(ctx context.Context, automationID string, jobID string, feedback model.AutomationMatchFeedback) (*model.AutomationMatchedJob, error)
 	BanAutomationCompany(ctx context.Context, companyName string, sourceJobID *string, sourceAutomationID *string) (*model.AutomationCompanyBan, error)
 	UnbanAutomationCompany(ctx context.Context, id string) (bool, error)
+	SyncLinkedInApplicationsNow(ctx context.Context) (*model.LinkedInApplicationSyncResult, error)
 }
 type QueryResolver interface {
 	Me(ctx context.Context) (*model.User, error)
@@ -764,13 +794,15 @@ type QueryResolver interface {
 	AdminInviteLinks(ctx context.Context) ([]*model.InviteLink, error)
 	JobAutomations(ctx context.Context) ([]*model.JobAutomation, error)
 	JobAutomation(ctx context.Context, id string) (*model.JobAutomation, error)
-	AutomationRuns(ctx context.Context, automationID string, limit *int) ([]*model.AutomationRun, error)
+	AutomationRuns(ctx context.Context, automationID string, limit *int, offset *int) ([]*model.AutomationRun, error)
 	AutomationMatches(ctx context.Context, automationID string, limit *int, offset *int, feedback *model.AutomationMatchFeedback) ([]*model.AutomationMatchedJob, error)
 	AutomationCompanyBans(ctx context.Context) ([]*model.AutomationCompanyBan, error)
 	LinkedInSessionStatus(ctx context.Context) (*model.LinkedInSessionStatus, error)
+	LinkedInApplications(ctx context.Context, limit *int, offset *int) ([]*model.LinkedInApplication, error)
 }
 type UserResolver interface {
 	HasPasswordCredential(ctx context.Context, obj *model.User) (bool, error)
+	HasGoogleCredential(ctx context.Context, obj *model.User) (bool, error)
 	CanChangeEmail(ctx context.Context, obj *model.User) (bool, error)
 }
 
@@ -1801,6 +1833,104 @@ func (e *executableSchema) Complexity(ctx context.Context, typeName, field strin
 
 		return e.complexity.KnowledgeEntry.UpdatedAt(childComplexity), true
 
+	case "LinkedInApplication.appliedAt":
+		if e.complexity.LinkedInApplication.AppliedAt == nil {
+			break
+		}
+
+		return e.complexity.LinkedInApplication.AppliedAt(childComplexity), true
+
+	case "LinkedInApplication.company":
+		if e.complexity.LinkedInApplication.Company == nil {
+			break
+		}
+
+		return e.complexity.LinkedInApplication.Company(childComplexity), true
+
+	case "LinkedInApplication.jobId":
+		if e.complexity.LinkedInApplication.JobID == nil {
+			break
+		}
+
+		return e.complexity.LinkedInApplication.JobID(childComplexity), true
+
+	case "LinkedInApplication.lastSyncedAt":
+		if e.complexity.LinkedInApplication.LastSyncedAt == nil {
+			break
+		}
+
+		return e.complexity.LinkedInApplication.LastSyncedAt(childComplexity), true
+
+	case "LinkedInApplication.linkedInStatus":
+		if e.complexity.LinkedInApplication.LinkedInStatus == nil {
+			break
+		}
+
+		return e.complexity.LinkedInApplication.LinkedInStatus(childComplexity), true
+
+	case "LinkedInApplication.rejectedAt":
+		if e.complexity.LinkedInApplication.RejectedAt == nil {
+			break
+		}
+
+		return e.complexity.LinkedInApplication.RejectedAt(childComplexity), true
+
+	case "LinkedInApplication.resumeDownloadedAt":
+		if e.complexity.LinkedInApplication.ResumeDownloadedAt == nil {
+			break
+		}
+
+		return e.complexity.LinkedInApplication.ResumeDownloadedAt(childComplexity), true
+
+	case "LinkedInApplication.title":
+		if e.complexity.LinkedInApplication.Title == nil {
+			break
+		}
+
+		return e.complexity.LinkedInApplication.Title(childComplexity), true
+
+	case "LinkedInApplication.trackedJobId":
+		if e.complexity.LinkedInApplication.TrackedJobID == nil {
+			break
+		}
+
+		return e.complexity.LinkedInApplication.TrackedJobID(childComplexity), true
+
+	case "LinkedInApplication.url":
+		if e.complexity.LinkedInApplication.URL == nil {
+			break
+		}
+
+		return e.complexity.LinkedInApplication.URL(childComplexity), true
+
+	case "LinkedInApplication.viewedAt":
+		if e.complexity.LinkedInApplication.ViewedAt == nil {
+			break
+		}
+
+		return e.complexity.LinkedInApplication.ViewedAt(childComplexity), true
+
+	case "LinkedInApplicationSyncResult.created":
+		if e.complexity.LinkedInApplicationSyncResult.Created == nil {
+			break
+		}
+
+		return e.complexity.LinkedInApplicationSyncResult.Created(childComplexity), true
+
+	case "LinkedInApplicationSyncResult.linked":
+		if e.complexity.LinkedInApplicationSyncResult.Linked == nil {
+			break
+		}
+
+		return e.complexity.LinkedInApplicationSyncResult.Linked(childComplexity), true
+
+	case "LinkedInApplicationSyncResult.synced":
+		if e.complexity.LinkedInApplicationSyncResult.Synced == nil {
+			break
+		}
+
+		return e.complexity.LinkedInApplicationSyncResult.Synced(childComplexity), true
+
 	case "LinkedInGeoLocation.geoId":
 		if e.complexity.LinkedInGeoLocation.GeoID == nil {
 			break
@@ -2278,6 +2408,13 @@ func (e *executableSchema) Complexity(ctx context.Context, typeName, field strin
 
 		return e.complexity.Mutation.RejectWaitlistEntry(childComplexity, args["id"].(string)), true
 
+	case "Mutation.removePassword":
+		if e.complexity.Mutation.RemovePassword == nil {
+			break
+		}
+
+		return e.complexity.Mutation.RemovePassword(childComplexity), true
+
 	case "Mutation.reorderResumeSections":
 		if e.complexity.Mutation.ReorderResumeSections == nil {
 			break
@@ -2369,6 +2506,18 @@ func (e *executableSchema) Complexity(ctx context.Context, typeName, field strin
 
 		return e.complexity.Mutation.SetAutomationMatchFeedback(childComplexity, args["automationId"].(string), args["jobId"].(string), args["feedback"].(model.AutomationMatchFeedback)), true
 
+	case "Mutation.setPassword":
+		if e.complexity.Mutation.SetPassword == nil {
+			break
+		}
+
+		args, err := ec.field_Mutation_setPassword_args(ctx, rawArgs)
+		if err != nil {
+			return 0, false
+		}
+
+		return e.complexity.Mutation.SetPassword(childComplexity, args["newPassword"].(string)), true
+
 	case "Mutation.setPortfolioProjectVisibility":
 		if e.complexity.Mutation.SetPortfolioProjectVisibility == nil {
 			break
@@ -2441,6 +2590,13 @@ func (e *executableSchema) Complexity(ctx context.Context, typeName, field strin
 
 		return e.complexity.Mutation.SetUsername(childComplexity, args["username"].(string)), true
 
+	case "Mutation.syncLinkedInApplicationsNow":
+		if e.complexity.Mutation.SyncLinkedInApplicationsNow == nil {
+			break
+		}
+
+		return e.complexity.Mutation.SyncLinkedInApplicationsNow(childComplexity), true
+
 	case "Mutation.unbanAutomationCompany":
 		if e.complexity.Mutation.UnbanAutomationCompany == nil {
 			break
@@ -2452,6 +2608,13 @@ func (e *executableSchema) Complexity(ctx context.Context, typeName, field strin
 		}
 
 		return e.complexity.Mutation.UnbanAutomationCompany(childComplexity, args["id"].(string)), true
+
+	case "Mutation.unlinkGoogle":
+		if e.complexity.Mutation.UnlinkGoogle == nil {
+			break
+		}
+
+		return e.complexity.Mutation.UnlinkGoogle(childComplexity), true
 
 	case "Mutation.updateContactProfile":
 		if e.complexity.Mutation.UpdateContactProfile == nil {
@@ -3213,7 +3376,7 @@ func (e *executableSchema) Complexity(ctx context.Context, typeName, field strin
 			return 0, false
 		}
 
-		return e.complexity.Query.AutomationRuns(childComplexity, args["automationId"].(string), args["limit"].(*int)), true
+		return e.complexity.Query.AutomationRuns(childComplexity, args["automationId"].(string), args["limit"].(*int), args["offset"].(*int)), true
 
 	case "Query.classifyAssistantMessage":
 		if e.complexity.Query.ClassifyAssistantMessage == nil {
@@ -3283,6 +3446,18 @@ func (e *executableSchema) Complexity(ctx context.Context, typeName, field strin
 		}
 
 		return e.complexity.Query.KnowledgeEntries(childComplexity, args["includeDisabled"].(*bool)), true
+
+	case "Query.linkedInApplications":
+		if e.complexity.Query.LinkedInApplications == nil {
+			break
+		}
+
+		args, err := ec.field_Query_linkedInApplications_args(ctx, rawArgs)
+		if err != nil {
+			return 0, false
+		}
+
+		return e.complexity.Query.LinkedInApplications(childComplexity, args["limit"].(*int), args["offset"].(*int)), true
 
 	case "Query.linkedInSessionStatus":
 		if e.complexity.Query.LinkedInSessionStatus == nil {
@@ -4416,6 +4591,13 @@ func (e *executableSchema) Complexity(ctx context.Context, typeName, field strin
 
 		return e.complexity.User.EmailVerified(childComplexity), true
 
+	case "User.hasGoogleCredential":
+		if e.complexity.User.HasGoogleCredential == nil {
+			break
+		}
+
+		return e.complexity.User.HasGoogleCredential(childComplexity), true
+
 	case "User.hasPasswordCredential":
 		if e.complexity.User.HasPasswordCredential == nil {
 			break
@@ -5216,6 +5398,17 @@ func (ec *executionContext) field_Mutation_setAutomationMatchFeedback_args(ctx c
 	return args, nil
 }
 
+func (ec *executionContext) field_Mutation_setPassword_args(ctx context.Context, rawArgs map[string]any) (map[string]any, error) {
+	var err error
+	args := map[string]any{}
+	arg0, err := graphql.ProcessArgField(ctx, rawArgs, "newPassword", ec.unmarshalNString2string)
+	if err != nil {
+		return nil, err
+	}
+	args["newPassword"] = arg0
+	return args, nil
+}
+
 func (ec *executionContext) field_Mutation_setPortfolioProjectVisibility_args(ctx context.Context, rawArgs map[string]any) (map[string]any, error) {
 	var err error
 	args := map[string]any{}
@@ -5701,6 +5894,11 @@ func (ec *executionContext) field_Query_automationRuns_args(ctx context.Context,
 		return nil, err
 	}
 	args["limit"] = arg1
+	arg2, err := graphql.ProcessArgField(ctx, rawArgs, "offset", ec.unmarshalOInt2ᚖint)
+	if err != nil {
+		return nil, err
+	}
+	args["offset"] = arg2
 	return args, nil
 }
 
@@ -5750,6 +5948,22 @@ func (ec *executionContext) field_Query_knowledgeEntries_args(ctx context.Contex
 		return nil, err
 	}
 	args["includeDisabled"] = arg0
+	return args, nil
+}
+
+func (ec *executionContext) field_Query_linkedInApplications_args(ctx context.Context, rawArgs map[string]any) (map[string]any, error) {
+	var err error
+	args := map[string]any{}
+	arg0, err := graphql.ProcessArgField(ctx, rawArgs, "limit", ec.unmarshalOInt2ᚖint)
+	if err != nil {
+		return nil, err
+	}
+	args["limit"] = arg0
+	arg1, err := graphql.ProcessArgField(ctx, rawArgs, "offset", ec.unmarshalOInt2ᚖint)
+	if err != nil {
+		return nil, err
+	}
+	args["offset"] = arg1
 	return args, nil
 }
 
@@ -12299,6 +12513,601 @@ func (ec *executionContext) fieldContext_KnowledgeEntry_updatedAt(_ context.Cont
 	return fc, nil
 }
 
+func (ec *executionContext) _LinkedInApplication_jobId(ctx context.Context, field graphql.CollectedField, obj *model.LinkedInApplication) (ret graphql.Marshaler) {
+	fc, err := ec.fieldContext_LinkedInApplication_jobId(ctx, field)
+	if err != nil {
+		return graphql.Null
+	}
+	ctx = graphql.WithFieldContext(ctx, fc)
+	defer func() {
+		if r := recover(); r != nil {
+			ec.Error(ctx, ec.Recover(ctx, r))
+			ret = graphql.Null
+		}
+	}()
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (any, error) {
+		ctx = rctx // use context from middleware stack in children
+		return obj.JobID, nil
+	})
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	if resTmp == nil {
+		if !graphql.HasFieldError(ctx, fc) {
+			ec.Errorf(ctx, "must not be null")
+		}
+		return graphql.Null
+	}
+	res := resTmp.(string)
+	fc.Result = res
+	return ec.marshalNID2string(ctx, field.Selections, res)
+}
+
+func (ec *executionContext) fieldContext_LinkedInApplication_jobId(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "LinkedInApplication",
+		Field:      field,
+		IsMethod:   false,
+		IsResolver: false,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return nil, errors.New("field of type ID does not have child fields")
+		},
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _LinkedInApplication_title(ctx context.Context, field graphql.CollectedField, obj *model.LinkedInApplication) (ret graphql.Marshaler) {
+	fc, err := ec.fieldContext_LinkedInApplication_title(ctx, field)
+	if err != nil {
+		return graphql.Null
+	}
+	ctx = graphql.WithFieldContext(ctx, fc)
+	defer func() {
+		if r := recover(); r != nil {
+			ec.Error(ctx, ec.Recover(ctx, r))
+			ret = graphql.Null
+		}
+	}()
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (any, error) {
+		ctx = rctx // use context from middleware stack in children
+		return obj.Title, nil
+	})
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	if resTmp == nil {
+		if !graphql.HasFieldError(ctx, fc) {
+			ec.Errorf(ctx, "must not be null")
+		}
+		return graphql.Null
+	}
+	res := resTmp.(string)
+	fc.Result = res
+	return ec.marshalNString2string(ctx, field.Selections, res)
+}
+
+func (ec *executionContext) fieldContext_LinkedInApplication_title(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "LinkedInApplication",
+		Field:      field,
+		IsMethod:   false,
+		IsResolver: false,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return nil, errors.New("field of type String does not have child fields")
+		},
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _LinkedInApplication_company(ctx context.Context, field graphql.CollectedField, obj *model.LinkedInApplication) (ret graphql.Marshaler) {
+	fc, err := ec.fieldContext_LinkedInApplication_company(ctx, field)
+	if err != nil {
+		return graphql.Null
+	}
+	ctx = graphql.WithFieldContext(ctx, fc)
+	defer func() {
+		if r := recover(); r != nil {
+			ec.Error(ctx, ec.Recover(ctx, r))
+			ret = graphql.Null
+		}
+	}()
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (any, error) {
+		ctx = rctx // use context from middleware stack in children
+		return obj.Company, nil
+	})
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	if resTmp == nil {
+		return graphql.Null
+	}
+	res := resTmp.(*string)
+	fc.Result = res
+	return ec.marshalOString2ᚖstring(ctx, field.Selections, res)
+}
+
+func (ec *executionContext) fieldContext_LinkedInApplication_company(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "LinkedInApplication",
+		Field:      field,
+		IsMethod:   false,
+		IsResolver: false,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return nil, errors.New("field of type String does not have child fields")
+		},
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _LinkedInApplication_url(ctx context.Context, field graphql.CollectedField, obj *model.LinkedInApplication) (ret graphql.Marshaler) {
+	fc, err := ec.fieldContext_LinkedInApplication_url(ctx, field)
+	if err != nil {
+		return graphql.Null
+	}
+	ctx = graphql.WithFieldContext(ctx, fc)
+	defer func() {
+		if r := recover(); r != nil {
+			ec.Error(ctx, ec.Recover(ctx, r))
+			ret = graphql.Null
+		}
+	}()
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (any, error) {
+		ctx = rctx // use context from middleware stack in children
+		return obj.URL, nil
+	})
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	if resTmp == nil {
+		if !graphql.HasFieldError(ctx, fc) {
+			ec.Errorf(ctx, "must not be null")
+		}
+		return graphql.Null
+	}
+	res := resTmp.(string)
+	fc.Result = res
+	return ec.marshalNString2string(ctx, field.Selections, res)
+}
+
+func (ec *executionContext) fieldContext_LinkedInApplication_url(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "LinkedInApplication",
+		Field:      field,
+		IsMethod:   false,
+		IsResolver: false,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return nil, errors.New("field of type String does not have child fields")
+		},
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _LinkedInApplication_appliedAt(ctx context.Context, field graphql.CollectedField, obj *model.LinkedInApplication) (ret graphql.Marshaler) {
+	fc, err := ec.fieldContext_LinkedInApplication_appliedAt(ctx, field)
+	if err != nil {
+		return graphql.Null
+	}
+	ctx = graphql.WithFieldContext(ctx, fc)
+	defer func() {
+		if r := recover(); r != nil {
+			ec.Error(ctx, ec.Recover(ctx, r))
+			ret = graphql.Null
+		}
+	}()
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (any, error) {
+		ctx = rctx // use context from middleware stack in children
+		return obj.AppliedAt, nil
+	})
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	if resTmp == nil {
+		return graphql.Null
+	}
+	res := resTmp.(*string)
+	fc.Result = res
+	return ec.marshalODateTime2ᚖstring(ctx, field.Selections, res)
+}
+
+func (ec *executionContext) fieldContext_LinkedInApplication_appliedAt(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "LinkedInApplication",
+		Field:      field,
+		IsMethod:   false,
+		IsResolver: false,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return nil, errors.New("field of type DateTime does not have child fields")
+		},
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _LinkedInApplication_linkedInStatus(ctx context.Context, field graphql.CollectedField, obj *model.LinkedInApplication) (ret graphql.Marshaler) {
+	fc, err := ec.fieldContext_LinkedInApplication_linkedInStatus(ctx, field)
+	if err != nil {
+		return graphql.Null
+	}
+	ctx = graphql.WithFieldContext(ctx, fc)
+	defer func() {
+		if r := recover(); r != nil {
+			ec.Error(ctx, ec.Recover(ctx, r))
+			ret = graphql.Null
+		}
+	}()
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (any, error) {
+		ctx = rctx // use context from middleware stack in children
+		return obj.LinkedInStatus, nil
+	})
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	if resTmp == nil {
+		return graphql.Null
+	}
+	res := resTmp.(*string)
+	fc.Result = res
+	return ec.marshalOString2ᚖstring(ctx, field.Selections, res)
+}
+
+func (ec *executionContext) fieldContext_LinkedInApplication_linkedInStatus(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "LinkedInApplication",
+		Field:      field,
+		IsMethod:   false,
+		IsResolver: false,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return nil, errors.New("field of type String does not have child fields")
+		},
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _LinkedInApplication_viewedAt(ctx context.Context, field graphql.CollectedField, obj *model.LinkedInApplication) (ret graphql.Marshaler) {
+	fc, err := ec.fieldContext_LinkedInApplication_viewedAt(ctx, field)
+	if err != nil {
+		return graphql.Null
+	}
+	ctx = graphql.WithFieldContext(ctx, fc)
+	defer func() {
+		if r := recover(); r != nil {
+			ec.Error(ctx, ec.Recover(ctx, r))
+			ret = graphql.Null
+		}
+	}()
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (any, error) {
+		ctx = rctx // use context from middleware stack in children
+		return obj.ViewedAt, nil
+	})
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	if resTmp == nil {
+		return graphql.Null
+	}
+	res := resTmp.(*string)
+	fc.Result = res
+	return ec.marshalODateTime2ᚖstring(ctx, field.Selections, res)
+}
+
+func (ec *executionContext) fieldContext_LinkedInApplication_viewedAt(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "LinkedInApplication",
+		Field:      field,
+		IsMethod:   false,
+		IsResolver: false,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return nil, errors.New("field of type DateTime does not have child fields")
+		},
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _LinkedInApplication_resumeDownloadedAt(ctx context.Context, field graphql.CollectedField, obj *model.LinkedInApplication) (ret graphql.Marshaler) {
+	fc, err := ec.fieldContext_LinkedInApplication_resumeDownloadedAt(ctx, field)
+	if err != nil {
+		return graphql.Null
+	}
+	ctx = graphql.WithFieldContext(ctx, fc)
+	defer func() {
+		if r := recover(); r != nil {
+			ec.Error(ctx, ec.Recover(ctx, r))
+			ret = graphql.Null
+		}
+	}()
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (any, error) {
+		ctx = rctx // use context from middleware stack in children
+		return obj.ResumeDownloadedAt, nil
+	})
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	if resTmp == nil {
+		return graphql.Null
+	}
+	res := resTmp.(*string)
+	fc.Result = res
+	return ec.marshalODateTime2ᚖstring(ctx, field.Selections, res)
+}
+
+func (ec *executionContext) fieldContext_LinkedInApplication_resumeDownloadedAt(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "LinkedInApplication",
+		Field:      field,
+		IsMethod:   false,
+		IsResolver: false,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return nil, errors.New("field of type DateTime does not have child fields")
+		},
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _LinkedInApplication_rejectedAt(ctx context.Context, field graphql.CollectedField, obj *model.LinkedInApplication) (ret graphql.Marshaler) {
+	fc, err := ec.fieldContext_LinkedInApplication_rejectedAt(ctx, field)
+	if err != nil {
+		return graphql.Null
+	}
+	ctx = graphql.WithFieldContext(ctx, fc)
+	defer func() {
+		if r := recover(); r != nil {
+			ec.Error(ctx, ec.Recover(ctx, r))
+			ret = graphql.Null
+		}
+	}()
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (any, error) {
+		ctx = rctx // use context from middleware stack in children
+		return obj.RejectedAt, nil
+	})
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	if resTmp == nil {
+		return graphql.Null
+	}
+	res := resTmp.(*string)
+	fc.Result = res
+	return ec.marshalODateTime2ᚖstring(ctx, field.Selections, res)
+}
+
+func (ec *executionContext) fieldContext_LinkedInApplication_rejectedAt(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "LinkedInApplication",
+		Field:      field,
+		IsMethod:   false,
+		IsResolver: false,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return nil, errors.New("field of type DateTime does not have child fields")
+		},
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _LinkedInApplication_trackedJobId(ctx context.Context, field graphql.CollectedField, obj *model.LinkedInApplication) (ret graphql.Marshaler) {
+	fc, err := ec.fieldContext_LinkedInApplication_trackedJobId(ctx, field)
+	if err != nil {
+		return graphql.Null
+	}
+	ctx = graphql.WithFieldContext(ctx, fc)
+	defer func() {
+		if r := recover(); r != nil {
+			ec.Error(ctx, ec.Recover(ctx, r))
+			ret = graphql.Null
+		}
+	}()
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (any, error) {
+		ctx = rctx // use context from middleware stack in children
+		return obj.TrackedJobID, nil
+	})
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	if resTmp == nil {
+		return graphql.Null
+	}
+	res := resTmp.(*string)
+	fc.Result = res
+	return ec.marshalOID2ᚖstring(ctx, field.Selections, res)
+}
+
+func (ec *executionContext) fieldContext_LinkedInApplication_trackedJobId(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "LinkedInApplication",
+		Field:      field,
+		IsMethod:   false,
+		IsResolver: false,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return nil, errors.New("field of type ID does not have child fields")
+		},
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _LinkedInApplication_lastSyncedAt(ctx context.Context, field graphql.CollectedField, obj *model.LinkedInApplication) (ret graphql.Marshaler) {
+	fc, err := ec.fieldContext_LinkedInApplication_lastSyncedAt(ctx, field)
+	if err != nil {
+		return graphql.Null
+	}
+	ctx = graphql.WithFieldContext(ctx, fc)
+	defer func() {
+		if r := recover(); r != nil {
+			ec.Error(ctx, ec.Recover(ctx, r))
+			ret = graphql.Null
+		}
+	}()
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (any, error) {
+		ctx = rctx // use context from middleware stack in children
+		return obj.LastSyncedAt, nil
+	})
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	if resTmp == nil {
+		if !graphql.HasFieldError(ctx, fc) {
+			ec.Errorf(ctx, "must not be null")
+		}
+		return graphql.Null
+	}
+	res := resTmp.(string)
+	fc.Result = res
+	return ec.marshalNDateTime2string(ctx, field.Selections, res)
+}
+
+func (ec *executionContext) fieldContext_LinkedInApplication_lastSyncedAt(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "LinkedInApplication",
+		Field:      field,
+		IsMethod:   false,
+		IsResolver: false,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return nil, errors.New("field of type DateTime does not have child fields")
+		},
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _LinkedInApplicationSyncResult_synced(ctx context.Context, field graphql.CollectedField, obj *model.LinkedInApplicationSyncResult) (ret graphql.Marshaler) {
+	fc, err := ec.fieldContext_LinkedInApplicationSyncResult_synced(ctx, field)
+	if err != nil {
+		return graphql.Null
+	}
+	ctx = graphql.WithFieldContext(ctx, fc)
+	defer func() {
+		if r := recover(); r != nil {
+			ec.Error(ctx, ec.Recover(ctx, r))
+			ret = graphql.Null
+		}
+	}()
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (any, error) {
+		ctx = rctx // use context from middleware stack in children
+		return obj.Synced, nil
+	})
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	if resTmp == nil {
+		if !graphql.HasFieldError(ctx, fc) {
+			ec.Errorf(ctx, "must not be null")
+		}
+		return graphql.Null
+	}
+	res := resTmp.(int)
+	fc.Result = res
+	return ec.marshalNInt2int(ctx, field.Selections, res)
+}
+
+func (ec *executionContext) fieldContext_LinkedInApplicationSyncResult_synced(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "LinkedInApplicationSyncResult",
+		Field:      field,
+		IsMethod:   false,
+		IsResolver: false,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return nil, errors.New("field of type Int does not have child fields")
+		},
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _LinkedInApplicationSyncResult_linked(ctx context.Context, field graphql.CollectedField, obj *model.LinkedInApplicationSyncResult) (ret graphql.Marshaler) {
+	fc, err := ec.fieldContext_LinkedInApplicationSyncResult_linked(ctx, field)
+	if err != nil {
+		return graphql.Null
+	}
+	ctx = graphql.WithFieldContext(ctx, fc)
+	defer func() {
+		if r := recover(); r != nil {
+			ec.Error(ctx, ec.Recover(ctx, r))
+			ret = graphql.Null
+		}
+	}()
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (any, error) {
+		ctx = rctx // use context from middleware stack in children
+		return obj.Linked, nil
+	})
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	if resTmp == nil {
+		if !graphql.HasFieldError(ctx, fc) {
+			ec.Errorf(ctx, "must not be null")
+		}
+		return graphql.Null
+	}
+	res := resTmp.(int)
+	fc.Result = res
+	return ec.marshalNInt2int(ctx, field.Selections, res)
+}
+
+func (ec *executionContext) fieldContext_LinkedInApplicationSyncResult_linked(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "LinkedInApplicationSyncResult",
+		Field:      field,
+		IsMethod:   false,
+		IsResolver: false,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return nil, errors.New("field of type Int does not have child fields")
+		},
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _LinkedInApplicationSyncResult_created(ctx context.Context, field graphql.CollectedField, obj *model.LinkedInApplicationSyncResult) (ret graphql.Marshaler) {
+	fc, err := ec.fieldContext_LinkedInApplicationSyncResult_created(ctx, field)
+	if err != nil {
+		return graphql.Null
+	}
+	ctx = graphql.WithFieldContext(ctx, fc)
+	defer func() {
+		if r := recover(); r != nil {
+			ec.Error(ctx, ec.Recover(ctx, r))
+			ret = graphql.Null
+		}
+	}()
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (any, error) {
+		ctx = rctx // use context from middleware stack in children
+		return obj.Created, nil
+	})
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	if resTmp == nil {
+		if !graphql.HasFieldError(ctx, fc) {
+			ec.Errorf(ctx, "must not be null")
+		}
+		return graphql.Null
+	}
+	res := resTmp.(int)
+	fc.Result = res
+	return ec.marshalNInt2int(ctx, field.Selections, res)
+}
+
+func (ec *executionContext) fieldContext_LinkedInApplicationSyncResult_created(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "LinkedInApplicationSyncResult",
+		Field:      field,
+		IsMethod:   false,
+		IsResolver: false,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return nil, errors.New("field of type Int does not have child fields")
+		},
+	}
+	return fc, nil
+}
+
 func (ec *executionContext) _LinkedInGeoLocation_geoId(ctx context.Context, field graphql.CollectedField, obj *model.LinkedInGeoLocation) (ret graphql.Marshaler) {
 	fc, err := ec.fieldContext_LinkedInGeoLocation_geoId(ctx, field)
 	if err != nil {
@@ -14237,6 +15046,8 @@ func (ec *executionContext) fieldContext_Mutation_setUsername(ctx context.Contex
 				return ec.fieldContext_User_role(ctx, field)
 			case "hasPasswordCredential":
 				return ec.fieldContext_User_hasPasswordCredential(ctx, field)
+			case "hasGoogleCredential":
+				return ec.fieldContext_User_hasGoogleCredential(ctx, field)
 			case "canChangeEmail":
 				return ec.fieldContext_User_canChangeEmail(ctx, field)
 			case "emailVerified":
@@ -14318,6 +15129,149 @@ func (ec *executionContext) fieldContext_Mutation_changePassword(ctx context.Con
 	return fc, nil
 }
 
+func (ec *executionContext) _Mutation_setPassword(ctx context.Context, field graphql.CollectedField) (ret graphql.Marshaler) {
+	fc, err := ec.fieldContext_Mutation_setPassword(ctx, field)
+	if err != nil {
+		return graphql.Null
+	}
+	ctx = graphql.WithFieldContext(ctx, fc)
+	defer func() {
+		if r := recover(); r != nil {
+			ec.Error(ctx, ec.Recover(ctx, r))
+			ret = graphql.Null
+		}
+	}()
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (any, error) {
+		ctx = rctx // use context from middleware stack in children
+		return ec.resolvers.Mutation().SetPassword(rctx, fc.Args["newPassword"].(string))
+	})
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	if resTmp == nil {
+		if !graphql.HasFieldError(ctx, fc) {
+			ec.Errorf(ctx, "must not be null")
+		}
+		return graphql.Null
+	}
+	res := resTmp.(bool)
+	fc.Result = res
+	return ec.marshalNBoolean2bool(ctx, field.Selections, res)
+}
+
+func (ec *executionContext) fieldContext_Mutation_setPassword(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "Mutation",
+		Field:      field,
+		IsMethod:   true,
+		IsResolver: true,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return nil, errors.New("field of type Boolean does not have child fields")
+		},
+	}
+	defer func() {
+		if r := recover(); r != nil {
+			err = ec.Recover(ctx, r)
+			ec.Error(ctx, err)
+		}
+	}()
+	ctx = graphql.WithFieldContext(ctx, fc)
+	if fc.Args, err = ec.field_Mutation_setPassword_args(ctx, field.ArgumentMap(ec.Variables)); err != nil {
+		ec.Error(ctx, err)
+		return fc, err
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _Mutation_removePassword(ctx context.Context, field graphql.CollectedField) (ret graphql.Marshaler) {
+	fc, err := ec.fieldContext_Mutation_removePassword(ctx, field)
+	if err != nil {
+		return graphql.Null
+	}
+	ctx = graphql.WithFieldContext(ctx, fc)
+	defer func() {
+		if r := recover(); r != nil {
+			ec.Error(ctx, ec.Recover(ctx, r))
+			ret = graphql.Null
+		}
+	}()
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (any, error) {
+		ctx = rctx // use context from middleware stack in children
+		return ec.resolvers.Mutation().RemovePassword(rctx)
+	})
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	if resTmp == nil {
+		if !graphql.HasFieldError(ctx, fc) {
+			ec.Errorf(ctx, "must not be null")
+		}
+		return graphql.Null
+	}
+	res := resTmp.(bool)
+	fc.Result = res
+	return ec.marshalNBoolean2bool(ctx, field.Selections, res)
+}
+
+func (ec *executionContext) fieldContext_Mutation_removePassword(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "Mutation",
+		Field:      field,
+		IsMethod:   true,
+		IsResolver: true,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return nil, errors.New("field of type Boolean does not have child fields")
+		},
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _Mutation_unlinkGoogle(ctx context.Context, field graphql.CollectedField) (ret graphql.Marshaler) {
+	fc, err := ec.fieldContext_Mutation_unlinkGoogle(ctx, field)
+	if err != nil {
+		return graphql.Null
+	}
+	ctx = graphql.WithFieldContext(ctx, fc)
+	defer func() {
+		if r := recover(); r != nil {
+			ec.Error(ctx, ec.Recover(ctx, r))
+			ret = graphql.Null
+		}
+	}()
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (any, error) {
+		ctx = rctx // use context from middleware stack in children
+		return ec.resolvers.Mutation().UnlinkGoogle(rctx)
+	})
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	if resTmp == nil {
+		if !graphql.HasFieldError(ctx, fc) {
+			ec.Errorf(ctx, "must not be null")
+		}
+		return graphql.Null
+	}
+	res := resTmp.(bool)
+	fc.Result = res
+	return ec.marshalNBoolean2bool(ctx, field.Selections, res)
+}
+
+func (ec *executionContext) fieldContext_Mutation_unlinkGoogle(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "Mutation",
+		Field:      field,
+		IsMethod:   true,
+		IsResolver: true,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return nil, errors.New("field of type Boolean does not have child fields")
+		},
+	}
+	return fc, nil
+}
+
 func (ec *executionContext) _Mutation_changeEmail(ctx context.Context, field graphql.CollectedField) (ret graphql.Marshaler) {
 	fc, err := ec.fieldContext_Mutation_changeEmail(ctx, field)
 	if err != nil {
@@ -14371,6 +15325,8 @@ func (ec *executionContext) fieldContext_Mutation_changeEmail(ctx context.Contex
 				return ec.fieldContext_User_role(ctx, field)
 			case "hasPasswordCredential":
 				return ec.fieldContext_User_hasPasswordCredential(ctx, field)
+			case "hasGoogleCredential":
+				return ec.fieldContext_User_hasGoogleCredential(ctx, field)
 			case "canChangeEmail":
 				return ec.fieldContext_User_canChangeEmail(ctx, field)
 			case "emailVerified":
@@ -17511,6 +18467,58 @@ func (ec *executionContext) fieldContext_Mutation_unbanAutomationCompany(ctx con
 	return fc, nil
 }
 
+func (ec *executionContext) _Mutation_syncLinkedInApplicationsNow(ctx context.Context, field graphql.CollectedField) (ret graphql.Marshaler) {
+	fc, err := ec.fieldContext_Mutation_syncLinkedInApplicationsNow(ctx, field)
+	if err != nil {
+		return graphql.Null
+	}
+	ctx = graphql.WithFieldContext(ctx, fc)
+	defer func() {
+		if r := recover(); r != nil {
+			ec.Error(ctx, ec.Recover(ctx, r))
+			ret = graphql.Null
+		}
+	}()
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (any, error) {
+		ctx = rctx // use context from middleware stack in children
+		return ec.resolvers.Mutation().SyncLinkedInApplicationsNow(rctx)
+	})
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	if resTmp == nil {
+		if !graphql.HasFieldError(ctx, fc) {
+			ec.Errorf(ctx, "must not be null")
+		}
+		return graphql.Null
+	}
+	res := resTmp.(*model.LinkedInApplicationSyncResult)
+	fc.Result = res
+	return ec.marshalNLinkedInApplicationSyncResult2ᚖgithubᚗcomᚋleoᚋaiᚑweekendᚋbackendᚋgraphᚋmodelᚐLinkedInApplicationSyncResult(ctx, field.Selections, res)
+}
+
+func (ec *executionContext) fieldContext_Mutation_syncLinkedInApplicationsNow(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "Mutation",
+		Field:      field,
+		IsMethod:   true,
+		IsResolver: true,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			switch field.Name {
+			case "synced":
+				return ec.fieldContext_LinkedInApplicationSyncResult_synced(ctx, field)
+			case "linked":
+				return ec.fieldContext_LinkedInApplicationSyncResult_linked(ctx, field)
+			case "created":
+				return ec.fieldContext_LinkedInApplicationSyncResult_created(ctx, field)
+			}
+			return nil, fmt.Errorf("no field named %q was found under type LinkedInApplicationSyncResult", field.Name)
+		},
+	}
+	return fc, nil
+}
+
 func (ec *executionContext) _Portfolio_id(ctx context.Context, field graphql.CollectedField, obj *model.Portfolio) (ret graphql.Marshaler) {
 	fc, err := ec.fieldContext_Portfolio_id(ctx, field)
 	if err != nil {
@@ -20433,6 +21441,8 @@ func (ec *executionContext) fieldContext_Query_me(_ context.Context, field graph
 				return ec.fieldContext_User_role(ctx, field)
 			case "hasPasswordCredential":
 				return ec.fieldContext_User_hasPasswordCredential(ctx, field)
+			case "hasGoogleCredential":
+				return ec.fieldContext_User_hasGoogleCredential(ctx, field)
 			case "canChangeEmail":
 				return ec.fieldContext_User_canChangeEmail(ctx, field)
 			case "emailVerified":
@@ -22982,7 +23992,7 @@ func (ec *executionContext) _Query_automationRuns(ctx context.Context, field gra
 	}()
 	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (any, error) {
 		ctx = rctx // use context from middleware stack in children
-		return ec.resolvers.Query().AutomationRuns(rctx, fc.Args["automationId"].(string), fc.Args["limit"].(*int))
+		return ec.resolvers.Query().AutomationRuns(rctx, fc.Args["automationId"].(string), fc.Args["limit"].(*int), fc.Args["offset"].(*int))
 	})
 	if err != nil {
 		ec.Error(ctx, err)
@@ -23226,6 +24236,85 @@ func (ec *executionContext) fieldContext_Query_linkedInSessionStatus(_ context.C
 			}
 			return nil, fmt.Errorf("no field named %q was found under type LinkedInSessionStatus", field.Name)
 		},
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _Query_linkedInApplications(ctx context.Context, field graphql.CollectedField) (ret graphql.Marshaler) {
+	fc, err := ec.fieldContext_Query_linkedInApplications(ctx, field)
+	if err != nil {
+		return graphql.Null
+	}
+	ctx = graphql.WithFieldContext(ctx, fc)
+	defer func() {
+		if r := recover(); r != nil {
+			ec.Error(ctx, ec.Recover(ctx, r))
+			ret = graphql.Null
+		}
+	}()
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (any, error) {
+		ctx = rctx // use context from middleware stack in children
+		return ec.resolvers.Query().LinkedInApplications(rctx, fc.Args["limit"].(*int), fc.Args["offset"].(*int))
+	})
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	if resTmp == nil {
+		if !graphql.HasFieldError(ctx, fc) {
+			ec.Errorf(ctx, "must not be null")
+		}
+		return graphql.Null
+	}
+	res := resTmp.([]*model.LinkedInApplication)
+	fc.Result = res
+	return ec.marshalNLinkedInApplication2ᚕᚖgithubᚗcomᚋleoᚋaiᚑweekendᚋbackendᚋgraphᚋmodelᚐLinkedInApplicationᚄ(ctx, field.Selections, res)
+}
+
+func (ec *executionContext) fieldContext_Query_linkedInApplications(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "Query",
+		Field:      field,
+		IsMethod:   true,
+		IsResolver: true,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			switch field.Name {
+			case "jobId":
+				return ec.fieldContext_LinkedInApplication_jobId(ctx, field)
+			case "title":
+				return ec.fieldContext_LinkedInApplication_title(ctx, field)
+			case "company":
+				return ec.fieldContext_LinkedInApplication_company(ctx, field)
+			case "url":
+				return ec.fieldContext_LinkedInApplication_url(ctx, field)
+			case "appliedAt":
+				return ec.fieldContext_LinkedInApplication_appliedAt(ctx, field)
+			case "linkedInStatus":
+				return ec.fieldContext_LinkedInApplication_linkedInStatus(ctx, field)
+			case "viewedAt":
+				return ec.fieldContext_LinkedInApplication_viewedAt(ctx, field)
+			case "resumeDownloadedAt":
+				return ec.fieldContext_LinkedInApplication_resumeDownloadedAt(ctx, field)
+			case "rejectedAt":
+				return ec.fieldContext_LinkedInApplication_rejectedAt(ctx, field)
+			case "trackedJobId":
+				return ec.fieldContext_LinkedInApplication_trackedJobId(ctx, field)
+			case "lastSyncedAt":
+				return ec.fieldContext_LinkedInApplication_lastSyncedAt(ctx, field)
+			}
+			return nil, fmt.Errorf("no field named %q was found under type LinkedInApplication", field.Name)
+		},
+	}
+	defer func() {
+		if r := recover(); r != nil {
+			err = ec.Recover(ctx, r)
+			ec.Error(ctx, err)
+		}
+	}()
+	ctx = graphql.WithFieldContext(ctx, fc)
+	if fc.Args, err = ec.field_Query_linkedInApplications_args(ctx, field.ArgumentMap(ec.Variables)); err != nil {
+		ec.Error(ctx, err)
+		return fc, err
 	}
 	return fc, nil
 }
@@ -29310,6 +30399,50 @@ func (ec *executionContext) _User_hasPasswordCredential(ctx context.Context, fie
 }
 
 func (ec *executionContext) fieldContext_User_hasPasswordCredential(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "User",
+		Field:      field,
+		IsMethod:   true,
+		IsResolver: true,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return nil, errors.New("field of type Boolean does not have child fields")
+		},
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _User_hasGoogleCredential(ctx context.Context, field graphql.CollectedField, obj *model.User) (ret graphql.Marshaler) {
+	fc, err := ec.fieldContext_User_hasGoogleCredential(ctx, field)
+	if err != nil {
+		return graphql.Null
+	}
+	ctx = graphql.WithFieldContext(ctx, fc)
+	defer func() {
+		if r := recover(); r != nil {
+			ec.Error(ctx, ec.Recover(ctx, r))
+			ret = graphql.Null
+		}
+	}()
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (any, error) {
+		ctx = rctx // use context from middleware stack in children
+		return ec.resolvers.User().HasGoogleCredential(rctx, obj)
+	})
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	if resTmp == nil {
+		if !graphql.HasFieldError(ctx, fc) {
+			ec.Errorf(ctx, "must not be null")
+		}
+		return graphql.Null
+	}
+	res := resTmp.(bool)
+	fc.Result = res
+	return ec.marshalNBoolean2bool(ctx, field.Selections, res)
+}
+
+func (ec *executionContext) fieldContext_User_hasGoogleCredential(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
 	fc = &graphql.FieldContext{
 		Object:     "User",
 		Field:      field,
@@ -35715,6 +36848,123 @@ func (ec *executionContext) _KnowledgeEntry(ctx context.Context, sel ast.Selecti
 	return out
 }
 
+var linkedInApplicationImplementors = []string{"LinkedInApplication"}
+
+func (ec *executionContext) _LinkedInApplication(ctx context.Context, sel ast.SelectionSet, obj *model.LinkedInApplication) graphql.Marshaler {
+	fields := graphql.CollectFields(ec.OperationContext, sel, linkedInApplicationImplementors)
+
+	out := graphql.NewFieldSet(fields)
+	deferred := make(map[string]*graphql.FieldSet)
+	for i, field := range fields {
+		switch field.Name {
+		case "__typename":
+			out.Values[i] = graphql.MarshalString("LinkedInApplication")
+		case "jobId":
+			out.Values[i] = ec._LinkedInApplication_jobId(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				out.Invalids++
+			}
+		case "title":
+			out.Values[i] = ec._LinkedInApplication_title(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				out.Invalids++
+			}
+		case "company":
+			out.Values[i] = ec._LinkedInApplication_company(ctx, field, obj)
+		case "url":
+			out.Values[i] = ec._LinkedInApplication_url(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				out.Invalids++
+			}
+		case "appliedAt":
+			out.Values[i] = ec._LinkedInApplication_appliedAt(ctx, field, obj)
+		case "linkedInStatus":
+			out.Values[i] = ec._LinkedInApplication_linkedInStatus(ctx, field, obj)
+		case "viewedAt":
+			out.Values[i] = ec._LinkedInApplication_viewedAt(ctx, field, obj)
+		case "resumeDownloadedAt":
+			out.Values[i] = ec._LinkedInApplication_resumeDownloadedAt(ctx, field, obj)
+		case "rejectedAt":
+			out.Values[i] = ec._LinkedInApplication_rejectedAt(ctx, field, obj)
+		case "trackedJobId":
+			out.Values[i] = ec._LinkedInApplication_trackedJobId(ctx, field, obj)
+		case "lastSyncedAt":
+			out.Values[i] = ec._LinkedInApplication_lastSyncedAt(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				out.Invalids++
+			}
+		default:
+			panic("unknown field " + strconv.Quote(field.Name))
+		}
+	}
+	out.Dispatch(ctx)
+	if out.Invalids > 0 {
+		return graphql.Null
+	}
+
+	atomic.AddInt32(&ec.deferred, int32(len(deferred)))
+
+	for label, dfs := range deferred {
+		ec.processDeferredGroup(graphql.DeferredGroup{
+			Label:    label,
+			Path:     graphql.GetPath(ctx),
+			FieldSet: dfs,
+			Context:  ctx,
+		})
+	}
+
+	return out
+}
+
+var linkedInApplicationSyncResultImplementors = []string{"LinkedInApplicationSyncResult"}
+
+func (ec *executionContext) _LinkedInApplicationSyncResult(ctx context.Context, sel ast.SelectionSet, obj *model.LinkedInApplicationSyncResult) graphql.Marshaler {
+	fields := graphql.CollectFields(ec.OperationContext, sel, linkedInApplicationSyncResultImplementors)
+
+	out := graphql.NewFieldSet(fields)
+	deferred := make(map[string]*graphql.FieldSet)
+	for i, field := range fields {
+		switch field.Name {
+		case "__typename":
+			out.Values[i] = graphql.MarshalString("LinkedInApplicationSyncResult")
+		case "synced":
+			out.Values[i] = ec._LinkedInApplicationSyncResult_synced(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				out.Invalids++
+			}
+		case "linked":
+			out.Values[i] = ec._LinkedInApplicationSyncResult_linked(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				out.Invalids++
+			}
+		case "created":
+			out.Values[i] = ec._LinkedInApplicationSyncResult_created(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				out.Invalids++
+			}
+		default:
+			panic("unknown field " + strconv.Quote(field.Name))
+		}
+	}
+	out.Dispatch(ctx)
+	if out.Invalids > 0 {
+		return graphql.Null
+	}
+
+	atomic.AddInt32(&ec.deferred, int32(len(deferred)))
+
+	for label, dfs := range deferred {
+		ec.processDeferredGroup(graphql.DeferredGroup{
+			Label:    label,
+			Path:     graphql.GetPath(ctx),
+			FieldSet: dfs,
+			Context:  ctx,
+		})
+	}
+
+	return out
+}
+
 var linkedInGeoLocationImplementors = []string{"LinkedInGeoLocation"}
 
 func (ec *executionContext) _LinkedInGeoLocation(ctx context.Context, sel ast.SelectionSet, obj *model.LinkedInGeoLocation) graphql.Marshaler {
@@ -36016,6 +37266,27 @@ func (ec *executionContext) _Mutation(ctx context.Context, sel ast.SelectionSet)
 		case "changePassword":
 			out.Values[i] = ec.OperationContext.RootResolverMiddleware(innerCtx, func(ctx context.Context) (res graphql.Marshaler) {
 				return ec._Mutation_changePassword(ctx, field)
+			})
+			if out.Values[i] == graphql.Null {
+				out.Invalids++
+			}
+		case "setPassword":
+			out.Values[i] = ec.OperationContext.RootResolverMiddleware(innerCtx, func(ctx context.Context) (res graphql.Marshaler) {
+				return ec._Mutation_setPassword(ctx, field)
+			})
+			if out.Values[i] == graphql.Null {
+				out.Invalids++
+			}
+		case "removePassword":
+			out.Values[i] = ec.OperationContext.RootResolverMiddleware(innerCtx, func(ctx context.Context) (res graphql.Marshaler) {
+				return ec._Mutation_removePassword(ctx, field)
+			})
+			if out.Values[i] == graphql.Null {
+				out.Invalids++
+			}
+		case "unlinkGoogle":
+			out.Values[i] = ec.OperationContext.RootResolverMiddleware(innerCtx, func(ctx context.Context) (res graphql.Marshaler) {
+				return ec._Mutation_unlinkGoogle(ctx, field)
 			})
 			if out.Values[i] == graphql.Null {
 				out.Invalids++
@@ -36338,6 +37609,13 @@ func (ec *executionContext) _Mutation(ctx context.Context, sel ast.SelectionSet)
 		case "unbanAutomationCompany":
 			out.Values[i] = ec.OperationContext.RootResolverMiddleware(innerCtx, func(ctx context.Context) (res graphql.Marshaler) {
 				return ec._Mutation_unbanAutomationCompany(ctx, field)
+			})
+			if out.Values[i] == graphql.Null {
+				out.Invalids++
+			}
+		case "syncLinkedInApplicationsNow":
+			out.Values[i] = ec.OperationContext.RootResolverMiddleware(innerCtx, func(ctx context.Context) (res graphql.Marshaler) {
+				return ec._Mutation_syncLinkedInApplicationsNow(ctx, field)
 			})
 			if out.Values[i] == graphql.Null {
 				out.Invalids++
@@ -37777,6 +39055,28 @@ func (ec *executionContext) _Query(ctx context.Context, sel ast.SelectionSet) gr
 			}
 
 			out.Concurrently(i, func(ctx context.Context) graphql.Marshaler { return rrm(innerCtx) })
+		case "linkedInApplications":
+			field := field
+
+			innerFunc := func(ctx context.Context, fs *graphql.FieldSet) (res graphql.Marshaler) {
+				defer func() {
+					if r := recover(); r != nil {
+						ec.Error(ctx, ec.Recover(ctx, r))
+					}
+				}()
+				res = ec._Query_linkedInApplications(ctx, field)
+				if res == graphql.Null {
+					atomic.AddUint32(&fs.Invalids, 1)
+				}
+				return res
+			}
+
+			rrm := func(ctx context.Context) graphql.Marshaler {
+				return ec.OperationContext.RootResolverMiddleware(ctx,
+					func(ctx context.Context) graphql.Marshaler { return innerFunc(ctx, out) })
+			}
+
+			out.Concurrently(i, func(ctx context.Context) graphql.Marshaler { return rrm(innerCtx) })
 		case "__type":
 			out.Values[i] = ec.OperationContext.RootResolverMiddleware(innerCtx, func(ctx context.Context) (res graphql.Marshaler) {
 				return ec._Query___type(ctx, field)
@@ -38776,6 +40076,42 @@ func (ec *executionContext) _User(ctx context.Context, sel ast.SelectionSet, obj
 					}
 				}()
 				res = ec._User_hasPasswordCredential(ctx, field, obj)
+				if res == graphql.Null {
+					atomic.AddUint32(&fs.Invalids, 1)
+				}
+				return res
+			}
+
+			if field.Deferrable != nil {
+				dfs, ok := deferred[field.Deferrable.Label]
+				di := 0
+				if ok {
+					dfs.AddField(field)
+					di = len(dfs.Values) - 1
+				} else {
+					dfs = graphql.NewFieldSet([]graphql.CollectedField{field})
+					deferred[field.Deferrable.Label] = dfs
+				}
+				dfs.Concurrently(di, func(ctx context.Context) graphql.Marshaler {
+					return innerFunc(ctx, dfs)
+				})
+
+				// don't run the out.Concurrently() call below
+				out.Values[i] = graphql.Null
+				continue
+			}
+
+			out.Concurrently(i, func(ctx context.Context) graphql.Marshaler { return innerFunc(ctx, out) })
+		case "hasGoogleCredential":
+			field := field
+
+			innerFunc := func(ctx context.Context, fs *graphql.FieldSet) (res graphql.Marshaler) {
+				defer func() {
+					if r := recover(); r != nil {
+						ec.Error(ctx, ec.Recover(ctx, r))
+					}
+				}()
+				res = ec._User_hasGoogleCredential(ctx, field, obj)
 				if res == graphql.Null {
 					atomic.AddUint32(&fs.Invalids, 1)
 				}
@@ -40692,6 +42028,74 @@ func (ec *executionContext) unmarshalNLineHeightDensity2githubᚗcomᚋleoᚋai�
 
 func (ec *executionContext) marshalNLineHeightDensity2githubᚗcomᚋleoᚋaiᚑweekendᚋbackendᚋgraphᚋmodelᚐLineHeightDensity(ctx context.Context, sel ast.SelectionSet, v model.LineHeightDensity) graphql.Marshaler {
 	return v
+}
+
+func (ec *executionContext) marshalNLinkedInApplication2ᚕᚖgithubᚗcomᚋleoᚋaiᚑweekendᚋbackendᚋgraphᚋmodelᚐLinkedInApplicationᚄ(ctx context.Context, sel ast.SelectionSet, v []*model.LinkedInApplication) graphql.Marshaler {
+	ret := make(graphql.Array, len(v))
+	var wg sync.WaitGroup
+	isLen1 := len(v) == 1
+	if !isLen1 {
+		wg.Add(len(v))
+	}
+	for i := range v {
+		i := i
+		fc := &graphql.FieldContext{
+			Index:  &i,
+			Result: &v[i],
+		}
+		ctx := graphql.WithFieldContext(ctx, fc)
+		f := func(i int) {
+			defer func() {
+				if r := recover(); r != nil {
+					ec.Error(ctx, ec.Recover(ctx, r))
+					ret = nil
+				}
+			}()
+			if !isLen1 {
+				defer wg.Done()
+			}
+			ret[i] = ec.marshalNLinkedInApplication2ᚖgithubᚗcomᚋleoᚋaiᚑweekendᚋbackendᚋgraphᚋmodelᚐLinkedInApplication(ctx, sel, v[i])
+		}
+		if isLen1 {
+			f(i)
+		} else {
+			go f(i)
+		}
+
+	}
+	wg.Wait()
+
+	for _, e := range ret {
+		if e == graphql.Null {
+			return graphql.Null
+		}
+	}
+
+	return ret
+}
+
+func (ec *executionContext) marshalNLinkedInApplication2ᚖgithubᚗcomᚋleoᚋaiᚑweekendᚋbackendᚋgraphᚋmodelᚐLinkedInApplication(ctx context.Context, sel ast.SelectionSet, v *model.LinkedInApplication) graphql.Marshaler {
+	if v == nil {
+		if !graphql.HasFieldError(ctx, graphql.GetFieldContext(ctx)) {
+			ec.Errorf(ctx, "the requested element is null which the schema does not allow")
+		}
+		return graphql.Null
+	}
+	return ec._LinkedInApplication(ctx, sel, v)
+}
+
+func (ec *executionContext) marshalNLinkedInApplicationSyncResult2githubᚗcomᚋleoᚋaiᚑweekendᚋbackendᚋgraphᚋmodelᚐLinkedInApplicationSyncResult(ctx context.Context, sel ast.SelectionSet, v model.LinkedInApplicationSyncResult) graphql.Marshaler {
+	return ec._LinkedInApplicationSyncResult(ctx, sel, &v)
+}
+
+func (ec *executionContext) marshalNLinkedInApplicationSyncResult2ᚖgithubᚗcomᚋleoᚋaiᚑweekendᚋbackendᚋgraphᚋmodelᚐLinkedInApplicationSyncResult(ctx context.Context, sel ast.SelectionSet, v *model.LinkedInApplicationSyncResult) graphql.Marshaler {
+	if v == nil {
+		if !graphql.HasFieldError(ctx, graphql.GetFieldContext(ctx)) {
+			ec.Errorf(ctx, "the requested element is null which the schema does not allow")
+		}
+		return graphql.Null
+	}
+	return ec._LinkedInApplicationSyncResult(ctx, sel, v)
 }
 
 func (ec *executionContext) unmarshalNLinkedInEmploymentType2githubᚗcomᚋleoᚋaiᚑweekendᚋbackendᚋgraphᚋmodelᚐLinkedInEmploymentType(ctx context.Context, v any) (model.LinkedInEmploymentType, error) {

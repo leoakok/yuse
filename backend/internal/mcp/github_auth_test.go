@@ -241,6 +241,15 @@ func (githubTokenExecutor) UpdateTrackedJob(model.UpdateTrackedJobInput) (*model
 func (githubTokenExecutor) DeleteTrackedJob(string) (bool, error) { return false, nil }
 func (e githubTokenExecutor) GitHubAccessToken() string { return e.token }
 func (githubTokenExecutor) UserEmail() string { return "" }
+func (githubTokenExecutor) IsAdmin() bool { return false }
+
+func (githubTokenExecutor) AgentSearchLinkedInJobs(context.Context, map[string]any) (map[string]any, error) {
+	return nil, fmt.Errorf("not implemented")
+}
+
+func (githubTokenExecutor) AgentListLinkedInApplications(int, int) (map[string]any, error) {
+	return nil, fmt.Errorf("not implemented")
+}
 
 func TestSearchGitHubRegistryAllowsEmptyQueryWithConnectedAccount(t *testing.T) {
 	srv := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
@@ -261,7 +270,7 @@ func TestSearchGitHubRegistryAllowsEmptyQueryWithConnectedAccount(t *testing.T) 
 	githubAPIBaseURL = srv.URL
 	defer func() { githubAPIBaseURL = orig }()
 
-	registry := NewRegistry(githubTokenExecutor{token: "oauth-token"})
+	registry := NewRegistry(githubTokenExecutor{token: "oauth-token"}, false)
 	args, _ := json.Marshal(map[string]any{
 		"listUserRepos": true,
 		"maxResults":    5,

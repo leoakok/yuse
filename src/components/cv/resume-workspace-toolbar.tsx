@@ -63,9 +63,9 @@ export function ResumeWorkspaceToolbar({
             size="icon"
             className="hidden size-8 shrink-0 lg:inline-flex"
             onClick={() => setEditorOpen(false)}
+            aria-label="Hide editor"
           >
             <PanelLeftClose className="size-4" />
-            <span className="sr-only">Hide editor</span>
           </Button>
           <div className="flex min-w-0 rounded-lg border p-0.5">
             <Button

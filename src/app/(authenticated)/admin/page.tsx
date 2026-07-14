@@ -3,11 +3,7 @@ import { AdminWorkspace } from "@/components/admin/admin-workspace";
 
 export default function AdminPage() {
   return (
-    <CatalogShell
-      title="Admin"
-      description="Manage beta access, users, and agent tuning."
-      fillHeight
-    >
+    <CatalogShell fillHeight width="full" edgeToEdge>
       <AdminWorkspace />
     </CatalogShell>
   );

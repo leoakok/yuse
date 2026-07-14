@@ -88,7 +88,6 @@ export function ConnectionsWorkspace() {
           GitHub
         </span>
       }
-      description="Connect GitHub to let the assistant search your repos, including private ones, when building your CV. Without a connection, public pages still work via web explore."
     >
       {loading ? (
         <p className="py-2 text-sm text-muted-foreground" aria-busy="true">
@@ -129,8 +128,8 @@ export function ConnectionsWorkspace() {
       ) : (
         <>
           <p className="text-sm text-muted-foreground">
-            Not connected. You can still import public GitHub profiles, connecting unlocks your
-            private repos and higher API limits.
+            Connect GitHub so Yuse can search your private repos when building a CV.
+            Public pages still work without a connection.
           </p>
           <Button
             onClick={() => {

@@ -7,6 +7,14 @@ import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Input } from "@/components/ui/input";
 import {
+  DataTable,
+  DataTableBody,
+  DataTableCell,
+  DataTableHead,
+  DataTableHeader,
+  DataTableRow,
+} from "@/components/ui/data-table";
+import {
   createInviteLink,
   listAdminInviteLinks,
   updateInviteLink,
@@ -147,59 +155,57 @@ export function AdminInvitesPanel() {
       ) : links.length === 0 ? (
         <p className="text-sm text-muted-foreground">No invite links yet.</p>
       ) : (
-        <div className="overflow-x-auto rounded-lg border border-border">
-          <table className="w-full min-w-[720px] text-left text-sm">
-            <thead className="border-b border-border bg-muted/40 text-muted-foreground">
-              <tr>
-                <th className="px-4 py-3 font-medium">Link</th>
-                <th className="px-4 py-3 font-medium">Restrictions</th>
-                <th className="px-4 py-3 font-medium">Usage</th>
-                <th className="px-4 py-3 font-medium">Status</th>
-                <th className="px-4 py-3 font-medium">Actions</th>
-              </tr>
-            </thead>
-            <tbody>
-              {links.map((link) => (
-                <tr key={link.id} className="border-b border-border/60 last:border-0">
-                  <td className="px-4 py-3">
-                    <div className="font-medium">{link.label || link.code}</div>
-                    <div className="text-muted-foreground">{link.urlPath}</div>
-                  </td>
-                  <td className="px-4 py-3 text-muted-foreground">
-                    {link.emailRestrict ? `Email: ${link.emailRestrict}` : "Any email"}
-                    {link.maxUses != null ? ` · Max ${link.maxUses}` : ""}
-                  </td>
-                  <td className="px-4 py-3 text-muted-foreground">
-                    {link.useCount}
-                    {link.maxUses != null ? ` / ${link.maxUses}` : ""}
-                  </td>
-                  <td className="px-4 py-3">
-                    <Badge variant={link.isActive ? "secondary" : "outline"}>
-                      {link.isActive ? "Active" : "Inactive"}
-                    </Badge>
-                  </td>
-                  <td className="px-4 py-3">
-                    <div className="flex flex-wrap gap-2">
-                      <Button type="button" size="sm" variant="outline" onClick={() => void copyLink(link)}>
-                        <Copy />
-                        Copy
-                      </Button>
-                      <Button
-                        type="button"
-                        size="sm"
-                        variant="outline"
-                        disabled={busyId === link.id}
-                        onClick={() => void toggleActive(link)}
-                      >
-                        {link.isActive ? "Deactivate" : "Activate"}
-                      </Button>
-                    </div>
-                  </td>
-                </tr>
-              ))}
-            </tbody>
-          </table>
-        </div>
+        <DataTable minWidth="720px">
+          <DataTableHeader>
+            <tr>
+              <DataTableHead>Link</DataTableHead>
+              <DataTableHead>Restrictions</DataTableHead>
+              <DataTableHead>Usage</DataTableHead>
+              <DataTableHead>Status</DataTableHead>
+              <DataTableHead>Actions</DataTableHead>
+            </tr>
+          </DataTableHeader>
+          <DataTableBody>
+            {links.map((link) => (
+              <DataTableRow key={link.id}>
+                <DataTableCell>
+                  <div className="font-medium">{link.label || link.code}</div>
+                  <div className="text-muted-foreground">{link.urlPath}</div>
+                </DataTableCell>
+                <DataTableCell muted>
+                  {link.emailRestrict ? `Email: ${link.emailRestrict}` : "Any email"}
+                  {link.maxUses != null ? ` · Max ${link.maxUses}` : ""}
+                </DataTableCell>
+                <DataTableCell muted>
+                  {link.useCount}
+                  {link.maxUses != null ? ` / ${link.maxUses}` : ""}
+                </DataTableCell>
+                <DataTableCell>
+                  <Badge variant={link.isActive ? "secondary" : "outline"}>
+                    {link.isActive ? "Active" : "Inactive"}
+                  </Badge>
+                </DataTableCell>
+                <DataTableCell>
+                  <div className="flex flex-wrap gap-2">
+                    <Button type="button" size="sm" variant="outline" onClick={() => void copyLink(link)}>
+                      <Copy />
+                      Copy
+                    </Button>
+                    <Button
+                      type="button"
+                      size="sm"
+                      variant="outline"
+                      disabled={busyId === link.id}
+                      onClick={() => void toggleActive(link)}
+                    >
+                      {link.isActive ? "Deactivate" : "Activate"}
+                    </Button>
+                  </div>
+                </DataTableCell>
+              </DataTableRow>
+            ))}
+          </DataTableBody>
+        </DataTable>
       )}
     </div>
   );

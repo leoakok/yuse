@@ -64,6 +64,7 @@ function userFromSession(session: Session | null): User | null {
     avatarUrl: sessionUser.image ?? undefined,
     role: "USER",
     hasPasswordCredential: sessionUser.id.startsWith("email-"),
+    hasGoogleCredential: Boolean(sessionUser.googleId) || sessionUser.id.startsWith("google-"),
     canChangeEmail: sessionUser.id.startsWith("email-"),
     emailVerified: !sessionUser.id.startsWith("email-"),
     createdAt: "",

@@ -28,6 +28,7 @@ import type {
   AutomationMatchedJob,
   AutomationMatchFeedback,
   AutomationCompanyBan,
+  LinkedInApplicationSyncResult,
 } from "@/lib/types/admin";
 import { graphqlRequest } from "@/lib/graphql/client";
 import {
@@ -57,6 +58,7 @@ import {
   DELETE_JOB_AUTOMATION_MUTATION,
   SAVE_LINKEDIN_SESSION_MUTATION,
   CLEAR_LINKEDIN_SESSION_MUTATION,
+  SYNC_LINKEDIN_APPLICATIONS_NOW_MUTATION,
   RUN_JOB_AUTOMATION_NOW_MUTATION,
   AUTOMATION_MATCHES_QUERY,
   AUTOMATION_COMPANY_BANS_QUERY,
@@ -148,10 +150,10 @@ export async function listAdminWaitlist(status?: WaitlistStatus): Promise<Waitli
   return data.adminWaitlist;
 }
 
-export async function listAdminAuditLog(limit = 50): Promise<AdminAuditLogEntry[]> {
+export async function listAdminAuditLog(limit = 25, offset = 0): Promise<AdminAuditLogEntry[]> {
   const data = await graphqlRequest<{ adminAuditLog: AdminAuditLogEntry[] }>(
     ADMIN_AUDIT_LOG_QUERY,
-    { limit }
+    { limit, offset }
   );
   return data.adminAuditLog;
 }
@@ -276,10 +278,15 @@ export async function listJobAutomations(): Promise<JobAutomation[]> {
   return data.jobAutomations;
 }
 
-export async function listAutomationRuns(automationId: string, limit = 10): Promise<AutomationRun[]> {
+export async function listAutomationRuns(
+  automationId: string,
+  limit = 10,
+  offset = 0,
+): Promise<AutomationRun[]> {
   const data = await graphqlRequest<{ automationRuns: AutomationRun[] }>(AUTOMATION_RUNS_QUERY, {
     automationId,
     limit,
+    offset,
   });
   return data.automationRuns;
 }
@@ -329,6 +336,13 @@ export async function clearLinkedInSession(): Promise<LinkedInSessionStatus> {
   return data.clearLinkedInSession;
 }
 
+export async function syncLinkedInApplicationsNow(): Promise<LinkedInApplicationSyncResult> {
+  const data = await graphqlRequest<{ syncLinkedInApplicationsNow: LinkedInApplicationSyncResult }>(
+    SYNC_LINKEDIN_APPLICATIONS_NOW_MUTATION,
+  );
+  return data.syncLinkedInApplicationsNow;
+}
+
 export async function runJobAutomationNow(id: string): Promise<JobAutomationRunResult> {
   const data = await graphqlRequest<{ runJobAutomationNow: JobAutomationRunResult }>(
     RUN_JOB_AUTOMATION_NOW_MUTATION,
@@ -345,7 +359,7 @@ export async function listAutomationMatches(
     AUTOMATION_MATCHES_QUERY,
     {
       automationId,
-      limit: options?.limit ?? 50,
+      limit: options?.limit ?? 20,
       offset: options?.offset ?? 0,
       feedback: options?.feedback ?? null,
     },

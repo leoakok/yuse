@@ -170,3 +170,108 @@ export function PasswordChangeRow({ onSave }: PasswordChangeRowProps) {
     </>
   );
 }
+
+export type PasswordSetValues = {
+  newPassword: string;
+  confirmPassword: string;
+};
+
+interface PasswordSetSheetProps {
+  open: boolean;
+  onOpenChange: (open: boolean) => void;
+  onSave: (values: PasswordSetValues) => Promise<void> | void;
+}
+
+function validatePasswordSet(values: PasswordSetValues): string | null {
+  if (!values.newPassword) {
+    return "Enter a password.";
+  }
+  if (values.newPassword.length < MIN_PASSWORD_LENGTH) {
+    return `Use at least ${MIN_PASSWORD_LENGTH} characters.`;
+  }
+  if (values.newPassword !== values.confirmPassword) {
+    return "Passwords do not match.";
+  }
+  return null;
+}
+
+export function PasswordSetSheet({ open, onOpenChange, onSave }: PasswordSetSheetProps) {
+  const [newPassword, setNewPassword] = useState("");
+  const [confirmPassword, setConfirmPassword] = useState("");
+  const [saving, setSaving] = useState(false);
+
+  useEffect(() => {
+    if (!open) return;
+    setNewPassword("");
+    setConfirmPassword("");
+  }, [open]);
+
+  async function handleSave() {
+    const values = { newPassword, confirmPassword };
+    const error = validatePasswordSet(values);
+    if (error) {
+      toast.error(error);
+      return;
+    }
+
+    setSaving(true);
+    try {
+      await onSave(values);
+      onOpenChange(false);
+    } catch (err) {
+      toast.error(err instanceof Error ? err.message : "Could not set password.");
+    } finally {
+      setSaving(false);
+    }
+  }
+
+  return (
+    <ResponsiveDialog open={open} onOpenChange={onOpenChange}>
+      <ResponsiveDialogContent>
+        <ResponsiveDialogHeader
+          title="Add password"
+          description="Set a password so you can also sign in with email."
+        />
+        <ResponsiveDialogBody className="space-y-3 py-0">
+          <div className="grid gap-1.5">
+            <label htmlFor="password-set-new" className="text-sm font-medium">
+              Password
+            </label>
+            <Input
+              id="password-set-new"
+              type="password"
+              autoComplete="new-password"
+              value={newPassword}
+              onChange={(event) => setNewPassword(event.target.value)}
+              disabled={saving}
+            />
+          </div>
+          <div className="grid gap-1.5">
+            <label htmlFor="password-set-confirm" className="text-sm font-medium">
+              Confirm password
+            </label>
+            <Input
+              id="password-set-confirm"
+              type="password"
+              autoComplete="new-password"
+              value={confirmPassword}
+              onChange={(event) => setConfirmPassword(event.target.value)}
+              disabled={saving}
+              onKeyDown={(event) => {
+                if (event.key === "Enter") {
+                  event.preventDefault();
+                  void handleSave();
+                }
+              }}
+            />
+          </div>
+        </ResponsiveDialogBody>
+        <ResponsiveDialogFooter>
+          <Button type="button" disabled={saving} onClick={() => void handleSave()}>
+            {saving ? "Saving…" : "Add password"}
+          </Button>
+        </ResponsiveDialogFooter>
+      </ResponsiveDialogContent>
+    </ResponsiveDialog>
+  );
+}

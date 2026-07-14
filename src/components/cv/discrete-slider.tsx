@@ -2,6 +2,7 @@
 
 import { useCallback, useMemo, useRef, type PointerEvent } from "react";
 import { Minus, Plus } from "lucide-react";
+import { IconTooltip } from "@/components/ui/tooltip";
 import { cn } from "@/lib/utils";
 import {
   buildSliderGeometry,
@@ -131,24 +132,28 @@ export function DiscreteSlider<T extends string | number>({
         />
       </div>
       <div className="flex shrink-0 gap-1">
-        <button
-          type="button"
-          onClick={() => setIndex(currentIndex - 1)}
-          disabled={currentIndex <= 0}
-          className="flex size-8 items-center justify-center rounded-md border bg-background text-muted-foreground transition-colors hover:bg-muted/50 disabled:pointer-events-none disabled:opacity-40"
-          aria-label="Decrease"
-        >
-          <Minus className="size-3.5" />
-        </button>
-        <button
-          type="button"
-          onClick={() => setIndex(currentIndex + 1)}
-          disabled={currentIndex >= maxIndex}
-          className="flex size-8 items-center justify-center rounded-md border bg-background text-muted-foreground transition-colors hover:bg-muted/50 disabled:pointer-events-none disabled:opacity-40"
-          aria-label="Increase"
-        >
-          <Plus className="size-3.5" />
-        </button>
+        <IconTooltip label="Decrease">
+          <button
+            type="button"
+            onClick={() => setIndex(currentIndex - 1)}
+            disabled={currentIndex <= 0}
+            className="flex size-8 items-center justify-center rounded-md border bg-background text-muted-foreground transition-colors hover:bg-muted/50 disabled:pointer-events-none disabled:opacity-40"
+            aria-label="Decrease"
+          >
+            <Minus className="size-3.5" />
+          </button>
+        </IconTooltip>
+        <IconTooltip label="Increase">
+          <button
+            type="button"
+            onClick={() => setIndex(currentIndex + 1)}
+            disabled={currentIndex >= maxIndex}
+            className="flex size-8 items-center justify-center rounded-md border bg-background text-muted-foreground transition-colors hover:bg-muted/50 disabled:pointer-events-none disabled:opacity-40"
+            aria-label="Increase"
+          >
+            <Plus className="size-3.5" />
+          </button>
+        </IconTooltip>
       </div>
     </div>
   );
