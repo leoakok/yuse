@@ -1,3 +1,5 @@
+import { resolveBackendGraphqlUrl } from "@/lib/auth/backend-url";
+
 const DEFAULT_URL = "/api/graphql";
 
 export class SessionInvalidError extends Error {
@@ -16,11 +18,7 @@ export class InviteRequiredError extends Error {
 
 export function getGraphqlUrl(): string {
   if (typeof window === "undefined") {
-    const serverUrl = process.env.GRAPHQL_URL?.trim();
-    if (serverUrl && /^https?:\/\//i.test(serverUrl)) {
-      return serverUrl;
-    }
-    return "http://localhost:8080/graphql";
+    return resolveBackendGraphqlUrl();
   }
   return process.env.NEXT_PUBLIC_GRAPHQL_URL || DEFAULT_URL;
 }

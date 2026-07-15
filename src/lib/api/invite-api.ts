@@ -1,7 +1,5 @@
-import { backendBaseUrl } from "@/lib/auth/backend-url";
-
 export async function claimInvite(code: string, email: string): Promise<void> {
-  const response = await fetch(`${backendBaseUrl()}/auth/claim-invite`, {
+  const response = await fetch("/api/auth/claim-invite", {
     method: "POST",
     headers: { "Content-Type": "application/json" },
     body: JSON.stringify({ code, email }),
@@ -15,7 +13,7 @@ export async function claimInvite(code: string, email: string): Promise<void> {
 }
 
 export async function fetchPublicInvite(code: string) {
-  const response = await fetch(`${backendBaseUrl()}/invites/${encodeURIComponent(code)}`, {
+  const response = await fetch(`/api/invites/${encodeURIComponent(code)}`, {
     cache: "no-store",
   });
   if (!response.ok) {
