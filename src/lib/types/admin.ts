@@ -15,6 +15,11 @@ export type AdminUser = {
   displayName: string;
   role: "USER" | "ADMIN";
   isActive: boolean;
+  aiEnabled: boolean;
+  aiMonthlyTokenLimit?: number | null;
+  aiTokensUsedThisMonth: number;
+  aiEffectiveLimit: number;
+  aiRequestsThisMonth: number;
   createdAt: string;
   updatedAt: string;
 };

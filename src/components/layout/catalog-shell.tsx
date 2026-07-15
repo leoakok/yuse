@@ -37,6 +37,15 @@ export function CatalogShell({
 }: CatalogShellProps) {
   const showTitle = Boolean(title);
 
+  // Full-bleed fill pages (admin) skip packing wrappers; children own the layout.
+  if (edgeToEdge && fillHeight && !showTitle) {
+    return (
+      <main className="flex min-h-0 w-full flex-1 flex-col overflow-hidden">
+        {children}
+      </main>
+    );
+  }
+
   return (
     <main
       className={cn(
@@ -50,8 +59,7 @@ export function CatalogShell({
           widthClass[width],
           fillHeight && "flex min-h-0 flex-1 flex-col",
           width === "full" && fillHeight && "px-0 pb-0",
-          compactHeader && width === "full" && fillHeight && !edgeToEdge && "pt-4",
-          edgeToEdge && "pt-0",
+          compactHeader && width === "full" && fillHeight && "pt-4",
         )}
       >
         {showTitle ? (
@@ -70,14 +78,18 @@ export function CatalogShell({
             />
           </div>
         ) : null}
-        <div
-          className={cn(
-            fillHeight && "flex min-h-0 min-w-0 w-full flex-1 flex-col",
-            compactHeader && !edgeToEdge && "px-4 lg:px-5",
-          )}
-        >
-          {children}
-        </div>
+        {fillHeight ? (
+          <div
+            className={cn(
+              "flex min-h-0 min-w-0 w-full flex-1 flex-col",
+              compactHeader && "px-4 lg:px-5",
+            )}
+          >
+            {children}
+          </div>
+        ) : (
+          children
+        )}
       </div>
     </main>
   );

@@ -1,5 +1,5 @@
 import { Star } from "lucide-react";
-import { buttonVariants } from "@/components/ui/button";
+import { buttonVariants } from "@/components/ui/button-variants";
 import { cn } from "@/lib/utils";
 import { GitHubMark } from "@/components/landing/brand-icons";
 import { Reveal } from "@/components/landing/reveal";

@@ -6,12 +6,16 @@ import (
 	"github.com/leo/ai-weekend/backend/graph/model"
 )
 
-// ListAdminUsers returns all users (admin only).
-func (s *Service) ListAdminUsers() ([]*model.AdminUser, error) {
+// ListAdminUsers returns paginated users (admin only).
+func (s *Service) ListAdminUsers(limit, offset int, query *string) ([]*model.AdminUser, error) {
 	if err := s.requireAdmin(); err != nil {
 		return nil, err
 	}
-	return s.store.ListAdminUsers()
+	q := ""
+	if query != nil {
+		q = *query
+	}
+	return s.store.ListAdminUsers(limit, offset, q)
 }
 
 // ListWaitlistEntries returns waitlist rows (admin only).
@@ -79,6 +83,23 @@ func (s *Service) SetUserRole(userID string, role model.UserRole) (*model.AdminU
 		return nil, fmt.Errorf("invalid role")
 	}
 	return s.store.SetUserRole(actor.ID, userID, role)
+}
+
+// SetUserAiLimits updates AI enabled and monthly token override (admin only).
+func (s *Service) SetUserAiLimits(userID string, aiEnabled bool, aiMonthlyTokenLimit *int) (*model.AdminUser, error) {
+	if err := s.requireAdmin(); err != nil {
+		return nil, err
+	}
+	actor := s.store.User()
+	if actor == nil {
+		return nil, ErrForbidden
+	}
+	var override *int64
+	if aiMonthlyTokenLimit != nil {
+		v := int64(*aiMonthlyTokenLimit)
+		override = &v
+	}
+	return s.store.SetUserAiLimits(actor.ID, userID, aiEnabled, override)
 }
 
 // ListInviteLinks returns beta invite links (admin only).

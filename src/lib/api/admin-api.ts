@@ -43,6 +43,7 @@ import {
   REJECT_WAITLIST_ENTRY_MUTATION,
   SET_USER_ACTIVE_MUTATION,
   SET_USER_ROLE_MUTATION,
+  SET_USER_AI_LIMITS_MUTATION,
   SEND_TEST_EMAIL_MUTATION,
   UPDATE_KNOWLEDGE_ENTRY_MUTATION,
   ADMIN_INVITE_LINKS_QUERY,
@@ -138,8 +139,16 @@ export async function deleteKnowledgeEntry(id: string): Promise<boolean> {
   return data.deleteKnowledgeEntry;
 }
 
-export async function listAdminUsers(): Promise<AdminUser[]> {
-  const data = await graphqlRequest<{ adminUsers: AdminUser[] }>(ADMIN_USERS_QUERY);
+export async function listAdminUsers(options?: {
+  limit?: number;
+  offset?: number;
+  query?: string;
+}): Promise<AdminUser[]> {
+  const data = await graphqlRequest<{ adminUsers: AdminUser[] }>(ADMIN_USERS_QUERY, {
+    limit: options?.limit ?? 25,
+    offset: options?.offset ?? 0,
+    query: options?.query?.trim() ? options.query.trim() : null,
+  });
   return data.adminUsers;
 }
 
@@ -191,6 +200,19 @@ export async function setUserRole(
     role,
   });
   return data.setUserRole;
+}
+
+export async function setUserAiLimits(
+  userId: string,
+  aiEnabled: boolean,
+  aiMonthlyTokenLimit: number | null,
+): Promise<AdminUser> {
+  const data = await graphqlRequest<{ setUserAiLimits: AdminUser }>(SET_USER_AI_LIMITS_MUTATION, {
+    userId,
+    aiEnabled,
+    aiMonthlyTokenLimit,
+  });
+  return data.setUserAiLimits;
 }
 
 export async function sendTestEmail(

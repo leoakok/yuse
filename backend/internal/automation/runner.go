@@ -212,7 +212,12 @@ func (r *Runner) execute(ctx context.Context, auto *store.JobAutomationRecord, r
 	matchReasons := make(map[string]string)
 	emit(sink, "match", "Matching jobs with AI", "running", nil)
 	if len(newJobs) > 0 {
-		results, err := r.LLM.MatchJobs(ctx, auto.MatchCriteria, newJobs, matchContext)
+		if err := store.CheckLLMAccessForUser(ctx, r.Pool, auto.UserID); err != nil {
+			emit(sink, "match", "Matching blocked", "error", nil)
+			return outcome, err
+		}
+		matchCtx := llm.WithUsageUser(ctx, auto.UserID)
+		results, err := r.LLM.MatchJobs(matchCtx, auto.MatchCriteria, newJobs, matchContext)
 		if err != nil {
 			emit(sink, "match", "Matching failed", "error", nil)
 			return outcome, err
@@ -291,7 +296,10 @@ func (r *Runner) execute(ctx context.Context, auto *store.JobAutomationRecord, r
 }
 
 func (r *Runner) loadMatchContext(ctx context.Context, userID string, bans []*store.AutomationCompanyBanRecord) (llm.MatchContext, error) {
-	_ = r.LLM.RefreshTasteProfileIfNeeded(ctx, store.PoolTasteStore{Pool: r.Pool}, userID)
+	if r.LLM != nil && store.CheckLLMAccessForUser(ctx, r.Pool, userID) == nil {
+		tasteCtx := llm.WithUsageUser(ctx, userID)
+		_ = r.LLM.RefreshTasteProfileIfNeeded(tasteCtx, store.PoolTasteStore{Pool: r.Pool}, userID)
+	}
 
 	profile, err := store.GetTasteProfile(ctx, r.Pool, userID)
 	if err != nil {

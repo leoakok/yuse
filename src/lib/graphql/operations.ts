@@ -1601,6 +1601,11 @@ const ADMIN_USER_FIELDS = `
   displayName
   role
   isActive
+  aiEnabled
+  aiMonthlyTokenLimit
+  aiTokensUsedThisMonth
+  aiEffectiveLimit
+  aiRequestsThisMonth
   createdAt
   updatedAt
 `;
@@ -1626,8 +1631,8 @@ const ADMIN_AUDIT_FIELDS = `
 `;
 
 export const ADMIN_USERS_QUERY = `
-  query AdminUsers {
-    adminUsers {
+  query AdminUsers($limit: Int, $offset: Int, $query: String) {
+    adminUsers(limit: $limit, offset: $offset, query: $query) {
       ${ADMIN_USER_FIELDS}
     }
   }
@@ -1723,6 +1728,18 @@ export const SET_USER_ACTIVE_MUTATION = `
 export const SET_USER_ROLE_MUTATION = `
   mutation SetUserRole($userId: ID!, $role: UserRole!) {
     setUserRole(userId: $userId, role: $role) {
+      ${ADMIN_USER_FIELDS}
+    }
+  }
+`;
+
+export const SET_USER_AI_LIMITS_MUTATION = `
+  mutation SetUserAiLimits($userId: ID!, $aiEnabled: Boolean!, $aiMonthlyTokenLimit: Int) {
+    setUserAiLimits(
+      userId: $userId
+      aiEnabled: $aiEnabled
+      aiMonthlyTokenLimit: $aiMonthlyTokenLimit
+    ) {
       ${ADMIN_USER_FIELDS}
     }
   }

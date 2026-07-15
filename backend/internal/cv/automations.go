@@ -9,6 +9,7 @@ import (
 	"github.com/leo/ai-weekend/backend/graph/model"
 	"github.com/leo/ai-weekend/backend/internal/automation"
 	"github.com/leo/ai-weekend/backend/internal/linkedin"
+	"github.com/leo/ai-weekend/backend/internal/llm"
 	"github.com/leo/ai-weekend/backend/internal/store"
 )
 
@@ -256,7 +257,10 @@ func (s *Service) SetAutomationMatchFeedback(ctx context.Context, automationID, 
 	if s.llm != nil && s.automationRunner != nil && s.automationRunner.Pool != nil {
 		user := s.store.User()
 		if user != nil {
-			_ = s.llm.RefreshTasteProfileIfNeeded(ctx, store.PoolTasteStore{Pool: s.automationRunner.Pool}, user.ID)
+			tasteCtx := llm.WithUsageUser(ctx, user.ID)
+			if store.CheckLLMAccessForUser(tasteCtx, s.automationRunner.Pool, user.ID) == nil {
+				_ = s.llm.RefreshTasteProfileIfNeeded(tasteCtx, store.PoolTasteStore{Pool: s.automationRunner.Pool}, user.ID)
+			}
 		}
 	}
 	return store.AutomationMatchedJobToModel(rec), nil

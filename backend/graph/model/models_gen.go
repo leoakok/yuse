@@ -63,8 +63,14 @@ type AdminUser struct {
 	DisplayName string   `json:"displayName"`
 	Role        UserRole `json:"role"`
 	IsActive    bool     `json:"isActive"`
-	CreatedAt   string   `json:"createdAt"`
-	UpdatedAt   string   `json:"updatedAt"`
+	AiEnabled   bool     `json:"aiEnabled"`
+	// Per-user monthly token override. Null means platform default.
+	AiMonthlyTokenLimit   *int   `json:"aiMonthlyTokenLimit,omitempty"`
+	AiTokensUsedThisMonth int    `json:"aiTokensUsedThisMonth"`
+	AiEffectiveLimit      int    `json:"aiEffectiveLimit"`
+	AiRequestsThisMonth   int    `json:"aiRequestsThisMonth"`
+	CreatedAt             string `json:"createdAt"`
+	UpdatedAt             string `json:"updatedAt"`
 }
 
 type AssistantActionLog struct {

@@ -19,6 +19,7 @@ type Service struct {
 	fallbackModel string
 	visionModel   string
 	hasAPIKey     bool
+	meter         UsageMeter
 }
 
 // AgentLoopCompletionHook is set by llm tests to stub OpenAI chat completions.

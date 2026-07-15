@@ -406,6 +406,11 @@ func (r *mutationResolver) SetUserRole(ctx context.Context, userID string, role 
 	return scope.CV(ctx).SetUserRole(userID, role)
 }
 
+// SetUserAiLimits is the resolver for the setUserAiLimits field.
+func (r *mutationResolver) SetUserAiLimits(ctx context.Context, userID string, aiEnabled bool, aiMonthlyTokenLimit *int) (*model.AdminUser, error) {
+	return scope.CV(ctx).SetUserAiLimits(userID, aiEnabled, aiMonthlyTokenLimit)
+}
+
 // SendTestEmail is the resolver for the sendTestEmail field.
 func (r *mutationResolver) SendTestEmail(ctx context.Context, typeArg model.TestEmailType, recipientEmail string) (*model.SendTestEmailResult, error) {
 	if err := scope.CheckAdminTestEmail(ctx); err != nil {
@@ -707,8 +712,15 @@ func (r *queryResolver) ClassifyAssistantMessage(ctx context.Context, text strin
 }
 
 // AdminUsers is the resolver for the adminUsers field.
-func (r *queryResolver) AdminUsers(ctx context.Context) ([]*model.AdminUser, error) {
-	return scope.CV(ctx).ListAdminUsers()
+func (r *queryResolver) AdminUsers(ctx context.Context, limit *int, offset *int, query *string) ([]*model.AdminUser, error) {
+	lim, off := 25, 0
+	if limit != nil {
+		lim = *limit
+	}
+	if offset != nil {
+		off = *offset
+	}
+	return scope.CV(ctx).ListAdminUsers(lim, off, query)
 }
 
 // AdminWaitlist is the resolver for the adminWaitlist field.

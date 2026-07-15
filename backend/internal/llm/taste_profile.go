@@ -99,6 +99,7 @@ dislikedSummary: patterns to avoid. Empty string if no examples for that side.`
 	if len(resp.Choices) == 0 {
 		return "", "", fmt.Errorf("taste profile llm: empty response")
 	}
+	s.recordUsage(ctx, "taste_profile", s.miniModel, resp.Usage.PromptTokens, resp.Usage.CompletionTokens)
 
 	var parsed tasteRefreshResponse
 	if err := json.Unmarshal([]byte(strings.TrimSpace(resp.Choices[0].Message.Content)), &parsed); err != nil {

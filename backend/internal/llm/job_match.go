@@ -106,6 +106,7 @@ func (s *Service) matchJobBatch(ctx context.Context, criteria string, jobs []Job
 	if len(resp.Choices) == 0 {
 		return nil, fmt.Errorf("job match llm: empty response")
 	}
+	s.recordUsage(ctx, "job_match", s.miniModel, resp.Usage.PromptTokens, resp.Usage.CompletionTokens)
 
 	content := strings.TrimSpace(resp.Choices[0].Message.Content)
 	var parsed jobMatchResponse
@@ -127,11 +128,11 @@ Include every job from the input. Match=true only when the role clearly fits the
 		b.WriteByte('.')
 	}
 	if strings.TrimSpace(taste.LikedSummary) != "" {
-		b.WriteString("\n\nUser taste — prefer: ")
+		b.WriteString("\n\nUser taste, prefer: ")
 		b.WriteString(strings.TrimSpace(taste.LikedSummary))
 	}
 	if strings.TrimSpace(taste.DislikedSummary) != "" {
-		b.WriteString("\n\nUser taste — avoid: ")
+		b.WriteString("\n\nUser taste, avoid: ")
 		b.WriteString(strings.TrimSpace(taste.DislikedSummary))
 	}
 	if len(taste.LikedExamples) > 0 {

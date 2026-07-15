@@ -42,6 +42,9 @@ func Bootstrap(ctx context.Context, cfg config.Config) (*Stack, error) {
 	}
 
 	llmSvc := llm.NewService(cfg)
+	if pg, ok := dataStore.(*store.Postgres); ok {
+		llmSvc.SetUsageMeter(store.PoolUsageMeter{Pool: pg.Pool()})
+	}
 	photos, err := storage.NewProfilePhotoUploader(cfg)
 	if err != nil {
 		return nil, fmt.Errorf("init profile photo upload: %w", err)

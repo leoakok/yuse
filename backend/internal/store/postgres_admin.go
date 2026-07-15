@@ -6,8 +6,8 @@ import (
 	"github.com/leo/ai-weekend/backend/graph/model"
 )
 
-func (p *Postgres) ListAdminUsers() ([]*model.AdminUser, error) {
-	return ListAdminUsers(context.Background(), p.pool)
+func (p *Postgres) ListAdminUsers(limit, offset int, query string) ([]*model.AdminUser, error) {
+	return ListAdminUsers(context.Background(), p.pool, limit, offset, query)
 }
 
 func (p *Postgres) ListWaitlistEntries(status *model.WaitlistStatus) ([]*model.WaitlistEntry, error) {
@@ -32,6 +32,10 @@ func (p *Postgres) SetUserActive(actorID, userID string, active bool) (*model.Ad
 
 func (p *Postgres) SetUserRole(actorID, userID string, role model.UserRole) (*model.AdminUser, error) {
 	return SetUserRole(context.Background(), p.pool, actorID, userID, role)
+}
+
+func (p *Postgres) SetUserAiLimits(actorID, userID string, aiEnabled bool, aiMonthlyTokenLimit *int64) (*model.AdminUser, error) {
+	return SetUserAiLimits(context.Background(), p.pool, actorID, userID, aiEnabled, aiMonthlyTokenLimit)
 }
 
 func (p *Postgres) ListInviteLinks() ([]*model.InviteLink, error) {

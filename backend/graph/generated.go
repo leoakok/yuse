@@ -61,13 +61,18 @@ type ComplexityRoot struct {
 	}
 
 	AdminUser struct {
-		CreatedAt   func(childComplexity int) int
-		DisplayName func(childComplexity int) int
-		Email       func(childComplexity int) int
-		ID          func(childComplexity int) int
-		IsActive    func(childComplexity int) int
-		Role        func(childComplexity int) int
-		UpdatedAt   func(childComplexity int) int
+		AiEffectiveLimit      func(childComplexity int) int
+		AiEnabled             func(childComplexity int) int
+		AiMonthlyTokenLimit   func(childComplexity int) int
+		AiRequestsThisMonth   func(childComplexity int) int
+		AiTokensUsedThisMonth func(childComplexity int) int
+		CreatedAt             func(childComplexity int) int
+		DisplayName           func(childComplexity int) int
+		Email                 func(childComplexity int) int
+		ID                    func(childComplexity int) int
+		IsActive              func(childComplexity int) int
+		Role                  func(childComplexity int) int
+		UpdatedAt             func(childComplexity int) int
 	}
 
 	AssistantActionLog struct {
@@ -334,6 +339,7 @@ type ComplexityRoot struct {
 		SetPortfolioSlug                  func(childComplexity int, portfolioID string, slug string) int
 		SetResumeSlug                     func(childComplexity int, resumeID string, slug string) int
 		SetUserActive                     func(childComplexity int, userID string, active bool) int
+		SetUserAiLimits                   func(childComplexity int, userID string, aiEnabled bool, aiMonthlyTokenLimit *int) int
 		SetUserRole                       func(childComplexity int, userID string, role model.UserRole) int
 		SetUsername                       func(childComplexity int, username string) int
 		SyncLinkedInApplicationsNow       func(childComplexity int) int
@@ -447,7 +453,7 @@ type ComplexityRoot struct {
 		AdminInviteLinks           func(childComplexity int) int
 		AdminLinkedInGeoSearch     func(childComplexity int, keywords string) int
 		AdminLinkedInJobSearch     func(childComplexity int, keywords *string, geoID *string, timeFilter *string, sortBy *model.LinkedInJobSortBy, maxResults *int, workplaceTypes []model.LinkedInWorkplaceType, experienceLevels []model.LinkedInExperienceLevel, employmentTypes []model.LinkedInEmploymentType, easyApply *bool, sessionCookie *string) int
-		AdminUsers                 func(childComplexity int) int
+		AdminUsers                 func(childComplexity int, limit *int, offset *int, query *string) int
 		AdminWaitlist              func(childComplexity int, status *model.WaitlistStatus) int
 		AssistantMessages          func(childComplexity int, threadID string, limit *int) int
 		AssistantThreads           func(childComplexity int) int
@@ -742,6 +748,7 @@ type MutationResolver interface {
 	RejectWaitlistEntry(ctx context.Context, id string) (*model.WaitlistEntry, error)
 	SetUserActive(ctx context.Context, userID string, active bool) (*model.AdminUser, error)
 	SetUserRole(ctx context.Context, userID string, role model.UserRole) (*model.AdminUser, error)
+	SetUserAiLimits(ctx context.Context, userID string, aiEnabled bool, aiMonthlyTokenLimit *int) (*model.AdminUser, error)
 	SendTestEmail(ctx context.Context, typeArg model.TestEmailType, recipientEmail string) (*model.SendTestEmailResult, error)
 	CreateInviteLink(ctx context.Context, input model.CreateInviteLinkInput) (*model.InviteLink, error)
 	UpdateInviteLink(ctx context.Context, input model.UpdateInviteLinkInput) (*model.InviteLink, error)
@@ -786,7 +793,7 @@ type QueryResolver interface {
 	ConnectionStatus(ctx context.Context, provider model.ConnectionProvider) (*model.ConnectionStatus, error)
 	KnowledgeEntries(ctx context.Context, includeDisabled *bool) ([]*model.KnowledgeEntry, error)
 	ClassifyAssistantMessage(ctx context.Context, text string, context model.AssistantContextInput) (*model.AssistantClassification, error)
-	AdminUsers(ctx context.Context) ([]*model.AdminUser, error)
+	AdminUsers(ctx context.Context, limit *int, offset *int, query *string) ([]*model.AdminUser, error)
 	AdminWaitlist(ctx context.Context, status *model.WaitlistStatus) ([]*model.WaitlistEntry, error)
 	AdminAuditLog(ctx context.Context, limit *int, offset *int) ([]*model.AdminAuditLogEntry, error)
 	AdminLinkedInGeoSearch(ctx context.Context, keywords string) ([]*model.LinkedInGeoLocation, error)
@@ -880,6 +887,41 @@ func (e *executableSchema) Complexity(ctx context.Context, typeName, field strin
 		}
 
 		return e.complexity.AdminAuditLogEntry.TargetType(childComplexity), true
+
+	case "AdminUser.aiEffectiveLimit":
+		if e.complexity.AdminUser.AiEffectiveLimit == nil {
+			break
+		}
+
+		return e.complexity.AdminUser.AiEffectiveLimit(childComplexity), true
+
+	case "AdminUser.aiEnabled":
+		if e.complexity.AdminUser.AiEnabled == nil {
+			break
+		}
+
+		return e.complexity.AdminUser.AiEnabled(childComplexity), true
+
+	case "AdminUser.aiMonthlyTokenLimit":
+		if e.complexity.AdminUser.AiMonthlyTokenLimit == nil {
+			break
+		}
+
+		return e.complexity.AdminUser.AiMonthlyTokenLimit(childComplexity), true
+
+	case "AdminUser.aiRequestsThisMonth":
+		if e.complexity.AdminUser.AiRequestsThisMonth == nil {
+			break
+		}
+
+		return e.complexity.AdminUser.AiRequestsThisMonth(childComplexity), true
+
+	case "AdminUser.aiTokensUsedThisMonth":
+		if e.complexity.AdminUser.AiTokensUsedThisMonth == nil {
+			break
+		}
+
+		return e.complexity.AdminUser.AiTokensUsedThisMonth(childComplexity), true
 
 	case "AdminUser.createdAt":
 		if e.complexity.AdminUser.CreatedAt == nil {
@@ -2566,6 +2608,18 @@ func (e *executableSchema) Complexity(ctx context.Context, typeName, field strin
 
 		return e.complexity.Mutation.SetUserActive(childComplexity, args["userId"].(string), args["active"].(bool)), true
 
+	case "Mutation.setUserAiLimits":
+		if e.complexity.Mutation.SetUserAiLimits == nil {
+			break
+		}
+
+		args, err := ec.field_Mutation_setUserAiLimits_args(ctx, rawArgs)
+		if err != nil {
+			return 0, false
+		}
+
+		return e.complexity.Mutation.SetUserAiLimits(childComplexity, args["userId"].(string), args["aiEnabled"].(bool), args["aiMonthlyTokenLimit"].(*int)), true
+
 	case "Mutation.setUserRole":
 		if e.complexity.Mutation.SetUserRole == nil {
 			break
@@ -3314,7 +3368,12 @@ func (e *executableSchema) Complexity(ctx context.Context, typeName, field strin
 			break
 		}
 
-		return e.complexity.Query.AdminUsers(childComplexity), true
+		args, err := ec.field_Query_adminUsers_args(ctx, rawArgs)
+		if err != nil {
+			return 0, false
+		}
+
+		return e.complexity.Query.AdminUsers(childComplexity, args["limit"].(*int), args["offset"].(*int), args["query"].(*string)), true
 
 	case "Query.adminWaitlist":
 		if e.complexity.Query.AdminWaitlist == nil {
@@ -5468,6 +5527,27 @@ func (ec *executionContext) field_Mutation_setUserActive_args(ctx context.Contex
 	return args, nil
 }
 
+func (ec *executionContext) field_Mutation_setUserAiLimits_args(ctx context.Context, rawArgs map[string]any) (map[string]any, error) {
+	var err error
+	args := map[string]any{}
+	arg0, err := graphql.ProcessArgField(ctx, rawArgs, "userId", ec.unmarshalNID2string)
+	if err != nil {
+		return nil, err
+	}
+	args["userId"] = arg0
+	arg1, err := graphql.ProcessArgField(ctx, rawArgs, "aiEnabled", ec.unmarshalNBoolean2bool)
+	if err != nil {
+		return nil, err
+	}
+	args["aiEnabled"] = arg1
+	arg2, err := graphql.ProcessArgField(ctx, rawArgs, "aiMonthlyTokenLimit", ec.unmarshalOInt2ᚖint)
+	if err != nil {
+		return nil, err
+	}
+	args["aiMonthlyTokenLimit"] = arg2
+	return args, nil
+}
+
 func (ec *executionContext) field_Mutation_setUserRole_args(ctx context.Context, rawArgs map[string]any) (map[string]any, error) {
 	var err error
 	args := map[string]any{}
@@ -5825,6 +5905,27 @@ func (ec *executionContext) field_Query_adminLinkedInJobSearch_args(ctx context.
 		return nil, err
 	}
 	args["sessionCookie"] = arg9
+	return args, nil
+}
+
+func (ec *executionContext) field_Query_adminUsers_args(ctx context.Context, rawArgs map[string]any) (map[string]any, error) {
+	var err error
+	args := map[string]any{}
+	arg0, err := graphql.ProcessArgField(ctx, rawArgs, "limit", ec.unmarshalOInt2ᚖint)
+	if err != nil {
+		return nil, err
+	}
+	args["limit"] = arg0
+	arg1, err := graphql.ProcessArgField(ctx, rawArgs, "offset", ec.unmarshalOInt2ᚖint)
+	if err != nil {
+		return nil, err
+	}
+	args["offset"] = arg1
+	arg2, err := graphql.ProcessArgField(ctx, rawArgs, "query", ec.unmarshalOString2ᚖstring)
+	if err != nil {
+		return nil, err
+	}
+	args["query"] = arg2
 	return args, nil
 }
 
@@ -6755,6 +6856,223 @@ func (ec *executionContext) fieldContext_AdminUser_isActive(_ context.Context, f
 		IsResolver: false,
 		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
 			return nil, errors.New("field of type Boolean does not have child fields")
+		},
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _AdminUser_aiEnabled(ctx context.Context, field graphql.CollectedField, obj *model.AdminUser) (ret graphql.Marshaler) {
+	fc, err := ec.fieldContext_AdminUser_aiEnabled(ctx, field)
+	if err != nil {
+		return graphql.Null
+	}
+	ctx = graphql.WithFieldContext(ctx, fc)
+	defer func() {
+		if r := recover(); r != nil {
+			ec.Error(ctx, ec.Recover(ctx, r))
+			ret = graphql.Null
+		}
+	}()
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (any, error) {
+		ctx = rctx // use context from middleware stack in children
+		return obj.AiEnabled, nil
+	})
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	if resTmp == nil {
+		if !graphql.HasFieldError(ctx, fc) {
+			ec.Errorf(ctx, "must not be null")
+		}
+		return graphql.Null
+	}
+	res := resTmp.(bool)
+	fc.Result = res
+	return ec.marshalNBoolean2bool(ctx, field.Selections, res)
+}
+
+func (ec *executionContext) fieldContext_AdminUser_aiEnabled(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "AdminUser",
+		Field:      field,
+		IsMethod:   false,
+		IsResolver: false,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return nil, errors.New("field of type Boolean does not have child fields")
+		},
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _AdminUser_aiMonthlyTokenLimit(ctx context.Context, field graphql.CollectedField, obj *model.AdminUser) (ret graphql.Marshaler) {
+	fc, err := ec.fieldContext_AdminUser_aiMonthlyTokenLimit(ctx, field)
+	if err != nil {
+		return graphql.Null
+	}
+	ctx = graphql.WithFieldContext(ctx, fc)
+	defer func() {
+		if r := recover(); r != nil {
+			ec.Error(ctx, ec.Recover(ctx, r))
+			ret = graphql.Null
+		}
+	}()
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (any, error) {
+		ctx = rctx // use context from middleware stack in children
+		return obj.AiMonthlyTokenLimit, nil
+	})
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	if resTmp == nil {
+		return graphql.Null
+	}
+	res := resTmp.(*int)
+	fc.Result = res
+	return ec.marshalOInt2ᚖint(ctx, field.Selections, res)
+}
+
+func (ec *executionContext) fieldContext_AdminUser_aiMonthlyTokenLimit(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "AdminUser",
+		Field:      field,
+		IsMethod:   false,
+		IsResolver: false,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return nil, errors.New("field of type Int does not have child fields")
+		},
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _AdminUser_aiTokensUsedThisMonth(ctx context.Context, field graphql.CollectedField, obj *model.AdminUser) (ret graphql.Marshaler) {
+	fc, err := ec.fieldContext_AdminUser_aiTokensUsedThisMonth(ctx, field)
+	if err != nil {
+		return graphql.Null
+	}
+	ctx = graphql.WithFieldContext(ctx, fc)
+	defer func() {
+		if r := recover(); r != nil {
+			ec.Error(ctx, ec.Recover(ctx, r))
+			ret = graphql.Null
+		}
+	}()
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (any, error) {
+		ctx = rctx // use context from middleware stack in children
+		return obj.AiTokensUsedThisMonth, nil
+	})
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	if resTmp == nil {
+		if !graphql.HasFieldError(ctx, fc) {
+			ec.Errorf(ctx, "must not be null")
+		}
+		return graphql.Null
+	}
+	res := resTmp.(int)
+	fc.Result = res
+	return ec.marshalNInt2int(ctx, field.Selections, res)
+}
+
+func (ec *executionContext) fieldContext_AdminUser_aiTokensUsedThisMonth(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "AdminUser",
+		Field:      field,
+		IsMethod:   false,
+		IsResolver: false,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return nil, errors.New("field of type Int does not have child fields")
+		},
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _AdminUser_aiEffectiveLimit(ctx context.Context, field graphql.CollectedField, obj *model.AdminUser) (ret graphql.Marshaler) {
+	fc, err := ec.fieldContext_AdminUser_aiEffectiveLimit(ctx, field)
+	if err != nil {
+		return graphql.Null
+	}
+	ctx = graphql.WithFieldContext(ctx, fc)
+	defer func() {
+		if r := recover(); r != nil {
+			ec.Error(ctx, ec.Recover(ctx, r))
+			ret = graphql.Null
+		}
+	}()
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (any, error) {
+		ctx = rctx // use context from middleware stack in children
+		return obj.AiEffectiveLimit, nil
+	})
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	if resTmp == nil {
+		if !graphql.HasFieldError(ctx, fc) {
+			ec.Errorf(ctx, "must not be null")
+		}
+		return graphql.Null
+	}
+	res := resTmp.(int)
+	fc.Result = res
+	return ec.marshalNInt2int(ctx, field.Selections, res)
+}
+
+func (ec *executionContext) fieldContext_AdminUser_aiEffectiveLimit(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "AdminUser",
+		Field:      field,
+		IsMethod:   false,
+		IsResolver: false,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return nil, errors.New("field of type Int does not have child fields")
+		},
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _AdminUser_aiRequestsThisMonth(ctx context.Context, field graphql.CollectedField, obj *model.AdminUser) (ret graphql.Marshaler) {
+	fc, err := ec.fieldContext_AdminUser_aiRequestsThisMonth(ctx, field)
+	if err != nil {
+		return graphql.Null
+	}
+	ctx = graphql.WithFieldContext(ctx, fc)
+	defer func() {
+		if r := recover(); r != nil {
+			ec.Error(ctx, ec.Recover(ctx, r))
+			ret = graphql.Null
+		}
+	}()
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (any, error) {
+		ctx = rctx // use context from middleware stack in children
+		return obj.AiRequestsThisMonth, nil
+	})
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	if resTmp == nil {
+		if !graphql.HasFieldError(ctx, fc) {
+			ec.Errorf(ctx, "must not be null")
+		}
+		return graphql.Null
+	}
+	res := resTmp.(int)
+	fc.Result = res
+	return ec.marshalNInt2int(ctx, field.Selections, res)
+}
+
+func (ec *executionContext) fieldContext_AdminUser_aiRequestsThisMonth(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "AdminUser",
+		Field:      field,
+		IsMethod:   false,
+		IsResolver: false,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return nil, errors.New("field of type Int does not have child fields")
 		},
 	}
 	return fc, nil
@@ -17531,6 +17849,16 @@ func (ec *executionContext) fieldContext_Mutation_setUserActive(ctx context.Cont
 				return ec.fieldContext_AdminUser_role(ctx, field)
 			case "isActive":
 				return ec.fieldContext_AdminUser_isActive(ctx, field)
+			case "aiEnabled":
+				return ec.fieldContext_AdminUser_aiEnabled(ctx, field)
+			case "aiMonthlyTokenLimit":
+				return ec.fieldContext_AdminUser_aiMonthlyTokenLimit(ctx, field)
+			case "aiTokensUsedThisMonth":
+				return ec.fieldContext_AdminUser_aiTokensUsedThisMonth(ctx, field)
+			case "aiEffectiveLimit":
+				return ec.fieldContext_AdminUser_aiEffectiveLimit(ctx, field)
+			case "aiRequestsThisMonth":
+				return ec.fieldContext_AdminUser_aiRequestsThisMonth(ctx, field)
 			case "createdAt":
 				return ec.fieldContext_AdminUser_createdAt(ctx, field)
 			case "updatedAt":
@@ -17602,6 +17930,16 @@ func (ec *executionContext) fieldContext_Mutation_setUserRole(ctx context.Contex
 				return ec.fieldContext_AdminUser_role(ctx, field)
 			case "isActive":
 				return ec.fieldContext_AdminUser_isActive(ctx, field)
+			case "aiEnabled":
+				return ec.fieldContext_AdminUser_aiEnabled(ctx, field)
+			case "aiMonthlyTokenLimit":
+				return ec.fieldContext_AdminUser_aiMonthlyTokenLimit(ctx, field)
+			case "aiTokensUsedThisMonth":
+				return ec.fieldContext_AdminUser_aiTokensUsedThisMonth(ctx, field)
+			case "aiEffectiveLimit":
+				return ec.fieldContext_AdminUser_aiEffectiveLimit(ctx, field)
+			case "aiRequestsThisMonth":
+				return ec.fieldContext_AdminUser_aiRequestsThisMonth(ctx, field)
 			case "createdAt":
 				return ec.fieldContext_AdminUser_createdAt(ctx, field)
 			case "updatedAt":
@@ -17618,6 +17956,87 @@ func (ec *executionContext) fieldContext_Mutation_setUserRole(ctx context.Contex
 	}()
 	ctx = graphql.WithFieldContext(ctx, fc)
 	if fc.Args, err = ec.field_Mutation_setUserRole_args(ctx, field.ArgumentMap(ec.Variables)); err != nil {
+		ec.Error(ctx, err)
+		return fc, err
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _Mutation_setUserAiLimits(ctx context.Context, field graphql.CollectedField) (ret graphql.Marshaler) {
+	fc, err := ec.fieldContext_Mutation_setUserAiLimits(ctx, field)
+	if err != nil {
+		return graphql.Null
+	}
+	ctx = graphql.WithFieldContext(ctx, fc)
+	defer func() {
+		if r := recover(); r != nil {
+			ec.Error(ctx, ec.Recover(ctx, r))
+			ret = graphql.Null
+		}
+	}()
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (any, error) {
+		ctx = rctx // use context from middleware stack in children
+		return ec.resolvers.Mutation().SetUserAiLimits(rctx, fc.Args["userId"].(string), fc.Args["aiEnabled"].(bool), fc.Args["aiMonthlyTokenLimit"].(*int))
+	})
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	if resTmp == nil {
+		if !graphql.HasFieldError(ctx, fc) {
+			ec.Errorf(ctx, "must not be null")
+		}
+		return graphql.Null
+	}
+	res := resTmp.(*model.AdminUser)
+	fc.Result = res
+	return ec.marshalNAdminUser2ᚖgithubᚗcomᚋleoᚋaiᚑweekendᚋbackendᚋgraphᚋmodelᚐAdminUser(ctx, field.Selections, res)
+}
+
+func (ec *executionContext) fieldContext_Mutation_setUserAiLimits(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "Mutation",
+		Field:      field,
+		IsMethod:   true,
+		IsResolver: true,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			switch field.Name {
+			case "id":
+				return ec.fieldContext_AdminUser_id(ctx, field)
+			case "email":
+				return ec.fieldContext_AdminUser_email(ctx, field)
+			case "displayName":
+				return ec.fieldContext_AdminUser_displayName(ctx, field)
+			case "role":
+				return ec.fieldContext_AdminUser_role(ctx, field)
+			case "isActive":
+				return ec.fieldContext_AdminUser_isActive(ctx, field)
+			case "aiEnabled":
+				return ec.fieldContext_AdminUser_aiEnabled(ctx, field)
+			case "aiMonthlyTokenLimit":
+				return ec.fieldContext_AdminUser_aiMonthlyTokenLimit(ctx, field)
+			case "aiTokensUsedThisMonth":
+				return ec.fieldContext_AdminUser_aiTokensUsedThisMonth(ctx, field)
+			case "aiEffectiveLimit":
+				return ec.fieldContext_AdminUser_aiEffectiveLimit(ctx, field)
+			case "aiRequestsThisMonth":
+				return ec.fieldContext_AdminUser_aiRequestsThisMonth(ctx, field)
+			case "createdAt":
+				return ec.fieldContext_AdminUser_createdAt(ctx, field)
+			case "updatedAt":
+				return ec.fieldContext_AdminUser_updatedAt(ctx, field)
+			}
+			return nil, fmt.Errorf("no field named %q was found under type AdminUser", field.Name)
+		},
+	}
+	defer func() {
+		if r := recover(); r != nil {
+			err = ec.Recover(ctx, r)
+			ec.Error(ctx, err)
+		}
+	}()
+	ctx = graphql.WithFieldContext(ctx, fc)
+	if fc.Args, err = ec.field_Mutation_setUserAiLimits_args(ctx, field.ArgumentMap(ec.Variables)); err != nil {
 		ec.Error(ctx, err)
 		return fc, err
 	}
@@ -23404,7 +23823,7 @@ func (ec *executionContext) _Query_adminUsers(ctx context.Context, field graphql
 	}()
 	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (any, error) {
 		ctx = rctx // use context from middleware stack in children
-		return ec.resolvers.Query().AdminUsers(rctx)
+		return ec.resolvers.Query().AdminUsers(rctx, fc.Args["limit"].(*int), fc.Args["offset"].(*int), fc.Args["query"].(*string))
 	})
 	if err != nil {
 		ec.Error(ctx, err)
@@ -23421,7 +23840,7 @@ func (ec *executionContext) _Query_adminUsers(ctx context.Context, field graphql
 	return ec.marshalNAdminUser2ᚕᚖgithubᚗcomᚋleoᚋaiᚑweekendᚋbackendᚋgraphᚋmodelᚐAdminUserᚄ(ctx, field.Selections, res)
 }
 
-func (ec *executionContext) fieldContext_Query_adminUsers(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+func (ec *executionContext) fieldContext_Query_adminUsers(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
 	fc = &graphql.FieldContext{
 		Object:     "Query",
 		Field:      field,
@@ -23439,6 +23858,16 @@ func (ec *executionContext) fieldContext_Query_adminUsers(_ context.Context, fie
 				return ec.fieldContext_AdminUser_role(ctx, field)
 			case "isActive":
 				return ec.fieldContext_AdminUser_isActive(ctx, field)
+			case "aiEnabled":
+				return ec.fieldContext_AdminUser_aiEnabled(ctx, field)
+			case "aiMonthlyTokenLimit":
+				return ec.fieldContext_AdminUser_aiMonthlyTokenLimit(ctx, field)
+			case "aiTokensUsedThisMonth":
+				return ec.fieldContext_AdminUser_aiTokensUsedThisMonth(ctx, field)
+			case "aiEffectiveLimit":
+				return ec.fieldContext_AdminUser_aiEffectiveLimit(ctx, field)
+			case "aiRequestsThisMonth":
+				return ec.fieldContext_AdminUser_aiRequestsThisMonth(ctx, field)
 			case "createdAt":
 				return ec.fieldContext_AdminUser_createdAt(ctx, field)
 			case "updatedAt":
@@ -23446,6 +23875,17 @@ func (ec *executionContext) fieldContext_Query_adminUsers(_ context.Context, fie
 			}
 			return nil, fmt.Errorf("no field named %q was found under type AdminUser", field.Name)
 		},
+	}
+	defer func() {
+		if r := recover(); r != nil {
+			err = ec.Recover(ctx, r)
+			ec.Error(ctx, err)
+		}
+	}()
+	ctx = graphql.WithFieldContext(ctx, fc)
+	if fc.Args, err = ec.field_Query_adminUsers_args(ctx, field.ArgumentMap(ec.Variables)); err != nil {
+		ec.Error(ctx, err)
+		return fc, err
 	}
 	return fc, nil
 }
@@ -35758,6 +36198,28 @@ func (ec *executionContext) _AdminUser(ctx context.Context, sel ast.SelectionSet
 			if out.Values[i] == graphql.Null {
 				out.Invalids++
 			}
+		case "aiEnabled":
+			out.Values[i] = ec._AdminUser_aiEnabled(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				out.Invalids++
+			}
+		case "aiMonthlyTokenLimit":
+			out.Values[i] = ec._AdminUser_aiMonthlyTokenLimit(ctx, field, obj)
+		case "aiTokensUsedThisMonth":
+			out.Values[i] = ec._AdminUser_aiTokensUsedThisMonth(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				out.Invalids++
+			}
+		case "aiEffectiveLimit":
+			out.Values[i] = ec._AdminUser_aiEffectiveLimit(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				out.Invalids++
+			}
+		case "aiRequestsThisMonth":
+			out.Values[i] = ec._AdminUser_aiRequestsThisMonth(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				out.Invalids++
+			}
 		case "createdAt":
 			out.Values[i] = ec._AdminUser_createdAt(ctx, field, obj)
 			if out.Values[i] == graphql.Null {
@@ -37525,6 +37987,13 @@ func (ec *executionContext) _Mutation(ctx context.Context, sel ast.SelectionSet)
 		case "setUserRole":
 			out.Values[i] = ec.OperationContext.RootResolverMiddleware(innerCtx, func(ctx context.Context) (res graphql.Marshaler) {
 				return ec._Mutation_setUserRole(ctx, field)
+			})
+			if out.Values[i] == graphql.Null {
+				out.Invalids++
+			}
+		case "setUserAiLimits":
+			out.Values[i] = ec.OperationContext.RootResolverMiddleware(innerCtx, func(ctx context.Context) (res graphql.Marshaler) {
+				return ec._Mutation_setUserAiLimits(ctx, field)
 			})
 			if out.Values[i] == graphql.Null {
 				out.Invalids++

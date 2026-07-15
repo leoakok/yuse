@@ -35,6 +35,7 @@ func main() {
 		log.Fatalf("invalid config: %v", err)
 	}
 	store.ConfigureAdminEmails(cfg.AdminEmails)
+	store.ConfigureAIMonthlyTokenLimit(cfg.AIMonthlyTokenLimit)
 
 	emailCfg := email.LoadConfig()
 	verificationRequired := cfg.EmailVerificationRequired || emailCfg.IsConfigured()

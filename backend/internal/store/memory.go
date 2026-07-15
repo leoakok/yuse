@@ -1331,7 +1331,7 @@ func (m *Memory) CreateResume(title string) *model.Resume {
 	return cloneResume(resume)
 }
 
-func (m *Memory) ListAdminUsers() ([]*model.AdminUser, error) {
+func (m *Memory) ListAdminUsers(_, _ int, _ string) ([]*model.AdminUser, error) {
 	return nil, nil
 }
 
@@ -1356,6 +1356,10 @@ func (m *Memory) SetUserActive(_, _ string, _ bool) (*model.AdminUser, error) {
 }
 
 func (m *Memory) SetUserRole(_, _ string, _ model.UserRole) (*model.AdminUser, error) {
+	return nil, fmt.Errorf("not supported in memory store")
+}
+
+func (m *Memory) SetUserAiLimits(_, _ string, _ bool, _ *int64) (*model.AdminUser, error) {
 	return nil, fmt.Errorf("not supported in memory store")
 }
 

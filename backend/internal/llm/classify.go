@@ -358,6 +358,7 @@ func (s *Service) llmClassify(
 	if len(resp.Choices) == 0 {
 		return Classification{}, fmt.Errorf("classifier returned no choices")
 	}
+	s.recordUsage(ctx, "classify", s.miniModel, resp.Usage.PromptTokens, resp.Usage.CompletionTokens)
 	return parseClassifierJSON(resp.Choices[0].Message.Content)
 }
 

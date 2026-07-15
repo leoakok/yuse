@@ -21,9 +21,9 @@ export function AdminWorkspace() {
   const fullHeight = FULL_HEIGHT_SECTIONS.includes(section);
 
   return (
-    <div className="flex min-h-0 min-w-0 w-full flex-1 overflow-hidden border-t border-border/60 bg-background">
-      <aside className="hidden w-44 shrink-0 border-r border-border/60 md:block lg:w-48">
-        <div className="border-b border-border/60 px-4 py-3 lg:px-5">
+    <div className="flex min-h-0 min-w-0 w-full flex-1 overflow-hidden bg-background">
+      <aside className="hidden w-44 shrink-0 border-r border-border/60 md:flex md:flex-col lg:w-48">
+        <div className="shrink-0 border-b border-border/60 px-4 py-3 lg:px-5">
           <h1 className="text-sm font-semibold tracking-tight">Admin</h1>
         </div>
         <AdminNav section={section} onSectionChange={setSection} />
@@ -55,30 +55,30 @@ export function AdminWorkspace() {
         <div
           className={cn(
             "min-h-0 flex-1",
-            fullHeight ? "flex flex-col overflow-hidden" : "overflow-y-auto p-4 lg:p-5",
+            fullHeight
+              ? "flex flex-col overflow-hidden"
+              : "overflow-y-auto p-4 lg:p-5",
+            !fullHeight && section === "emails" && "max-w-2xl",
+            !fullHeight && section === "agent" && "mx-auto max-w-5xl",
+            !fullHeight &&
+              section !== "emails" &&
+              section !== "agent" &&
+              "max-w-5xl",
           )}
         >
-          <div className={cn(section !== "users" && "hidden", !fullHeight && "max-w-5xl")}>
-            <AdminUsersPanel />
-          </div>
-          <div className={cn(section !== "waitlist" && "hidden", !fullHeight && "max-w-5xl")}>
-            <AdminWaitlistPanel />
-          </div>
-          <div className={cn(section !== "invites" && "hidden", !fullHeight && "max-w-5xl")}>
-            <AdminInvitesPanel />
-          </div>
-          <div className={cn(section !== "audit" && "hidden", !fullHeight && "max-w-5xl")}>
-            <AdminAuditPanel />
-          </div>
-          <div className={cn(section !== "emails" && "hidden", !fullHeight && "max-w-2xl")}>
-            <AdminEmailTesterPanel />
-          </div>
+          {section === "users" ? <AdminUsersPanel /> : null}
+          {section === "waitlist" ? <AdminWaitlistPanel /> : null}
+          {section === "invites" ? <AdminInvitesPanel /> : null}
+          {section === "audit" ? <AdminAuditPanel /> : null}
+          {section === "emails" ? <AdminEmailTesterPanel /> : null}
           {section === "linkedin" ? <AdminLinkedInPanel /> : null}
           {section === "automations" ? <AdminAutomationsPanel /> : null}
-          <div className={cn(section !== "agent" && "hidden", "mx-auto max-w-5xl space-y-8")}>
-            <IntentPlayground />
-            <KnowledgeDictionary />
-          </div>
+          {section === "agent" ? (
+            <div className="space-y-8">
+              <IntentPlayground />
+              <KnowledgeDictionary />
+            </div>
+          ) : null}
         </div>
       </div>
     </div>

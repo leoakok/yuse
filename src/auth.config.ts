@@ -6,8 +6,12 @@ import { isPublicPortfolioPath } from "@/lib/portfolio/slug";
 const PUBLIC_PATH_PREFIXES = [
   "/llms.txt",
   "/ai.txt",
+  "/humans.txt",
   "/robots.txt",
   "/sitemap.xml",
+  "/opengraph-image",
+  "/twitter-image",
+  "/manifest.webmanifest",
 ] as const;
 
 function isExplicitPublicPath(pathname: string): boolean {

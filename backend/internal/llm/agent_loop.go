@@ -431,6 +431,9 @@ func buildChatCompletionRequest(
 		Tools:      tools,
 		ToolChoice: "auto",
 		Stream:     true,
+		StreamOptions: &openai.StreamOptions{
+			IncludeUsage: true,
+		},
 	}
 	if !modelHasFixedSamplingParams(modelName) {
 		req.Temperature = 0.2
@@ -453,6 +456,7 @@ func (s *Service) streamCompletionOnce(
 
 	var message openai.ChatCompletionMessage
 	toolCalls := make(map[int]*openai.ToolCall)
+	promptTokens, completionTokens := 0, 0
 
 	for {
 		response, err := stream.Recv()
@@ -461,6 +465,10 @@ func (s *Service) streamCompletionOnce(
 		}
 		if err != nil {
 			return openai.ChatCompletionMessage{}, err
+		}
+		if response.Usage != nil {
+			promptTokens = response.Usage.PromptTokens
+			completionTokens = response.Usage.CompletionTokens
 		}
 		if len(response.Choices) == 0 {
 			continue
@@ -512,5 +520,6 @@ func (s *Service) streamCompletionOnce(
 	if message.Role == "" {
 		message.Role = openai.ChatMessageRoleAssistant
 	}
+	s.recordUsage(ctx, "assistant", modelName, promptTokens, completionTokens)
 	return message, nil
 }

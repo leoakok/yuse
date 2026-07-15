@@ -4,6 +4,7 @@ import (
 	"context"
 	"errors"
 	"fmt"
+	"math"
 	"strings"
 	"time"
 
@@ -12,13 +13,34 @@ import (
 	"github.com/leo/ai-weekend/backend/graph/model"
 )
 
-// ListAdminUsers returns all platform users for the admin panel.
-func ListAdminUsers(ctx context.Context, pool *pgxpool.Pool) ([]*model.AdminUser, error) {
+// ListAdminUsers returns paginated platform users for the admin panel.
+// query matches email or display name (case-insensitive contains).
+func ListAdminUsers(ctx context.Context, pool *pgxpool.Pool, limit, offset int, query string) ([]*model.AdminUser, error) {
+	if limit < 1 {
+		limit = 25
+	}
+	if limit > 100 {
+		limit = 100
+	}
+	if offset < 0 {
+		offset = 0
+	}
+	yearMonth := CurrentLLMYearMonth()
+	pattern := adminUserSearchPattern(query)
+
 	rows, err := pool.Query(ctx, `
-		SELECT id, email, display_name, role, is_active, created_at, updated_at
-		FROM users
-		ORDER BY created_at DESC
-	`)
+		SELECT u.id, u.email, u.display_name, u.role, u.is_active,
+		       u.ai_enabled, u.ai_monthly_token_limit,
+		       COALESCE(m.prompt_tokens, 0) + COALESCE(m.completion_tokens, 0),
+		       COALESCE(m.request_count, 0),
+		       u.created_at, u.updated_at
+		FROM users u
+		LEFT JOIN llm_usage_monthly m
+		  ON m.user_id = u.id AND m.year_month = $1
+		WHERE ($2 = '' OR u.email ILIKE $2 ESCAPE '\' OR u.display_name ILIKE $2 ESCAPE '\')
+		ORDER BY u.created_at DESC
+		LIMIT $3 OFFSET $4
+	`, yearMonth, pattern, limit, offset)
 	if err != nil {
 		return nil, fmt.Errorf("list users: %w", err)
 	}
@@ -33,6 +55,40 @@ func ListAdminUsers(ctx context.Context, pool *pgxpool.Pool) ([]*model.AdminUser
 		out = append(out, user)
 	}
 	return out, rows.Err()
+}
+
+func adminUserSearchPattern(query string) string {
+	q := strings.TrimSpace(query)
+	if q == "" {
+		return ""
+	}
+	q = strings.ReplaceAll(q, `\`, `\\`)
+	q = strings.ReplaceAll(q, `%`, `\%`)
+	q = strings.ReplaceAll(q, `_`, `\_`)
+	return "%" + q + "%"
+}
+
+func getAdminUser(ctx context.Context, pool *pgxpool.Pool, userID string) (*model.AdminUser, error) {
+	yearMonth := CurrentLLMYearMonth()
+	row := pool.QueryRow(ctx, `
+		SELECT u.id, u.email, u.display_name, u.role, u.is_active,
+		       u.ai_enabled, u.ai_monthly_token_limit,
+		       COALESCE(m.prompt_tokens, 0) + COALESCE(m.completion_tokens, 0),
+		       COALESCE(m.request_count, 0),
+		       u.created_at, u.updated_at
+		FROM users u
+		LEFT JOIN llm_usage_monthly m
+		  ON m.user_id = u.id AND m.year_month = $2
+		WHERE u.id = $1
+	`, userID, yearMonth)
+	user, err := scanAdminUser(row)
+	if errors.Is(err, pgx.ErrNoRows) {
+		return nil, fmt.Errorf("user not found")
+	}
+	if err != nil {
+		return nil, err
+	}
+	return user, nil
 }
 
 // ListWaitlistEntries returns waitlist rows, optionally filtered by status.
@@ -107,19 +163,21 @@ func SetUserActive(ctx context.Context, pool *pgxpool.Pool, actorID, userID stri
 		return nil, fmt.Errorf("cannot deactivate your own account")
 	}
 
-	row := pool.QueryRow(ctx, `
+	tag, err := pool.Exec(ctx, `
 		UPDATE users
 		SET is_active = $2, updated_at = $3
 		WHERE id = $1
-		RETURNING id, email, display_name, role, is_active, created_at, updated_at
 	`, userID, active, time.Now().UTC())
-
-	user, err := scanAdminUser(row)
-	if errors.Is(err, pgx.ErrNoRows) {
-		return nil, fmt.Errorf("user not found")
-	}
 	if err != nil {
 		return nil, fmt.Errorf("set user active: %w", err)
+	}
+	if tag.RowsAffected() == 0 {
+		return nil, fmt.Errorf("user not found")
+	}
+
+	user, err := getAdminUser(ctx, pool, userID)
+	if err != nil {
+		return nil, err
 	}
 
 	action := "deactivate_user"
@@ -144,19 +202,21 @@ func SetUserRole(ctx context.Context, pool *pgxpool.Pool, actorID, userID string
 		return nil, fmt.Errorf("cannot demote your own admin role")
 	}
 
-	row := pool.QueryRow(ctx, `
+	tag, err := pool.Exec(ctx, `
 		UPDATE users
 		SET role = $2, updated_at = $3
 		WHERE id = $1
-		RETURNING id, email, display_name, role, is_active, created_at, updated_at
 	`, userID, string(role), time.Now().UTC())
-
-	user, err := scanAdminUser(row)
-	if errors.Is(err, pgx.ErrNoRows) {
-		return nil, fmt.Errorf("user not found")
-	}
 	if err != nil {
 		return nil, fmt.Errorf("set user role: %w", err)
+	}
+	if tag.RowsAffected() == 0 {
+		return nil, fmt.Errorf("user not found")
+	}
+
+	user, err := getAdminUser(ctx, pool, userID)
+	if err != nil {
+		return nil, err
 	}
 
 	if err := RecordAdminAudit(ctx, pool, actorID, "set_user_role", "user", userID, map[string]any{
@@ -168,16 +228,65 @@ func SetUserRole(ctx context.Context, pool *pgxpool.Pool, actorID, userID string
 	return user, nil
 }
 
+// SetUserAiLimits updates AI kill switch and optional monthly token override.
+// A nil aiMonthlyTokenLimit clears the per-user override (platform default applies).
+func SetUserAiLimits(
+	ctx context.Context,
+	pool *pgxpool.Pool,
+	actorID, userID string,
+	aiEnabled bool,
+	aiMonthlyTokenLimit *int64,
+) (*model.AdminUser, error) {
+	tag, err := pool.Exec(ctx, `
+		UPDATE users
+		SET ai_enabled = $2,
+		    ai_monthly_token_limit = $3,
+		    updated_at = $4
+		WHERE id = $1
+	`, userID, aiEnabled, aiMonthlyTokenLimit, time.Now().UTC())
+	if err != nil {
+		return nil, fmt.Errorf("set user ai limits: %w", err)
+	}
+	if tag.RowsAffected() == 0 {
+		return nil, fmt.Errorf("user not found")
+	}
+
+	user, err := getAdminUser(ctx, pool, userID)
+	if err != nil {
+		return nil, err
+	}
+
+	meta := map[string]any{
+		"email":     user.Email,
+		"aiEnabled": aiEnabled,
+	}
+	if aiMonthlyTokenLimit != nil {
+		meta["aiMonthlyTokenLimit"] = *aiMonthlyTokenLimit
+	} else {
+		meta["aiMonthlyTokenLimit"] = nil
+	}
+	if err := RecordAdminAudit(ctx, pool, actorID, "set_user_ai_limits", "user", userID, meta); err != nil {
+		return nil, err
+	}
+	return user, nil
+}
+
 func scanAdminUser(row scannable) (*model.AdminUser, error) {
 	var user model.AdminUser
 	var role string
 	var createdAt, updatedAt time.Time
+	var override *int64
+	var tokensUsed, requestCount int64
 	if err := row.Scan(
 		&user.ID,
 		&user.Email,
 		&user.DisplayName,
 		&role,
 		&user.IsActive,
+		&user.AiEnabled,
+		&override,
+		&tokensUsed,
+		&requestCount,
 		&createdAt,
 		&updatedAt,
 	); err != nil {
@@ -186,7 +295,25 @@ func scanAdminUser(row scannable) (*model.AdminUser, error) {
 	user.Role = normalizeUserRole(role)
 	user.CreatedAt = formatTime(createdAt)
 	user.UpdatedAt = formatTime(updatedAt)
+	user.AiTokensUsedThisMonth = clampGraphQLInt(tokensUsed)
+	user.AiRequestsThisMonth = clampGraphQLInt(requestCount)
+	effective := EffectiveAIMonthlyTokenLimit(override)
+	user.AiEffectiveLimit = clampGraphQLInt(effective)
+	if override != nil {
+		limit := clampGraphQLInt(*override)
+		user.AiMonthlyTokenLimit = &limit
+	}
 	return &user, nil
+}
+
+func clampGraphQLInt(v int64) int {
+	if v > math.MaxInt32 {
+		return math.MaxInt32
+	}
+	if v < math.MinInt32 {
+		return math.MinInt32
+	}
+	return int(v)
 }
 
 func scanWaitlistEntry(row scannable) (*model.WaitlistEntry, error) {

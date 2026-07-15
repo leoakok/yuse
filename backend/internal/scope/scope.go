@@ -60,8 +60,13 @@ func Session(ctx context.Context) (store.SessionScope, bool) {
 	return store.SessionScope{}, false
 }
 
-// CheckAssistantAccess enforces per-user assistant rate limits and email verification.
+// CheckAssistantAccess enforces per-user assistant rate limits, email verification, and AI budget.
 func CheckAssistantAccess(ctx context.Context) error {
+	return CheckLLMAccess(ctx)
+}
+
+// CheckLLMAccess enforces rate limits, email verification, ai_enabled, and monthly token budget.
+func CheckLLMAccess(ctx context.Context) error {
 	value, ok := From(ctx)
 	if !ok || value.CV == nil {
 		return fmt.Errorf("unauthorized")
@@ -79,6 +84,11 @@ func CheckAssistantAccess(ctx context.Context) error {
 	if value.Security.EmailVerificationRequired && value.Security.Pool != nil {
 		if err := store.RequireVerifiedEmailForLLM(ctx, value.Security.Pool, userID, true); err != nil {
 			return fmt.Errorf("verify your email before using the assistant")
+		}
+	}
+	if value.Security.Pool != nil {
+		if err := store.CheckLLMAccessForUser(ctx, value.Security.Pool, userID); err != nil {
+			return err
 		}
 	}
 	return nil

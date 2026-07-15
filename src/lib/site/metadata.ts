@@ -3,6 +3,7 @@ import { portfolioSiteOrigin } from "@/lib/portfolio/share-url";
 
 export const SITE_NAME = "Yuse";
 export const SITE_TAGLINE = "More than a one-page summary";
+export const SITE_HERO_HEADLINE = "You are more than a one-page summary.";
 export const SITE_DESCRIPTION =
   "Yuse is an AI-native resume and portfolio builder with a job tracker. Connect GitHub and LinkedIn, tailor your CV to every role, and publish a portfolio that reflects your real work.";
 export const SITE_KEYWORDS = [
@@ -17,13 +18,17 @@ export const SITE_KEYWORDS = [
   "LinkedIn resume",
   "job application",
   "career tools",
+  "digital twin resume",
+  "AI career assistant",
 ];
 export const INSTAGRAM_HANDLE = "yuse.one";
 export const INSTAGRAM_URL = "https://www.instagram.com/yuse.one";
-export const DEFAULT_OG_IMAGE = "/social/og-homepage.png";
+
+/** File-convention OG route generated from the landing hero (no CTAs). */
+export const DEFAULT_OG_IMAGE = "/opengraph-image";
 export const DEFAULT_OG_IMAGE_WIDTH = 1200;
-export const DEFAULT_OG_IMAGE_HEIGHT = 900;
-export const DEFAULT_OG_IMAGE_ALT = "Yuse, AI resume and portfolio builder";
+export const DEFAULT_OG_IMAGE_HEIGHT = 630;
+export const DEFAULT_OG_IMAGE_ALT = "Yuse. You are more than a one-page summary.";
 
 const PRIVATE_PATH_PREFIXES = [
   "/home",
@@ -83,7 +88,11 @@ export function buildRootMetadata(): Metadata {
         "en-GB": url,
       },
       types: {
-        "text/plain": [{ url: "/llms.txt" }, { url: "/ai.txt" }],
+        "text/plain": [
+          { url: "/llms.txt", title: "llms.txt" },
+          { url: "/ai.txt", title: "ai.txt" },
+          { url: "/humans.txt", title: "humans.txt" },
+        ],
       },
     },
     robots: {
@@ -94,6 +103,7 @@ export function buildRootMetadata(): Metadata {
         follow: true,
         "max-image-preview": "large",
         "max-snippet": -1,
+        "max-video-preview": -1,
       },
     },
     openGraph: {
@@ -101,13 +111,13 @@ export function buildRootMetadata(): Metadata {
       type: "website",
       locale: "en_GB",
       url,
-      title: SITE_NAME,
+      title: `${SITE_NAME}. ${SITE_HERO_HEADLINE}`,
       description: SITE_DESCRIPTION,
       images: defaultOgImages(),
     },
     twitter: {
       card: "summary_large_image",
-      title: SITE_NAME,
+      title: `${SITE_NAME}. ${SITE_HERO_HEADLINE}`,
       description: SITE_DESCRIPTION,
       images: [DEFAULT_OG_IMAGE],
     },
@@ -117,20 +127,24 @@ export function buildRootMetadata(): Metadata {
     },
     manifest: "/manifest.webmanifest",
     other: {
+      "instagram:site": INSTAGRAM_URL,
       "instagram:creator": `@${INSTAGRAM_HANDLE}`,
     },
   };
 }
 
 export function buildHomeMetadata(): Metadata {
-  const title = `${SITE_NAME}, ${SITE_TAGLINE}`;
+  const title = `${SITE_NAME}. ${SITE_HERO_HEADLINE}`;
   const description =
     "Yuse is an AI-native CV builder that learns your real work, connects your GitHub and LinkedIn, and tailors a CV to every job you go after.";
   const url = siteUrl();
 
   return {
-    title,
+    title: {
+      absolute: title,
+    },
     description,
+    keywords: SITE_KEYWORDS,
     alternates: {
       canonical: url,
     },
@@ -138,14 +152,10 @@ export function buildHomeMetadata(): Metadata {
       title,
       description,
       url,
-      images: [
-        {
-          url: DEFAULT_OG_IMAGE,
-          width: DEFAULT_OG_IMAGE_WIDTH,
-          height: DEFAULT_OG_IMAGE_HEIGHT,
-          alt: title,
-        },
-      ],
+      type: "website",
+      siteName: SITE_NAME,
+      locale: "en_GB",
+      images: defaultOgImages(),
     },
     twitter: {
       card: "summary_large_image",
@@ -172,6 +182,8 @@ export function buildLandingJsonLd() {
   const organizationId = `${url}/#organization`;
   const websiteId = `${url}/#website`;
   const appId = `${url}/#app`;
+  const logoUrl = absoluteUrl("/yuse-logo@2x.png");
+  const ogImageUrl = absoluteUrl(DEFAULT_OG_IMAGE);
 
   return {
     "@context": "https://schema.org",
@@ -180,19 +192,37 @@ export function buildLandingJsonLd() {
         "@type": "Organization",
         "@id": organizationId,
         name: SITE_NAME,
+        legalName: SITE_NAME,
         url,
-        logo: absoluteUrl("/yuse-logo@2x.png"),
+        logo: {
+          "@type": "ImageObject",
+          url: logoUrl,
+        },
+        image: ogImageUrl,
         description: SITE_DESCRIPTION,
+        slogan: SITE_HERO_HEADLINE,
         sameAs: [INSTAGRAM_URL],
+        brand: {
+          "@type": "Brand",
+          name: SITE_NAME,
+          slogan: SITE_HERO_HEADLINE,
+          logo: logoUrl,
+        },
       },
       {
         "@type": "WebSite",
         "@id": websiteId,
         url,
         name: SITE_NAME,
+        alternateName: ["yuse.one", "Yuse AI"],
         description: SITE_DESCRIPTION,
         inLanguage: "en-GB",
         publisher: { "@id": organizationId },
+        about: { "@id": organizationId },
+        potentialAction: {
+          "@type": "ReadAction",
+          target: url,
+        },
       },
       {
         "@type": "WebApplication",
@@ -200,16 +230,43 @@ export function buildLandingJsonLd() {
         name: SITE_NAME,
         url,
         applicationCategory: "BusinessApplication",
+        applicationSubCategory: "Career tools",
         operatingSystem: "Web",
         description: SITE_DESCRIPTION,
+        featureList: [
+          "AI resume and CV builder",
+          "Digital Twin work memory",
+          "Portfolio publishing",
+          "Job application tracker",
+          "GitHub and LinkedIn connections",
+        ],
         browserRequirements: "Requires a modern web browser and JavaScript.",
         offers: {
           "@type": "Offer",
           price: "0",
           priceCurrency: "GBP",
+          description: "Invite-only beta",
+          availability: "https://schema.org/LimitedAvailability",
         },
         publisher: { "@id": organizationId },
         isPartOf: { "@id": websiteId },
+        image: ogImageUrl,
+      },
+      {
+        "@type": "WebPage",
+        "@id": `${url}/#webpage`,
+        url,
+        name: `${SITE_NAME}. ${SITE_HERO_HEADLINE}`,
+        description: SITE_DESCRIPTION,
+        isPartOf: { "@id": websiteId },
+        about: { "@id": organizationId },
+        primaryImageOfPage: {
+          "@type": "ImageObject",
+          url: ogImageUrl,
+          width: DEFAULT_OG_IMAGE_WIDTH,
+          height: DEFAULT_OG_IMAGE_HEIGHT,
+        },
+        inLanguage: "en-GB",
       },
     ],
   };

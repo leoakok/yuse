@@ -62,6 +62,7 @@ func (m SessionMiddleware) Wrap(next http.Handler) http.Handler {
 		scopedStore := m.Store.WithSession(session)
 		cvSvc := m.newCVService(scopedStore)
 		ctx := scope.With(r.Context(), m.scopeValue(session, cvSvc))
+		ctx = llm.WithUsageUser(ctx, session.UserID)
 		next.ServeHTTP(w, r.WithContext(ctx))
 	})
 }
@@ -109,6 +110,7 @@ func (m SessionMiddleware) WrapGraphQL(next http.Handler) http.Handler {
 		scopedStore := m.Store.WithSession(session)
 		cvSvc := m.newCVService(scopedStore)
 		ctx := scope.With(r.Context(), m.scopeValue(session, cvSvc))
+		ctx = llm.WithUsageUser(ctx, session.UserID)
 		next.ServeHTTP(w, r.WithContext(ctx))
 	})
 }

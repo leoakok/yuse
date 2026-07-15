@@ -49,6 +49,7 @@ type Config struct {
 	RateLimitAccessCheckPerIP  int
 	RateLimitAccessCheckWindow time.Duration
 	CronSecret                 string
+	AIMonthlyTokenLimit        int64
 }
 
 func Load() (Config, error) {
@@ -93,6 +94,7 @@ func Load() (Config, error) {
 		RateLimitAccessCheckPerIP:   envInt("RATE_LIMIT_ACCESS_CHECK_PER_IP", 5),
 		RateLimitAccessCheckWindow: envDuration("RATE_LIMIT_ACCESS_CHECK_WINDOW", 15*time.Minute),
 		CronSecret:                 strings.TrimSpace(os.Getenv("CRON_SECRET")),
+		AIMonthlyTokenLimit:        envInt64AllowZero("AI_MONTHLY_TOKEN_LIMIT", 1_000_000),
 	}
 
 	if cfg.GitHubOAuthCallbackURL == "" {
@@ -173,6 +175,18 @@ func envInt(key string, fallback int) int {
 	}
 	parsed, err := strconv.Atoi(value)
 	if err != nil || parsed < 1 {
+		return fallback
+	}
+	return parsed
+}
+
+func envInt64AllowZero(key string, fallback int64) int64 {
+	value := strings.TrimSpace(os.Getenv(key))
+	if value == "" {
+		return fallback
+	}
+	parsed, err := strconv.ParseInt(value, 10, 64)
+	if err != nil {
 		return fallback
 	}
 	return parsed

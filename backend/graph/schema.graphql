@@ -344,6 +344,12 @@ type AdminUser {
   displayName: String!
   role: UserRole!
   isActive: Boolean!
+  aiEnabled: Boolean!
+  """Per-user monthly token override. Null means platform default."""
+  aiMonthlyTokenLimit: Int
+  aiTokensUsedThisMonth: Int!
+  aiEffectiveLimit: Int!
+  aiRequestsThisMonth: Int!
   createdAt: DateTime!
   updatedAt: DateTime!
 }
@@ -1014,8 +1020,8 @@ type Query {
   knowledgeEntries(includeDisabled: Boolean = true): [KnowledgeEntry!]!
   """Admin only. Runs the cheap intent layer for a test message and returns the breakdown."""
   classifyAssistantMessage(text: String!, context: AssistantContextInput!): AssistantClassification!
-  """Admin only. Lists all platform users."""
-  adminUsers: [AdminUser!]!
+  """Admin only. Lists platform users (paginated). Optional query matches email or display name."""
+  adminUsers(limit: Int = 25, offset: Int = 0, query: String): [AdminUser!]!
   """Admin only. Lists beta waitlist entries."""
   adminWaitlist(status: WaitlistStatus): [WaitlistEntry!]!
   """Admin only. Lists recent admin audit log entries."""
@@ -1400,6 +1406,8 @@ type Mutation {
   setUserActive(userId: ID!, active: Boolean!): AdminUser!
   """Admin only. Set a user's platform role."""
   setUserRole(userId: ID!, role: UserRole!): AdminUser!
+  """Admin only. Set AI enabled flag and optional monthly token limit override. Null limit clears the override."""
+  setUserAiLimits(userId: ID!, aiEnabled: Boolean!, aiMonthlyTokenLimit: Int): AdminUser!
   """Admin only. Send a preview of a transactional email to a recipient inbox."""
   sendTestEmail(type: TestEmailType!, recipientEmail: String!): SendTestEmailResult!
   """Admin only. Create a beta invite link."""

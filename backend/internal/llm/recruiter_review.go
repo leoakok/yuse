@@ -100,6 +100,7 @@ func (s *Service) recruiterReview(
 	if len(resp.Choices) == 0 {
 		return RecruiterReviewResult{}, fmt.Errorf("recruiter review returned no choices")
 	}
+	s.recordUsage(ctx, "recruiter_review", s.miniModel, resp.Usage.PromptTokens, resp.Usage.CompletionTokens)
 	return parseRecruiterReviewJSON(resp.Choices[0].Message.Content)
 }
 
