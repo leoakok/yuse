@@ -48,6 +48,14 @@ type Config struct {
 	RateLimitWaitlistWindow    time.Duration
 	RateLimitAccessCheckPerIP  int
 	RateLimitAccessCheckWindow time.Duration
+	RateLimitPublicPortfolioPerIP int
+	RateLimitPublicPortfolioWindow  time.Duration
+	RateLimitPublicDesignPerIP      int
+	RateLimitPublicDesignWindow     time.Duration
+	RateLimitPublicInvitePerIP      int
+	RateLimitPublicInviteWindow     time.Duration
+	RateLimitVerifyEmailPerIP       int
+	RateLimitVerifyEmailWindow      time.Duration
 	CronSecret                 string
 	AIMonthlyTokenLimit        int64
 }
@@ -93,6 +101,14 @@ func Load() (Config, error) {
 		RateLimitWaitlistWindow:     envDuration("RATE_LIMIT_WAITLIST_WINDOW", time.Hour),
 		RateLimitAccessCheckPerIP:   envInt("RATE_LIMIT_ACCESS_CHECK_PER_IP", 5),
 		RateLimitAccessCheckWindow: envDuration("RATE_LIMIT_ACCESS_CHECK_WINDOW", 15*time.Minute),
+		RateLimitPublicPortfolioPerIP: envInt("RATE_LIMIT_PUBLIC_PORTFOLIO_PER_IP", 60),
+		RateLimitPublicPortfolioWindow: envDuration("RATE_LIMIT_PUBLIC_PORTFOLIO_WINDOW", time.Minute),
+		RateLimitPublicDesignPerIP:     envInt("RATE_LIMIT_PUBLIC_DESIGN_PER_IP", 30),
+		RateLimitPublicDesignWindow:    envDuration("RATE_LIMIT_PUBLIC_DESIGN_WINDOW", time.Minute),
+		RateLimitPublicInvitePerIP:     envInt("RATE_LIMIT_PUBLIC_INVITE_PER_IP", 30),
+		RateLimitPublicInviteWindow:    envDuration("RATE_LIMIT_PUBLIC_INVITE_WINDOW", time.Minute),
+		RateLimitVerifyEmailPerIP:      envInt("RATE_LIMIT_VERIFY_EMAIL_PER_IP", 10),
+		RateLimitVerifyEmailWindow:     envDuration("RATE_LIMIT_VERIFY_EMAIL_WINDOW", time.Minute),
 		CronSecret:                 strings.TrimSpace(os.Getenv("CRON_SECRET")),
 		AIMonthlyTokenLimit:        envInt64AllowZero("AI_MONTHLY_TOKEN_LIMIT", 1_000_000),
 	}

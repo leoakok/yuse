@@ -71,10 +71,18 @@ func TestMemoryUsageMeterIncrements(t *testing.T) {
 	ctx := t.Context()
 	userID := "user-1"
 
-	if err := meter.RecordLLMUsage(ctx, userID, "assistant", "gpt-test", 10, 20); err != nil {
+	reconcile, _, err := meter.ReserveLLMUsage(ctx, userID, "assistant", "gpt-test", 50)
+	if err != nil {
 		t.Fatal(err)
 	}
-	if err := meter.RecordLLMUsage(ctx, userID, "classify", "gpt-test", 5, 5); err != nil {
+	if err := reconcile(ctx, 10, 20); err != nil {
+		t.Fatal(err)
+	}
+	reconcile, _, err = meter.ReserveLLMUsage(ctx, userID, "classify", "gpt-test", 50)
+	if err != nil {
+		t.Fatal(err)
+	}
+	if err := reconcile(ctx, 5, 5); err != nil {
 		t.Fatal(err)
 	}
 
@@ -100,5 +108,25 @@ func TestMemoryUsageMeterIncrements(t *testing.T) {
 	status = meter.Status(userID)
 	if err := EvaluateLLMAccess(status); !errors.Is(err, ErrAILimitReached) {
 		t.Fatalf("over custom limit: %v", err)
+	}
+}
+
+func TestMemoryUsageMeterReservationEnforcesAndReleases(t *testing.T) {
+	meter := NewMemoryUsageMeter()
+	limit := int64(100)
+	meter.SetLimits("user-1", true, &limit)
+	_, _, err := meter.ReserveLLMUsage(t.Context(), "user-1", "assistant", "gpt-test", 101)
+	if !errors.Is(err, ErrAILimitReached) {
+		t.Fatalf("over reservation: %v", err)
+	}
+	_, release, err := meter.ReserveLLMUsage(t.Context(), "user-1", "assistant", "gpt-test", 100)
+	if err != nil {
+		t.Fatal(err)
+	}
+	if err := release(t.Context()); err != nil {
+		t.Fatal(err)
+	}
+	if got := meter.Status("user-1"); got.TokensUsed != 0 || got.RequestCount != 0 {
+		t.Fatalf("released status: %+v", got)
 	}
 }

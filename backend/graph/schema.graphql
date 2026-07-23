@@ -379,6 +379,40 @@ type InviteLink {
   urlPath: String!
 }
 
+enum DesignShareContentMode {
+  DUMMY
+  REAL
+}
+
+"""Shareable CV design snapshot at /d/{id}."""
+type DesignShare {
+  id: ID!
+  resumeId: ID!
+  contentMode: DesignShareContentMode!
+  title: String
+  isActive: Boolean!
+  createdAt: DateTime!
+  updatedAt: DateTime!
+  """Public path segment, e.g. /d/abc123xyz."""
+  urlPath: String!
+}
+
+"""Admin-curated design for landing carousel or public theme picker."""
+type CuratedTheme {
+  id: ID!
+  title: String!
+  designShareId: ID!
+  tags: [String!]!
+  featuredOnLanding: Boolean!
+  isPublic: Boolean!
+  sortOrder: Int!
+  createdAt: DateTime!
+  updatedAt: DateTime!
+  """Resolved design share path, e.g. /d/abc123xyz."""
+  urlPath: String!
+  preview: ResumeWithContent!
+}
+
 """Result of an admin test email send."""
 type SendTestEmailResult {
   success: Boolean!
@@ -1043,6 +1077,10 @@ type Query {
   ): [LinkedInJobCard!]!
   """Admin only. Lists beta invite links."""
   adminInviteLinks: [InviteLink!]!
+  """Admin only. Lists curated public themes."""
+  adminCuratedThemes: [CuratedTheme!]!
+  """Design share for a resume owned by the signed-in user, if any."""
+  designShareForResume(resumeId: ID!): DesignShare
   """Admin only. Lists job search automations for the signed-in user."""
   jobAutomations: [JobAutomation!]!
   """Admin only. Fetches one job search automation."""
@@ -1414,6 +1452,18 @@ type Mutation {
   createInviteLink(input: CreateInviteLinkInput!): InviteLink!
   """Admin only. Update a beta invite link."""
   updateInviteLink(input: UpdateInviteLinkInput!): InviteLink!
+  """Create or refresh a design-only share link for a resume."""
+  createDesignShare(resumeId: ID!, contentMode: DesignShareContentMode!, title: String): DesignShare!
+  """Deactivate a design share link owned by the signed-in user."""
+  deactivateDesignShare(id: ID!): DesignShare!
+  """Apply a shared design to an existing resume or create a new one when resumeId is omitted."""
+  applyDesignShare(designShareId: ID!, resumeId: ID): Resume!
+  """Admin only. Add a curated theme from a /d/{id} link."""
+  createCuratedTheme(input: CreateCuratedThemeInput!): CuratedTheme!
+  """Admin only. Update a curated theme."""
+  updateCuratedTheme(input: UpdateCuratedThemeInput!): CuratedTheme!
+  """Admin only. Remove a curated theme."""
+  deleteCuratedTheme(id: ID!): Boolean!
   """Admin only. Create a job search automation."""
   createJobAutomation(input: CreateJobAutomationInput!): JobAutomation!
   """Admin only. Update a job search automation."""
@@ -1452,4 +1502,23 @@ input UpdateInviteLinkInput {
   maxUses: Int
   isActive: Boolean
   expiresAt: DateTime
+}
+
+input CreateCuratedThemeInput {
+  title: String!
+  """Full or partial design URL, e.g. yuse.one/d/abc123 or /d/abc123."""
+  designUrl: String!
+  tags: [String!]
+  featuredOnLanding: Boolean
+  isPublic: Boolean
+  sortOrder: Int
+}
+
+input UpdateCuratedThemeInput {
+  id: ID!
+  title: String
+  tags: [String!]
+  featuredOnLanding: Boolean
+  isPublic: Boolean
+  sortOrder: Int
 }

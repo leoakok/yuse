@@ -1,5 +1,6 @@
 import type { LinkedInJobCard } from "@/lib/types/admin";
 import { LinkedInRelativeListedAt } from "@/components/admin/linkedin-relative-listed-at";
+import { sanitizeExternalUrl } from "@/lib/security/safe-url";
 
 interface LinkedInJobDetailProps {
   job: LinkedInJobCard | null;
@@ -25,6 +26,7 @@ export function LinkedInJobDetail({ job }: LinkedInJobDetailProps) {
   }
 
   const description = job.description?.trim() ?? "";
+  const safeUrl = sanitizeExternalUrl(job.url);
 
   return (
     <div className="flex h-full min-h-0 flex-col overflow-hidden">
@@ -44,14 +46,16 @@ export function LinkedInJobDetail({ job }: LinkedInJobDetailProps) {
                 </dd>
               </div>
             </dl>
-            <a
-              href={job.url}
-              target="_blank"
-              rel="noopener noreferrer"
-              className="inline-block text-sm text-primary underline-offset-4 hover:underline"
-            >
-              Open on LinkedIn
-            </a>
+            {safeUrl ? (
+              <a
+                href={safeUrl}
+                target="_blank"
+                rel="noopener noreferrer"
+                className="inline-block text-sm text-primary underline-offset-4 hover:underline"
+              >
+                Open on LinkedIn
+              </a>
+            ) : null}
           </div>
 
           {description ? (

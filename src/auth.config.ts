@@ -69,34 +69,33 @@ export const authConfig = {
         return token;
       }
       if (account?.provider === "google" && account.providerAccountId) {
-        const googleProfile = profile as { email?: string; name?: string; picture?: string } | undefined;
-        const email = googleProfile?.email?.trim();
-        if (email) {
-          try {
-            const res = await fetch(`${backendBaseUrl()}/auth/resolve-google`, {
-              method: "POST",
-              headers: { "Content-Type": "application/json" },
-              body: JSON.stringify({
-                googleId: account.providerAccountId,
-                email,
-              }),
-              cache: "no-store",
-            });
-            if (res.ok) {
-              const data = (await res.json()) as { userId?: string };
-              if (data.userId) {
-                token.sub = data.userId;
-              } else {
-                token.sub = `google-${account.providerAccountId}`;
-              }
-            } else {
-              token.sub = `google-${account.providerAccountId}`;
+        const fallbackGoogleSub = `google-${account.providerAccountId}`;
+        const previousSub = typeof token.sub === "string" ? token.sub : "";
+        let resolvedSub = fallbackGoogleSub;
+        try {
+          const res = await fetch(`${backendBaseUrl()}/auth/resolve-google`, {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({
+              googleId: account.providerAccountId,
+            }),
+            cache: "no-store",
+          });
+          if (res.ok) {
+            const data = (await res.json()) as { userId?: string };
+            if (data.userId) {
+              resolvedSub = data.userId;
             }
-          } catch {
-            token.sub = `google-${account.providerAccountId}`;
           }
+        } catch {
+          resolvedSub = fallbackGoogleSub;
+        }
+        // If a signed-in user is connecting Google from settings, keep their subject
+        // and let backend session sync attach the Google credential to the same account.
+        if (previousSub && !previousSub.startsWith("google-")) {
+          token.sub = previousSub;
         } else {
-          token.sub = `google-${account.providerAccountId}`;
+          token.sub = resolvedSub;
         }
         token.googleId = account.providerAccountId;
       }
@@ -143,6 +142,14 @@ export const authConfig = {
       }
 
       if (isInvite) {
+        return true;
+      }
+
+      if (pathname.startsWith("/d/")) {
+        return true;
+      }
+
+      if (pathname.startsWith("/api/public")) {
         return true;
       }
 

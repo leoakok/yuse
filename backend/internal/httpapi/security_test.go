@@ -1,11 +1,14 @@
 package httpapi_test
 
 import (
+	"net/http"
 	"net/http/httptest"
 	"os"
 	"testing"
+	"time"
 
 	"github.com/leo/ai-weekend/backend/internal/httpapi"
+	"github.com/leo/ai-weekend/backend/internal/ratelimit"
 	"github.com/leo/ai-weekend/backend/internal/scope"
 )
 
@@ -62,6 +65,37 @@ func TestClientIPIgnoresForwardedForFromUntrustedPeer(t *testing.T) {
 
 	if got := httpapi.ClientIP(req); got != "203.0.113.10" {
 		t.Fatalf("ClientIP = %q, want %q", got, "203.0.113.10")
+	}
+}
+
+func TestPublicEndpointLimiterReturns429(t *testing.T) {
+	limiter := ratelimit.New(1, time.Minute)
+	called := false
+	handler := limiter.Middleware(func(r *http.Request) string {
+		return "ip:test"
+	})(http.HandlerFunc(func(w http.ResponseWriter, _ *http.Request) {
+		called = true
+		w.WriteHeader(http.StatusOK)
+	}))
+
+	req := httptest.NewRequest(http.MethodGet, "/public/designs/abc", nil)
+	rec := httptest.NewRecorder()
+	handler.ServeHTTP(rec, req)
+	if rec.Code != http.StatusOK {
+		t.Fatalf("first request status = %d, want 200", rec.Code)
+	}
+	if !called {
+		t.Fatal("expected handler to run on first request")
+	}
+
+	called = false
+	rec = httptest.NewRecorder()
+	handler.ServeHTTP(rec, req)
+	if rec.Code != http.StatusTooManyRequests {
+		t.Fatalf("second request status = %d, want 429", rec.Code)
+	}
+	if called {
+		t.Fatal("expected handler to be rate limited on second request")
 	}
 }
 

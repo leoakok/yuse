@@ -93,14 +93,27 @@ func (s *Service) recruiterReview(
 		req.Temperature = 0
 	}
 
+	reconcile, release, err := s.reserveUsage(ctx, "recruiter_review", s.miniModel, req)
+	if err != nil {
+		return RecruiterReviewResult{}, err
+	}
+	settled := false
+	defer func() {
+		if !settled {
+			releaseUsage(release)
+		}
+	}()
 	resp, err := s.client.CreateChatCompletion(ctx, req)
 	if err != nil {
 		return RecruiterReviewResult{}, err
 	}
+	if err := reconcileUsage(reconcile, resp.Usage.PromptTokens, resp.Usage.CompletionTokens); err != nil {
+		return RecruiterReviewResult{}, err
+	}
+	settled = true
 	if len(resp.Choices) == 0 {
 		return RecruiterReviewResult{}, fmt.Errorf("recruiter review returned no choices")
 	}
-	s.recordUsage(ctx, "recruiter_review", s.miniModel, resp.Usage.PromptTokens, resp.Usage.CompletionTokens)
 	return parseRecruiterReviewJSON(resp.Choices[0].Message.Content)
 }
 

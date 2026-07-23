@@ -8,8 +8,8 @@ import (
 	"time"
 
 	"github.com/google/uuid"
-	"github.com/leo/ai-weekend/backend/internal/automation"
 	"github.com/leo/ai-weekend/backend/graph/model"
+	"github.com/leo/ai-weekend/backend/internal/automation"
 	"github.com/leo/ai-weekend/backend/internal/llm"
 	"github.com/leo/ai-weekend/backend/internal/mcp"
 	"github.com/leo/ai-weekend/backend/internal/security"
@@ -149,7 +149,16 @@ func (s *Service) UpdateResume(
 		resume.Title = strings.TrimSpace(*title)
 	}
 	if contactProfileID != nil {
-		resume.ContactProfileID = contactProfileID
+		id := strings.TrimSpace(*contactProfileID)
+		if id == "" {
+			resume.ContactProfileID = nil
+		} else {
+			profile, err := s.store.GetContactProfile(id)
+			if err != nil {
+				return nil, err
+			}
+			resume.ContactProfileID = &profile.ID
+		}
 	}
 	resume.UpdatedAt = time.Now().UTC().Format(time.RFC3339)
 	s.store.SaveResume(resume)
@@ -443,6 +452,12 @@ func (s *Service) UpdateContactProfile(
 				return nil, err
 			}
 		}
+	}
+	if err := validateOptionalExternalURL(input.LinkedinPhotoURL); err != nil {
+		return nil, err
+	}
+	if err := validateOptionalExternalURL(input.GithubPhotoURL); err != nil {
+		return nil, err
 	}
 	return s.store.UpdateContactProfile(
 		input.ResumeID,
@@ -820,6 +835,20 @@ func (s *Service) UserEmail() string {
 		return strings.TrimSpace(u.Email)
 	}
 	return ""
+}
+
+func validateOptionalExternalURL(raw *string) error {
+	if raw == nil {
+		return nil
+	}
+	trimmed := strings.TrimSpace(*raw)
+	if trimmed == "" {
+		return nil
+	}
+	if _, err := security.ValidateExternalURL(trimmed); err != nil {
+		return fmt.Errorf("invalid url: %w", err)
+	}
+	return nil
 }
 
 func (s *Service) ConnectionStatus(provider model.ConnectionProvider) (*model.ConnectionStatus, error) {

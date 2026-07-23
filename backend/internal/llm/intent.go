@@ -4,6 +4,7 @@ import (
 	"strings"
 
 	"github.com/leo/ai-weekend/backend/graph/model"
+	"github.com/leo/ai-weekend/backend/internal/mcp"
 )
 
 // highImpactTools are write/import actions that should never fire on an ambiguous
@@ -27,6 +28,15 @@ var highImpactTools = map[string]bool{
 	"delete_portfolio_project":    true,
 	"delete_portfolio_skill":      true,
 	"delete_portfolio_testimonial": true,
+}
+
+var untrustedContentTools = map[string]bool{
+	"web_search":             true,
+	"fetch_url":              true,
+	"fetch_linkedin_profile": true,
+	"crawl_site":             true,
+	"crawl_github_profile":   true,
+	"explore_website":        true,
 }
 
 func userAskedLinkedInImport(text string) bool {
@@ -247,4 +257,22 @@ func shouldBlockHighImpactTool(category model.AssistantCategory, toolName string
 	default:
 		return false
 	}
+}
+
+// shouldBlockHighImpactToolAfterUntrustedReads prevents high-impact tool execution
+// when the current turn has already consumed untrusted external content, unless the
+// user explicitly asked for that high-impact action in the current message.
+func shouldBlockHighImpactToolAfterUntrustedReads(userText, toolName string, executions []mcp.Execution) bool {
+	if !highImpactTools[toolName] {
+		return false
+	}
+	if userExplicitlyRequestedHighImpactAction(userText) {
+		return false
+	}
+	for _, exec := range executions {
+		if exec.Error == "" && untrustedContentTools[exec.Tool] {
+			return true
+		}
+	}
+	return false
 }

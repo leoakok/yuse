@@ -36,8 +36,22 @@ export function isSafeJobUrl(raw: string): boolean {
   }
   try {
     const parsed = new URL(safe);
-    return parsed.protocol === "http:" || parsed.protocol === "https:";
+    if (parsed.protocol !== "http:" && parsed.protocol !== "https:") {
+      return false;
+    }
+    return !isBlockedHost(parsed.hostname);
   } catch {
     return false;
   }
+}
+
+function isBlockedHost(hostname: string): boolean {
+  const host = hostname.toLowerCase().trim();
+  if (!host || host === "localhost" || host.endsWith(".localhost")) {
+    return true;
+  }
+  if (host === "metadata.google.internal" || host === "metadata") {
+    return true;
+  }
+  return /^(127\.|10\.|192\.168\.|169\.254\.|0\.)/.test(host);
 }

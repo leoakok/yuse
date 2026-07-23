@@ -193,6 +193,7 @@ export function AdminAutomationsPanel() {
   const [loading, setLoading] = useState(true);
   const [dialogOpen, setDialogOpen] = useState(false);
   const [cookieDialogOpen, setCookieDialogOpen] = useState(false);
+  const [deleteTarget, setDeleteTarget] = useState<JobAutomation | null>(null);
   const [cookieDraft, setCookieDraft] = useState("");
   const [form, setForm] = useState<FormState>(emptyForm);
   const [editingId, setEditingId] = useState<string | null>(null);
@@ -328,7 +329,12 @@ export function AdminAutomationsPanel() {
   }
 
   async function handleDelete(row: JobAutomation) {
-    if (!window.confirm(`Delete "${row.name}"?`)) return;
+    setDeleteTarget(row);
+  }
+
+  async function confirmDelete() {
+    if (!deleteTarget) return;
+    const row = deleteTarget;
     setBusyId(row.id);
     try {
       await deleteJobAutomation(row.id);
@@ -336,6 +342,7 @@ export function AdminAutomationsPanel() {
       if (selectedId === row.id) {
         setSelectedId(null);
       }
+      setDeleteTarget(null);
       toast.success("Automation deleted.");
     } catch {
       toast.error("Could not delete automation.");
@@ -823,6 +830,41 @@ export function AdminAutomationsPanel() {
                 Save session
               </Button>
             </div>
+          </ResponsiveDialogFooter>
+        </ResponsiveDialogContent>
+      </ResponsiveDialog>
+
+      <ResponsiveDialog
+        open={deleteTarget != null}
+        onOpenChange={(open) => {
+          if (!open) setDeleteTarget(null);
+        }}
+      >
+        <ResponsiveDialogContent showCloseButton={busyId !== deleteTarget?.id}>
+          <ResponsiveDialogHeader>
+            <ResponsiveDialogTitle>Delete this automation?</ResponsiveDialogTitle>
+            <ResponsiveDialogDescription>
+              This removes &ldquo;{deleteTarget?.name}&rdquo; and its run history. Matched jobs you
+              already saved stay in the list.
+            </ResponsiveDialogDescription>
+          </ResponsiveDialogHeader>
+          <ResponsiveDialogFooter>
+            <Button
+              type="button"
+              variant="outline"
+              disabled={busyId === deleteTarget?.id}
+              onClick={() => setDeleteTarget(null)}
+            >
+              Cancel
+            </Button>
+            <Button
+              type="button"
+              variant="destructive"
+              disabled={busyId === deleteTarget?.id}
+              onClick={() => void confirmDelete()}
+            >
+              {busyId === deleteTarget?.id ? "Deleting…" : "Delete"}
+            </Button>
           </ResponsiveDialogFooter>
         </ResponsiveDialogContent>
       </ResponsiveDialog>

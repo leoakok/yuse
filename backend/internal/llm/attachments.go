@@ -1,6 +1,7 @@
 package llm
 
 import (
+	"encoding/base64"
 	"encoding/json"
 	"fmt"
 	"strings"
@@ -10,6 +11,14 @@ import (
 )
 
 const maxAttachmentBytes = 10 << 20 // 10 MiB
+const maxExtractedTextChars = 8000
+
+var allowedAttachmentMIMEs = map[string]struct{}{
+	"application/pdf": {},
+	"image/jpeg":      {},
+	"image/png":       {},
+	"image/webp":      {},
+}
 
 // Attachment is a file the user attached to an assistant message.
 type Attachment struct {
@@ -34,12 +43,83 @@ func attachmentsFromInput(inputs []*model.AssistantAttachmentInput) ([]Attachmen
 			ContentBase64: strings.TrimSpace(ptrStr(input.ContentBase64)),
 			ExtractedText: strings.TrimSpace(ptrStr(input.ExtractedText)),
 		}
-		if err := attachment.validateSize(); err != nil {
+		if err := attachment.validate(); err != nil {
 			return nil, err
 		}
 		out = append(out, attachment)
 	}
 	return out, nil
+}
+
+func (a Attachment) validate() error {
+	if err := a.validateSize(); err != nil {
+		return err
+	}
+	if a.ContentBase64 != "" {
+		if err := a.validateMIME(); err != nil {
+			return err
+		}
+		if err := a.validateMagicBytes(); err != nil {
+			return err
+		}
+	}
+	if len(a.ExtractedText) > maxExtractedTextChars {
+		return fmt.Errorf("attachment %q extracted text exceeds maximum length", a.Name)
+	}
+	return nil
+}
+
+func (a Attachment) validateMIME() error {
+	mime := strings.ToLower(strings.TrimSpace(a.MimeType))
+	if mime == "" {
+		if a.isPDF() {
+			mime = "application/pdf"
+		} else if a.isImage() {
+			mime = "image/jpeg"
+		}
+	}
+	if mime == "" {
+		return fmt.Errorf("attachment %q requires a supported file type", a.Name)
+	}
+	if _, ok := allowedAttachmentMIMEs[mime]; !ok {
+		return fmt.Errorf("attachment %q has unsupported type %q", a.Name, mime)
+	}
+	return nil
+}
+
+func (a Attachment) validateMagicBytes() error {
+	raw, err := base64.StdEncoding.DecodeString(a.ContentBase64)
+	if err != nil {
+		return fmt.Errorf("attachment %q has invalid base64 content", a.Name)
+	}
+	if len(raw) == 0 {
+		return fmt.Errorf("attachment %q is empty", a.Name)
+	}
+	mime := strings.ToLower(strings.TrimSpace(a.MimeType))
+	switch {
+	case mime == "application/pdf" || a.isPDF():
+		if len(raw) < 4 || string(raw[:4]) != "%PDF" {
+			return fmt.Errorf("attachment %q is not a valid PDF", a.Name)
+		}
+	case strings.HasPrefix(mime, "image/") || a.isImage():
+		if !looksLikeImageBytes(raw) {
+			return fmt.Errorf("attachment %q is not a valid image", a.Name)
+		}
+	}
+	return nil
+}
+
+func looksLikeImageBytes(raw []byte) bool {
+	if len(raw) >= 3 && raw[0] == 0xFF && raw[1] == 0xD8 && raw[2] == 0xFF {
+		return true
+	}
+	if len(raw) >= 8 && raw[0] == 0x89 && raw[1] == 0x50 && raw[2] == 0x4E && raw[3] == 0x47 {
+		return true
+	}
+	if len(raw) >= 12 && string(raw[0:4]) == "RIFF" && string(raw[8:12]) == "WEBP" {
+		return true
+	}
+	return false
 }
 
 func (a Attachment) validateSize() error {
@@ -128,6 +208,9 @@ func enrichAttachments(attachments []Attachment) []Attachment {
 		if err != nil || text == "" {
 			continue
 		}
+		if len(text) > maxExtractedTextChars {
+			text = text[:maxExtractedTextChars]
+		}
 		out[i].ExtractedText = text
 	}
 	return out
@@ -171,7 +254,11 @@ func buildUserMessage(
 		var fileLines []string
 		fileLines = append(fileLines, fmt.Sprintf("Attached file: %s (%s)", attachment.Name, attachment.MimeType))
 		if attachment.ExtractedText != "" {
-			fileLines = append(fileLines, "Content:", attachment.ExtractedText)
+			extracted := attachment.ExtractedText
+			if len(extracted) > maxExtractedTextChars {
+				extracted = extracted[:maxExtractedTextChars]
+			}
+			fileLines = append(fileLines, "Content:", extracted)
 		} else if attachment.isPDF() {
 			fileLines = append(
 				fileLines,

@@ -7,8 +7,8 @@ import (
 	"strings"
 	"time"
 
-	openai "github.com/sashabaranov/go-openai"
 	"github.com/leo/ai-weekend/backend/internal/store"
+	openai "github.com/sashabaranov/go-openai"
 )
 
 const tasteProfileStaleAfter = time.Hour
@@ -82,7 +82,7 @@ Return strict JSON only: {"likedSummary":"2-3 sentences","dislikedSummary":"2-3 
 likedSummary: patterns the user prefers (roles, industries, seniority, company types).
 dislikedSummary: patterns to avoid. Empty string if no examples for that side.`
 
-	resp, err := s.client.CreateChatCompletion(ctx, openai.ChatCompletionRequest{
+	req := openai.ChatCompletionRequest{
 		Model: s.miniModel,
 		Messages: []openai.ChatCompletionMessage{
 			{Role: openai.ChatMessageRoleSystem, Content: system},
@@ -92,14 +92,29 @@ dislikedSummary: patterns to avoid. Empty string if no examples for that side.`
 			Type: openai.ChatCompletionResponseFormatTypeJSONObject,
 		},
 		Temperature: 0,
-	})
+		MaxTokens:   1024,
+	}
+	reconcile, release, err := s.reserveUsage(ctx, "taste_profile", s.miniModel, req)
+	if err != nil {
+		return "", "", err
+	}
+	settled := false
+	defer func() {
+		if !settled {
+			releaseUsage(release)
+		}
+	}()
+	resp, err := s.client.CreateChatCompletion(ctx, req)
 	if err != nil {
 		return "", "", fmt.Errorf("taste profile llm: %w", err)
 	}
+	if err := reconcileUsage(reconcile, resp.Usage.PromptTokens, resp.Usage.CompletionTokens); err != nil {
+		return "", "", err
+	}
+	settled = true
 	if len(resp.Choices) == 0 {
 		return "", "", fmt.Errorf("taste profile llm: empty response")
 	}
-	s.recordUsage(ctx, "taste_profile", s.miniModel, resp.Usage.PromptTokens, resp.Usage.CompletionTokens)
 
 	var parsed tasteRefreshResponse
 	if err := json.Unmarshal([]byte(strings.TrimSpace(resp.Choices[0].Message.Content)), &parsed); err != nil {

@@ -3,6 +3,7 @@ package linkedin
 import (
 	"encoding/json"
 	"fmt"
+	"net/url"
 	"strconv"
 	"strings"
 	"time"
@@ -71,7 +72,7 @@ func jobCardFromPostingCard(m map[string]any) JobCard {
 	location, workplace := parseWorkplaceAndLocation(secondary)
 
 	listedAt := listedAtFromFooter(m["footerItems"])
-	url := jobURL
+	url := safeLinkedInJobURL(jobURL)
 	if url == "" && jobID != "" {
 		slug := strings.ToLower(strings.ReplaceAll(title, " ", "-"))
 		url = fmt.Sprintf("https://www.linkedin.com/jobs/view/%s-%s", slug, jobID)
@@ -86,6 +87,18 @@ func jobCardFromPostingCard(m map[string]any) JobCard {
 		ListedAt:      listedAt,
 		URL:           url,
 	}
+}
+
+func safeLinkedInJobURL(raw string) string {
+	parsed, err := url.Parse(strings.TrimSpace(raw))
+	if err != nil || parsed.Scheme != "https" || parsed.User != nil {
+		return ""
+	}
+	host := strings.ToLower(parsed.Hostname())
+	if host != "linkedin.com" && !strings.HasSuffix(host, ".linkedin.com") {
+		return ""
+	}
+	return parsed.String()
 }
 
 func listedAtFromFooter(value any) string {

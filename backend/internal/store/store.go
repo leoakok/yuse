@@ -74,6 +74,16 @@ type Store interface {
 	SetResumeSlug(userID, resumeID, slug string) (*model.Resume, error)
 	PublicPortfolioWithContent(username string, slug *string) (*model.PortfolioWithContent, error)
 	PublicResumeWithContent(username string, slug *string) (*model.ResumeWithContent, error)
+	UpsertDesignShare(userID, resumeID string, contentMode model.DesignShareContentMode, title *string, settings *model.ResumeSettings, theme *model.CvTheme) (*model.DesignShare, error)
+	GetDesignShare(id string) (*model.DesignShare, error)
+	GetDesignShareForResume(resumeID string) (*model.DesignShare, error)
+	DeactivateDesignShare(userID, shareID string) (*model.DesignShare, error)
+	PublicDesignPreview(shareID string) (*model.DesignShare, *model.ResumeWithContent, error)
+	ApplyDesignShareSettings(targetResumeID, userID string, snapshot *model.ResumeSettings) (*model.ResumeSettings, error)
+	ListCuratedThemes(featuredOnLanding, isPublic *bool) ([]*model.CuratedTheme, error)
+	CreateCuratedTheme(actorID string, input model.CreateCuratedThemeInput) (*model.CuratedTheme, error)
+	UpdateCuratedTheme(actorID string, input model.UpdateCuratedThemeInput) (*model.CuratedTheme, error)
+	DeleteCuratedTheme(actorID, id string) (bool, error)
 	ListTwinEntries() []*model.TwinEntry
 	GetTwinEntry(id string) (*model.TwinEntry, error)
 	CreateTwinEntry(entry *model.TwinEntry) *model.TwinEntry

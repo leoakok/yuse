@@ -237,7 +237,7 @@ func (p *Postgres) resumeWithContentUnscoped(resumeID string) (*model.ResumeWith
 	settings := p.getResumeSettingsUnscoped(resumeID)
 	var contact *model.ContactProfile
 	if resume.ContactProfileID != nil {
-		contact, _ = p.getContactProfileUnscoped(*resume.ContactProfileID)
+		contact, _ = p.getContactProfileUnscoped(*resume.ContactProfileID, resume.WorkspaceID)
 	}
 	theme, err := p.GetTheme(settings.ThemeID)
 	if err != nil {
@@ -368,7 +368,7 @@ func (p *Postgres) portfolioWithContentUnscoped(portfolioID string) (*model.Port
 	settings := p.GetPortfolioSettings(portfolioID)
 	var contact *model.ContactProfile
 	if portfolio.ContactProfileID != nil {
-		contact, _ = p.getContactProfileUnscoped(*portfolio.ContactProfileID)
+		contact, _ = p.getContactProfileUnscoped(*portfolio.ContactProfileID, portfolio.WorkspaceID)
 	}
 	theme, err := p.GetTheme(settings.ThemeID)
 	if err != nil {
@@ -438,12 +438,12 @@ func sanitizePublicContact(contact *model.ContactProfile) *model.ContactProfile 
 	return &sanitized
 }
 
-func (p *Postgres) getContactProfileUnscoped(id string) (*model.ContactProfile, error) {
+func (p *Postgres) getContactProfileUnscoped(id, workspaceID string) (*model.ContactProfile, error) {
 	row := p.pool.QueryRow(p.ctx(), `
 		SELECT id, workspace_id, full_name, headline, email, phone, location, website, linked_in, github,
 			photo_url, linkedin_photo_url, github_photo_url, og_image_url, favicon_url, created_at, updated_at
-		FROM contact_profiles WHERE id = $1
-	`, id)
+		FROM contact_profiles WHERE id = $1 AND workspace_id = $2
+	`, id, workspaceID)
 	return scanContactProfile(row)
 }
 

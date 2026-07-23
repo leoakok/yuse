@@ -40,3 +40,8 @@ yarn-error.log*
 *.tsbuildinfo
 next-env.d.ts
 .env*.local
+
+# SAST scan artifacts and vendored tooling (not project source)
+sast/
+.cursor/skills/sast-*/
+.cursor/rules/sast-orchestration.mdc

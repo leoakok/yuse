@@ -6,6 +6,7 @@ import (
 	"testing"
 
 	"github.com/leo/ai-weekend/backend/graph/model"
+	"github.com/leo/ai-weekend/backend/internal/mcp"
 )
 
 // classifyOffline exercises the deterministic fast-path + heuristic layers
@@ -219,6 +220,21 @@ func TestShouldBlockHighImpactTool(t *testing.T) {
 	}
 	if shouldBlockHighImpactTool(model.AssistantCategoryUpdateCv, "delete_all_section_items") {
 		t.Fatal("delete_all_section_items should be allowed for UPDATE_CV")
+	}
+}
+
+func TestShouldBlockHighImpactToolAfterUntrustedReads(t *testing.T) {
+	executions := []mcp.Execution{
+		{Tool: "fetch_url", Error: ""},
+	}
+	if !shouldBlockHighImpactToolAfterUntrustedReads("thanks", "create_resume", executions) {
+		t.Fatal("expected create_resume blocked after fetch_url without explicit request")
+	}
+	if shouldBlockHighImpactToolAfterUntrustedReads("please create a resume for this role", "create_resume", executions) {
+		t.Fatal("expected create_resume allowed when user explicitly requested it")
+	}
+	if shouldBlockHighImpactToolAfterUntrustedReads("thanks", "list_resumes", executions) {
+		t.Fatal("read tools should not be blocked after untrusted reads")
 	}
 }
 

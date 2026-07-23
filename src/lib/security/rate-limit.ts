@@ -31,18 +31,25 @@ export function checkRateLimit({ key, limit, windowMs }: RateLimitOptions): Rate
 }
 
 export function clientIp(request: Request): string {
-  const forwarded = request.headers.get("x-forwarded-for");
-  if (forwarded) {
-    const first = forwarded.split(",")[0]?.trim();
-    if (first) {
-      return first;
+  if (trustForwardedHeaders()) {
+    const forwarded = request.headers.get("x-forwarded-for");
+    if (forwarded) {
+      const first = forwarded.split(",")[0]?.trim();
+      if (first) {
+        return first;
+      }
+    }
+    const realIp = request.headers.get("x-real-ip");
+    if (realIp?.trim()) {
+      return realIp.trim();
     }
   }
-  const realIp = request.headers.get("x-real-ip");
-  if (realIp?.trim()) {
-    return realIp.trim();
-  }
   return "unknown";
+}
+
+function trustForwardedHeaders(): boolean {
+  const trusted = process.env.TRUSTED_PROXY?.trim().toLowerCase();
+  return trusted === "true" || trusted === "1";
 }
 
 export const MAX_REGISTER_BODY_BYTES = 16 * 1024;

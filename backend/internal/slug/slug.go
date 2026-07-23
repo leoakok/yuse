@@ -37,7 +37,7 @@ var reservedSlugs = map[string]struct{}{
 	"app": {}, "apps": {}, "dashboard": {}, "account": {}, "accounts": {}, "profile": {}, "profiles": {},
 	"user": {}, "users": {}, "workspace": {}, "workspaces": {}, "org": {}, "orgs": {}, "organization": {},
 	"search": {}, "explore": {}, "feed": {}, "notifications": {}, "inbox": {}, "messages": {}, "chat": {},
-	"share": {}, "invite": {}, "join": {}, "create": {}, "new": {}, "edit": {}, "delete": {}, "remove": {},
+	"d": {}, "themes": {}, "templates": {},
 	// Brands / impersonation basics
 	"yuse": {}, "google": {}, "github": {}, "linkedin": {}, "facebook": {}, "twitter": {}, "instagram": {},
 	// Basic offensive / abuse (minimal set)

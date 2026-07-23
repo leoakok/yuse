@@ -4,6 +4,7 @@ import { Reveal } from "@/components/landing/reveal";
 import { TailorDemo } from "@/components/landing/tailor-demo";
 import { TailorCvShowcase } from "@/components/landing/tailor-cv-showcase";
 import { LinkedInMark } from "@/components/landing/brand-icons";
+import { fetchFeaturedDesigns } from "@/lib/design/public-api";
 
 type Step = {
   icon: ReactNode;
@@ -17,7 +18,9 @@ const STEPS: Step[] = [
   { icon: null, title: "Paste a job link" },
 ];
 
-export function LandingHow({ isSignedIn = false }: { isSignedIn?: boolean }) {
+export async function LandingHow({ isSignedIn = false }: { isSignedIn?: boolean }) {
+  const featuredThemes = await fetchFeaturedDesigns();
+
   return (
     <section id="how" className="scroll-mt-20 border-t border-border/60">
       <div className="mx-auto w-full max-w-6xl px-5 py-16 sm:px-8 sm:py-24">
@@ -48,7 +51,7 @@ export function LandingHow({ isSignedIn = false }: { isSignedIn?: boolean }) {
         </Reveal>
 
         <Reveal className="mt-10" delay={100}>
-          <TailorCvShowcase isSignedIn={isSignedIn} />
+          <TailorCvShowcase isSignedIn={isSignedIn} featuredThemes={featuredThemes} />
         </Reveal>
       </div>
     </section>

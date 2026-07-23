@@ -11,6 +11,7 @@ import (
 	"time"
 
 	"github.com/99designs/gqlgen/graphql/handler"
+	"github.com/99designs/gqlgen/graphql/handler/extension"
 	"github.com/99designs/gqlgen/graphql/playground"
 	"github.com/joho/godotenv"
 	"github.com/rs/cors"
@@ -68,6 +69,10 @@ func main() {
 	assistantLimiter := ratelimit.New(cfg.RateLimitAssistantPerUser, cfg.RateLimitAssistantWindow)
 	accountLimiter := ratelimit.New(cfg.RateLimitAccountPerUser, cfg.RateLimitAccountWindow)
 	testEmailLimiter := ratelimit.New(10, time.Hour)
+	publicPortfolioLimiter := ratelimit.New(cfg.RateLimitPublicPortfolioPerIP, cfg.RateLimitPublicPortfolioWindow)
+	publicDesignLimiter := ratelimit.New(cfg.RateLimitPublicDesignPerIP, cfg.RateLimitPublicDesignWindow)
+	publicInviteLimiter := ratelimit.New(cfg.RateLimitPublicInvitePerIP, cfg.RateLimitPublicInviteWindow)
+	verifyEmailLimiter := ratelimit.New(cfg.RateLimitVerifyEmailPerIP, cfg.RateLimitVerifyEmailWindow)
 
 	sessionMiddleware := httpapi.SessionMiddleware{
 		Pool:                      pgStore.Pool(),
@@ -87,6 +92,7 @@ func main() {
 	gqlServer := handler.NewDefaultServer(graph.NewExecutableSchema(graph.Config{
 		Resolvers: &graph.Resolver{},
 	}))
+	gqlServer.Use(extension.FixedComplexityLimit(300))
 	gqlServer.AroundOperations(graph.AroundOperations)
 
 	mux := http.NewServeMux()
@@ -101,10 +107,10 @@ func main() {
 	mux.Handle("POST /auth/resolve-google", loginLimiter.Middleware(ipKey)(httpapi.ResolveGoogle(pgStore.Pool())))
 	mux.Handle("POST /auth/forgot-password", loginLimiter.Middleware(ipKey)(httpapi.ForgotPassword(pgStore.Pool(), emailCfg, strings.TrimRight(cfg.CORSOrigin, "/"))))
 	mux.Handle("POST /auth/reset-password", loginLimiter.Middleware(ipKey)(httpapi.ResetPassword(pgStore.Pool())))
-	mux.Handle("GET /auth/verify-email", httpapi.VerifyEmail(pgStore.Pool()))
+	mux.Handle("GET /auth/verify-email", verifyEmailLimiter.Middleware(ipKey)(httpapi.VerifyEmail(pgStore.Pool())))
 	mux.Handle("POST /waitlist", waitlistLimiter.Middleware(ipKey)(httpapi.JoinWaitlist(pgStore.Pool())))
 	mux.Handle("POST /auth/access-check", accessCheckLimiter.Middleware(ipKey)(httpapi.CheckAccess(pgStore.Pool())))
-	mux.Handle("GET /invites/{code}", httpapi.PublicInvite(pgStore.Pool()))
+	mux.Handle("GET /invites/{code}", publicInviteLimiter.Middleware(ipKey)(httpapi.PublicInvite(pgStore.Pool())))
 	mux.Handle("POST /auth/claim-invite", accessCheckLimiter.Middleware(ipKey)(httpapi.ClaimInvite(pgStore.Pool())))
 
 	githubOAuth := httpapi.GitHubOAuthHandlers{Pool: pgStore.Pool(), Config: cfg}
@@ -123,8 +129,11 @@ func main() {
 
 	mux.Handle("POST /assistant/stream", sessionMiddleware.Wrap(httpapi.AssistantStream()))
 	mux.Handle("POST /automations/run/stream", sessionMiddleware.Wrap(httpapi.AutomationRunStream()))
-	mux.Handle("GET /public/{username}", httpapi.PublicPortfolio(pgStore))
-	mux.Handle("GET /public/{username}/{slug}", httpapi.PublicPortfolio(pgStore))
+	mux.Handle("GET /public/{username}", publicPortfolioLimiter.Middleware(ipKey)(httpapi.PublicPortfolio(pgStore)))
+	mux.Handle("GET /public/{username}/{slug}", publicPortfolioLimiter.Middleware(ipKey)(httpapi.PublicPortfolio(pgStore)))
+	mux.Handle("GET /public/designs/{id}", publicDesignLimiter.Middleware(ipKey)(httpapi.PublicDesign(pgStore)))
+	mux.Handle("GET /public/featured-designs", publicPortfolioLimiter.Middleware(ipKey)(httpapi.PublicFeaturedDesigns(pgStore)))
+	mux.Handle("GET /public/themes", publicPortfolioLimiter.Middleware(ipKey)(httpapi.PublicThemes(pgStore)))
 	cronHandler := httpapi.JobAutomationsCron(autoRunner, cfg.CronSecret)
 	mux.Handle("GET /internal/cron/job-automations", cronHandler)
 	mux.Handle("POST /internal/cron/job-automations", cronHandler)

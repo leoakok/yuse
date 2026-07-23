@@ -1,4 +1,5 @@
 import type { ContactField, ContactLayout, ContactProfile } from "@/lib/types/cv";
+import { sanitizeExternalUrl } from "@/lib/security/safe-url";
 
 export const DEFAULT_CONTACT_FIELDS: ContactField[] = [
   "EMAIL",
@@ -54,20 +55,20 @@ function resolveFieldValue(
     case "WEBSITE": {
       const value = profile.website?.trim();
       if (!value) return null;
-      const href = value.startsWith("http") ? value : `https://${value}`;
-      return { value, href };
+      const href = sanitizeExternalUrl(value.startsWith("http") ? value : `https://${value}`);
+      return href ? { value, href } : { value };
     }
     case "LINKEDIN": {
       const value = profile.linkedIn?.trim();
       if (!value) return null;
-      const href = value.startsWith("http") ? value : `https://${value}`;
-      return { value, href };
+      const href = sanitizeExternalUrl(value.startsWith("http") ? value : `https://${value}`);
+      return href ? { value, href } : { value };
     }
     case "GITHUB": {
       const value = profile.github?.trim();
       if (!value) return null;
-      const href = value.startsWith("http") ? value : `https://${value}`;
-      return { value, href };
+      const href = sanitizeExternalUrl(value.startsWith("http") ? value : `https://${value}`);
+      return href ? { value, href } : { value };
     }
     default:
       return null;

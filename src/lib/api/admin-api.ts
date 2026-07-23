@@ -66,7 +66,17 @@ import {
   SET_AUTOMATION_MATCH_FEEDBACK_MUTATION,
   BAN_AUTOMATION_COMPANY_MUTATION,
   UNBAN_AUTOMATION_COMPANY_MUTATION,
+  ADMIN_CURATED_THEMES_QUERY,
+  CREATE_CURATED_THEME_MUTATION,
+  UPDATE_CURATED_THEME_MUTATION,
+  DELETE_CURATED_THEME_MUTATION,
 } from "@/lib/graphql/operations";
+import { mapResumeWithContent } from "@/lib/api/cv-api";
+import type {
+  CreateCuratedThemeInput,
+  CuratedTheme,
+  UpdateCuratedThemeInput,
+} from "@/lib/types/design-share";
 
 function mapAssistantContext(context: AssistantContext) {
   const viewMap = {
@@ -429,4 +439,42 @@ export async function unbanAutomationCompany(id: string): Promise<boolean> {
     { id },
   );
   return data.unbanAutomationCompany;
+}
+
+function mapCuratedTheme(theme: CuratedTheme): CuratedTheme {
+  return {
+    ...theme,
+    preview: mapResumeWithContent(theme.preview),
+  };
+}
+
+export async function listAdminCuratedThemes(): Promise<CuratedTheme[]> {
+  const data = await graphqlRequest<{ adminCuratedThemes: CuratedTheme[] }>(
+    ADMIN_CURATED_THEMES_QUERY,
+  );
+  return data.adminCuratedThemes.map(mapCuratedTheme);
+}
+
+export async function createCuratedTheme(input: CreateCuratedThemeInput): Promise<CuratedTheme> {
+  const data = await graphqlRequest<{ createCuratedTheme: CuratedTheme }>(
+    CREATE_CURATED_THEME_MUTATION,
+    { input },
+  );
+  return mapCuratedTheme(data.createCuratedTheme);
+}
+
+export async function updateCuratedTheme(input: UpdateCuratedThemeInput): Promise<CuratedTheme> {
+  const data = await graphqlRequest<{ updateCuratedTheme: CuratedTheme }>(
+    UPDATE_CURATED_THEME_MUTATION,
+    { input },
+  );
+  return mapCuratedTheme(data.updateCuratedTheme);
+}
+
+export async function deleteCuratedTheme(id: string): Promise<boolean> {
+  const data = await graphqlRequest<{ deleteCuratedTheme: boolean }>(
+    DELETE_CURATED_THEME_MUTATION,
+    { id },
+  );
+  return data.deleteCuratedTheme;
 }

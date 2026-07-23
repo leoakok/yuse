@@ -425,3 +425,65 @@ export function dispatchDesignPreset(
     handlers.onDesignExtensionChange({ ...handlers.designExtension, ...bundle.extension });
   }
 }
+
+export function dispatchResumeSettings(
+  settings: ResumeSettings,
+  handlers: DesignPresetChangeHandlers,
+): void {
+  handlers.onDesignPresetChange(settings.designPresetId);
+  handlers.onFontFamilyChange(settings.fontFamily);
+  handlers.onAccentColorChange(settings.accentColor);
+  handlers.onSectionDividerStyleChange(settings.sectionDividerStyle);
+  handlers.onItemTitleLayoutChange(settings.itemTitleLayout);
+  handlers.onItemTitleSeparatorChange(settings.itemTitleSeparator);
+  handlers.onItemTitleOrderChange(settings.itemTitleOrder);
+  handlers.onColumnLayoutChange(settings.columnLayout);
+  handlers.onSidebarPositionChange(settings.sidebarPosition);
+  handlers.onSidebarWidthChange(settings.sidebarWidth);
+  handlers.onContactLayoutChange(settings.contactLayout);
+  handlers.onSkillsLayoutChange(settings.skillsLayout);
+  handlers.onDateFormatChange(settings.dateFormat);
+  handlers.onDatePositionChange(settings.datePosition);
+
+  if (handlers.onTypographyChange && handlers.typography) {
+    handlers.onTypographyChange({
+      fontSize: settings.fontSize,
+      contactNameFontSize: settings.contactNameFontSize,
+      contactHeadlineFontSize: settings.contactHeadlineFontSize,
+      contactDetailsFontSize: settings.contactDetailsFontSize,
+      sectionTitleFontSize: settings.sectionTitleFontSize,
+      itemTitleFontSize: settings.itemTitleFontSize,
+      itemMetaFontSize: settings.itemMetaFontSize,
+    });
+  }
+
+  if (handlers.onDesignExtensionChange && handlers.designExtension) {
+    handlers.onDesignExtensionChange({
+      sectionSpacing: settings.sectionSpacing,
+      itemSpacing: settings.itemSpacing,
+      descriptionStyle: settings.descriptionStyle,
+      bulletChar: settings.bulletChar,
+      itemTitleEmphasis: settings.itemTitleEmphasis,
+      highlightCurrentRole: settings.highlightCurrentRole,
+      locationDisplay: settings.locationDisplay,
+      headingFontFamily: settings.headingFontFamily,
+      bodyFontFamily: settings.bodyFontFamily,
+      nameFontWeight: settings.nameFontWeight,
+      sectionTitleFontWeight: settings.sectionTitleFontWeight,
+      lineHeight: settings.lineHeight,
+      headingLetterSpacing: settings.headingLetterSpacing,
+      sectionTitleCase: settings.sectionTitleCase,
+      textPrimaryColor: settings.textPrimaryColor,
+      textMutedColor: settings.textMutedColor,
+      pageBackground: settings.pageBackground,
+      linkColor: settings.linkColor,
+      skillsProficiency: settings.skillsProficiency,
+      languagesLayout: settings.languagesLayout,
+      certificationsLayout: settings.certificationsLayout,
+      keepSectionsTogether: settings.keepSectionsTogether,
+      maxItemsBeforeBreak: settings.maxItemsBeforeBreak,
+      footerStyle: settings.footerStyle,
+      exportFilenameTemplate: settings.exportFilenameTemplate,
+    });
+  }
+}

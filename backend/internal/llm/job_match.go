@@ -89,7 +89,7 @@ func (s *Service) matchJobBatch(ctx context.Context, criteria string, jobs []Job
 	system := buildMatchSystemPrompt(taste)
 	user := fmt.Sprintf("Criteria:\n%s\n\nJobs JSON:\n%s", criteria, string(payload))
 
-	resp, err := s.client.CreateChatCompletion(ctx, openai.ChatCompletionRequest{
+	req := openai.ChatCompletionRequest{
 		Model: s.miniModel,
 		Messages: []openai.ChatCompletionMessage{
 			{Role: openai.ChatMessageRoleSystem, Content: system},
@@ -99,14 +99,29 @@ func (s *Service) matchJobBatch(ctx context.Context, criteria string, jobs []Job
 			Type: openai.ChatCompletionResponseFormatTypeJSONObject,
 		},
 		Temperature: 0,
-	})
+		MaxTokens:   4096,
+	}
+	reconcile, release, err := s.reserveUsage(ctx, "job_match", s.miniModel, req)
+	if err != nil {
+		return nil, err
+	}
+	settled := false
+	defer func() {
+		if !settled {
+			releaseUsage(release)
+		}
+	}()
+	resp, err := s.client.CreateChatCompletion(ctx, req)
 	if err != nil {
 		return nil, fmt.Errorf("job match llm: %w", err)
 	}
+	if err := reconcileUsage(reconcile, resp.Usage.PromptTokens, resp.Usage.CompletionTokens); err != nil {
+		return nil, err
+	}
+	settled = true
 	if len(resp.Choices) == 0 {
 		return nil, fmt.Errorf("job match llm: empty response")
 	}
-	s.recordUsage(ctx, "job_match", s.miniModel, resp.Usage.PromptTokens, resp.Usage.CompletionTokens)
 
 	content := strings.TrimSpace(resp.Choices[0].Message.Content)
 	var parsed jobMatchResponse

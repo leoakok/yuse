@@ -53,11 +53,11 @@ func EffectiveAIMonthlyTokenLimit(override *int64) int64 {
 
 // LLMAccessStatus is the metering snapshot used to gate LLM calls.
 type LLMAccessStatus struct {
-	AIEnabled       bool
-	OverrideLimit   *int64
-	TokensUsed      int64
-	RequestCount    int64
-	EffectiveLimit  int64
+	AIEnabled      bool
+	OverrideLimit  *int64
+	TokensUsed     int64
+	RequestCount   int64
+	EffectiveLimit int64
 }
 
 // EvaluateLLMAccess returns a user-facing error when AI should be blocked.
@@ -114,14 +114,75 @@ func CheckLLMAccessForUser(ctx context.Context, pool *pgxpool.Pool, userID strin
 	return EvaluateLLMAccess(status)
 }
 
-// RecordLLMUsage increments the monthly rollup and writes a best-effort event row.
-func RecordLLMUsage(
+// ReserveLLMUsage atomically reserves monthly budget before a model call.
+func ReserveLLMUsage(
 	ctx context.Context,
 	pool *pgxpool.Pool,
 	userID, feature, model string,
-	promptTokens, completionTokens int,
-) error {
+	tokens int,
+) (*LLMUsageReservation, error) {
 	if userID == "" {
+		return nil, nil
+	}
+	if tokens < 1 {
+		tokens = 1
+	}
+	yearMonth := CurrentLLMYearMonth()
+	now := time.Now().UTC()
+
+	var reserved bool
+	err := pool.QueryRow(ctx, `
+		WITH account AS (
+			SELECT id, COALESCE(ai_monthly_token_limit, $4) AS token_limit
+			FROM users
+			WHERE id = $1 AND ai_enabled
+		)
+		INSERT INTO llm_usage_monthly (
+			user_id, year_month, prompt_tokens, completion_tokens, request_count, updated_at
+		)
+		SELECT id, $2, $3, 0, 1, $5
+		FROM account
+		WHERE token_limit > 0 AND $3 <= token_limit
+		ON CONFLICT (user_id, year_month) DO UPDATE SET
+			prompt_tokens = llm_usage_monthly.prompt_tokens + EXCLUDED.prompt_tokens,
+			request_count = llm_usage_monthly.request_count + 1,
+			updated_at = EXCLUDED.updated_at
+		WHERE llm_usage_monthly.prompt_tokens + llm_usage_monthly.completion_tokens + EXCLUDED.prompt_tokens <= (SELECT token_limit FROM account)
+		RETURNING TRUE
+	`, userID, yearMonth, tokens, PlatformAIMonthlyTokenLimit(), now).Scan(&reserved)
+	if errors.Is(err, pgx.ErrNoRows) {
+		// Preserve the disabled-account error when a setting changed after an earlier gate.
+		status, statusErr := GetLLMAccessStatus(ctx, pool, userID)
+		if statusErr != nil {
+			return nil, statusErr
+		}
+		if accessErr := EvaluateLLMAccess(status); accessErr != nil {
+			return nil, accessErr
+		}
+		return nil, ErrAILimitReached
+	}
+	if err != nil {
+		return nil, fmt.Errorf("reserve llm usage monthly: %w", err)
+	}
+	return &LLMUsageReservation{
+		pool: pool, userID: userID, feature: feature, model: model,
+		yearMonth: yearMonth, tokens: tokens,
+	}, nil
+}
+
+// LLMUsageReservation holds an in-flight monthly budget reservation.
+type LLMUsageReservation struct {
+	pool      *pgxpool.Pool
+	userID    string
+	feature   string
+	model     string
+	yearMonth string
+	tokens    int
+}
+
+// ReconcileLLMUsage replaces the conservative reservation with actual usage.
+func (r *LLMUsageReservation) ReconcileLLMUsage(ctx context.Context, promptTokens, completionTokens int) error {
+	if r == nil {
 		return nil
 	}
 	if promptTokens < 0 {
@@ -130,48 +191,67 @@ func RecordLLMUsage(
 	if completionTokens < 0 {
 		completionTokens = 0
 	}
-	yearMonth := CurrentLLMYearMonth()
 	now := time.Now().UTC()
-
-	_, err := pool.Exec(ctx, `
-		INSERT INTO llm_usage_monthly (
-			user_id, year_month, prompt_tokens, completion_tokens, request_count, updated_at
-		) VALUES ($1, $2, $3, $4, 1, $5)
-		ON CONFLICT (user_id, year_month) DO UPDATE SET
-			prompt_tokens = llm_usage_monthly.prompt_tokens + EXCLUDED.prompt_tokens,
-			completion_tokens = llm_usage_monthly.completion_tokens + EXCLUDED.completion_tokens,
-			request_count = llm_usage_monthly.request_count + 1,
-			updated_at = EXCLUDED.updated_at
-	`, userID, yearMonth, promptTokens, completionTokens, now)
+	_, err := r.pool.Exec(ctx, `
+		UPDATE llm_usage_monthly SET
+			prompt_tokens = prompt_tokens - $3 + $4,
+			completion_tokens = completion_tokens + $5,
+			updated_at = $6
+		WHERE user_id = $1 AND year_month = $2
+	`, r.userID, r.yearMonth, r.tokens, promptTokens, completionTokens, now)
 	if err != nil {
-		return fmt.Errorf("record llm usage monthly: %w", err)
+		return fmt.Errorf("reconcile llm usage monthly: %w", err)
 	}
 
-	_, err = pool.Exec(ctx, `
+	_, err = r.pool.Exec(ctx, `
 		INSERT INTO llm_usage_events (
 			id, user_id, feature, model, prompt_tokens, completion_tokens, created_at
 		) VALUES ($1, $2, $3, $4, $5, $6, $7)
-	`, uuid.NewString(), userID, feature, model, promptTokens, completionTokens, now)
+	`, uuid.NewString(), r.userID, r.feature, r.model, promptTokens, completionTokens, now)
 	if err != nil {
-		// Best-effort: monthly rollup already committed; do not fail the reply.
 		return nil
 	}
 	return nil
 }
 
-// PoolUsageMeter records LLM usage against a postgres pool.
+// ReleaseLLMUsage removes a reservation when no model response was received.
+func (r *LLMUsageReservation) ReleaseLLMUsage(ctx context.Context) error {
+	if r == nil {
+		return nil
+	}
+	_, err := r.pool.Exec(ctx, `
+		UPDATE llm_usage_monthly SET
+			prompt_tokens = GREATEST(0, prompt_tokens - $3),
+			request_count = GREATEST(0, request_count - 1),
+			updated_at = $4
+		WHERE user_id = $1 AND year_month = $2
+	`, r.userID, r.yearMonth, r.tokens, time.Now().UTC())
+	if err != nil {
+		return fmt.Errorf("release llm usage reservation: %w", err)
+	}
+	return nil
+}
+
+// PoolUsageMeter reserves LLM budget against a postgres pool.
 type PoolUsageMeter struct {
 	Pool *pgxpool.Pool
 }
 
-// RecordLLMUsage implements llm.UsageMeter.
-func (m PoolUsageMeter) RecordLLMUsage(
+// ReserveLLMUsage implements llm.UsageMeter.
+func (m PoolUsageMeter) ReserveLLMUsage(
 	ctx context.Context,
 	userID, feature, model string,
-	promptTokens, completionTokens int,
-) error {
+	tokens int,
+) (func(context.Context, int, int) error, func(context.Context) error, error) {
 	if m.Pool == nil {
-		return nil
+		return nil, nil, nil
 	}
-	return RecordLLMUsage(ctx, m.Pool, userID, feature, model, promptTokens, completionTokens)
+	reservation, err := ReserveLLMUsage(ctx, m.Pool, userID, feature, model, tokens)
+	if err != nil {
+		return nil, nil, err
+	}
+	if reservation == nil {
+		return nil, nil, nil
+	}
+	return reservation.ReconcileLLMUsage, reservation.ReleaseLLMUsage, nil
 }

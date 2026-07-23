@@ -1,16 +1,18 @@
 "use client";
 
-import { useLayoutEffect, useRef, useState, type RefObject } from "react";
-import { ChevronsUpDown } from "lucide-react";
-import type { DesignPresetId, PageFormat } from "@/lib/types/cv";
+import { useEffect, useLayoutEffect, useRef, useState, type RefObject } from "react";
+import { ChevronsUpDown, Loader2 } from "lucide-react";
+import type { DesignPresetId, PageFormat, ResumeWithContent } from "@/lib/types/cv";
 import {
   DESIGN_PRESET_OPTIONS,
   dispatchDesignPreset,
+  dispatchResumeSettings,
   getDesignPresetLabel,
   type DesignPresetChangeHandlers,
 } from "@/lib/cv/design-presets";
 import { buildThemePreviewContent } from "@/lib/cv/theme-preview-content";
 import { getPageSizePx } from "@/lib/cv/page-format";
+import { fetchPublicThemes } from "@/lib/design/public-api";
 import { CvPreview } from "@/components/cv/cv-preview";
 import {
   ResponsiveDialog,
@@ -19,6 +21,7 @@ import {
   ResponsiveDialogHeader,
   ResponsiveDialogTitle,
 } from "@/components/ui/responsive-dialog";
+import type { CuratedTheme } from "@/lib/types/design-share";
 import { cn } from "@/lib/utils";
 
 interface ResumeThemePickerProps extends DesignPresetChangeHandlers {
@@ -51,19 +54,21 @@ function useFitToContainerScale(containerRef: RefObject<HTMLElement | null>, pag
 }
 
 function ThemePreviewCard({
-  presetId,
+  title,
+  description,
+  content,
   selected,
   onSelect,
 }: {
-  presetId: DesignPresetId;
+  title: string;
+  description: string;
+  content: ResumeWithContent;
   selected: boolean;
   onSelect: () => void;
 }) {
   const containerRef = useRef<HTMLDivElement>(null);
-  const content = buildThemePreviewContent(presetId);
   const pageFormat = content.settings.pageFormat ?? "A4";
   const scale = useFitToContainerScale(containerRef, pageFormat);
-  const option = DESIGN_PRESET_OPTIONS.find((entry) => entry.id === presetId);
 
   return (
     <button
@@ -92,10 +97,31 @@ function ThemePreviewCard({
         </div>
       </div>
       <div className="space-y-0.5 px-3 py-3">
-        <p className="text-sm font-medium">{option?.label ?? presetId}</p>
-        <p className="text-xs text-muted-foreground">{option?.description}</p>
+        <p className="text-sm font-medium">{title}</p>
+        <p className="text-xs text-muted-foreground">{description}</p>
       </div>
     </button>
+  );
+}
+
+function PresetThemePreviewCard({
+  presetId,
+  selected,
+  onSelect,
+}: {
+  presetId: DesignPresetId;
+  selected: boolean;
+  onSelect: () => void;
+}) {
+  const option = DESIGN_PRESET_OPTIONS.find((entry) => entry.id === presetId);
+  return (
+    <ThemePreviewCard
+      title={option?.label ?? presetId}
+      description={option?.description ?? "Resume theme"}
+      content={buildThemePreviewContent(presetId)}
+      selected={selected}
+      onSelect={onSelect}
+    />
   );
 }
 
@@ -104,14 +130,32 @@ export function ResumeThemePicker({
   ...handlers
 }: ResumeThemePickerProps) {
   const [open, setOpen] = useState(false);
+  const [publicThemes, setPublicThemes] = useState<CuratedTheme[]>([]);
+  const [loadingThemes, setLoadingThemes] = useState(false);
+  const [selectedCuratedId, setSelectedCuratedId] = useState<string | null>(null);
 
   const currentLabel = getDesignPresetLabel(designPresetId);
   const currentDescription =
     DESIGN_PRESET_OPTIONS.find((option) => option.id === designPresetId)?.description ??
     "Resume theme";
 
-  function handleSelect(presetId: DesignPresetId) {
+  useEffect(() => {
+    if (!open) return;
+    setLoadingThemes(true);
+    void fetchPublicThemes()
+      .then(setPublicThemes)
+      .finally(() => setLoadingThemes(false));
+  }, [open]);
+
+  function handleSelectPreset(presetId: DesignPresetId) {
+    setSelectedCuratedId(null);
     dispatchDesignPreset(presetId, handlers);
+    setOpen(false);
+  }
+
+  function handleSelectCurated(theme: CuratedTheme) {
+    setSelectedCuratedId(theme.id);
+    dispatchResumeSettings(theme.preview.settings, handlers);
     setOpen(false);
   }
 
@@ -144,15 +188,43 @@ export function ResumeThemePicker({
             </ResponsiveDialogDescription>
           </ResponsiveDialogHeader>
           <div className="min-h-0 flex-1 overflow-y-auto px-4 py-4 sm:px-6 sm:py-6">
-            <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
-              {DESIGN_PRESET_OPTIONS.map((option) => (
-                <ThemePreviewCard
-                  key={option.id}
-                  presetId={option.id}
-                  selected={designPresetId === option.id}
-                  onSelect={() => handleSelect(option.id)}
-                />
-              ))}
+            {loadingThemes ? (
+              <div className="mb-6 flex items-center gap-2 text-sm text-muted-foreground">
+                <Loader2 className="size-4 animate-spin" />
+                Loading featured designs...
+              </div>
+            ) : null}
+
+            {publicThemes.length > 0 ? (
+              <div className="mb-8 space-y-3">
+                <p className="text-sm font-medium">Featured designs</p>
+                <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
+                  {publicThemes.map((theme) => (
+                    <ThemePreviewCard
+                      key={theme.id}
+                      title={theme.title}
+                      description={theme.tags.join(", ") || "Featured design"}
+                      content={theme.preview}
+                      selected={selectedCuratedId === theme.id}
+                      onSelect={() => handleSelectCurated(theme)}
+                    />
+                  ))}
+                </div>
+              </div>
+            ) : null}
+
+            <div className="space-y-3">
+              <p className="text-sm font-medium">Built-in presets</p>
+              <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
+                {DESIGN_PRESET_OPTIONS.map((option) => (
+                  <PresetThemePreviewCard
+                    key={option.id}
+                    presetId={option.id}
+                    selected={selectedCuratedId === null && designPresetId === option.id}
+                    onSelect={() => handleSelectPreset(option.id)}
+                  />
+                ))}
+              </div>
             </div>
           </div>
         </ResponsiveDialogContent>

@@ -25,6 +25,7 @@ const NAV_GROUPS: NavGroup[] = [
     label: "Operations",
     items: [
       { id: "automations", label: "Automations" },
+      { id: "themes", label: "Themes" },
       { id: "linkedin", label: "LinkedIn" },
       { id: "audit", label: "Audit log" },
     ],
@@ -38,6 +39,7 @@ const NAV_GROUPS: NavGroup[] = [
   },
 ];
 
+export const ADMIN_SECTION_OPTIONS = NAV_GROUPS.flatMap((group) => group.items);
 interface AdminNavProps {
   section: AdminSection;
   onSectionChange: (section: AdminSection) => void;

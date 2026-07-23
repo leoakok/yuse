@@ -22,6 +22,7 @@ export const RESERVED_SLUGS = new Set([
   "user", "users", "workspace", "workspaces", "org", "orgs", "organization",
   "search", "explore", "feed", "notifications", "inbox", "messages", "chat",
   "share", "invite", "join", "create", "new", "edit", "delete", "remove",
+  "d", "themes", "templates",
   "yuse", "google", "github", "linkedin", "facebook", "twitter", "instagram",
   "abuse", "spam", "scam", "phishing", "porn", "xxx", "sex", "nazi",
 ]);

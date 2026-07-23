@@ -445,6 +445,36 @@ func (r *mutationResolver) UpdateInviteLink(ctx context.Context, input model.Upd
 	return scope.CV(ctx).UpdateInviteLink(input)
 }
 
+// CreateDesignShare is the resolver for the createDesignShare field.
+func (r *mutationResolver) CreateDesignShare(ctx context.Context, resumeID string, contentMode model.DesignShareContentMode, title *string) (*model.DesignShare, error) {
+	return scope.CV(ctx).CreateDesignShare(resumeID, contentMode, title)
+}
+
+// DeactivateDesignShare is the resolver for the deactivateDesignShare field.
+func (r *mutationResolver) DeactivateDesignShare(ctx context.Context, id string) (*model.DesignShare, error) {
+	return scope.CV(ctx).DeactivateDesignShare(id)
+}
+
+// ApplyDesignShare is the resolver for the applyDesignShare field.
+func (r *mutationResolver) ApplyDesignShare(ctx context.Context, designShareID string, resumeID *string) (*model.Resume, error) {
+	return scope.CV(ctx).ApplyDesignShare(designShareID, resumeID)
+}
+
+// CreateCuratedTheme is the resolver for the createCuratedTheme field.
+func (r *mutationResolver) CreateCuratedTheme(ctx context.Context, input model.CreateCuratedThemeInput) (*model.CuratedTheme, error) {
+	return scope.CV(ctx).CreateCuratedTheme(input)
+}
+
+// UpdateCuratedTheme is the resolver for the updateCuratedTheme field.
+func (r *mutationResolver) UpdateCuratedTheme(ctx context.Context, input model.UpdateCuratedThemeInput) (*model.CuratedTheme, error) {
+	return scope.CV(ctx).UpdateCuratedTheme(input)
+}
+
+// DeleteCuratedTheme is the resolver for the deleteCuratedTheme field.
+func (r *mutationResolver) DeleteCuratedTheme(ctx context.Context, id string) (bool, error) {
+	return scope.CV(ctx).DeleteCuratedTheme(id)
+}
+
 // CreateJobAutomation is the resolver for the createJobAutomation field.
 func (r *mutationResolver) CreateJobAutomation(ctx context.Context, input model.CreateJobAutomationInput) (*model.JobAutomation, error) {
 	return scope.CV(ctx).CreateJobAutomation(input)
@@ -754,6 +784,16 @@ func (r *queryResolver) AdminLinkedInJobSearch(ctx context.Context, keywords *st
 // AdminInviteLinks is the resolver for the adminInviteLinks field.
 func (r *queryResolver) AdminInviteLinks(ctx context.Context) ([]*model.InviteLink, error) {
 	return scope.CV(ctx).ListInviteLinks()
+}
+
+// AdminCuratedThemes is the resolver for the adminCuratedThemes field.
+func (r *queryResolver) AdminCuratedThemes(ctx context.Context) ([]*model.CuratedTheme, error) {
+	return scope.CV(ctx).ListAdminCuratedThemes()
+}
+
+// DesignShareForResume is the resolver for the designShareForResume field.
+func (r *queryResolver) DesignShareForResume(ctx context.Context, resumeID string) (*model.DesignShare, error) {
+	return scope.CV(ctx).GetDesignShareForResume(resumeID)
 }
 
 // JobAutomations is the resolver for the jobAutomations field.

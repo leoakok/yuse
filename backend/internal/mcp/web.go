@@ -12,7 +12,9 @@ import (
 	"os"
 	"regexp"
 	"sort"
+	"strconv"
 	"strings"
+	"sync"
 	"time"
 )
 
@@ -54,6 +56,8 @@ var commonSitePaths = []string{
 
 var sitemapLocPattern = regexp.MustCompile(`(?i)<loc>\s*([^<\s]+)\s*</loc>`)
 
+var lookupIP = net.LookupIP
+
 // WebClient performs bounded web search and URL fetches for the assistant.
 type WebClient struct {
 	tavilyKey string
@@ -65,12 +69,6 @@ func NewWebClientFromEnv() *WebClient {
 		tavilyKey: strings.TrimSpace(os.Getenv("TAVILY_API_KEY")),
 		client: &http.Client{
 			Timeout: fetchTimeout,
-			CheckRedirect: func(req *http.Request, via []*http.Request) error {
-				if len(via) >= 5 {
-					return fmt.Errorf("too many redirects")
-				}
-				return validateFetchURL(req.URL.String())
-			},
 		},
 	}
 }
@@ -151,7 +149,8 @@ func (w *WebClient) ExploreSite(rawURL string, maxPages int, progress ToolProgre
 	if rawURL == "" {
 		return nil, fmt.Errorf("url is required")
 	}
-	if err := validateFetchURL(rawURL); err != nil {
+	initialTarget, err := validateAndResolveFetchURL(rawURL)
+	if err != nil {
 		return nil, err
 	}
 	if maxPages <= 0 {
@@ -161,10 +160,7 @@ func (w *WebClient) ExploreSite(rawURL string, maxPages int, progress ToolProgre
 		maxPages = maxCrawlPages
 	}
 
-	base, err := url.Parse(rawURL)
-	if err != nil {
-		return nil, err
-	}
+	base := initialTarget.url
 
 	seen := map[string]bool{}
 	var pages []map[string]any
@@ -178,7 +174,13 @@ func (w *WebClient) ExploreSite(rawURL string, maxPages int, progress ToolProgre
 		}
 		seen[canon] = true
 		progress.StepStart("fetch_url", map[string]any{"url": target})
-		page, fetchErr := w.fetchPage(target, maxCrawlTextPerPage)
+		var page fetchedPage
+		var fetchErr error
+		if label == "homepage" {
+			page, fetchErr = w.fetchResolvedPage(initialTarget, maxCrawlTextPerPage)
+		} else {
+			page, fetchErr = w.fetchPage(target, maxCrawlTextPerPage)
+		}
 		stepExec := Execution{Tool: "fetch_url", Arguments: map[string]any{"url": target}}
 		if fetchErr != nil {
 			stepExec.Error = fetchErr.Error()
@@ -278,18 +280,22 @@ func (w *WebClient) fetchPage(rawURL string, textLimit int) (fetchedPage, error)
 	if rawURL == "" {
 		return fetchedPage{}, fmt.Errorf("url is required")
 	}
-	if err := validateFetchURL(rawURL); err != nil {
+	target, err := validateAndResolveFetchURL(rawURL)
+	if err != nil {
 		return fetchedPage{}, err
 	}
+	return w.fetchResolvedPage(target, textLimit)
+}
 
-	req, err := http.NewRequestWithContext(context.Background(), http.MethodGet, rawURL, nil)
+func (w *WebClient) fetchResolvedPage(target validatedFetchTarget, textLimit int) (fetchedPage, error) {
+	req, err := http.NewRequestWithContext(context.Background(), http.MethodGet, target.url.String(), nil)
 	if err != nil {
 		return fetchedPage{}, err
 	}
 	req.Header.Set("User-Agent", browserUserAgent)
 	req.Header.Set("Accept", "text/html,application/xhtml+xml,text/plain;q=0.9,*/*;q=0.8")
 
-	resp, err := w.client.Do(req)
+	resp, err := newPinnedFetchClient(target).Do(req)
 	if err != nil {
 		return fetchedPage{}, fmt.Errorf("fetch failed: %w", err)
 	}
@@ -313,7 +319,7 @@ func (w *WebClient) fetchPage(rawURL string, textLimit int) (fetchedPage, error)
 	}
 
 	return fetchedPage{
-		url:         rawURL,
+		url:         resp.Request.URL.String(),
 		status:      resp.StatusCode,
 		contentType: contentType,
 		body:        bodyStr,
@@ -668,32 +674,130 @@ func extractReadableText(body, contentType string) string {
 }
 
 func validateFetchURL(raw string) error {
+	_, err := validateAndResolveFetchURL(raw)
+	return err
+}
+
+type validatedFetchTarget struct {
+	url *url.URL
+	ips []net.IP
+}
+
+func validateAndResolveFetchURL(raw string) (validatedFetchTarget, error) {
 	parsed, err := url.Parse(raw)
 	if err != nil {
-		return fmt.Errorf("invalid url: %w", err)
+		return validatedFetchTarget{}, fmt.Errorf("invalid url: %w", err)
 	}
 	if parsed.Scheme != "http" && parsed.Scheme != "https" {
-		return fmt.Errorf("only http and https URLs are allowed")
+		return validatedFetchTarget{}, fmt.Errorf("only http and https URLs are allowed")
 	}
 	host := strings.TrimSpace(parsed.Hostname())
 	if host == "" {
-		return fmt.Errorf("url host is required")
+		return validatedFetchTarget{}, fmt.Errorf("url host is required")
+	}
+	if parsed.User != nil {
+		return validatedFetchTarget{}, fmt.Errorf("URLs with user info are not allowed")
+	}
+	if _, err := fetchTargetAddress(parsed); err != nil {
+		return validatedFetchTarget{}, err
 	}
 	lowerHost := strings.ToLower(host)
 	if lowerHost == "localhost" || strings.HasSuffix(lowerHost, ".localhost") || lowerHost == "0.0.0.0" {
-		return fmt.Errorf("localhost URLs are not allowed")
+		return validatedFetchTarget{}, fmt.Errorf("localhost URLs are not allowed")
 	}
 
-	ips, err := net.LookupIP(host)
-	if err != nil {
-		return fmt.Errorf("could not resolve host: %w", err)
+	var ips []net.IP
+	if ip := net.ParseIP(host); ip != nil {
+		ips = []net.IP{ip}
+	} else {
+		ips, err = lookupIP(host)
+		if err != nil {
+			return validatedFetchTarget{}, fmt.Errorf("could not resolve host: %w", err)
+		}
+	}
+	if len(ips) == 0 {
+		return validatedFetchTarget{}, fmt.Errorf("could not resolve host")
 	}
 	for _, ip := range ips {
 		if isBlockedIP(ip) {
-			return fmt.Errorf("URL resolves to a blocked address")
+			return validatedFetchTarget{}, fmt.Errorf("URL resolves to a blocked address")
 		}
 	}
-	return nil
+	return validatedFetchTarget{url: parsed, ips: ips}, nil
+}
+
+func fetchTargetAddress(target *url.URL) (string, error) {
+	port := target.Port()
+	if port == "" {
+		if target.Scheme == "https" {
+			port = "443"
+		} else {
+			port = "80"
+		}
+	}
+	portNumber, err := strconv.ParseUint(port, 10, 16)
+	if err != nil || portNumber == 0 {
+		return "", fmt.Errorf("invalid url port")
+	}
+	return net.JoinHostPort(target.Hostname(), port), nil
+}
+
+func newPinnedFetchClient(initial validatedFetchTarget) *http.Client {
+	var mu sync.RWMutex
+	pins := make(map[string]string)
+
+	pin := func(target validatedFetchTarget) {
+		address, err := fetchTargetAddress(target.url)
+		if err != nil {
+			return
+		}
+		mu.Lock()
+		defer mu.Unlock()
+		pins[canonicalDialAddress(address)] = target.ips[0].String()
+	}
+	pin(initial)
+
+	dialer := &net.Dialer{}
+	transport := http.DefaultTransport.(*http.Transport).Clone()
+	// A proxy would resolve the destination itself and bypass the pinned dialer.
+	transport.Proxy = nil
+	transport.DialContext = func(ctx context.Context, network, address string) (net.Conn, error) {
+		mu.RLock()
+		ip, ok := pins[canonicalDialAddress(address)]
+		mu.RUnlock()
+		if !ok {
+			return nil, fmt.Errorf("unvalidated fetch destination %q", address)
+		}
+		_, port, err := net.SplitHostPort(address)
+		if err != nil {
+			return nil, err
+		}
+		return dialer.DialContext(ctx, network, net.JoinHostPort(ip, port))
+	}
+
+	return &http.Client{
+		Transport: transport,
+		Timeout:   fetchTimeout,
+		CheckRedirect: func(req *http.Request, via []*http.Request) error {
+			if len(via) >= 5 {
+				return fmt.Errorf("too many redirects")
+			}
+			target, err := validateAndResolveFetchURL(req.URL.String())
+			if err != nil {
+				return err
+			}
+			pin(target)
+			return nil
+		},
+	}
+}
+
+func canonicalDialAddress(address string) string {
+	host, port, err := net.SplitHostPort(address)
+	if err != nil {
+		return address
+	}
+	return net.JoinHostPort(strings.ToLower(host), port)
 }
 
 func isBlockedIP(ip net.IP) bool {

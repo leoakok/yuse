@@ -10,6 +10,7 @@ import {
   createResumeFromShowcaseDesign,
   takePendingShowcaseDesign,
 } from "@/lib/landing/start-with-design";
+import { applyDesignShare, takePendingDesignShare } from "@/lib/design/apply-design";
 import { hasCompletedOnboarding } from "@/lib/onboarding/state";
 
 export function HomeRedirect() {
@@ -25,6 +26,24 @@ export function HomeRedirect() {
     }
 
     async function go() {
+      const pendingDesign = takePendingDesignShare();
+      if (pendingDesign) {
+        try {
+          const resume = await applyDesignShare(pendingDesign.designShareId);
+          if (!cancelled) {
+            toast.success(
+              pendingDesign.title ? `Applied ${pendingDesign.title}` : "Design applied",
+            );
+            router.replace(resumePath(resume.id));
+          }
+          return;
+        } catch {
+          if (!cancelled) {
+            toast.error("Could not apply that design. Opening your workspace instead.");
+          }
+        }
+      }
+
       const pending = takePendingShowcaseDesign();
       if (pending) {
         try {

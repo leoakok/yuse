@@ -63,6 +63,24 @@ func TestParseJobPostingCardFromIncluded(t *testing.T) {
 	}
 }
 
+func TestJobCardRejectsUnsafeProviderURL(t *testing.T) {
+	card := jobCardFromPostingCard(map[string]any{
+		"jobPostingUrn":   "urn:li:fsd_jobPosting:4437450669",
+		"jobPostingTitle": "Engineer",
+		"jobPostingUrl":   "javascript:alert(1)",
+	})
+	if !strings.HasPrefix(card.URL, "https://www.linkedin.com/jobs/view/") {
+		t.Fatalf("expected canonical LinkedIn fallback URL, got %q", card.URL)
+	}
+
+	if got := safeLinkedInJobURL("https://www.linkedin.com/jobs/view/4437450669"); got == "" {
+		t.Fatal("expected valid LinkedIn URL to be retained")
+	}
+	if got := safeLinkedInJobURL("https://linkedin.example/jobs/view/4437450669"); got != "" {
+		t.Fatalf("expected non-LinkedIn host to be rejected, got %q", got)
+	}
+}
+
 func TestBuildJobSearchQueryFilters(t *testing.T) {
 	got := buildJobSearchQuery(SearchParams{
 		Keywords:         "engineer",

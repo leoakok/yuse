@@ -351,14 +351,27 @@ func (s *Service) llmClassify(
 		req.Temperature = 0
 	}
 
+	reconcile, release, err := s.reserveUsage(ctx, "classify", s.miniModel, req)
+	if err != nil {
+		return Classification{}, err
+	}
+	settled := false
+	defer func() {
+		if !settled {
+			releaseUsage(release)
+		}
+	}()
 	resp, err := s.client.CreateChatCompletion(ctx, req)
 	if err != nil {
 		return Classification{}, err
 	}
+	if err := reconcileUsage(reconcile, resp.Usage.PromptTokens, resp.Usage.CompletionTokens); err != nil {
+		return Classification{}, err
+	}
+	settled = true
 	if len(resp.Choices) == 0 {
 		return Classification{}, fmt.Errorf("classifier returned no choices")
 	}
-	s.recordUsage(ctx, "classify", s.miniModel, resp.Usage.PromptTokens, resp.Usage.CompletionTokens)
 	return parseClassifierJSON(resp.Choices[0].Message.Content)
 }
 

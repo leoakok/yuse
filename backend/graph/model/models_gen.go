@@ -209,6 +209,16 @@ type ContactProfile struct {
 	UpdatedAt         string  `json:"updatedAt"`
 }
 
+type CreateCuratedThemeInput struct {
+	Title string `json:"title"`
+	// Full or partial design URL, e.g. yuse.one/d/abc123 or /d/abc123.
+	DesignURL         string   `json:"designUrl"`
+	Tags              []string `json:"tags,omitempty"`
+	FeaturedOnLanding *bool    `json:"featuredOnLanding,omitempty"`
+	IsPublic          *bool    `json:"isPublic,omitempty"`
+	SortOrder         *int     `json:"sortOrder,omitempty"`
+}
+
 type CreateInviteLinkInput struct {
 	Label *string `json:"label,omitempty"`
 	// When set, only this email may redeem the invite.
@@ -258,12 +268,41 @@ type CreateTwinEntryInput struct {
 	Metadata map[string]any `json:"metadata,omitempty"`
 }
 
+// Admin-curated design for landing carousel or public theme picker.
+type CuratedTheme struct {
+	ID                string   `json:"id"`
+	Title             string   `json:"title"`
+	DesignShareID     string   `json:"designShareId"`
+	Tags              []string `json:"tags"`
+	FeaturedOnLanding bool     `json:"featuredOnLanding"`
+	IsPublic          bool     `json:"isPublic"`
+	SortOrder         int      `json:"sortOrder"`
+	CreatedAt         string   `json:"createdAt"`
+	UpdatedAt         string   `json:"updatedAt"`
+	// Resolved design share path, e.g. /d/abc123xyz.
+	URLPath string             `json:"urlPath"`
+	Preview *ResumeWithContent `json:"preview"`
+}
+
 type CvTheme struct {
 	ID       string         `json:"id"`
 	Name     string         `json:"name"`
 	Slug     string         `json:"slug"`
 	IsSystem bool           `json:"isSystem"`
 	Config   map[string]any `json:"config"`
+}
+
+// Shareable CV design snapshot at /d/{id}.
+type DesignShare struct {
+	ID          string                 `json:"id"`
+	ResumeID    string                 `json:"resumeId"`
+	ContentMode DesignShareContentMode `json:"contentMode"`
+	Title       *string                `json:"title,omitempty"`
+	IsActive    bool                   `json:"isActive"`
+	CreatedAt   string                 `json:"createdAt"`
+	UpdatedAt   string                 `json:"updatedAt"`
+	// Public path segment, e.g. /d/abc123xyz.
+	URLPath string `json:"urlPath"`
 }
 
 // Beta invite link for /r/{code} onboarding.
@@ -639,6 +678,15 @@ type UpdateContactProfileInput struct {
 	PhotoURL         *string `json:"photoUrl,omitempty"`
 	LinkedinPhotoURL *string `json:"linkedinPhotoUrl,omitempty"`
 	GithubPhotoURL   *string `json:"githubPhotoUrl,omitempty"`
+}
+
+type UpdateCuratedThemeInput struct {
+	ID                string   `json:"id"`
+	Title             *string  `json:"title,omitempty"`
+	Tags              []string `json:"tags,omitempty"`
+	FeaturedOnLanding *bool    `json:"featuredOnLanding,omitempty"`
+	IsPublic          *bool    `json:"isPublic,omitempty"`
+	SortOrder         *int     `json:"sortOrder,omitempty"`
 }
 
 type UpdateInviteLinkInput struct {
@@ -1787,6 +1835,61 @@ func (e *DesignPresetID) UnmarshalJSON(b []byte) error {
 }
 
 func (e DesignPresetID) MarshalJSON() ([]byte, error) {
+	var buf bytes.Buffer
+	e.MarshalGQL(&buf)
+	return buf.Bytes(), nil
+}
+
+type DesignShareContentMode string
+
+const (
+	DesignShareContentModeDummy DesignShareContentMode = "DUMMY"
+	DesignShareContentModeReal  DesignShareContentMode = "REAL"
+)
+
+var AllDesignShareContentMode = []DesignShareContentMode{
+	DesignShareContentModeDummy,
+	DesignShareContentModeReal,
+}
+
+func (e DesignShareContentMode) IsValid() bool {
+	switch e {
+	case DesignShareContentModeDummy, DesignShareContentModeReal:
+		return true
+	}
+	return false
+}
+
+func (e DesignShareContentMode) String() string {
+	return string(e)
+}
+
+func (e *DesignShareContentMode) UnmarshalGQL(v any) error {
+	str, ok := v.(string)
+	if !ok {
+		return fmt.Errorf("enums must be strings")
+	}
+
+	*e = DesignShareContentMode(str)
+	if !e.IsValid() {
+		return fmt.Errorf("%s is not a valid DesignShareContentMode", str)
+	}
+	return nil
+}
+
+func (e DesignShareContentMode) MarshalGQL(w io.Writer) {
+	fmt.Fprint(w, strconv.Quote(e.String()))
+}
+
+func (e *DesignShareContentMode) UnmarshalJSON(b []byte) error {
+	s, err := strconv.Unquote(string(b))
+	if err != nil {
+		return err
+	}
+	return e.UnmarshalGQL(s)
+}
+
+func (e DesignShareContentMode) MarshalJSON() ([]byte, error) {
 	var buf bytes.Buffer
 	e.MarshalGQL(&buf)
 	return buf.Bytes(), nil

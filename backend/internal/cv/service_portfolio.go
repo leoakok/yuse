@@ -59,7 +59,16 @@ func (s *Service) UpdatePortfolio(
 		portfolio.About = strings.TrimSpace(*about)
 	}
 	if contactProfileID != nil {
-		portfolio.ContactProfileID = contactProfileID
+		id := strings.TrimSpace(*contactProfileID)
+		if id == "" {
+			portfolio.ContactProfileID = nil
+		} else {
+			profile, err := s.store.GetContactProfile(id)
+			if err != nil {
+				return nil, err
+			}
+			portfolio.ContactProfileID = &profile.ID
+		}
 	}
 	portfolio.UpdatedAt = time.Now().UTC().Format(time.RFC3339)
 	s.store.SavePortfolio(portfolio)

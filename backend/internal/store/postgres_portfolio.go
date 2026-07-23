@@ -202,6 +202,9 @@ func (p *Postgres) AddPortfolioProject(input model.AddPortfolioProjectInput) (*m
 }
 
 func (p *Postgres) UpdatePortfolioProject(input model.UpdatePortfolioProjectInput) (*model.PortfolioWithContent, error) {
+	if _, err := p.GetPortfolio(input.PortfolioID); err != nil {
+		return nil, err
+	}
 	project, err := p.getPortfolioProject(input.PortfolioID, input.ProjectID)
 	if err != nil {
 		return nil, err
@@ -256,6 +259,9 @@ func (p *Postgres) UpdatePortfolioProject(input model.UpdatePortfolioProjectInpu
 }
 
 func (p *Postgres) DeletePortfolioProject(portfolioID, projectID string) (*model.PortfolioWithContent, error) {
+	if _, err := p.GetPortfolio(portfolioID); err != nil {
+		return nil, err
+	}
 	if _, err := p.getPortfolioProject(portfolioID, projectID); err != nil {
 		return nil, err
 	}
@@ -271,6 +277,9 @@ func (p *Postgres) DeletePortfolioProject(portfolioID, projectID string) (*model
 }
 
 func (p *Postgres) SetPortfolioProjectVisibility(portfolioID, projectID string, showInPreview bool) (*model.PortfolioWithContent, error) {
+	if _, err := p.GetPortfolio(portfolioID); err != nil {
+		return nil, err
+	}
 	if _, err := p.getPortfolioProject(portfolioID, projectID); err != nil {
 		return nil, err
 	}
@@ -309,6 +318,9 @@ func (p *Postgres) AddPortfolioSkill(input model.AddPortfolioSkillInput) (*model
 }
 
 func (p *Postgres) UpdatePortfolioSkill(input model.UpdatePortfolioSkillInput) (*model.PortfolioWithContent, error) {
+	if _, err := p.GetPortfolio(input.PortfolioID); err != nil {
+		return nil, err
+	}
 	skill, err := p.getPortfolioSkill(input.PortfolioID, input.SkillID)
 	if err != nil {
 		return nil, err
@@ -334,6 +346,9 @@ func (p *Postgres) UpdatePortfolioSkill(input model.UpdatePortfolioSkillInput) (
 }
 
 func (p *Postgres) DeletePortfolioSkill(portfolioID, skillID string) (*model.PortfolioWithContent, error) {
+	if _, err := p.GetPortfolio(portfolioID); err != nil {
+		return nil, err
+	}
 	if _, err := p.getPortfolioSkill(portfolioID, skillID); err != nil {
 		return nil, err
 	}
@@ -380,6 +395,9 @@ func (p *Postgres) AddPortfolioTestimonial(input model.AddPortfolioTestimonialIn
 }
 
 func (p *Postgres) UpdatePortfolioTestimonial(input model.UpdatePortfolioTestimonialInput) (*model.PortfolioWithContent, error) {
+	if _, err := p.GetPortfolio(input.PortfolioID); err != nil {
+		return nil, err
+	}
 	t, err := p.getPortfolioTestimonial(input.PortfolioID, input.TestimonialID)
 	if err != nil {
 		return nil, err
@@ -408,6 +426,9 @@ func (p *Postgres) UpdatePortfolioTestimonial(input model.UpdatePortfolioTestimo
 }
 
 func (p *Postgres) DeletePortfolioTestimonial(portfolioID, testimonialID string) (*model.PortfolioWithContent, error) {
+	if _, err := p.GetPortfolio(portfolioID); err != nil {
+		return nil, err
+	}
 	if _, err := p.getPortfolioTestimonial(portfolioID, testimonialID); err != nil {
 		return nil, err
 	}

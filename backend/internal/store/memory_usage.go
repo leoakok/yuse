@@ -40,34 +40,63 @@ func NewMemoryUsageMeter() *MemoryUsageMeter {
 	}
 }
 
-// RecordLLMUsage implements llm.UsageMeter.
-func (m *MemoryUsageMeter) RecordLLMUsage(
+// ReserveLLMUsage implements llm.UsageMeter.
+func (m *MemoryUsageMeter) ReserveLLMUsage(
 	ctx context.Context,
 	userID, feature, model string,
-	promptTokens, completionTokens int,
-) error {
+	tokens int,
+) (func(context.Context, int, int) error, func(context.Context) error, error) {
 	_ = ctx
 	if userID == "" {
-		return nil
+		return nil, nil, nil
+	}
+	if tokens < 1 {
+		tokens = 1
 	}
 	m.mu.Lock()
-	defer m.mu.Unlock()
 	row := m.usage[userID]
-	row.prompt += int64(promptTokens)
-	row.completion += int64(completionTokens)
+	enabled := true
+	if v, ok := m.enabled[userID]; ok {
+		enabled = v
+	}
+	override := m.limit[userID]
+	limit := EffectiveAIMonthlyTokenLimit(override)
+	if !enabled {
+		m.mu.Unlock()
+		return nil, nil, ErrAIDisabled
+	}
+	if limit <= 0 || row.prompt+row.completion+int64(tokens) > limit {
+		m.mu.Unlock()
+		return nil, nil, ErrAILimitReached
+	}
+	row.prompt += int64(tokens)
 	row.requests++
 	m.usage[userID] = row
 	if _, ok := m.enabled[userID]; !ok {
 		m.enabled[userID] = true
 	}
-	m.events = append(m.events, MemoryUsageEvent{
-		UserID:           userID,
-		Feature:          feature,
-		Model:            model,
-		PromptTokens:     promptTokens,
-		CompletionTokens: completionTokens,
-	})
-	return nil
+	m.mu.Unlock()
+
+	reconcile := func(_ context.Context, promptTokens, completionTokens int) error {
+		m.mu.Lock()
+		defer m.mu.Unlock()
+		row := m.usage[userID]
+		row.prompt += int64(promptTokens - tokens)
+		row.completion += int64(completionTokens)
+		m.usage[userID] = row
+		m.events = append(m.events, MemoryUsageEvent{userID, feature, model, promptTokens, completionTokens})
+		return nil
+	}
+	release := func(_ context.Context) error {
+		m.mu.Lock()
+		defer m.mu.Unlock()
+		row := m.usage[userID]
+		row.prompt -= int64(tokens)
+		row.requests--
+		m.usage[userID] = row
+		return nil
+	}
+	return reconcile, release, nil
 }
 
 // SetLimits updates AI enabled and optional monthly override for a user.

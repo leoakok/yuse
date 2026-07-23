@@ -18,7 +18,6 @@ var (
 	ErrEmailManagedExternally    = errors.New("email managed externally")
 	ErrIncorrectPassword         = errors.New("incorrect password")
 	ErrLastSignInMethod          = errors.New("keep at least one sign-in method")
-	ErrGoogleAlreadyLinked       = errors.New("google already linked to another account")
 )
 
 // IsCredentialsAccount reports whether the user signed up with email and password.
@@ -267,17 +266,13 @@ func ChangeEmail(ctx context.Context, pool *pgxpool.Pool, userID, currentPasswor
 	return UserByID(ctx, pool, userID)
 }
 
-// ResolveGoogleIdentity maps a Google OAuth identity to an existing or new user ID.
-// If the Google email matches an existing account, Google is linked to that account.
-func ResolveGoogleIdentity(ctx context.Context, pool *pgxpool.Pool, googleID, email string) (string, error) {
+// ResolveGoogleIdentity maps a Google OAuth subject to a user ID.
+// It never links by email; linking must happen in an authenticated account flow.
+func ResolveGoogleIdentity(ctx context.Context, pool *pgxpool.Pool, googleID string) (string, error) {
 	googleID = strings.TrimSpace(googleID)
 	if googleID == "" {
 		return "", fmt.Errorf("google id required")
 	}
-	if err := auth.ValidateEmail(email); err != nil {
-		return "", err
-	}
-	normalizedEmail := auth.NormalizeEmail(email)
 	newUserID := auth.UserIDFromGoogleSub(googleID)
 
 	var byGoogle string
@@ -291,38 +286,5 @@ func ResolveGoogleIdentity(ctx context.Context, pool *pgxpool.Pool, googleID, em
 		return "", fmt.Errorf("lookup google: %w", err)
 	}
 
-	var byEmail string
-	err = pool.QueryRow(ctx, `
-		SELECT id FROM users WHERE LOWER(email) = $1
-	`, normalizedEmail).Scan(&byEmail)
-	if err == nil {
-		now := time.Now().UTC()
-		tag, linkErr := pool.Exec(ctx, `
-			UPDATE users SET
-				google_id = $2,
-				email_verified_at = COALESCE(email_verified_at, $3),
-				updated_at = $3
-			WHERE id = $1
-			  AND (google_id IS NULL OR google_id = $2)
-		`, byEmail, googleID, now)
-		if linkErr != nil {
-			if isUniqueViolation(linkErr) {
-				return "", ErrGoogleAlreadyLinked
-			}
-			return "", fmt.Errorf("link google: %w", linkErr)
-		}
-		if tag.RowsAffected() == 0 {
-			return "", ErrGoogleAlreadyLinked
-		}
-		return byEmail, nil
-	}
-	if !errors.Is(err, pgx.ErrNoRows) {
-		return "", fmt.Errorf("lookup email: %w", err)
-	}
-
 	return newUserID, nil
-}
-
-func isUniqueViolation(err error) bool {
-	return err != nil && strings.Contains(err.Error(), "idx_users_google_id")
 }

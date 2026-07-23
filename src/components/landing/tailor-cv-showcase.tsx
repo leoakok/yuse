@@ -4,16 +4,17 @@ import { useEffect, useMemo, useRef, useState, type ReactNode } from "react";
 import { useRouter } from "next/navigation";
 import { toast } from "sonner";
 import { CvPreview } from "@/components/cv/cv-preview";
+import { ApplyDesignDialog } from "@/components/cv/apply-design-dialog";
 import { Button } from "@/components/ui/button";
 import { getPageSizePx } from "@/lib/cv/page-format";
 import { resumePath } from "@/lib/cv/routes";
-import { TAILOR_SHOWCASE_EXAMPLES } from "@/lib/landing/tailor-demo-content";
-import type { TailorShowcaseExample } from "@/lib/landing/tailor-demo-content";
 import {
   createResumeFromShowcaseDesign,
   pendingDesignFromShowcase,
   stashPendingShowcaseDesign,
 } from "@/lib/landing/start-with-design";
+import { TAILOR_SHOWCASE_EXAMPLES, type TailorShowcaseExample } from "@/lib/landing/tailor-demo-content";
+import type { CuratedTheme } from "@/lib/types/design-share";
 import type { ResumeWithContent } from "@/lib/types/cv";
 import { cn } from "@/lib/utils";
 
@@ -96,28 +97,62 @@ function LandingA4CvPreview({
   );
 }
 
-type TailorCvShowcaseProps = {
-  isSignedIn?: boolean;
+type ShowcaseItem = {
+  id: string;
+  styleLabel: string;
+  label: string;
+  preview: ResumeWithContent;
+  designShareId?: string;
+  staticExample?: TailorShowcaseExample;
 };
 
-export function TailorCvShowcase({ isSignedIn = false }: TailorCvShowcaseProps) {
+type TailorCvShowcaseProps = {
+  isSignedIn?: boolean;
+  featuredThemes?: CuratedTheme[];
+};
+
+export function TailorCvShowcase({ isSignedIn = false, featuredThemes = [] }: TailorCvShowcaseProps) {
   const router = useRouter();
+  const [applyTheme, setApplyTheme] = useState<ShowcaseItem | null>(null);
   const [startingId, setStartingId] = useState<string | null>(null);
 
-  async function handleStartWith(example: TailorShowcaseExample) {
-    const design = pendingDesignFromShowcase(example);
+  const items: ShowcaseItem[] =
+    featuredThemes.length > 0
+      ? featuredThemes.map((theme) => ({
+          id: theme.id,
+          styleLabel: theme.title,
+          label: theme.tags[0] ?? "Featured design",
+          preview: theme.preview,
+          designShareId: theme.designShareId,
+        }))
+      : TAILOR_SHOWCASE_EXAMPLES.map((example) => ({
+          id: example.id,
+          styleLabel: example.styleLabel,
+          label: example.label,
+          preview: example.preview,
+          staticExample: example,
+        }));
+
+  async function handleUseDesign(item: ShowcaseItem) {
+    if (item.designShareId) {
+      setApplyTheme(item);
+      return;
+    }
+
+    if (!item.staticExample) return;
+    const design = pendingDesignFromShowcase(item.staticExample);
 
     if (!isSignedIn) {
       stashPendingShowcaseDesign(design);
-      toast.message(`Sign in to start with ${example.styleLabel}`);
+      toast.message(`Sign in to start with ${item.styleLabel}`);
       router.push("/login");
       return;
     }
 
-    setStartingId(example.id);
+    setStartingId(item.id);
     try {
       const resume = await createResumeFromShowcaseDesign(design);
-      toast.success(`Started a ${example.styleLabel} resume`);
+      toast.success(`Started a ${item.styleLabel} resume`);
       router.push(resumePath(resume.id));
     } catch {
       toast.error("Could not create that resume. Try again.");
@@ -145,12 +180,12 @@ export function TailorCvShowcase({ isSignedIn = false }: TailorCvShowcaseProps) 
         />
 
         <div className="flex gap-6 overflow-x-auto px-5 pb-3 snap-x snap-mandatory scroll-pl-5 sm:scroll-pl-8 sm:px-8 [-ms-overflow-style:none] [scrollbar-width:none] [&::-webkit-scrollbar]:hidden">
-          {TAILOR_SHOWCASE_EXAMPLES.map((example) => (
+          {items.map((item) => (
             <LandingA4CvPreview
-              key={example.id}
-              content={example.preview}
-              label={example.label}
-              styleLabel={example.styleLabel}
+              key={item.id}
+              content={item.preview}
+              label={item.label}
+              styleLabel={item.styleLabel}
               className="w-[min(78vw,360px)] shrink-0 snap-center md:w-[380px]"
               footer={
                 <div className="flex justify-center px-2 pb-2 pt-1">
@@ -159,12 +194,10 @@ export function TailorCvShowcase({ isSignedIn = false }: TailorCvShowcaseProps) 
                     variant="outline"
                     size="sm"
                     className="rounded-full px-4"
-                    disabled={startingId === example.id}
-                    onClick={() => void handleStartWith(example)}
+                    disabled={startingId === item.id}
+                    onClick={() => void handleUseDesign(item)}
                   >
-                    {startingId === example.id
-                      ? "Starting…"
-                      : `Start with ${example.styleLabel}`}
+                    {startingId === item.id ? "Starting..." : "Use this design"}
                   </Button>
                 </div>
               }
@@ -172,6 +205,18 @@ export function TailorCvShowcase({ isSignedIn = false }: TailorCvShowcaseProps) 
           ))}
         </div>
       </div>
+
+      {applyTheme?.designShareId ? (
+        <ApplyDesignDialog
+          open={Boolean(applyTheme)}
+          onOpenChange={(open) => {
+            if (!open) setApplyTheme(null);
+          }}
+          designShareId={applyTheme.designShareId}
+          designTitle={applyTheme.styleLabel}
+          isSignedIn={isSignedIn}
+        />
+      ) : null}
     </div>
   );
 }

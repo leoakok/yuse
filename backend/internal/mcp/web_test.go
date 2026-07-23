@@ -1,6 +1,8 @@
 package mcp
 
 import (
+	"net"
+	"net/http"
 	"net/url"
 	"strings"
 	"testing"
@@ -38,6 +40,55 @@ func TestNormalizeFetchURLAddsHTTPS(t *testing.T) {
 func TestValidateFetchURLRejectsNonHTTP(t *testing.T) {
 	if err := validateFetchURL("file:///etc/passwd"); err == nil {
 		t.Fatal("expected file scheme blocked")
+	}
+}
+
+func TestValidateFetchURLRejectsInvalidPortAndUserInfo(t *testing.T) {
+	for _, raw := range []string{
+		"https://example.com:0/",
+		"https://user:password@example.com/",
+	} {
+		if err := validateFetchURL(raw); err == nil {
+			t.Fatalf("expected invalid URL %q to be rejected", raw)
+		}
+	}
+}
+
+func TestValidateFetchURLRejectsBlockedDNSAnswer(t *testing.T) {
+	originalLookupIP := lookupIP
+	lookupIP = func(string) ([]net.IP, error) {
+		return []net.IP{net.ParseIP("93.184.216.34"), net.ParseIP("127.0.0.1")}, nil
+	}
+	t.Cleanup(func() { lookupIP = originalLookupIP })
+
+	if err := validateFetchURL("https://example.test/"); err == nil {
+		t.Fatal("expected a mixed public and loopback DNS answer to be rejected")
+	}
+}
+
+func TestPinnedFetchClientPinsRedirectTarget(t *testing.T) {
+	originalLookupIP := lookupIP
+	lookups := 0
+	lookupIP = func(string) ([]net.IP, error) {
+		lookups++
+		return []net.IP{net.ParseIP("93.184.216.34")}, nil
+	}
+	t.Cleanup(func() { lookupIP = originalLookupIP })
+
+	initial, err := validateAndResolveFetchURL("https://Example.test/")
+	if err != nil {
+		t.Fatalf("validate initial target: %v", err)
+	}
+	client := newPinnedFetchClient(initial)
+	redirectURL, err := url.Parse("https://example.test:8443/next")
+	if err != nil {
+		t.Fatalf("parse redirect target: %v", err)
+	}
+	if err := client.CheckRedirect(&http.Request{URL: redirectURL}, nil); err != nil {
+		t.Fatalf("pin redirect target: %v", err)
+	}
+	if lookups != 2 {
+		t.Fatalf("expected one lookup for initial validation and one redirect validation, got %d", lookups)
 	}
 }
 
@@ -104,7 +155,7 @@ func TestExtractInternalLinksSameOrigin(t *testing.T) {
 		t.Fatalf("expected 2 same-origin page links, got %d: %v", len(links), links)
 	}
 	want := map[string]bool{
-		"https://leo.ahmetkok.dev/about":     true,
+		"https://leo.ahmetkok.dev/about":    true,
 		"https://leo.ahmetkok.dev/projects": true,
 	}
 	for _, link := range links {

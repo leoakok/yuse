@@ -41,16 +41,21 @@ type JobAutomationRecord struct {
 
 // AutomationRunRecord is an audit row for a single automation execution.
 type AutomationRunRecord struct {
-	ID            string
-	AutomationID  string
-	StartedAt     time.Time
-	FinishedAt    *time.Time
-	Status        string
-	JobsFetched   int
-	JobsMatched   int
-	JobsEmailed   int
-	Error         *string
+	ID           string
+	AutomationID string
+	StartedAt    time.Time
+	FinishedAt   *time.Time
+	Status       string
+	JobsFetched  int
+	JobsMatched  int
+	JobsEmailed  int
+	Error        *string
 }
+
+// ErrAutomationRunInProgress indicates that the automation already has an active run.
+var ErrAutomationRunInProgress = errors.New("automation run already in progress")
+
+const automationRunClaimTimeout = time.Hour
 
 func scanJobAutomation(row pgx.Row) (*JobAutomationRecord, error) {
 	var rec JobAutomationRecord
@@ -294,30 +299,65 @@ func ListDueJobAutomations(ctx context.Context, pool *pgxpool.Pool, limit int) (
 	return out, rows.Err()
 }
 
-// ClaimJobAutomationRun bumps next_run_at at the start of a run to avoid double-processing.
-func ClaimJobAutomationRun(ctx context.Context, pool *pgxpool.Pool, automationID string, intervalMinutes int) error {
-	now := time.Now().UTC()
-	next := now.Add(time.Duration(intervalMinutes) * time.Minute)
-	_, err := pool.Exec(ctx, `
-		UPDATE job_automations
-		SET next_run_at = $2, last_run_at = $3, updated_at = $3
-		WHERE id = $1 AND enabled = TRUE
-	`, automationID, next, now)
-	return err
-}
-
-func InsertAutomationRun(ctx context.Context, pool *pgxpool.Pool, run *AutomationRunRecord) error {
+// ClaimJobAutomationRun atomically records the active run and, for scheduled runs,
+// advances the next scheduled time. The unique RUNNING-row index enforces one claim.
+func ClaimJobAutomationRun(ctx context.Context, pool *pgxpool.Pool, run *AutomationRunRecord, intervalMinutes int, scheduled bool) error {
 	if run.ID == "" {
 		run.ID = "run-" + uuid.NewString()[:12]
 	}
-	_, err := pool.Exec(ctx, `
+
+	tx, err := pool.Begin(ctx)
+	if err != nil {
+		return err
+	}
+	defer tx.Rollback(context.WithoutCancel(ctx))
+
+	// A process crash cannot execute updateRun. Expire only clearly stale claims so
+	// a later manual or scheduled request can recover the automation.
+	now := time.Now().UTC()
+	_, err = tx.Exec(ctx, `
+		UPDATE automation_runs
+		SET status = 'FAILED', finished_at = $2, error = 'automation run claim expired'
+		WHERE automation_id = $1
+		  AND status = 'RUNNING'
+		  AND started_at < $2 - ($3 * INTERVAL '1 second')
+	`, run.AutomationID, now, int64(automationRunClaimTimeout/time.Second))
+	if err != nil {
+		return err
+	}
+
+	tag, err := tx.Exec(ctx, `
 		INSERT INTO automation_runs (
 			id, automation_id, started_at, finished_at, status,
 			jobs_fetched, jobs_matched, jobs_emailed, error
 		) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9)
+		ON CONFLICT DO NOTHING
 	`, run.ID, run.AutomationID, run.StartedAt, run.FinishedAt, run.Status,
 		run.JobsFetched, run.JobsMatched, run.JobsEmailed, run.Error)
-	return err
+	if err != nil {
+		return err
+	}
+	if tag.RowsAffected() == 0 {
+		return ErrAutomationRunInProgress
+	}
+
+	if scheduled {
+		next := now.Add(time.Duration(intervalMinutes) * time.Minute)
+		tag, err = tx.Exec(ctx, `
+			UPDATE job_automations
+			SET next_run_at = $2, last_run_at = $3, updated_at = $3
+			WHERE id = $1 AND enabled = TRUE
+				AND (next_run_at IS NULL OR next_run_at <= $3)
+		`, run.AutomationID, next, now)
+		if err != nil {
+			return err
+		}
+		if tag.RowsAffected() == 0 {
+			return fmt.Errorf("automation is no longer due")
+		}
+	}
+
+	return tx.Commit(ctx)
 }
 
 func UpdateAutomationRun(ctx context.Context, pool *pgxpool.Pool, run *AutomationRunRecord) error {
@@ -358,6 +398,7 @@ func FilterUnseenJobIDs(ctx context.Context, pool *pgxpool.Pool, automationID st
 	for _, id := range jobIDs {
 		if _, ok := seen[id]; !ok {
 			out = append(out, id)
+			seen[id] = struct{}{}
 		}
 	}
 	return out, nil

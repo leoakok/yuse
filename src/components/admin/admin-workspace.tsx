@@ -3,7 +3,7 @@
 import { useState } from "react";
 import { IntentPlayground } from "@/components/admin/intent-playground";
 import { KnowledgeDictionary } from "@/components/admin/knowledge-dictionary";
-import { AdminNav } from "@/components/admin/admin-nav";
+import { AdminNav, ADMIN_SECTION_OPTIONS } from "@/components/admin/admin-nav";
 import { AdminUsersPanel } from "@/components/admin/admin-users-panel";
 import { AdminWaitlistPanel } from "@/components/admin/admin-waitlist-panel";
 import { AdminAuditPanel } from "@/components/admin/admin-audit-panel";
@@ -11,6 +11,14 @@ import { AdminEmailTesterPanel } from "@/components/admin/admin-email-tester-pan
 import { AdminInvitesPanel } from "@/components/admin/admin-invites-panel";
 import { AdminLinkedInPanel } from "@/components/admin/admin-linkedin-panel";
 import { AdminAutomationsPanel } from "@/components/admin/admin-automations-panel";
+import { AdminThemesPanel } from "@/components/admin/admin-themes-panel";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
 import type { AdminSection } from "@/lib/types/admin";
 import { cn } from "@/lib/utils";
 
@@ -35,21 +43,23 @@ export function AdminWorkspace() {
           <label htmlFor="admin-section" className="sr-only">
             Admin section
           </label>
-          <select
-            id="admin-section"
+          <Select
             value={section}
-            onChange={(event) => setSection(event.target.value as AdminSection)}
-            className="h-9 w-full rounded-md border border-input bg-background px-3 text-sm"
+            onValueChange={(value) => {
+              if (value) setSection(value as AdminSection);
+            }}
           >
-            <option value="users">Users</option>
-            <option value="waitlist">Waitlist</option>
-            <option value="invites">Invites</option>
-            <option value="automations">Automations</option>
-            <option value="linkedin">LinkedIn</option>
-            <option value="audit">Audit log</option>
-            <option value="emails">Email tester</option>
-            <option value="agent">Agent</option>
-          </select>
+            <SelectTrigger id="admin-section" className="w-full">
+              <SelectValue />
+            </SelectTrigger>
+            <SelectContent>
+              {ADMIN_SECTION_OPTIONS.map((option) => (
+                <SelectItem key={option.id} value={option.id}>
+                  {option.label}
+                </SelectItem>
+              ))}
+            </SelectContent>
+          </Select>
         </div>
 
         <div
@@ -73,6 +83,7 @@ export function AdminWorkspace() {
           {section === "emails" ? <AdminEmailTesterPanel /> : null}
           {section === "linkedin" ? <AdminLinkedInPanel /> : null}
           {section === "automations" ? <AdminAutomationsPanel /> : null}
+          {section === "themes" ? <AdminThemesPanel /> : null}
           {section === "agent" ? (
             <div className="space-y-8">
               <IntentPlayground />

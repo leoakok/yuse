@@ -187,12 +187,37 @@ type ComplexityRoot struct {
 		WorkspaceID       func(childComplexity int) int
 	}
 
+	CuratedTheme struct {
+		CreatedAt         func(childComplexity int) int
+		DesignShareID     func(childComplexity int) int
+		FeaturedOnLanding func(childComplexity int) int
+		ID                func(childComplexity int) int
+		IsPublic          func(childComplexity int) int
+		Preview           func(childComplexity int) int
+		SortOrder         func(childComplexity int) int
+		Tags              func(childComplexity int) int
+		Title             func(childComplexity int) int
+		URLPath           func(childComplexity int) int
+		UpdatedAt         func(childComplexity int) int
+	}
+
 	CvTheme struct {
 		Config   func(childComplexity int) int
 		ID       func(childComplexity int) int
 		IsSystem func(childComplexity int) int
 		Name     func(childComplexity int) int
 		Slug     func(childComplexity int) int
+	}
+
+	DesignShare struct {
+		ContentMode func(childComplexity int) int
+		CreatedAt   func(childComplexity int) int
+		ID          func(childComplexity int) int
+		IsActive    func(childComplexity int) int
+		ResumeID    func(childComplexity int) int
+		Title       func(childComplexity int) int
+		URLPath     func(childComplexity int) int
+		UpdatedAt   func(childComplexity int) int
 	}
 
 	InviteLink struct {
@@ -296,12 +321,15 @@ type ComplexityRoot struct {
 		AddPortfolioSkill                 func(childComplexity int, input model.AddPortfolioSkillInput) int
 		AddPortfolioTestimonial           func(childComplexity int, input model.AddPortfolioTestimonialInput) int
 		AddResumeSectionItem              func(childComplexity int, input model.AddResumeSectionItemInput) int
+		ApplyDesignShare                  func(childComplexity int, designShareID string, resumeID *string) int
 		ApproveWaitlistEntry              func(childComplexity int, id string) int
 		BanAutomationCompany              func(childComplexity int, companyName string, sourceJobID *string, sourceAutomationID *string) int
 		ChangeEmail                       func(childComplexity int, currentPassword string, email string) int
 		ChangePassword                    func(childComplexity int, currentPassword string, newPassword string) int
 		ClearLinkedInSession              func(childComplexity int) int
 		CreateAssistantThread             func(childComplexity int) int
+		CreateCuratedTheme                func(childComplexity int, input model.CreateCuratedThemeInput) int
+		CreateDesignShare                 func(childComplexity int, resumeID string, contentMode model.DesignShareContentMode, title *string) int
 		CreateInviteLink                  func(childComplexity int, input model.CreateInviteLinkInput) int
 		CreateJobAutomation               func(childComplexity int, input model.CreateJobAutomationInput) int
 		CreateKnowledgeEntry              func(childComplexity int, input model.CreateKnowledgeEntryInput) int
@@ -310,7 +338,9 @@ type ComplexityRoot struct {
 		CreateResumeSection               func(childComplexity int, input model.CreateResumeSectionInput) int
 		CreateTrackedJob                  func(childComplexity int, url string) int
 		CreateTwinEntry                   func(childComplexity int, input model.CreateTwinEntryInput) int
+		DeactivateDesignShare             func(childComplexity int, id string) int
 		DeleteAssistantThread             func(childComplexity int, id string) int
+		DeleteCuratedTheme                func(childComplexity int, id string) int
 		DeleteJobAutomation               func(childComplexity int, id string) int
 		DeleteKnowledgeEntry              func(childComplexity int, id string) int
 		DeletePortfolio                   func(childComplexity int, id string) int
@@ -346,6 +376,7 @@ type ComplexityRoot struct {
 		UnbanAutomationCompany            func(childComplexity int, id string) int
 		UnlinkGoogle                      func(childComplexity int) int
 		UpdateContactProfile              func(childComplexity int, input model.UpdateContactProfileInput) int
+		UpdateCuratedTheme                func(childComplexity int, input model.UpdateCuratedThemeInput) int
 		UpdateInviteLink                  func(childComplexity int, input model.UpdateInviteLinkInput) int
 		UpdateJobAutomation               func(childComplexity int, input model.UpdateJobAutomationInput) int
 		UpdateKnowledgeEntry              func(childComplexity int, input model.UpdateKnowledgeEntryInput) int
@@ -450,6 +481,7 @@ type ComplexityRoot struct {
 
 	Query struct {
 		AdminAuditLog              func(childComplexity int, limit *int, offset *int) int
+		AdminCuratedThemes         func(childComplexity int) int
 		AdminInviteLinks           func(childComplexity int) int
 		AdminLinkedInGeoSearch     func(childComplexity int, keywords string) int
 		AdminLinkedInJobSearch     func(childComplexity int, keywords *string, geoID *string, timeFilter *string, sortBy *model.LinkedInJobSortBy, maxResults *int, workplaceTypes []model.LinkedInWorkplaceType, experienceLevels []model.LinkedInExperienceLevel, employmentTypes []model.LinkedInEmploymentType, easyApply *bool, sessionCookie *string) int
@@ -464,6 +496,7 @@ type ComplexityRoot struct {
 		ConnectionStatus           func(childComplexity int, provider model.ConnectionProvider) int
 		ContactProfiles            func(childComplexity int) int
 		CvThemes                   func(childComplexity int) int
+		DesignShareForResume       func(childComplexity int, resumeID string) int
 		JobAutomation              func(childComplexity int, id string) int
 		JobAutomations             func(childComplexity int) int
 		KnowledgeEntries           func(childComplexity int, includeDisabled *bool) int
@@ -752,6 +785,12 @@ type MutationResolver interface {
 	SendTestEmail(ctx context.Context, typeArg model.TestEmailType, recipientEmail string) (*model.SendTestEmailResult, error)
 	CreateInviteLink(ctx context.Context, input model.CreateInviteLinkInput) (*model.InviteLink, error)
 	UpdateInviteLink(ctx context.Context, input model.UpdateInviteLinkInput) (*model.InviteLink, error)
+	CreateDesignShare(ctx context.Context, resumeID string, contentMode model.DesignShareContentMode, title *string) (*model.DesignShare, error)
+	DeactivateDesignShare(ctx context.Context, id string) (*model.DesignShare, error)
+	ApplyDesignShare(ctx context.Context, designShareID string, resumeID *string) (*model.Resume, error)
+	CreateCuratedTheme(ctx context.Context, input model.CreateCuratedThemeInput) (*model.CuratedTheme, error)
+	UpdateCuratedTheme(ctx context.Context, input model.UpdateCuratedThemeInput) (*model.CuratedTheme, error)
+	DeleteCuratedTheme(ctx context.Context, id string) (bool, error)
 	CreateJobAutomation(ctx context.Context, input model.CreateJobAutomationInput) (*model.JobAutomation, error)
 	UpdateJobAutomation(ctx context.Context, input model.UpdateJobAutomationInput) (*model.JobAutomation, error)
 	DeleteJobAutomation(ctx context.Context, id string) (bool, error)
@@ -799,6 +838,8 @@ type QueryResolver interface {
 	AdminLinkedInGeoSearch(ctx context.Context, keywords string) ([]*model.LinkedInGeoLocation, error)
 	AdminLinkedInJobSearch(ctx context.Context, keywords *string, geoID *string, timeFilter *string, sortBy *model.LinkedInJobSortBy, maxResults *int, workplaceTypes []model.LinkedInWorkplaceType, experienceLevels []model.LinkedInExperienceLevel, employmentTypes []model.LinkedInEmploymentType, easyApply *bool, sessionCookie *string) ([]*model.LinkedInJobCard, error)
 	AdminInviteLinks(ctx context.Context) ([]*model.InviteLink, error)
+	AdminCuratedThemes(ctx context.Context) ([]*model.CuratedTheme, error)
+	DesignShareForResume(ctx context.Context, resumeID string) (*model.DesignShare, error)
 	JobAutomations(ctx context.Context) ([]*model.JobAutomation, error)
 	JobAutomation(ctx context.Context, id string) (*model.JobAutomation, error)
 	AutomationRuns(ctx context.Context, automationID string, limit *int, offset *int) ([]*model.AutomationRun, error)
@@ -1546,6 +1587,83 @@ func (e *executableSchema) Complexity(ctx context.Context, typeName, field strin
 
 		return e.complexity.ContactProfile.WorkspaceID(childComplexity), true
 
+	case "CuratedTheme.createdAt":
+		if e.complexity.CuratedTheme.CreatedAt == nil {
+			break
+		}
+
+		return e.complexity.CuratedTheme.CreatedAt(childComplexity), true
+
+	case "CuratedTheme.designShareId":
+		if e.complexity.CuratedTheme.DesignShareID == nil {
+			break
+		}
+
+		return e.complexity.CuratedTheme.DesignShareID(childComplexity), true
+
+	case "CuratedTheme.featuredOnLanding":
+		if e.complexity.CuratedTheme.FeaturedOnLanding == nil {
+			break
+		}
+
+		return e.complexity.CuratedTheme.FeaturedOnLanding(childComplexity), true
+
+	case "CuratedTheme.id":
+		if e.complexity.CuratedTheme.ID == nil {
+			break
+		}
+
+		return e.complexity.CuratedTheme.ID(childComplexity), true
+
+	case "CuratedTheme.isPublic":
+		if e.complexity.CuratedTheme.IsPublic == nil {
+			break
+		}
+
+		return e.complexity.CuratedTheme.IsPublic(childComplexity), true
+
+	case "CuratedTheme.preview":
+		if e.complexity.CuratedTheme.Preview == nil {
+			break
+		}
+
+		return e.complexity.CuratedTheme.Preview(childComplexity), true
+
+	case "CuratedTheme.sortOrder":
+		if e.complexity.CuratedTheme.SortOrder == nil {
+			break
+		}
+
+		return e.complexity.CuratedTheme.SortOrder(childComplexity), true
+
+	case "CuratedTheme.tags":
+		if e.complexity.CuratedTheme.Tags == nil {
+			break
+		}
+
+		return e.complexity.CuratedTheme.Tags(childComplexity), true
+
+	case "CuratedTheme.title":
+		if e.complexity.CuratedTheme.Title == nil {
+			break
+		}
+
+		return e.complexity.CuratedTheme.Title(childComplexity), true
+
+	case "CuratedTheme.urlPath":
+		if e.complexity.CuratedTheme.URLPath == nil {
+			break
+		}
+
+		return e.complexity.CuratedTheme.URLPath(childComplexity), true
+
+	case "CuratedTheme.updatedAt":
+		if e.complexity.CuratedTheme.UpdatedAt == nil {
+			break
+		}
+
+		return e.complexity.CuratedTheme.UpdatedAt(childComplexity), true
+
 	case "CvTheme.config":
 		if e.complexity.CvTheme.Config == nil {
 			break
@@ -1580,6 +1698,62 @@ func (e *executableSchema) Complexity(ctx context.Context, typeName, field strin
 		}
 
 		return e.complexity.CvTheme.Slug(childComplexity), true
+
+	case "DesignShare.contentMode":
+		if e.complexity.DesignShare.ContentMode == nil {
+			break
+		}
+
+		return e.complexity.DesignShare.ContentMode(childComplexity), true
+
+	case "DesignShare.createdAt":
+		if e.complexity.DesignShare.CreatedAt == nil {
+			break
+		}
+
+		return e.complexity.DesignShare.CreatedAt(childComplexity), true
+
+	case "DesignShare.id":
+		if e.complexity.DesignShare.ID == nil {
+			break
+		}
+
+		return e.complexity.DesignShare.ID(childComplexity), true
+
+	case "DesignShare.isActive":
+		if e.complexity.DesignShare.IsActive == nil {
+			break
+		}
+
+		return e.complexity.DesignShare.IsActive(childComplexity), true
+
+	case "DesignShare.resumeId":
+		if e.complexity.DesignShare.ResumeID == nil {
+			break
+		}
+
+		return e.complexity.DesignShare.ResumeID(childComplexity), true
+
+	case "DesignShare.title":
+		if e.complexity.DesignShare.Title == nil {
+			break
+		}
+
+		return e.complexity.DesignShare.Title(childComplexity), true
+
+	case "DesignShare.urlPath":
+		if e.complexity.DesignShare.URLPath == nil {
+			break
+		}
+
+		return e.complexity.DesignShare.URLPath(childComplexity), true
+
+	case "DesignShare.updatedAt":
+		if e.complexity.DesignShare.UpdatedAt == nil {
+			break
+		}
+
+		return e.complexity.DesignShare.UpdatedAt(childComplexity), true
 
 	case "InviteLink.code":
 		if e.complexity.InviteLink.Code == nil {
@@ -2112,6 +2286,18 @@ func (e *executableSchema) Complexity(ctx context.Context, typeName, field strin
 
 		return e.complexity.Mutation.AddResumeSectionItem(childComplexity, args["input"].(model.AddResumeSectionItemInput)), true
 
+	case "Mutation.applyDesignShare":
+		if e.complexity.Mutation.ApplyDesignShare == nil {
+			break
+		}
+
+		args, err := ec.field_Mutation_applyDesignShare_args(ctx, rawArgs)
+		if err != nil {
+			return 0, false
+		}
+
+		return e.complexity.Mutation.ApplyDesignShare(childComplexity, args["designShareId"].(string), args["resumeId"].(*string)), true
+
 	case "Mutation.approveWaitlistEntry":
 		if e.complexity.Mutation.ApproveWaitlistEntry == nil {
 			break
@@ -2173,6 +2359,30 @@ func (e *executableSchema) Complexity(ctx context.Context, typeName, field strin
 		}
 
 		return e.complexity.Mutation.CreateAssistantThread(childComplexity), true
+
+	case "Mutation.createCuratedTheme":
+		if e.complexity.Mutation.CreateCuratedTheme == nil {
+			break
+		}
+
+		args, err := ec.field_Mutation_createCuratedTheme_args(ctx, rawArgs)
+		if err != nil {
+			return 0, false
+		}
+
+		return e.complexity.Mutation.CreateCuratedTheme(childComplexity, args["input"].(model.CreateCuratedThemeInput)), true
+
+	case "Mutation.createDesignShare":
+		if e.complexity.Mutation.CreateDesignShare == nil {
+			break
+		}
+
+		args, err := ec.field_Mutation_createDesignShare_args(ctx, rawArgs)
+		if err != nil {
+			return 0, false
+		}
+
+		return e.complexity.Mutation.CreateDesignShare(childComplexity, args["resumeId"].(string), args["contentMode"].(model.DesignShareContentMode), args["title"].(*string)), true
 
 	case "Mutation.createInviteLink":
 		if e.complexity.Mutation.CreateInviteLink == nil {
@@ -2270,6 +2480,18 @@ func (e *executableSchema) Complexity(ctx context.Context, typeName, field strin
 
 		return e.complexity.Mutation.CreateTwinEntry(childComplexity, args["input"].(model.CreateTwinEntryInput)), true
 
+	case "Mutation.deactivateDesignShare":
+		if e.complexity.Mutation.DeactivateDesignShare == nil {
+			break
+		}
+
+		args, err := ec.field_Mutation_deactivateDesignShare_args(ctx, rawArgs)
+		if err != nil {
+			return 0, false
+		}
+
+		return e.complexity.Mutation.DeactivateDesignShare(childComplexity, args["id"].(string)), true
+
 	case "Mutation.deleteAssistantThread":
 		if e.complexity.Mutation.DeleteAssistantThread == nil {
 			break
@@ -2281,6 +2503,18 @@ func (e *executableSchema) Complexity(ctx context.Context, typeName, field strin
 		}
 
 		return e.complexity.Mutation.DeleteAssistantThread(childComplexity, args["id"].(string)), true
+
+	case "Mutation.deleteCuratedTheme":
+		if e.complexity.Mutation.DeleteCuratedTheme == nil {
+			break
+		}
+
+		args, err := ec.field_Mutation_deleteCuratedTheme_args(ctx, rawArgs)
+		if err != nil {
+			return 0, false
+		}
+
+		return e.complexity.Mutation.DeleteCuratedTheme(childComplexity, args["id"].(string)), true
 
 	case "Mutation.deleteJobAutomation":
 		if e.complexity.Mutation.DeleteJobAutomation == nil {
@@ -2681,6 +2915,18 @@ func (e *executableSchema) Complexity(ctx context.Context, typeName, field strin
 		}
 
 		return e.complexity.Mutation.UpdateContactProfile(childComplexity, args["input"].(model.UpdateContactProfileInput)), true
+
+	case "Mutation.updateCuratedTheme":
+		if e.complexity.Mutation.UpdateCuratedTheme == nil {
+			break
+		}
+
+		args, err := ec.field_Mutation_updateCuratedTheme_args(ctx, rawArgs)
+		if err != nil {
+			return 0, false
+		}
+
+		return e.complexity.Mutation.UpdateCuratedTheme(childComplexity, args["input"].(model.UpdateCuratedThemeInput)), true
 
 	case "Mutation.updateInviteLink":
 		if e.complexity.Mutation.UpdateInviteLink == nil {
@@ -3332,6 +3578,13 @@ func (e *executableSchema) Complexity(ctx context.Context, typeName, field strin
 
 		return e.complexity.Query.AdminAuditLog(childComplexity, args["limit"].(*int), args["offset"].(*int)), true
 
+	case "Query.adminCuratedThemes":
+		if e.complexity.Query.AdminCuratedThemes == nil {
+			break
+		}
+
+		return e.complexity.Query.AdminCuratedThemes(childComplexity), true
+
 	case "Query.adminInviteLinks":
 		if e.complexity.Query.AdminInviteLinks == nil {
 			break
@@ -3474,6 +3727,18 @@ func (e *executableSchema) Complexity(ctx context.Context, typeName, field strin
 		}
 
 		return e.complexity.Query.CvThemes(childComplexity), true
+
+	case "Query.designShareForResume":
+		if e.complexity.Query.DesignShareForResume == nil {
+			break
+		}
+
+		args, err := ec.field_Query_designShareForResume_args(ctx, rawArgs)
+		if err != nil {
+			return 0, false
+		}
+
+		return e.complexity.Query.DesignShareForResume(childComplexity, args["resumeId"].(string)), true
 
 	case "Query.jobAutomation":
 		if e.complexity.Query.JobAutomation == nil {
@@ -4825,6 +5090,7 @@ func (e *executableSchema) Exec(ctx context.Context) graphql.ResponseHandler {
 		ec.unmarshalInputAddResumeSectionItemInput,
 		ec.unmarshalInputAssistantAttachmentInput,
 		ec.unmarshalInputAssistantContextInput,
+		ec.unmarshalInputCreateCuratedThemeInput,
 		ec.unmarshalInputCreateInviteLinkInput,
 		ec.unmarshalInputCreateJobAutomationInput,
 		ec.unmarshalInputCreateKnowledgeEntryInput,
@@ -4833,6 +5099,7 @@ func (e *executableSchema) Exec(ctx context.Context) graphql.ResponseHandler {
 		ec.unmarshalInputReorderResumeSectionsInput,
 		ec.unmarshalInputSetPortfolioProjectVisibilityInput,
 		ec.unmarshalInputUpdateContactProfileInput,
+		ec.unmarshalInputUpdateCuratedThemeInput,
 		ec.unmarshalInputUpdateInviteLinkInput,
 		ec.unmarshalInputUpdateJobAutomationInput,
 		ec.unmarshalInputUpdateKnowledgeEntryInput,
@@ -5008,6 +5275,22 @@ func (ec *executionContext) field_Mutation_addResumeSectionItem_args(ctx context
 	return args, nil
 }
 
+func (ec *executionContext) field_Mutation_applyDesignShare_args(ctx context.Context, rawArgs map[string]any) (map[string]any, error) {
+	var err error
+	args := map[string]any{}
+	arg0, err := graphql.ProcessArgField(ctx, rawArgs, "designShareId", ec.unmarshalNID2string)
+	if err != nil {
+		return nil, err
+	}
+	args["designShareId"] = arg0
+	arg1, err := graphql.ProcessArgField(ctx, rawArgs, "resumeId", ec.unmarshalOID2ᚖstring)
+	if err != nil {
+		return nil, err
+	}
+	args["resumeId"] = arg1
+	return args, nil
+}
+
 func (ec *executionContext) field_Mutation_approveWaitlistEntry_args(ctx context.Context, rawArgs map[string]any) (map[string]any, error) {
 	var err error
 	args := map[string]any{}
@@ -5069,6 +5352,38 @@ func (ec *executionContext) field_Mutation_changePassword_args(ctx context.Conte
 		return nil, err
 	}
 	args["newPassword"] = arg1
+	return args, nil
+}
+
+func (ec *executionContext) field_Mutation_createCuratedTheme_args(ctx context.Context, rawArgs map[string]any) (map[string]any, error) {
+	var err error
+	args := map[string]any{}
+	arg0, err := graphql.ProcessArgField(ctx, rawArgs, "input", ec.unmarshalNCreateCuratedThemeInput2githubᚗcomᚋleoᚋaiᚑweekendᚋbackendᚋgraphᚋmodelᚐCreateCuratedThemeInput)
+	if err != nil {
+		return nil, err
+	}
+	args["input"] = arg0
+	return args, nil
+}
+
+func (ec *executionContext) field_Mutation_createDesignShare_args(ctx context.Context, rawArgs map[string]any) (map[string]any, error) {
+	var err error
+	args := map[string]any{}
+	arg0, err := graphql.ProcessArgField(ctx, rawArgs, "resumeId", ec.unmarshalNID2string)
+	if err != nil {
+		return nil, err
+	}
+	args["resumeId"] = arg0
+	arg1, err := graphql.ProcessArgField(ctx, rawArgs, "contentMode", ec.unmarshalNDesignShareContentMode2githubᚗcomᚋleoᚋaiᚑweekendᚋbackendᚋgraphᚋmodelᚐDesignShareContentMode)
+	if err != nil {
+		return nil, err
+	}
+	args["contentMode"] = arg1
+	arg2, err := graphql.ProcessArgField(ctx, rawArgs, "title", ec.unmarshalOString2ᚖstring)
+	if err != nil {
+		return nil, err
+	}
+	args["title"] = arg2
 	return args, nil
 }
 
@@ -5160,7 +5475,29 @@ func (ec *executionContext) field_Mutation_createTwinEntry_args(ctx context.Cont
 	return args, nil
 }
 
+func (ec *executionContext) field_Mutation_deactivateDesignShare_args(ctx context.Context, rawArgs map[string]any) (map[string]any, error) {
+	var err error
+	args := map[string]any{}
+	arg0, err := graphql.ProcessArgField(ctx, rawArgs, "id", ec.unmarshalNID2string)
+	if err != nil {
+		return nil, err
+	}
+	args["id"] = arg0
+	return args, nil
+}
+
 func (ec *executionContext) field_Mutation_deleteAssistantThread_args(ctx context.Context, rawArgs map[string]any) (map[string]any, error) {
+	var err error
+	args := map[string]any{}
+	arg0, err := graphql.ProcessArgField(ctx, rawArgs, "id", ec.unmarshalNID2string)
+	if err != nil {
+		return nil, err
+	}
+	args["id"] = arg0
+	return args, nil
+}
+
+func (ec *executionContext) field_Mutation_deleteCuratedTheme_args(ctx context.Context, rawArgs map[string]any) (map[string]any, error) {
 	var err error
 	args := map[string]any{}
 	arg0, err := graphql.ProcessArgField(ctx, rawArgs, "id", ec.unmarshalNID2string)
@@ -5590,6 +5927,17 @@ func (ec *executionContext) field_Mutation_updateContactProfile_args(ctx context
 	var err error
 	args := map[string]any{}
 	arg0, err := graphql.ProcessArgField(ctx, rawArgs, "input", ec.unmarshalNUpdateContactProfileInput2githubᚗcomᚋleoᚋaiᚑweekendᚋbackendᚋgraphᚋmodelᚐUpdateContactProfileInput)
+	if err != nil {
+		return nil, err
+	}
+	args["input"] = arg0
+	return args, nil
+}
+
+func (ec *executionContext) field_Mutation_updateCuratedTheme_args(ctx context.Context, rawArgs map[string]any) (map[string]any, error) {
+	var err error
+	args := map[string]any{}
+	arg0, err := graphql.ProcessArgField(ctx, rawArgs, "input", ec.unmarshalNUpdateCuratedThemeInput2githubᚗcomᚋleoᚋaiᚑweekendᚋbackendᚋgraphᚋmodelᚐUpdateCuratedThemeInput)
 	if err != nil {
 		return nil, err
 	}
@@ -6027,6 +6375,17 @@ func (ec *executionContext) field_Query_connectionStatus_args(ctx context.Contex
 		return nil, err
 	}
 	args["provider"] = arg0
+	return args, nil
+}
+
+func (ec *executionContext) field_Query_designShareForResume_args(ctx context.Context, rawArgs map[string]any) (map[string]any, error) {
+	var err error
+	args := map[string]any{}
+	arg0, err := graphql.ProcessArgField(ctx, rawArgs, "resumeId", ec.unmarshalNID2string)
+	if err != nil {
+		return nil, err
+	}
+	args["resumeId"] = arg0
 	return args, nil
 }
 
@@ -10750,6 +11109,502 @@ func (ec *executionContext) fieldContext_ContactProfile_updatedAt(_ context.Cont
 	return fc, nil
 }
 
+func (ec *executionContext) _CuratedTheme_id(ctx context.Context, field graphql.CollectedField, obj *model.CuratedTheme) (ret graphql.Marshaler) {
+	fc, err := ec.fieldContext_CuratedTheme_id(ctx, field)
+	if err != nil {
+		return graphql.Null
+	}
+	ctx = graphql.WithFieldContext(ctx, fc)
+	defer func() {
+		if r := recover(); r != nil {
+			ec.Error(ctx, ec.Recover(ctx, r))
+			ret = graphql.Null
+		}
+	}()
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (any, error) {
+		ctx = rctx // use context from middleware stack in children
+		return obj.ID, nil
+	})
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	if resTmp == nil {
+		if !graphql.HasFieldError(ctx, fc) {
+			ec.Errorf(ctx, "must not be null")
+		}
+		return graphql.Null
+	}
+	res := resTmp.(string)
+	fc.Result = res
+	return ec.marshalNID2string(ctx, field.Selections, res)
+}
+
+func (ec *executionContext) fieldContext_CuratedTheme_id(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "CuratedTheme",
+		Field:      field,
+		IsMethod:   false,
+		IsResolver: false,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return nil, errors.New("field of type ID does not have child fields")
+		},
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _CuratedTheme_title(ctx context.Context, field graphql.CollectedField, obj *model.CuratedTheme) (ret graphql.Marshaler) {
+	fc, err := ec.fieldContext_CuratedTheme_title(ctx, field)
+	if err != nil {
+		return graphql.Null
+	}
+	ctx = graphql.WithFieldContext(ctx, fc)
+	defer func() {
+		if r := recover(); r != nil {
+			ec.Error(ctx, ec.Recover(ctx, r))
+			ret = graphql.Null
+		}
+	}()
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (any, error) {
+		ctx = rctx // use context from middleware stack in children
+		return obj.Title, nil
+	})
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	if resTmp == nil {
+		if !graphql.HasFieldError(ctx, fc) {
+			ec.Errorf(ctx, "must not be null")
+		}
+		return graphql.Null
+	}
+	res := resTmp.(string)
+	fc.Result = res
+	return ec.marshalNString2string(ctx, field.Selections, res)
+}
+
+func (ec *executionContext) fieldContext_CuratedTheme_title(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "CuratedTheme",
+		Field:      field,
+		IsMethod:   false,
+		IsResolver: false,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return nil, errors.New("field of type String does not have child fields")
+		},
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _CuratedTheme_designShareId(ctx context.Context, field graphql.CollectedField, obj *model.CuratedTheme) (ret graphql.Marshaler) {
+	fc, err := ec.fieldContext_CuratedTheme_designShareId(ctx, field)
+	if err != nil {
+		return graphql.Null
+	}
+	ctx = graphql.WithFieldContext(ctx, fc)
+	defer func() {
+		if r := recover(); r != nil {
+			ec.Error(ctx, ec.Recover(ctx, r))
+			ret = graphql.Null
+		}
+	}()
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (any, error) {
+		ctx = rctx // use context from middleware stack in children
+		return obj.DesignShareID, nil
+	})
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	if resTmp == nil {
+		if !graphql.HasFieldError(ctx, fc) {
+			ec.Errorf(ctx, "must not be null")
+		}
+		return graphql.Null
+	}
+	res := resTmp.(string)
+	fc.Result = res
+	return ec.marshalNID2string(ctx, field.Selections, res)
+}
+
+func (ec *executionContext) fieldContext_CuratedTheme_designShareId(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "CuratedTheme",
+		Field:      field,
+		IsMethod:   false,
+		IsResolver: false,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return nil, errors.New("field of type ID does not have child fields")
+		},
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _CuratedTheme_tags(ctx context.Context, field graphql.CollectedField, obj *model.CuratedTheme) (ret graphql.Marshaler) {
+	fc, err := ec.fieldContext_CuratedTheme_tags(ctx, field)
+	if err != nil {
+		return graphql.Null
+	}
+	ctx = graphql.WithFieldContext(ctx, fc)
+	defer func() {
+		if r := recover(); r != nil {
+			ec.Error(ctx, ec.Recover(ctx, r))
+			ret = graphql.Null
+		}
+	}()
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (any, error) {
+		ctx = rctx // use context from middleware stack in children
+		return obj.Tags, nil
+	})
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	if resTmp == nil {
+		if !graphql.HasFieldError(ctx, fc) {
+			ec.Errorf(ctx, "must not be null")
+		}
+		return graphql.Null
+	}
+	res := resTmp.([]string)
+	fc.Result = res
+	return ec.marshalNString2ᚕstringᚄ(ctx, field.Selections, res)
+}
+
+func (ec *executionContext) fieldContext_CuratedTheme_tags(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "CuratedTheme",
+		Field:      field,
+		IsMethod:   false,
+		IsResolver: false,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return nil, errors.New("field of type String does not have child fields")
+		},
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _CuratedTheme_featuredOnLanding(ctx context.Context, field graphql.CollectedField, obj *model.CuratedTheme) (ret graphql.Marshaler) {
+	fc, err := ec.fieldContext_CuratedTheme_featuredOnLanding(ctx, field)
+	if err != nil {
+		return graphql.Null
+	}
+	ctx = graphql.WithFieldContext(ctx, fc)
+	defer func() {
+		if r := recover(); r != nil {
+			ec.Error(ctx, ec.Recover(ctx, r))
+			ret = graphql.Null
+		}
+	}()
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (any, error) {
+		ctx = rctx // use context from middleware stack in children
+		return obj.FeaturedOnLanding, nil
+	})
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	if resTmp == nil {
+		if !graphql.HasFieldError(ctx, fc) {
+			ec.Errorf(ctx, "must not be null")
+		}
+		return graphql.Null
+	}
+	res := resTmp.(bool)
+	fc.Result = res
+	return ec.marshalNBoolean2bool(ctx, field.Selections, res)
+}
+
+func (ec *executionContext) fieldContext_CuratedTheme_featuredOnLanding(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "CuratedTheme",
+		Field:      field,
+		IsMethod:   false,
+		IsResolver: false,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return nil, errors.New("field of type Boolean does not have child fields")
+		},
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _CuratedTheme_isPublic(ctx context.Context, field graphql.CollectedField, obj *model.CuratedTheme) (ret graphql.Marshaler) {
+	fc, err := ec.fieldContext_CuratedTheme_isPublic(ctx, field)
+	if err != nil {
+		return graphql.Null
+	}
+	ctx = graphql.WithFieldContext(ctx, fc)
+	defer func() {
+		if r := recover(); r != nil {
+			ec.Error(ctx, ec.Recover(ctx, r))
+			ret = graphql.Null
+		}
+	}()
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (any, error) {
+		ctx = rctx // use context from middleware stack in children
+		return obj.IsPublic, nil
+	})
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	if resTmp == nil {
+		if !graphql.HasFieldError(ctx, fc) {
+			ec.Errorf(ctx, "must not be null")
+		}
+		return graphql.Null
+	}
+	res := resTmp.(bool)
+	fc.Result = res
+	return ec.marshalNBoolean2bool(ctx, field.Selections, res)
+}
+
+func (ec *executionContext) fieldContext_CuratedTheme_isPublic(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "CuratedTheme",
+		Field:      field,
+		IsMethod:   false,
+		IsResolver: false,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return nil, errors.New("field of type Boolean does not have child fields")
+		},
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _CuratedTheme_sortOrder(ctx context.Context, field graphql.CollectedField, obj *model.CuratedTheme) (ret graphql.Marshaler) {
+	fc, err := ec.fieldContext_CuratedTheme_sortOrder(ctx, field)
+	if err != nil {
+		return graphql.Null
+	}
+	ctx = graphql.WithFieldContext(ctx, fc)
+	defer func() {
+		if r := recover(); r != nil {
+			ec.Error(ctx, ec.Recover(ctx, r))
+			ret = graphql.Null
+		}
+	}()
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (any, error) {
+		ctx = rctx // use context from middleware stack in children
+		return obj.SortOrder, nil
+	})
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	if resTmp == nil {
+		if !graphql.HasFieldError(ctx, fc) {
+			ec.Errorf(ctx, "must not be null")
+		}
+		return graphql.Null
+	}
+	res := resTmp.(int)
+	fc.Result = res
+	return ec.marshalNInt2int(ctx, field.Selections, res)
+}
+
+func (ec *executionContext) fieldContext_CuratedTheme_sortOrder(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "CuratedTheme",
+		Field:      field,
+		IsMethod:   false,
+		IsResolver: false,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return nil, errors.New("field of type Int does not have child fields")
+		},
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _CuratedTheme_createdAt(ctx context.Context, field graphql.CollectedField, obj *model.CuratedTheme) (ret graphql.Marshaler) {
+	fc, err := ec.fieldContext_CuratedTheme_createdAt(ctx, field)
+	if err != nil {
+		return graphql.Null
+	}
+	ctx = graphql.WithFieldContext(ctx, fc)
+	defer func() {
+		if r := recover(); r != nil {
+			ec.Error(ctx, ec.Recover(ctx, r))
+			ret = graphql.Null
+		}
+	}()
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (any, error) {
+		ctx = rctx // use context from middleware stack in children
+		return obj.CreatedAt, nil
+	})
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	if resTmp == nil {
+		if !graphql.HasFieldError(ctx, fc) {
+			ec.Errorf(ctx, "must not be null")
+		}
+		return graphql.Null
+	}
+	res := resTmp.(string)
+	fc.Result = res
+	return ec.marshalNDateTime2string(ctx, field.Selections, res)
+}
+
+func (ec *executionContext) fieldContext_CuratedTheme_createdAt(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "CuratedTheme",
+		Field:      field,
+		IsMethod:   false,
+		IsResolver: false,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return nil, errors.New("field of type DateTime does not have child fields")
+		},
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _CuratedTheme_updatedAt(ctx context.Context, field graphql.CollectedField, obj *model.CuratedTheme) (ret graphql.Marshaler) {
+	fc, err := ec.fieldContext_CuratedTheme_updatedAt(ctx, field)
+	if err != nil {
+		return graphql.Null
+	}
+	ctx = graphql.WithFieldContext(ctx, fc)
+	defer func() {
+		if r := recover(); r != nil {
+			ec.Error(ctx, ec.Recover(ctx, r))
+			ret = graphql.Null
+		}
+	}()
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (any, error) {
+		ctx = rctx // use context from middleware stack in children
+		return obj.UpdatedAt, nil
+	})
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	if resTmp == nil {
+		if !graphql.HasFieldError(ctx, fc) {
+			ec.Errorf(ctx, "must not be null")
+		}
+		return graphql.Null
+	}
+	res := resTmp.(string)
+	fc.Result = res
+	return ec.marshalNDateTime2string(ctx, field.Selections, res)
+}
+
+func (ec *executionContext) fieldContext_CuratedTheme_updatedAt(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "CuratedTheme",
+		Field:      field,
+		IsMethod:   false,
+		IsResolver: false,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return nil, errors.New("field of type DateTime does not have child fields")
+		},
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _CuratedTheme_urlPath(ctx context.Context, field graphql.CollectedField, obj *model.CuratedTheme) (ret graphql.Marshaler) {
+	fc, err := ec.fieldContext_CuratedTheme_urlPath(ctx, field)
+	if err != nil {
+		return graphql.Null
+	}
+	ctx = graphql.WithFieldContext(ctx, fc)
+	defer func() {
+		if r := recover(); r != nil {
+			ec.Error(ctx, ec.Recover(ctx, r))
+			ret = graphql.Null
+		}
+	}()
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (any, error) {
+		ctx = rctx // use context from middleware stack in children
+		return obj.URLPath, nil
+	})
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	if resTmp == nil {
+		if !graphql.HasFieldError(ctx, fc) {
+			ec.Errorf(ctx, "must not be null")
+		}
+		return graphql.Null
+	}
+	res := resTmp.(string)
+	fc.Result = res
+	return ec.marshalNString2string(ctx, field.Selections, res)
+}
+
+func (ec *executionContext) fieldContext_CuratedTheme_urlPath(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "CuratedTheme",
+		Field:      field,
+		IsMethod:   false,
+		IsResolver: false,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return nil, errors.New("field of type String does not have child fields")
+		},
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _CuratedTheme_preview(ctx context.Context, field graphql.CollectedField, obj *model.CuratedTheme) (ret graphql.Marshaler) {
+	fc, err := ec.fieldContext_CuratedTheme_preview(ctx, field)
+	if err != nil {
+		return graphql.Null
+	}
+	ctx = graphql.WithFieldContext(ctx, fc)
+	defer func() {
+		if r := recover(); r != nil {
+			ec.Error(ctx, ec.Recover(ctx, r))
+			ret = graphql.Null
+		}
+	}()
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (any, error) {
+		ctx = rctx // use context from middleware stack in children
+		return obj.Preview, nil
+	})
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	if resTmp == nil {
+		if !graphql.HasFieldError(ctx, fc) {
+			ec.Errorf(ctx, "must not be null")
+		}
+		return graphql.Null
+	}
+	res := resTmp.(*model.ResumeWithContent)
+	fc.Result = res
+	return ec.marshalNResumeWithContent2ᚖgithubᚗcomᚋleoᚋaiᚑweekendᚋbackendᚋgraphᚋmodelᚐResumeWithContent(ctx, field.Selections, res)
+}
+
+func (ec *executionContext) fieldContext_CuratedTheme_preview(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "CuratedTheme",
+		Field:      field,
+		IsMethod:   false,
+		IsResolver: false,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			switch field.Name {
+			case "resume":
+				return ec.fieldContext_ResumeWithContent_resume(ctx, field)
+			case "contactProfile":
+				return ec.fieldContext_ResumeWithContent_contactProfile(ctx, field)
+			case "settings":
+				return ec.fieldContext_ResumeWithContent_settings(ctx, field)
+			case "theme":
+				return ec.fieldContext_ResumeWithContent_theme(ctx, field)
+			case "sections":
+				return ec.fieldContext_ResumeWithContent_sections(ctx, field)
+			}
+			return nil, fmt.Errorf("no field named %q was found under type ResumeWithContent", field.Name)
+		},
+	}
+	return fc, nil
+}
+
 func (ec *executionContext) _CvTheme_id(ctx context.Context, field graphql.CollectedField, obj *model.CvTheme) (ret graphql.Marshaler) {
 	fc, err := ec.fieldContext_CvTheme_id(ctx, field)
 	if err != nil {
@@ -10965,6 +11820,355 @@ func (ec *executionContext) fieldContext_CvTheme_config(_ context.Context, field
 		IsResolver: false,
 		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
 			return nil, errors.New("field of type JSON does not have child fields")
+		},
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _DesignShare_id(ctx context.Context, field graphql.CollectedField, obj *model.DesignShare) (ret graphql.Marshaler) {
+	fc, err := ec.fieldContext_DesignShare_id(ctx, field)
+	if err != nil {
+		return graphql.Null
+	}
+	ctx = graphql.WithFieldContext(ctx, fc)
+	defer func() {
+		if r := recover(); r != nil {
+			ec.Error(ctx, ec.Recover(ctx, r))
+			ret = graphql.Null
+		}
+	}()
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (any, error) {
+		ctx = rctx // use context from middleware stack in children
+		return obj.ID, nil
+	})
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	if resTmp == nil {
+		if !graphql.HasFieldError(ctx, fc) {
+			ec.Errorf(ctx, "must not be null")
+		}
+		return graphql.Null
+	}
+	res := resTmp.(string)
+	fc.Result = res
+	return ec.marshalNID2string(ctx, field.Selections, res)
+}
+
+func (ec *executionContext) fieldContext_DesignShare_id(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "DesignShare",
+		Field:      field,
+		IsMethod:   false,
+		IsResolver: false,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return nil, errors.New("field of type ID does not have child fields")
+		},
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _DesignShare_resumeId(ctx context.Context, field graphql.CollectedField, obj *model.DesignShare) (ret graphql.Marshaler) {
+	fc, err := ec.fieldContext_DesignShare_resumeId(ctx, field)
+	if err != nil {
+		return graphql.Null
+	}
+	ctx = graphql.WithFieldContext(ctx, fc)
+	defer func() {
+		if r := recover(); r != nil {
+			ec.Error(ctx, ec.Recover(ctx, r))
+			ret = graphql.Null
+		}
+	}()
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (any, error) {
+		ctx = rctx // use context from middleware stack in children
+		return obj.ResumeID, nil
+	})
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	if resTmp == nil {
+		if !graphql.HasFieldError(ctx, fc) {
+			ec.Errorf(ctx, "must not be null")
+		}
+		return graphql.Null
+	}
+	res := resTmp.(string)
+	fc.Result = res
+	return ec.marshalNID2string(ctx, field.Selections, res)
+}
+
+func (ec *executionContext) fieldContext_DesignShare_resumeId(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "DesignShare",
+		Field:      field,
+		IsMethod:   false,
+		IsResolver: false,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return nil, errors.New("field of type ID does not have child fields")
+		},
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _DesignShare_contentMode(ctx context.Context, field graphql.CollectedField, obj *model.DesignShare) (ret graphql.Marshaler) {
+	fc, err := ec.fieldContext_DesignShare_contentMode(ctx, field)
+	if err != nil {
+		return graphql.Null
+	}
+	ctx = graphql.WithFieldContext(ctx, fc)
+	defer func() {
+		if r := recover(); r != nil {
+			ec.Error(ctx, ec.Recover(ctx, r))
+			ret = graphql.Null
+		}
+	}()
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (any, error) {
+		ctx = rctx // use context from middleware stack in children
+		return obj.ContentMode, nil
+	})
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	if resTmp == nil {
+		if !graphql.HasFieldError(ctx, fc) {
+			ec.Errorf(ctx, "must not be null")
+		}
+		return graphql.Null
+	}
+	res := resTmp.(model.DesignShareContentMode)
+	fc.Result = res
+	return ec.marshalNDesignShareContentMode2githubᚗcomᚋleoᚋaiᚑweekendᚋbackendᚋgraphᚋmodelᚐDesignShareContentMode(ctx, field.Selections, res)
+}
+
+func (ec *executionContext) fieldContext_DesignShare_contentMode(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "DesignShare",
+		Field:      field,
+		IsMethod:   false,
+		IsResolver: false,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return nil, errors.New("field of type DesignShareContentMode does not have child fields")
+		},
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _DesignShare_title(ctx context.Context, field graphql.CollectedField, obj *model.DesignShare) (ret graphql.Marshaler) {
+	fc, err := ec.fieldContext_DesignShare_title(ctx, field)
+	if err != nil {
+		return graphql.Null
+	}
+	ctx = graphql.WithFieldContext(ctx, fc)
+	defer func() {
+		if r := recover(); r != nil {
+			ec.Error(ctx, ec.Recover(ctx, r))
+			ret = graphql.Null
+		}
+	}()
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (any, error) {
+		ctx = rctx // use context from middleware stack in children
+		return obj.Title, nil
+	})
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	if resTmp == nil {
+		return graphql.Null
+	}
+	res := resTmp.(*string)
+	fc.Result = res
+	return ec.marshalOString2ᚖstring(ctx, field.Selections, res)
+}
+
+func (ec *executionContext) fieldContext_DesignShare_title(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "DesignShare",
+		Field:      field,
+		IsMethod:   false,
+		IsResolver: false,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return nil, errors.New("field of type String does not have child fields")
+		},
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _DesignShare_isActive(ctx context.Context, field graphql.CollectedField, obj *model.DesignShare) (ret graphql.Marshaler) {
+	fc, err := ec.fieldContext_DesignShare_isActive(ctx, field)
+	if err != nil {
+		return graphql.Null
+	}
+	ctx = graphql.WithFieldContext(ctx, fc)
+	defer func() {
+		if r := recover(); r != nil {
+			ec.Error(ctx, ec.Recover(ctx, r))
+			ret = graphql.Null
+		}
+	}()
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (any, error) {
+		ctx = rctx // use context from middleware stack in children
+		return obj.IsActive, nil
+	})
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	if resTmp == nil {
+		if !graphql.HasFieldError(ctx, fc) {
+			ec.Errorf(ctx, "must not be null")
+		}
+		return graphql.Null
+	}
+	res := resTmp.(bool)
+	fc.Result = res
+	return ec.marshalNBoolean2bool(ctx, field.Selections, res)
+}
+
+func (ec *executionContext) fieldContext_DesignShare_isActive(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "DesignShare",
+		Field:      field,
+		IsMethod:   false,
+		IsResolver: false,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return nil, errors.New("field of type Boolean does not have child fields")
+		},
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _DesignShare_createdAt(ctx context.Context, field graphql.CollectedField, obj *model.DesignShare) (ret graphql.Marshaler) {
+	fc, err := ec.fieldContext_DesignShare_createdAt(ctx, field)
+	if err != nil {
+		return graphql.Null
+	}
+	ctx = graphql.WithFieldContext(ctx, fc)
+	defer func() {
+		if r := recover(); r != nil {
+			ec.Error(ctx, ec.Recover(ctx, r))
+			ret = graphql.Null
+		}
+	}()
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (any, error) {
+		ctx = rctx // use context from middleware stack in children
+		return obj.CreatedAt, nil
+	})
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	if resTmp == nil {
+		if !graphql.HasFieldError(ctx, fc) {
+			ec.Errorf(ctx, "must not be null")
+		}
+		return graphql.Null
+	}
+	res := resTmp.(string)
+	fc.Result = res
+	return ec.marshalNDateTime2string(ctx, field.Selections, res)
+}
+
+func (ec *executionContext) fieldContext_DesignShare_createdAt(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "DesignShare",
+		Field:      field,
+		IsMethod:   false,
+		IsResolver: false,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return nil, errors.New("field of type DateTime does not have child fields")
+		},
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _DesignShare_updatedAt(ctx context.Context, field graphql.CollectedField, obj *model.DesignShare) (ret graphql.Marshaler) {
+	fc, err := ec.fieldContext_DesignShare_updatedAt(ctx, field)
+	if err != nil {
+		return graphql.Null
+	}
+	ctx = graphql.WithFieldContext(ctx, fc)
+	defer func() {
+		if r := recover(); r != nil {
+			ec.Error(ctx, ec.Recover(ctx, r))
+			ret = graphql.Null
+		}
+	}()
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (any, error) {
+		ctx = rctx // use context from middleware stack in children
+		return obj.UpdatedAt, nil
+	})
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	if resTmp == nil {
+		if !graphql.HasFieldError(ctx, fc) {
+			ec.Errorf(ctx, "must not be null")
+		}
+		return graphql.Null
+	}
+	res := resTmp.(string)
+	fc.Result = res
+	return ec.marshalNDateTime2string(ctx, field.Selections, res)
+}
+
+func (ec *executionContext) fieldContext_DesignShare_updatedAt(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "DesignShare",
+		Field:      field,
+		IsMethod:   false,
+		IsResolver: false,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return nil, errors.New("field of type DateTime does not have child fields")
+		},
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _DesignShare_urlPath(ctx context.Context, field graphql.CollectedField, obj *model.DesignShare) (ret graphql.Marshaler) {
+	fc, err := ec.fieldContext_DesignShare_urlPath(ctx, field)
+	if err != nil {
+		return graphql.Null
+	}
+	ctx = graphql.WithFieldContext(ctx, fc)
+	defer func() {
+		if r := recover(); r != nil {
+			ec.Error(ctx, ec.Recover(ctx, r))
+			ret = graphql.Null
+		}
+	}()
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (any, error) {
+		ctx = rctx // use context from middleware stack in children
+		return obj.URLPath, nil
+	})
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	if resTmp == nil {
+		if !graphql.HasFieldError(ctx, fc) {
+			ec.Errorf(ctx, "must not be null")
+		}
+		return graphql.Null
+	}
+	res := resTmp.(string)
+	fc.Result = res
+	return ec.marshalNString2string(ctx, field.Selections, res)
+}
+
+func (ec *executionContext) fieldContext_DesignShare_urlPath(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "DesignShare",
+		Field:      field,
+		IsMethod:   false,
+		IsResolver: false,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return nil, errors.New("field of type String does not have child fields")
 		},
 	}
 	return fc, nil
@@ -18258,6 +19462,438 @@ func (ec *executionContext) fieldContext_Mutation_updateInviteLink(ctx context.C
 	return fc, nil
 }
 
+func (ec *executionContext) _Mutation_createDesignShare(ctx context.Context, field graphql.CollectedField) (ret graphql.Marshaler) {
+	fc, err := ec.fieldContext_Mutation_createDesignShare(ctx, field)
+	if err != nil {
+		return graphql.Null
+	}
+	ctx = graphql.WithFieldContext(ctx, fc)
+	defer func() {
+		if r := recover(); r != nil {
+			ec.Error(ctx, ec.Recover(ctx, r))
+			ret = graphql.Null
+		}
+	}()
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (any, error) {
+		ctx = rctx // use context from middleware stack in children
+		return ec.resolvers.Mutation().CreateDesignShare(rctx, fc.Args["resumeId"].(string), fc.Args["contentMode"].(model.DesignShareContentMode), fc.Args["title"].(*string))
+	})
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	if resTmp == nil {
+		if !graphql.HasFieldError(ctx, fc) {
+			ec.Errorf(ctx, "must not be null")
+		}
+		return graphql.Null
+	}
+	res := resTmp.(*model.DesignShare)
+	fc.Result = res
+	return ec.marshalNDesignShare2ᚖgithubᚗcomᚋleoᚋaiᚑweekendᚋbackendᚋgraphᚋmodelᚐDesignShare(ctx, field.Selections, res)
+}
+
+func (ec *executionContext) fieldContext_Mutation_createDesignShare(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "Mutation",
+		Field:      field,
+		IsMethod:   true,
+		IsResolver: true,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			switch field.Name {
+			case "id":
+				return ec.fieldContext_DesignShare_id(ctx, field)
+			case "resumeId":
+				return ec.fieldContext_DesignShare_resumeId(ctx, field)
+			case "contentMode":
+				return ec.fieldContext_DesignShare_contentMode(ctx, field)
+			case "title":
+				return ec.fieldContext_DesignShare_title(ctx, field)
+			case "isActive":
+				return ec.fieldContext_DesignShare_isActive(ctx, field)
+			case "createdAt":
+				return ec.fieldContext_DesignShare_createdAt(ctx, field)
+			case "updatedAt":
+				return ec.fieldContext_DesignShare_updatedAt(ctx, field)
+			case "urlPath":
+				return ec.fieldContext_DesignShare_urlPath(ctx, field)
+			}
+			return nil, fmt.Errorf("no field named %q was found under type DesignShare", field.Name)
+		},
+	}
+	defer func() {
+		if r := recover(); r != nil {
+			err = ec.Recover(ctx, r)
+			ec.Error(ctx, err)
+		}
+	}()
+	ctx = graphql.WithFieldContext(ctx, fc)
+	if fc.Args, err = ec.field_Mutation_createDesignShare_args(ctx, field.ArgumentMap(ec.Variables)); err != nil {
+		ec.Error(ctx, err)
+		return fc, err
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _Mutation_deactivateDesignShare(ctx context.Context, field graphql.CollectedField) (ret graphql.Marshaler) {
+	fc, err := ec.fieldContext_Mutation_deactivateDesignShare(ctx, field)
+	if err != nil {
+		return graphql.Null
+	}
+	ctx = graphql.WithFieldContext(ctx, fc)
+	defer func() {
+		if r := recover(); r != nil {
+			ec.Error(ctx, ec.Recover(ctx, r))
+			ret = graphql.Null
+		}
+	}()
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (any, error) {
+		ctx = rctx // use context from middleware stack in children
+		return ec.resolvers.Mutation().DeactivateDesignShare(rctx, fc.Args["id"].(string))
+	})
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	if resTmp == nil {
+		if !graphql.HasFieldError(ctx, fc) {
+			ec.Errorf(ctx, "must not be null")
+		}
+		return graphql.Null
+	}
+	res := resTmp.(*model.DesignShare)
+	fc.Result = res
+	return ec.marshalNDesignShare2ᚖgithubᚗcomᚋleoᚋaiᚑweekendᚋbackendᚋgraphᚋmodelᚐDesignShare(ctx, field.Selections, res)
+}
+
+func (ec *executionContext) fieldContext_Mutation_deactivateDesignShare(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "Mutation",
+		Field:      field,
+		IsMethod:   true,
+		IsResolver: true,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			switch field.Name {
+			case "id":
+				return ec.fieldContext_DesignShare_id(ctx, field)
+			case "resumeId":
+				return ec.fieldContext_DesignShare_resumeId(ctx, field)
+			case "contentMode":
+				return ec.fieldContext_DesignShare_contentMode(ctx, field)
+			case "title":
+				return ec.fieldContext_DesignShare_title(ctx, field)
+			case "isActive":
+				return ec.fieldContext_DesignShare_isActive(ctx, field)
+			case "createdAt":
+				return ec.fieldContext_DesignShare_createdAt(ctx, field)
+			case "updatedAt":
+				return ec.fieldContext_DesignShare_updatedAt(ctx, field)
+			case "urlPath":
+				return ec.fieldContext_DesignShare_urlPath(ctx, field)
+			}
+			return nil, fmt.Errorf("no field named %q was found under type DesignShare", field.Name)
+		},
+	}
+	defer func() {
+		if r := recover(); r != nil {
+			err = ec.Recover(ctx, r)
+			ec.Error(ctx, err)
+		}
+	}()
+	ctx = graphql.WithFieldContext(ctx, fc)
+	if fc.Args, err = ec.field_Mutation_deactivateDesignShare_args(ctx, field.ArgumentMap(ec.Variables)); err != nil {
+		ec.Error(ctx, err)
+		return fc, err
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _Mutation_applyDesignShare(ctx context.Context, field graphql.CollectedField) (ret graphql.Marshaler) {
+	fc, err := ec.fieldContext_Mutation_applyDesignShare(ctx, field)
+	if err != nil {
+		return graphql.Null
+	}
+	ctx = graphql.WithFieldContext(ctx, fc)
+	defer func() {
+		if r := recover(); r != nil {
+			ec.Error(ctx, ec.Recover(ctx, r))
+			ret = graphql.Null
+		}
+	}()
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (any, error) {
+		ctx = rctx // use context from middleware stack in children
+		return ec.resolvers.Mutation().ApplyDesignShare(rctx, fc.Args["designShareId"].(string), fc.Args["resumeId"].(*string))
+	})
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	if resTmp == nil {
+		if !graphql.HasFieldError(ctx, fc) {
+			ec.Errorf(ctx, "must not be null")
+		}
+		return graphql.Null
+	}
+	res := resTmp.(*model.Resume)
+	fc.Result = res
+	return ec.marshalNResume2ᚖgithubᚗcomᚋleoᚋaiᚑweekendᚋbackendᚋgraphᚋmodelᚐResume(ctx, field.Selections, res)
+}
+
+func (ec *executionContext) fieldContext_Mutation_applyDesignShare(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "Mutation",
+		Field:      field,
+		IsMethod:   true,
+		IsResolver: true,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			switch field.Name {
+			case "id":
+				return ec.fieldContext_Resume_id(ctx, field)
+			case "workspaceId":
+				return ec.fieldContext_Resume_workspaceId(ctx, field)
+			case "title":
+				return ec.fieldContext_Resume_title(ctx, field)
+			case "slug":
+				return ec.fieldContext_Resume_slug(ctx, field)
+			case "contactProfileId":
+				return ec.fieldContext_Resume_contactProfileId(ctx, field)
+			case "createdBy":
+				return ec.fieldContext_Resume_createdBy(ctx, field)
+			case "createdAt":
+				return ec.fieldContext_Resume_createdAt(ctx, field)
+			case "updatedAt":
+				return ec.fieldContext_Resume_updatedAt(ctx, field)
+			}
+			return nil, fmt.Errorf("no field named %q was found under type Resume", field.Name)
+		},
+	}
+	defer func() {
+		if r := recover(); r != nil {
+			err = ec.Recover(ctx, r)
+			ec.Error(ctx, err)
+		}
+	}()
+	ctx = graphql.WithFieldContext(ctx, fc)
+	if fc.Args, err = ec.field_Mutation_applyDesignShare_args(ctx, field.ArgumentMap(ec.Variables)); err != nil {
+		ec.Error(ctx, err)
+		return fc, err
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _Mutation_createCuratedTheme(ctx context.Context, field graphql.CollectedField) (ret graphql.Marshaler) {
+	fc, err := ec.fieldContext_Mutation_createCuratedTheme(ctx, field)
+	if err != nil {
+		return graphql.Null
+	}
+	ctx = graphql.WithFieldContext(ctx, fc)
+	defer func() {
+		if r := recover(); r != nil {
+			ec.Error(ctx, ec.Recover(ctx, r))
+			ret = graphql.Null
+		}
+	}()
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (any, error) {
+		ctx = rctx // use context from middleware stack in children
+		return ec.resolvers.Mutation().CreateCuratedTheme(rctx, fc.Args["input"].(model.CreateCuratedThemeInput))
+	})
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	if resTmp == nil {
+		if !graphql.HasFieldError(ctx, fc) {
+			ec.Errorf(ctx, "must not be null")
+		}
+		return graphql.Null
+	}
+	res := resTmp.(*model.CuratedTheme)
+	fc.Result = res
+	return ec.marshalNCuratedTheme2ᚖgithubᚗcomᚋleoᚋaiᚑweekendᚋbackendᚋgraphᚋmodelᚐCuratedTheme(ctx, field.Selections, res)
+}
+
+func (ec *executionContext) fieldContext_Mutation_createCuratedTheme(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "Mutation",
+		Field:      field,
+		IsMethod:   true,
+		IsResolver: true,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			switch field.Name {
+			case "id":
+				return ec.fieldContext_CuratedTheme_id(ctx, field)
+			case "title":
+				return ec.fieldContext_CuratedTheme_title(ctx, field)
+			case "designShareId":
+				return ec.fieldContext_CuratedTheme_designShareId(ctx, field)
+			case "tags":
+				return ec.fieldContext_CuratedTheme_tags(ctx, field)
+			case "featuredOnLanding":
+				return ec.fieldContext_CuratedTheme_featuredOnLanding(ctx, field)
+			case "isPublic":
+				return ec.fieldContext_CuratedTheme_isPublic(ctx, field)
+			case "sortOrder":
+				return ec.fieldContext_CuratedTheme_sortOrder(ctx, field)
+			case "createdAt":
+				return ec.fieldContext_CuratedTheme_createdAt(ctx, field)
+			case "updatedAt":
+				return ec.fieldContext_CuratedTheme_updatedAt(ctx, field)
+			case "urlPath":
+				return ec.fieldContext_CuratedTheme_urlPath(ctx, field)
+			case "preview":
+				return ec.fieldContext_CuratedTheme_preview(ctx, field)
+			}
+			return nil, fmt.Errorf("no field named %q was found under type CuratedTheme", field.Name)
+		},
+	}
+	defer func() {
+		if r := recover(); r != nil {
+			err = ec.Recover(ctx, r)
+			ec.Error(ctx, err)
+		}
+	}()
+	ctx = graphql.WithFieldContext(ctx, fc)
+	if fc.Args, err = ec.field_Mutation_createCuratedTheme_args(ctx, field.ArgumentMap(ec.Variables)); err != nil {
+		ec.Error(ctx, err)
+		return fc, err
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _Mutation_updateCuratedTheme(ctx context.Context, field graphql.CollectedField) (ret graphql.Marshaler) {
+	fc, err := ec.fieldContext_Mutation_updateCuratedTheme(ctx, field)
+	if err != nil {
+		return graphql.Null
+	}
+	ctx = graphql.WithFieldContext(ctx, fc)
+	defer func() {
+		if r := recover(); r != nil {
+			ec.Error(ctx, ec.Recover(ctx, r))
+			ret = graphql.Null
+		}
+	}()
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (any, error) {
+		ctx = rctx // use context from middleware stack in children
+		return ec.resolvers.Mutation().UpdateCuratedTheme(rctx, fc.Args["input"].(model.UpdateCuratedThemeInput))
+	})
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	if resTmp == nil {
+		if !graphql.HasFieldError(ctx, fc) {
+			ec.Errorf(ctx, "must not be null")
+		}
+		return graphql.Null
+	}
+	res := resTmp.(*model.CuratedTheme)
+	fc.Result = res
+	return ec.marshalNCuratedTheme2ᚖgithubᚗcomᚋleoᚋaiᚑweekendᚋbackendᚋgraphᚋmodelᚐCuratedTheme(ctx, field.Selections, res)
+}
+
+func (ec *executionContext) fieldContext_Mutation_updateCuratedTheme(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "Mutation",
+		Field:      field,
+		IsMethod:   true,
+		IsResolver: true,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			switch field.Name {
+			case "id":
+				return ec.fieldContext_CuratedTheme_id(ctx, field)
+			case "title":
+				return ec.fieldContext_CuratedTheme_title(ctx, field)
+			case "designShareId":
+				return ec.fieldContext_CuratedTheme_designShareId(ctx, field)
+			case "tags":
+				return ec.fieldContext_CuratedTheme_tags(ctx, field)
+			case "featuredOnLanding":
+				return ec.fieldContext_CuratedTheme_featuredOnLanding(ctx, field)
+			case "isPublic":
+				return ec.fieldContext_CuratedTheme_isPublic(ctx, field)
+			case "sortOrder":
+				return ec.fieldContext_CuratedTheme_sortOrder(ctx, field)
+			case "createdAt":
+				return ec.fieldContext_CuratedTheme_createdAt(ctx, field)
+			case "updatedAt":
+				return ec.fieldContext_CuratedTheme_updatedAt(ctx, field)
+			case "urlPath":
+				return ec.fieldContext_CuratedTheme_urlPath(ctx, field)
+			case "preview":
+				return ec.fieldContext_CuratedTheme_preview(ctx, field)
+			}
+			return nil, fmt.Errorf("no field named %q was found under type CuratedTheme", field.Name)
+		},
+	}
+	defer func() {
+		if r := recover(); r != nil {
+			err = ec.Recover(ctx, r)
+			ec.Error(ctx, err)
+		}
+	}()
+	ctx = graphql.WithFieldContext(ctx, fc)
+	if fc.Args, err = ec.field_Mutation_updateCuratedTheme_args(ctx, field.ArgumentMap(ec.Variables)); err != nil {
+		ec.Error(ctx, err)
+		return fc, err
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _Mutation_deleteCuratedTheme(ctx context.Context, field graphql.CollectedField) (ret graphql.Marshaler) {
+	fc, err := ec.fieldContext_Mutation_deleteCuratedTheme(ctx, field)
+	if err != nil {
+		return graphql.Null
+	}
+	ctx = graphql.WithFieldContext(ctx, fc)
+	defer func() {
+		if r := recover(); r != nil {
+			ec.Error(ctx, ec.Recover(ctx, r))
+			ret = graphql.Null
+		}
+	}()
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (any, error) {
+		ctx = rctx // use context from middleware stack in children
+		return ec.resolvers.Mutation().DeleteCuratedTheme(rctx, fc.Args["id"].(string))
+	})
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	if resTmp == nil {
+		if !graphql.HasFieldError(ctx, fc) {
+			ec.Errorf(ctx, "must not be null")
+		}
+		return graphql.Null
+	}
+	res := resTmp.(bool)
+	fc.Result = res
+	return ec.marshalNBoolean2bool(ctx, field.Selections, res)
+}
+
+func (ec *executionContext) fieldContext_Mutation_deleteCuratedTheme(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "Mutation",
+		Field:      field,
+		IsMethod:   true,
+		IsResolver: true,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return nil, errors.New("field of type Boolean does not have child fields")
+		},
+	}
+	defer func() {
+		if r := recover(); r != nil {
+			err = ec.Recover(ctx, r)
+			ec.Error(ctx, err)
+		}
+	}()
+	ctx = graphql.WithFieldContext(ctx, fc)
+	if fc.Args, err = ec.field_Mutation_deleteCuratedTheme_args(ctx, field.ArgumentMap(ec.Variables)); err != nil {
+		ec.Error(ctx, err)
+		return fc, err
+	}
+	return fc, nil
+}
+
 func (ec *executionContext) _Mutation_createJobAutomation(ctx context.Context, field graphql.CollectedField) (ret graphql.Marshaler) {
 	fc, err := ec.fieldContext_Mutation_createJobAutomation(ctx, field)
 	if err != nil {
@@ -24230,6 +25866,144 @@ func (ec *executionContext) fieldContext_Query_adminInviteLinks(_ context.Contex
 			}
 			return nil, fmt.Errorf("no field named %q was found under type InviteLink", field.Name)
 		},
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _Query_adminCuratedThemes(ctx context.Context, field graphql.CollectedField) (ret graphql.Marshaler) {
+	fc, err := ec.fieldContext_Query_adminCuratedThemes(ctx, field)
+	if err != nil {
+		return graphql.Null
+	}
+	ctx = graphql.WithFieldContext(ctx, fc)
+	defer func() {
+		if r := recover(); r != nil {
+			ec.Error(ctx, ec.Recover(ctx, r))
+			ret = graphql.Null
+		}
+	}()
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (any, error) {
+		ctx = rctx // use context from middleware stack in children
+		return ec.resolvers.Query().AdminCuratedThemes(rctx)
+	})
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	if resTmp == nil {
+		if !graphql.HasFieldError(ctx, fc) {
+			ec.Errorf(ctx, "must not be null")
+		}
+		return graphql.Null
+	}
+	res := resTmp.([]*model.CuratedTheme)
+	fc.Result = res
+	return ec.marshalNCuratedTheme2ᚕᚖgithubᚗcomᚋleoᚋaiᚑweekendᚋbackendᚋgraphᚋmodelᚐCuratedThemeᚄ(ctx, field.Selections, res)
+}
+
+func (ec *executionContext) fieldContext_Query_adminCuratedThemes(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "Query",
+		Field:      field,
+		IsMethod:   true,
+		IsResolver: true,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			switch field.Name {
+			case "id":
+				return ec.fieldContext_CuratedTheme_id(ctx, field)
+			case "title":
+				return ec.fieldContext_CuratedTheme_title(ctx, field)
+			case "designShareId":
+				return ec.fieldContext_CuratedTheme_designShareId(ctx, field)
+			case "tags":
+				return ec.fieldContext_CuratedTheme_tags(ctx, field)
+			case "featuredOnLanding":
+				return ec.fieldContext_CuratedTheme_featuredOnLanding(ctx, field)
+			case "isPublic":
+				return ec.fieldContext_CuratedTheme_isPublic(ctx, field)
+			case "sortOrder":
+				return ec.fieldContext_CuratedTheme_sortOrder(ctx, field)
+			case "createdAt":
+				return ec.fieldContext_CuratedTheme_createdAt(ctx, field)
+			case "updatedAt":
+				return ec.fieldContext_CuratedTheme_updatedAt(ctx, field)
+			case "urlPath":
+				return ec.fieldContext_CuratedTheme_urlPath(ctx, field)
+			case "preview":
+				return ec.fieldContext_CuratedTheme_preview(ctx, field)
+			}
+			return nil, fmt.Errorf("no field named %q was found under type CuratedTheme", field.Name)
+		},
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _Query_designShareForResume(ctx context.Context, field graphql.CollectedField) (ret graphql.Marshaler) {
+	fc, err := ec.fieldContext_Query_designShareForResume(ctx, field)
+	if err != nil {
+		return graphql.Null
+	}
+	ctx = graphql.WithFieldContext(ctx, fc)
+	defer func() {
+		if r := recover(); r != nil {
+			ec.Error(ctx, ec.Recover(ctx, r))
+			ret = graphql.Null
+		}
+	}()
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (any, error) {
+		ctx = rctx // use context from middleware stack in children
+		return ec.resolvers.Query().DesignShareForResume(rctx, fc.Args["resumeId"].(string))
+	})
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	if resTmp == nil {
+		return graphql.Null
+	}
+	res := resTmp.(*model.DesignShare)
+	fc.Result = res
+	return ec.marshalODesignShare2ᚖgithubᚗcomᚋleoᚋaiᚑweekendᚋbackendᚋgraphᚋmodelᚐDesignShare(ctx, field.Selections, res)
+}
+
+func (ec *executionContext) fieldContext_Query_designShareForResume(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "Query",
+		Field:      field,
+		IsMethod:   true,
+		IsResolver: true,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			switch field.Name {
+			case "id":
+				return ec.fieldContext_DesignShare_id(ctx, field)
+			case "resumeId":
+				return ec.fieldContext_DesignShare_resumeId(ctx, field)
+			case "contentMode":
+				return ec.fieldContext_DesignShare_contentMode(ctx, field)
+			case "title":
+				return ec.fieldContext_DesignShare_title(ctx, field)
+			case "isActive":
+				return ec.fieldContext_DesignShare_isActive(ctx, field)
+			case "createdAt":
+				return ec.fieldContext_DesignShare_createdAt(ctx, field)
+			case "updatedAt":
+				return ec.fieldContext_DesignShare_updatedAt(ctx, field)
+			case "urlPath":
+				return ec.fieldContext_DesignShare_urlPath(ctx, field)
+			}
+			return nil, fmt.Errorf("no field named %q was found under type DesignShare", field.Name)
+		},
+	}
+	defer func() {
+		if r := recover(); r != nil {
+			err = ec.Recover(ctx, r)
+			ec.Error(ctx, err)
+		}
+	}()
+	ctx = graphql.WithFieldContext(ctx, fc)
+	if fc.Args, err = ec.field_Query_designShareForResume_args(ctx, field.ArgumentMap(ec.Variables)); err != nil {
+		ec.Error(ctx, err)
+		return fc, err
 	}
 	return fc, nil
 }
@@ -34115,6 +35889,68 @@ func (ec *executionContext) unmarshalInputAssistantContextInput(ctx context.Cont
 	return it, nil
 }
 
+func (ec *executionContext) unmarshalInputCreateCuratedThemeInput(ctx context.Context, obj any) (model.CreateCuratedThemeInput, error) {
+	var it model.CreateCuratedThemeInput
+	asMap := map[string]any{}
+	for k, v := range obj.(map[string]any) {
+		asMap[k] = v
+	}
+
+	fieldsInOrder := [...]string{"title", "designUrl", "tags", "featuredOnLanding", "isPublic", "sortOrder"}
+	for _, k := range fieldsInOrder {
+		v, ok := asMap[k]
+		if !ok {
+			continue
+		}
+		switch k {
+		case "title":
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("title"))
+			data, err := ec.unmarshalNString2string(ctx, v)
+			if err != nil {
+				return it, err
+			}
+			it.Title = data
+		case "designUrl":
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("designUrl"))
+			data, err := ec.unmarshalNString2string(ctx, v)
+			if err != nil {
+				return it, err
+			}
+			it.DesignURL = data
+		case "tags":
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("tags"))
+			data, err := ec.unmarshalOString2ᚕstringᚄ(ctx, v)
+			if err != nil {
+				return it, err
+			}
+			it.Tags = data
+		case "featuredOnLanding":
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("featuredOnLanding"))
+			data, err := ec.unmarshalOBoolean2ᚖbool(ctx, v)
+			if err != nil {
+				return it, err
+			}
+			it.FeaturedOnLanding = data
+		case "isPublic":
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("isPublic"))
+			data, err := ec.unmarshalOBoolean2ᚖbool(ctx, v)
+			if err != nil {
+				return it, err
+			}
+			it.IsPublic = data
+		case "sortOrder":
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("sortOrder"))
+			data, err := ec.unmarshalOInt2ᚖint(ctx, v)
+			if err != nil {
+				return it, err
+			}
+			it.SortOrder = data
+		}
+	}
+
+	return it, nil
+}
+
 func (ec *executionContext) unmarshalInputCreateInviteLinkInput(ctx context.Context, obj any) (model.CreateInviteLinkInput, error) {
 	var it model.CreateInviteLinkInput
 	asMap := map[string]any{}
@@ -34618,6 +36454,68 @@ func (ec *executionContext) unmarshalInputUpdateContactProfileInput(ctx context.
 				return it, err
 			}
 			it.GithubPhotoURL = data
+		}
+	}
+
+	return it, nil
+}
+
+func (ec *executionContext) unmarshalInputUpdateCuratedThemeInput(ctx context.Context, obj any) (model.UpdateCuratedThemeInput, error) {
+	var it model.UpdateCuratedThemeInput
+	asMap := map[string]any{}
+	for k, v := range obj.(map[string]any) {
+		asMap[k] = v
+	}
+
+	fieldsInOrder := [...]string{"id", "title", "tags", "featuredOnLanding", "isPublic", "sortOrder"}
+	for _, k := range fieldsInOrder {
+		v, ok := asMap[k]
+		if !ok {
+			continue
+		}
+		switch k {
+		case "id":
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("id"))
+			data, err := ec.unmarshalNID2string(ctx, v)
+			if err != nil {
+				return it, err
+			}
+			it.ID = data
+		case "title":
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("title"))
+			data, err := ec.unmarshalOString2ᚖstring(ctx, v)
+			if err != nil {
+				return it, err
+			}
+			it.Title = data
+		case "tags":
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("tags"))
+			data, err := ec.unmarshalOString2ᚕstringᚄ(ctx, v)
+			if err != nil {
+				return it, err
+			}
+			it.Tags = data
+		case "featuredOnLanding":
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("featuredOnLanding"))
+			data, err := ec.unmarshalOBoolean2ᚖbool(ctx, v)
+			if err != nil {
+				return it, err
+			}
+			it.FeaturedOnLanding = data
+		case "isPublic":
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("isPublic"))
+			data, err := ec.unmarshalOBoolean2ᚖbool(ctx, v)
+			if err != nil {
+				return it, err
+			}
+			it.IsPublic = data
+		case "sortOrder":
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("sortOrder"))
+			data, err := ec.unmarshalOInt2ᚖint(ctx, v)
+			if err != nil {
+				return it, err
+			}
+			it.SortOrder = data
 		}
 	}
 
@@ -36932,6 +38830,95 @@ func (ec *executionContext) _ContactProfile(ctx context.Context, sel ast.Selecti
 	return out
 }
 
+var curatedThemeImplementors = []string{"CuratedTheme"}
+
+func (ec *executionContext) _CuratedTheme(ctx context.Context, sel ast.SelectionSet, obj *model.CuratedTheme) graphql.Marshaler {
+	fields := graphql.CollectFields(ec.OperationContext, sel, curatedThemeImplementors)
+
+	out := graphql.NewFieldSet(fields)
+	deferred := make(map[string]*graphql.FieldSet)
+	for i, field := range fields {
+		switch field.Name {
+		case "__typename":
+			out.Values[i] = graphql.MarshalString("CuratedTheme")
+		case "id":
+			out.Values[i] = ec._CuratedTheme_id(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				out.Invalids++
+			}
+		case "title":
+			out.Values[i] = ec._CuratedTheme_title(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				out.Invalids++
+			}
+		case "designShareId":
+			out.Values[i] = ec._CuratedTheme_designShareId(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				out.Invalids++
+			}
+		case "tags":
+			out.Values[i] = ec._CuratedTheme_tags(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				out.Invalids++
+			}
+		case "featuredOnLanding":
+			out.Values[i] = ec._CuratedTheme_featuredOnLanding(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				out.Invalids++
+			}
+		case "isPublic":
+			out.Values[i] = ec._CuratedTheme_isPublic(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				out.Invalids++
+			}
+		case "sortOrder":
+			out.Values[i] = ec._CuratedTheme_sortOrder(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				out.Invalids++
+			}
+		case "createdAt":
+			out.Values[i] = ec._CuratedTheme_createdAt(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				out.Invalids++
+			}
+		case "updatedAt":
+			out.Values[i] = ec._CuratedTheme_updatedAt(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				out.Invalids++
+			}
+		case "urlPath":
+			out.Values[i] = ec._CuratedTheme_urlPath(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				out.Invalids++
+			}
+		case "preview":
+			out.Values[i] = ec._CuratedTheme_preview(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				out.Invalids++
+			}
+		default:
+			panic("unknown field " + strconv.Quote(field.Name))
+		}
+	}
+	out.Dispatch(ctx)
+	if out.Invalids > 0 {
+		return graphql.Null
+	}
+
+	atomic.AddInt32(&ec.deferred, int32(len(deferred)))
+
+	for label, dfs := range deferred {
+		ec.processDeferredGroup(graphql.DeferredGroup{
+			Label:    label,
+			Path:     graphql.GetPath(ctx),
+			FieldSet: dfs,
+			Context:  ctx,
+		})
+	}
+
+	return out
+}
+
 var cvThemeImplementors = []string{"CvTheme"}
 
 func (ec *executionContext) _CvTheme(ctx context.Context, sel ast.SelectionSet, obj *model.CvTheme) graphql.Marshaler {
@@ -36965,6 +38952,77 @@ func (ec *executionContext) _CvTheme(ctx context.Context, sel ast.SelectionSet, 
 			}
 		case "config":
 			out.Values[i] = ec._CvTheme_config(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				out.Invalids++
+			}
+		default:
+			panic("unknown field " + strconv.Quote(field.Name))
+		}
+	}
+	out.Dispatch(ctx)
+	if out.Invalids > 0 {
+		return graphql.Null
+	}
+
+	atomic.AddInt32(&ec.deferred, int32(len(deferred)))
+
+	for label, dfs := range deferred {
+		ec.processDeferredGroup(graphql.DeferredGroup{
+			Label:    label,
+			Path:     graphql.GetPath(ctx),
+			FieldSet: dfs,
+			Context:  ctx,
+		})
+	}
+
+	return out
+}
+
+var designShareImplementors = []string{"DesignShare"}
+
+func (ec *executionContext) _DesignShare(ctx context.Context, sel ast.SelectionSet, obj *model.DesignShare) graphql.Marshaler {
+	fields := graphql.CollectFields(ec.OperationContext, sel, designShareImplementors)
+
+	out := graphql.NewFieldSet(fields)
+	deferred := make(map[string]*graphql.FieldSet)
+	for i, field := range fields {
+		switch field.Name {
+		case "__typename":
+			out.Values[i] = graphql.MarshalString("DesignShare")
+		case "id":
+			out.Values[i] = ec._DesignShare_id(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				out.Invalids++
+			}
+		case "resumeId":
+			out.Values[i] = ec._DesignShare_resumeId(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				out.Invalids++
+			}
+		case "contentMode":
+			out.Values[i] = ec._DesignShare_contentMode(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				out.Invalids++
+			}
+		case "title":
+			out.Values[i] = ec._DesignShare_title(ctx, field, obj)
+		case "isActive":
+			out.Values[i] = ec._DesignShare_isActive(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				out.Invalids++
+			}
+		case "createdAt":
+			out.Values[i] = ec._DesignShare_createdAt(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				out.Invalids++
+			}
+		case "updatedAt":
+			out.Values[i] = ec._DesignShare_updatedAt(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				out.Invalids++
+			}
+		case "urlPath":
+			out.Values[i] = ec._DesignShare_urlPath(ctx, field, obj)
 			if out.Values[i] == graphql.Null {
 				out.Invalids++
 			}
@@ -38015,6 +40073,48 @@ func (ec *executionContext) _Mutation(ctx context.Context, sel ast.SelectionSet)
 		case "updateInviteLink":
 			out.Values[i] = ec.OperationContext.RootResolverMiddleware(innerCtx, func(ctx context.Context) (res graphql.Marshaler) {
 				return ec._Mutation_updateInviteLink(ctx, field)
+			})
+			if out.Values[i] == graphql.Null {
+				out.Invalids++
+			}
+		case "createDesignShare":
+			out.Values[i] = ec.OperationContext.RootResolverMiddleware(innerCtx, func(ctx context.Context) (res graphql.Marshaler) {
+				return ec._Mutation_createDesignShare(ctx, field)
+			})
+			if out.Values[i] == graphql.Null {
+				out.Invalids++
+			}
+		case "deactivateDesignShare":
+			out.Values[i] = ec.OperationContext.RootResolverMiddleware(innerCtx, func(ctx context.Context) (res graphql.Marshaler) {
+				return ec._Mutation_deactivateDesignShare(ctx, field)
+			})
+			if out.Values[i] == graphql.Null {
+				out.Invalids++
+			}
+		case "applyDesignShare":
+			out.Values[i] = ec.OperationContext.RootResolverMiddleware(innerCtx, func(ctx context.Context) (res graphql.Marshaler) {
+				return ec._Mutation_applyDesignShare(ctx, field)
+			})
+			if out.Values[i] == graphql.Null {
+				out.Invalids++
+			}
+		case "createCuratedTheme":
+			out.Values[i] = ec.OperationContext.RootResolverMiddleware(innerCtx, func(ctx context.Context) (res graphql.Marshaler) {
+				return ec._Mutation_createCuratedTheme(ctx, field)
+			})
+			if out.Values[i] == graphql.Null {
+				out.Invalids++
+			}
+		case "updateCuratedTheme":
+			out.Values[i] = ec.OperationContext.RootResolverMiddleware(innerCtx, func(ctx context.Context) (res graphql.Marshaler) {
+				return ec._Mutation_updateCuratedTheme(ctx, field)
+			})
+			if out.Values[i] == graphql.Null {
+				out.Invalids++
+			}
+		case "deleteCuratedTheme":
+			out.Values[i] = ec.OperationContext.RootResolverMiddleware(innerCtx, func(ctx context.Context) (res graphql.Marshaler) {
+				return ec._Mutation_deleteCuratedTheme(ctx, field)
 			})
 			if out.Values[i] == graphql.Null {
 				out.Invalids++
@@ -39386,6 +41486,47 @@ func (ec *executionContext) _Query(ctx context.Context, sel ast.SelectionSet) gr
 				if res == graphql.Null {
 					atomic.AddUint32(&fs.Invalids, 1)
 				}
+				return res
+			}
+
+			rrm := func(ctx context.Context) graphql.Marshaler {
+				return ec.OperationContext.RootResolverMiddleware(ctx,
+					func(ctx context.Context) graphql.Marshaler { return innerFunc(ctx, out) })
+			}
+
+			out.Concurrently(i, func(ctx context.Context) graphql.Marshaler { return rrm(innerCtx) })
+		case "adminCuratedThemes":
+			field := field
+
+			innerFunc := func(ctx context.Context, fs *graphql.FieldSet) (res graphql.Marshaler) {
+				defer func() {
+					if r := recover(); r != nil {
+						ec.Error(ctx, ec.Recover(ctx, r))
+					}
+				}()
+				res = ec._Query_adminCuratedThemes(ctx, field)
+				if res == graphql.Null {
+					atomic.AddUint32(&fs.Invalids, 1)
+				}
+				return res
+			}
+
+			rrm := func(ctx context.Context) graphql.Marshaler {
+				return ec.OperationContext.RootResolverMiddleware(ctx,
+					func(ctx context.Context) graphql.Marshaler { return innerFunc(ctx, out) })
+			}
+
+			out.Concurrently(i, func(ctx context.Context) graphql.Marshaler { return rrm(innerCtx) })
+		case "designShareForResume":
+			field := field
+
+			innerFunc := func(ctx context.Context, _ *graphql.FieldSet) (res graphql.Marshaler) {
+				defer func() {
+					if r := recover(); r != nil {
+						ec.Error(ctx, ec.Recover(ctx, r))
+					}
+				}()
+				res = ec._Query_designShareForResume(ctx, field)
 				return res
 			}
 
@@ -41956,6 +44097,11 @@ func (ec *executionContext) marshalNContactProfile2ᚖgithubᚗcomᚋleoᚋaiᚑ
 	return ec._ContactProfile(ctx, sel, v)
 }
 
+func (ec *executionContext) unmarshalNCreateCuratedThemeInput2githubᚗcomᚋleoᚋaiᚑweekendᚋbackendᚋgraphᚋmodelᚐCreateCuratedThemeInput(ctx context.Context, v any) (model.CreateCuratedThemeInput, error) {
+	res, err := ec.unmarshalInputCreateCuratedThemeInput(ctx, v)
+	return res, graphql.ErrorOnPath(ctx, err)
+}
+
 func (ec *executionContext) unmarshalNCreateInviteLinkInput2githubᚗcomᚋleoᚋaiᚑweekendᚋbackendᚋgraphᚋmodelᚐCreateInviteLinkInput(ctx context.Context, v any) (model.CreateInviteLinkInput, error) {
 	res, err := ec.unmarshalInputCreateInviteLinkInput(ctx, v)
 	return res, graphql.ErrorOnPath(ctx, err)
@@ -41979,6 +44125,64 @@ func (ec *executionContext) unmarshalNCreateResumeSectionInput2githubᚗcomᚋle
 func (ec *executionContext) unmarshalNCreateTwinEntryInput2githubᚗcomᚋleoᚋaiᚑweekendᚋbackendᚋgraphᚋmodelᚐCreateTwinEntryInput(ctx context.Context, v any) (model.CreateTwinEntryInput, error) {
 	res, err := ec.unmarshalInputCreateTwinEntryInput(ctx, v)
 	return res, graphql.ErrorOnPath(ctx, err)
+}
+
+func (ec *executionContext) marshalNCuratedTheme2githubᚗcomᚋleoᚋaiᚑweekendᚋbackendᚋgraphᚋmodelᚐCuratedTheme(ctx context.Context, sel ast.SelectionSet, v model.CuratedTheme) graphql.Marshaler {
+	return ec._CuratedTheme(ctx, sel, &v)
+}
+
+func (ec *executionContext) marshalNCuratedTheme2ᚕᚖgithubᚗcomᚋleoᚋaiᚑweekendᚋbackendᚋgraphᚋmodelᚐCuratedThemeᚄ(ctx context.Context, sel ast.SelectionSet, v []*model.CuratedTheme) graphql.Marshaler {
+	ret := make(graphql.Array, len(v))
+	var wg sync.WaitGroup
+	isLen1 := len(v) == 1
+	if !isLen1 {
+		wg.Add(len(v))
+	}
+	for i := range v {
+		i := i
+		fc := &graphql.FieldContext{
+			Index:  &i,
+			Result: &v[i],
+		}
+		ctx := graphql.WithFieldContext(ctx, fc)
+		f := func(i int) {
+			defer func() {
+				if r := recover(); r != nil {
+					ec.Error(ctx, ec.Recover(ctx, r))
+					ret = nil
+				}
+			}()
+			if !isLen1 {
+				defer wg.Done()
+			}
+			ret[i] = ec.marshalNCuratedTheme2ᚖgithubᚗcomᚋleoᚋaiᚑweekendᚋbackendᚋgraphᚋmodelᚐCuratedTheme(ctx, sel, v[i])
+		}
+		if isLen1 {
+			f(i)
+		} else {
+			go f(i)
+		}
+
+	}
+	wg.Wait()
+
+	for _, e := range ret {
+		if e == graphql.Null {
+			return graphql.Null
+		}
+	}
+
+	return ret
+}
+
+func (ec *executionContext) marshalNCuratedTheme2ᚖgithubᚗcomᚋleoᚋaiᚑweekendᚋbackendᚋgraphᚋmodelᚐCuratedTheme(ctx context.Context, sel ast.SelectionSet, v *model.CuratedTheme) graphql.Marshaler {
+	if v == nil {
+		if !graphql.HasFieldError(ctx, graphql.GetFieldContext(ctx)) {
+			ec.Errorf(ctx, "the requested element is null which the schema does not allow")
+		}
+		return graphql.Null
+	}
+	return ec._CuratedTheme(ctx, sel, v)
 }
 
 func (ec *executionContext) marshalNCvTheme2ᚕᚖgithubᚗcomᚋleoᚋaiᚑweekendᚋbackendᚋgraphᚋmodelᚐCvThemeᚄ(ctx context.Context, sel ast.SelectionSet, v []*model.CvTheme) graphql.Marshaler {
@@ -42088,6 +44292,30 @@ func (ec *executionContext) unmarshalNDesignPresetId2githubᚗcomᚋleoᚋaiᚑw
 }
 
 func (ec *executionContext) marshalNDesignPresetId2githubᚗcomᚋleoᚋaiᚑweekendᚋbackendᚋgraphᚋmodelᚐDesignPresetID(ctx context.Context, sel ast.SelectionSet, v model.DesignPresetID) graphql.Marshaler {
+	return v
+}
+
+func (ec *executionContext) marshalNDesignShare2githubᚗcomᚋleoᚋaiᚑweekendᚋbackendᚋgraphᚋmodelᚐDesignShare(ctx context.Context, sel ast.SelectionSet, v model.DesignShare) graphql.Marshaler {
+	return ec._DesignShare(ctx, sel, &v)
+}
+
+func (ec *executionContext) marshalNDesignShare2ᚖgithubᚗcomᚋleoᚋaiᚑweekendᚋbackendᚋgraphᚋmodelᚐDesignShare(ctx context.Context, sel ast.SelectionSet, v *model.DesignShare) graphql.Marshaler {
+	if v == nil {
+		if !graphql.HasFieldError(ctx, graphql.GetFieldContext(ctx)) {
+			ec.Errorf(ctx, "the requested element is null which the schema does not allow")
+		}
+		return graphql.Null
+	}
+	return ec._DesignShare(ctx, sel, v)
+}
+
+func (ec *executionContext) unmarshalNDesignShareContentMode2githubᚗcomᚋleoᚋaiᚑweekendᚋbackendᚋgraphᚋmodelᚐDesignShareContentMode(ctx context.Context, v any) (model.DesignShareContentMode, error) {
+	var res model.DesignShareContentMode
+	err := res.UnmarshalGQL(v)
+	return res, graphql.ErrorOnPath(ctx, err)
+}
+
+func (ec *executionContext) marshalNDesignShareContentMode2githubᚗcomᚋleoᚋaiᚑweekendᚋbackendᚋgraphᚋmodelᚐDesignShareContentMode(ctx context.Context, sel ast.SelectionSet, v model.DesignShareContentMode) graphql.Marshaler {
 	return v
 }
 
@@ -43827,6 +46055,11 @@ func (ec *executionContext) unmarshalNUpdateContactProfileInput2githubᚗcomᚋl
 	return res, graphql.ErrorOnPath(ctx, err)
 }
 
+func (ec *executionContext) unmarshalNUpdateCuratedThemeInput2githubᚗcomᚋleoᚋaiᚑweekendᚋbackendᚋgraphᚋmodelᚐUpdateCuratedThemeInput(ctx context.Context, v any) (model.UpdateCuratedThemeInput, error) {
+	res, err := ec.unmarshalInputUpdateCuratedThemeInput(ctx, v)
+	return res, graphql.ErrorOnPath(ctx, err)
+}
+
 func (ec *executionContext) unmarshalNUpdateInviteLinkInput2githubᚗcomᚋleoᚋaiᚑweekendᚋbackendᚋgraphᚋmodelᚐUpdateInviteLinkInput(ctx context.Context, v any) (model.UpdateInviteLinkInput, error) {
 	res, err := ec.unmarshalInputUpdateInviteLinkInput(ctx, v)
 	return res, graphql.ErrorOnPath(ctx, err)
@@ -44571,6 +46804,13 @@ func (ec *executionContext) marshalODesignPresetId2ᚖgithubᚗcomᚋleoᚋaiᚑ
 		return graphql.Null
 	}
 	return v
+}
+
+func (ec *executionContext) marshalODesignShare2ᚖgithubᚗcomᚋleoᚋaiᚑweekendᚋbackendᚋgraphᚋmodelᚐDesignShare(ctx context.Context, sel ast.SelectionSet, v *model.DesignShare) graphql.Marshaler {
+	if v == nil {
+		return graphql.Null
+	}
+	return ec._DesignShare(ctx, sel, v)
 }
 
 func (ec *executionContext) unmarshalOFloat2ᚖfloat64(ctx context.Context, v any) (*float64, error) {

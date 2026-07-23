@@ -21,6 +21,8 @@ func TestBuildChatCompletionRequestIncludesStreamUsage(t *testing.T) {
 
 func TestRecordUsageFromStreamChunk(t *testing.T) {
 	meter := store.NewMemoryUsageMeter()
+	limit := int64(10_000)
+	meter.SetLimits("user-stream", true, &limit)
 	svc := &Service{hasAPIKey: true, meter: meter, miniModel: "gpt-test"}
 
 	server := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
@@ -80,17 +82,53 @@ func TestRecordUsageFromStreamChunk(t *testing.T) {
 	}
 }
 
-func TestRecordUsageAttributedUser(t *testing.T) {
+func TestReserveUsageAttributedUser(t *testing.T) {
 	meter := store.NewMemoryUsageMeter()
 	svc := &Service{meter: meter}
-	svc.recordUsage(context.Background(), "classify", "m", 1, 2)
+	reconcile, release, err := svc.reserveUsage(context.Background(), "classify", "m", openai.ChatCompletionRequest{MaxTokens: 1})
+	if err != nil {
+		t.Fatal(err)
+	}
+	releaseUsage(release)
 	if len(meter.Events()) != 0 {
 		t.Fatal("expected no record without user")
 	}
 	ctx := WithUsageUser(context.Background(), "u1")
-	svc.recordUsage(ctx, "classify", "m", 3, 4)
+	limit := int64(10_000)
+	meter.SetLimits("u1", true, &limit)
+	reconcile, release, err = svc.reserveUsage(ctx, "classify", "m", openai.ChatCompletionRequest{MaxTokens: 10})
+	if err != nil {
+		t.Fatal(err)
+	}
+	if err := reconcileUsage(reconcile, 3, 4); err != nil {
+		t.Fatal(err)
+	}
 	events := meter.Events()
 	if len(events) != 1 || events[0].PromptTokens != 3 || events[0].CompletionTokens != 4 {
 		t.Fatalf("got %+v", events)
+	}
+}
+
+func TestStreamCompletionErrorReleasesReservation(t *testing.T) {
+	meter := store.NewMemoryUsageMeter()
+	limit := int64(10_000)
+	meter.SetLimits("user-stream", true, &limit)
+	server := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		http.Error(w, "upstream failure", http.StatusInternalServerError)
+	}))
+	defer server.Close()
+
+	cfg := openai.DefaultConfig("test-key")
+	cfg.BaseURL = server.URL + "/v1"
+	svc := &Service{client: openai.NewClientWithConfig(cfg), meter: meter}
+	ctx := WithUsageUser(context.Background(), "user-stream")
+	_, err := svc.streamCompletionOnce(ctx, "gpt-test", []openai.ChatCompletionMessage{{
+		Role: openai.ChatMessageRoleUser, Content: "hello",
+	}}, nil, noopStreamSink{})
+	if err == nil {
+		t.Fatal("expected stream error")
+	}
+	if status := meter.Status("user-stream"); status.TokensUsed != 0 || status.RequestCount != 0 {
+		t.Fatalf("reservation was not released: %+v", status)
 	}
 }

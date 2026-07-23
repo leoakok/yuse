@@ -35,7 +35,7 @@ export type AdminAuditLogEntry = {
   createdAt: string;
 };
 
-export type AdminSection = "users" | "waitlist" | "invites" | "audit" | "emails" | "linkedin" | "automations" | "agent";
+export type AdminSection = "users" | "waitlist" | "invites" | "audit" | "emails" | "linkedin" | "automations" | "agent" | "themes";
 
 export type LinkedInWorkplaceType = "REMOTE" | "HYBRID" | "ON_SITE";
 export type LinkedInExperienceLevel =

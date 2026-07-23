@@ -61,29 +61,26 @@ func (r *Runner) RunByIDWithProgress(ctx context.Context, automationID string, s
 	if sink == nil {
 		sink = NopProgressSink{}
 	}
-	return r.runWithAudit(ctx, auto, sink)
+	return r.runWithAudit(ctx, auto, sink, false)
 }
 
-// RunOne executes a single automation by record (cron path; claims next_run_at).
+// RunOne executes a single scheduled automation by record.
 func (r *Runner) RunOne(ctx context.Context, auto *store.JobAutomationRecord) (*RunOutcome, error) {
 	if auto == nil {
 		return nil, fmt.Errorf("automation is required")
 	}
 
-	if err := store.ClaimJobAutomationRun(ctx, r.Pool, auto.ID, auto.IntervalMinutes); err != nil {
-		return nil, err
-	}
-	return r.runWithAudit(ctx, auto, NopProgressSink{})
+	return r.runWithAudit(ctx, auto, NopProgressSink{}, true)
 }
 
-func (r *Runner) runWithAudit(ctx context.Context, auto *store.JobAutomationRecord, sink ProgressSink) (*RunOutcome, error) {
+func (r *Runner) runWithAudit(ctx context.Context, auto *store.JobAutomationRecord, sink ProgressSink, scheduled bool) (*RunOutcome, error) {
 	started := time.Now().UTC()
 	run := &store.AutomationRunRecord{
 		AutomationID: auto.ID,
 		StartedAt:    started,
 		Status:       "RUNNING",
 	}
-	if err := store.InsertAutomationRun(ctx, r.Pool, run); err != nil {
+	if err := store.ClaimJobAutomationRun(ctx, r.Pool, run, auto.IntervalMinutes, scheduled); err != nil {
 		return nil, err
 	}
 	emit(sink, "run", "Run started", "running", map[string]any{"runId": run.ID})
@@ -118,14 +115,14 @@ func (r *Runner) runWithAudit(ctx context.Context, auto *store.JobAutomationReco
 				"error":  msg,
 			})
 		}
-		_ = store.UpdateAutomationRun(ctx, r.Pool, run)
+		r.updateRun(ctx, run)
 		outcome.Run = run
 		return outcome, runErr
 	}
 
 	run.Status = "SUCCESS"
 	run.Error = nil
-	_ = store.UpdateAutomationRun(ctx, r.Pool, run)
+	r.updateRun(ctx, run)
 	outcome.Run = run
 	emit(sink, "run", "Run finished", "done", map[string]any{
 		"status":      "SUCCESS",
@@ -134,6 +131,13 @@ func (r *Runner) runWithAudit(ctx context.Context, auto *store.JobAutomationReco
 		"jobsEmailed": run.JobsEmailed,
 	})
 	return outcome, nil
+}
+
+func (r *Runner) updateRun(ctx context.Context, run *store.AutomationRunRecord) {
+	// A canceled execution context must not leave its RUNNING claim behind.
+	releaseCtx, cancel := context.WithTimeout(context.WithoutCancel(ctx), 5*time.Second)
+	defer cancel()
+	_ = store.UpdateAutomationRun(releaseCtx, r.Pool, run)
 }
 
 func (r *Runner) execute(ctx context.Context, auto *store.JobAutomationRecord, runID string, sink ProgressSink) (*RunOutcome, error) {

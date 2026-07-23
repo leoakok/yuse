@@ -275,6 +275,21 @@ func (s *Service) agentLoop(
 				})
 				continue
 			}
+			if shouldBlockHighImpactToolAfterUntrustedReads(userText, fn.Name, executions) {
+				exec := mcp.Execution{
+					Tool:      fn.Name,
+					Arguments: args,
+					Error:     "blocked: confirm this action in your message before running it after reading external content",
+				}
+				executions = append(executions, exec)
+				sink.ToolEnd(exec)
+				messages = append(messages, openai.ChatCompletionMessage{
+					Role:       openai.ChatMessageRoleTool,
+					ToolCallID: call.ID,
+					Content:    exec.ResultJSON(),
+				})
+				continue
+			}
 			startLabel := mcp.ToolActivityStartLabel(fn.Name, args)
 			sink.Status(startLabel)
 			sink.ToolStart(fn.Name, args)
@@ -431,6 +446,7 @@ func buildChatCompletionRequest(
 		Tools:      tools,
 		ToolChoice: "auto",
 		Stream:     true,
+		MaxTokens:  4096,
 		StreamOptions: &openai.StreamOptions{
 			IncludeUsage: true,
 		},
@@ -448,7 +464,18 @@ func (s *Service) streamCompletionOnce(
 	tools []openai.Tool,
 	sink StreamSink,
 ) (openai.ChatCompletionMessage, error) {
-	stream, err := s.client.CreateChatCompletionStream(ctx, buildChatCompletionRequest(modelName, messages, tools))
+	req := buildChatCompletionRequest(modelName, messages, tools)
+	reconcile, release, err := s.reserveUsage(ctx, "assistant", modelName, req)
+	if err != nil {
+		return openai.ChatCompletionMessage{}, err
+	}
+	settled := false
+	defer func() {
+		if !settled {
+			releaseUsage(release)
+		}
+	}()
+	stream, err := s.client.CreateChatCompletionStream(ctx, req)
 	if err != nil {
 		return openai.ChatCompletionMessage{}, err
 	}
@@ -520,6 +547,9 @@ func (s *Service) streamCompletionOnce(
 	if message.Role == "" {
 		message.Role = openai.ChatMessageRoleAssistant
 	}
-	s.recordUsage(ctx, "assistant", modelName, promptTokens, completionTokens)
+	if err := reconcileUsage(reconcile, promptTokens, completionTokens); err != nil {
+		return openai.ChatCompletionMessage{}, err
+	}
+	settled = true
 	return message, nil
 }

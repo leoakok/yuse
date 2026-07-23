@@ -16,7 +16,18 @@ func ValidateTrackedJobURL(raw string) (string, error) {
 	if strings.HasPrefix(trimmed, "manual://") {
 		return trimmed, nil
 	}
+	return validateHTTPURL(trimmed)
+}
 
+// ValidateExternalURL ensures an external https/http URL is safe to store (contact photos, links).
+func ValidateExternalURL(raw string) (string, error) {
+	return validateHTTPURL(strings.TrimSpace(raw))
+}
+
+func validateHTTPURL(trimmed string) (string, error) {
+	if trimmed == "" {
+		return "", fmt.Errorf("url is required")
+	}
 	parsed, err := url.Parse(trimmed)
 	if err != nil {
 		return "", fmt.Errorf("invalid url")

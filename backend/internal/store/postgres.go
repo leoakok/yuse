@@ -795,12 +795,20 @@ func (p *Postgres) AddResumeSectionItem(
 	resumeID, sectionID, headline, body string,
 	metadata map[string]any,
 ) (*model.ResumeWithContent, error) {
+	if _, err := p.GetResume(resumeID); err != nil {
+		return nil, err
+	}
+
 	ctx := p.ctx()
 	tx, err := p.pool.Begin(ctx)
 	if err != nil {
 		return nil, err
 	}
 	defer func() { _ = tx.Rollback(ctx) }()
+	section, err := p.getSectionTx(ctx, tx, sectionID)
+	if err != nil {
+		return nil, err
+	}
 
 	var linked bool
 	if err := tx.QueryRow(ctx, `
@@ -811,12 +819,6 @@ func (p *Postgres) AddResumeSectionItem(
 		return nil, err
 	}
 	if !linked {
-		if _, err := p.GetResume(resumeID); err != nil {
-			return nil, err
-		}
-		if _, err := p.getSectionTx(ctx, tx, sectionID); err != nil {
-			return nil, err
-		}
 		var maxSort int
 		_ = tx.QueryRow(ctx, `
 			SELECT COALESCE(MAX(sort_order), -1) FROM resume_sections WHERE resume_id = $1
@@ -833,11 +835,6 @@ func (p *Postgres) AddResumeSectionItem(
 	}
 	if !linked {
 		return nil, ErrNotFound
-	}
-
-	section, err := p.getSectionTx(ctx, tx, sectionID)
-	if err != nil {
-		return nil, err
 	}
 
 	trimmedHeadline := strings.TrimSpace(headline)

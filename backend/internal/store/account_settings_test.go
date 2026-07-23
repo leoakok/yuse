@@ -103,7 +103,23 @@ func TestSetPasswordAndAuthenticateGoogleUser(t *testing.T) {
 	}
 }
 
-func TestResolveGoogleLinksExistingEmailUser(t *testing.T) {
+func TestResolveGoogleReturnsDerivedUserIDWhenNotLinked(t *testing.T) {
+	pool := testPool(t)
+	defer pool.Close()
+
+	ctx := context.Background()
+	googleID := "gid-" + uuid.NewString()[:8]
+	resolved, err := store.ResolveGoogleIdentity(ctx, pool, googleID)
+	if err != nil {
+		t.Fatalf("ResolveGoogleIdentity: %v", err)
+	}
+	want := auth.UserIDFromGoogleSub(googleID)
+	if resolved != want {
+		t.Fatalf("resolved = %q, want %q", resolved, want)
+	}
+}
+
+func TestResolveGoogleReturnsLinkedAccount(t *testing.T) {
 	pool := testPool(t)
 	defer pool.Close()
 
@@ -115,7 +131,12 @@ func TestResolveGoogleLinksExistingEmailUser(t *testing.T) {
 	}
 
 	googleID := "gid-" + uuid.NewString()[:8]
-	resolved, err := store.ResolveGoogleIdentity(ctx, pool, googleID, email)
+	now := time.Now().UTC()
+	if _, err := pool.Exec(ctx, `UPDATE users SET google_id = $2, updated_at = $3 WHERE id = $1`, scope.UserID, googleID, now); err != nil {
+		t.Fatalf("link google fixture: %v", err)
+	}
+
+	resolved, err := store.ResolveGoogleIdentity(ctx, pool, googleID)
 	if err != nil {
 		t.Fatalf("ResolveGoogleIdentity: %v", err)
 	}

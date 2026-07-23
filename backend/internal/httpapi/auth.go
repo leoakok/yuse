@@ -126,7 +126,6 @@ func Login(pool *pgxpool.Pool) http.HandlerFunc {
 
 type resolveGoogleRequest struct {
 	GoogleID string `json:"googleId"`
-	Email    string `json:"email"`
 }
 
 func ResolveGoogle(pool *pgxpool.Pool) http.HandlerFunc {
@@ -143,15 +142,9 @@ func ResolveGoogle(pool *pgxpool.Pool) http.HandlerFunc {
 			return
 		}
 
-		userID, err := store.ResolveGoogleIdentity(r.Context(), pool, req.GoogleID, req.Email)
+		userID, err := store.ResolveGoogleIdentity(r.Context(), pool, req.GoogleID)
 		if err != nil {
-			status := http.StatusBadRequest
-			message := err.Error()
-			if errors.Is(err, store.ErrGoogleAlreadyLinked) {
-				status = http.StatusConflict
-				message = "google account already linked"
-			}
-			writeAuthError(w, message, status)
+			writeAuthError(w, err.Error(), http.StatusBadRequest)
 			return
 		}
 

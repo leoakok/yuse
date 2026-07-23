@@ -2048,3 +2048,150 @@ export const UNBAN_AUTOMATION_COMPANY_MUTATION = `
     unbanAutomationCompany(id: $id)
   }
 `;
+
+const CURATED_THEME_PREVIEW_FIELDS = `
+  resume {
+    id
+    workspaceId
+    title
+    contactProfileId
+    createdBy
+    createdAt
+    updatedAt
+  }
+  contactProfile {
+    id
+    workspaceId
+    fullName
+    headline
+    email
+    phone
+    location
+    website
+    linkedIn
+    github
+    createdAt
+    updatedAt
+  }
+  settings {
+${RESUME_SETTINGS_FIELDS}
+  }
+  theme {
+    id
+    name
+    slug
+    isSystem
+    config
+  }
+  sections {
+    showInPreview
+    displayTitle
+    section {
+      id
+      workspaceId
+      type
+      title
+      createdBy
+      createdAt
+      updatedAt
+    }
+    items {
+      id
+      workspaceId
+      type
+      headline
+      body
+      metadata
+      showInPreview
+      createdBy
+      createdAt
+      updatedAt
+    }
+  }
+`;
+
+const CURATED_THEME_FIELDS = `
+  id
+  title
+  designShareId
+  tags
+  featuredOnLanding
+  isPublic
+  sortOrder
+  createdAt
+  updatedAt
+  urlPath
+  preview {
+${CURATED_THEME_PREVIEW_FIELDS}
+  }
+`;
+
+export const DESIGN_SHARE_FOR_RESUME_QUERY = `
+  query DesignShareForResume($resumeId: ID!) {
+    designShareForResume(resumeId: $resumeId) {
+      id
+      resumeId
+      contentMode
+      title
+      isActive
+      createdAt
+      updatedAt
+      urlPath
+    }
+  }
+`;
+
+export const CREATE_DESIGN_SHARE_MUTATION = `
+  mutation CreateDesignShare($resumeId: ID!, $contentMode: DesignShareContentMode!, $title: String) {
+    createDesignShare(resumeId: $resumeId, contentMode: $contentMode, title: $title) {
+      id
+      resumeId
+      contentMode
+      title
+      isActive
+      createdAt
+      updatedAt
+      urlPath
+    }
+  }
+`;
+
+export const APPLY_DESIGN_SHARE_MUTATION = `
+  mutation ApplyDesignShare($designShareId: ID!, $resumeId: ID) {
+    applyDesignShare(designShareId: $designShareId, resumeId: $resumeId) {
+      id
+      title
+      updatedAt
+    }
+  }
+`;
+
+export const ADMIN_CURATED_THEMES_QUERY = `
+  query AdminCuratedThemes {
+    adminCuratedThemes {
+${CURATED_THEME_FIELDS}
+    }
+  }
+`;
+
+export const CREATE_CURATED_THEME_MUTATION = `
+  mutation CreateCuratedTheme($input: CreateCuratedThemeInput!) {
+    createCuratedTheme(input: $input) {
+${CURATED_THEME_FIELDS}
+    }
+  }
+`;
+
+export const UPDATE_CURATED_THEME_MUTATION = `
+  mutation UpdateCuratedTheme($input: UpdateCuratedThemeInput!) {
+    updateCuratedTheme(input: $input) {
+${CURATED_THEME_FIELDS}
+    }
+  }
+`;
+
+export const DELETE_CURATED_THEME_MUTATION = `
+  mutation DeleteCuratedTheme($id: ID!) {
+    deleteCuratedTheme(id: $id)
+  }
+`;

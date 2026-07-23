@@ -1435,3 +1435,43 @@ func (m *Memory) LinkedInSessionConfigured() (bool, *time.Time, error) {
 	return false, nil, nil
 }
 
+func (m *Memory) UpsertDesignShare(_, _ string, _ model.DesignShareContentMode, _ *string, _ *model.ResumeSettings, _ *model.CvTheme) (*model.DesignShare, error) {
+	return nil, fmt.Errorf("not supported in memory store")
+}
+
+func (m *Memory) GetDesignShare(_ string) (*model.DesignShare, error) {
+	return nil, ErrDesignShareNotFound
+}
+
+func (m *Memory) GetDesignShareForResume(_ string) (*model.DesignShare, error) {
+	return nil, ErrDesignShareNotFound
+}
+
+func (m *Memory) DeactivateDesignShare(_, _ string) (*model.DesignShare, error) {
+	return nil, fmt.Errorf("not supported in memory store")
+}
+
+func (m *Memory) PublicDesignPreview(_ string) (*model.DesignShare, *model.ResumeWithContent, error) {
+	return nil, nil, ErrDesignShareNotFound
+}
+
+func (m *Memory) ApplyDesignShareSettings(_, _ string, _ *model.ResumeSettings) (*model.ResumeSettings, error) {
+	return nil, fmt.Errorf("not supported in memory store")
+}
+
+func (m *Memory) ListCuratedThemes(_, _ *bool) ([]*model.CuratedTheme, error) {
+	return []*model.CuratedTheme{}, nil
+}
+
+func (m *Memory) CreateCuratedTheme(_ string, _ model.CreateCuratedThemeInput) (*model.CuratedTheme, error) {
+	return nil, fmt.Errorf("not supported in memory store")
+}
+
+func (m *Memory) UpdateCuratedTheme(_ string, _ model.UpdateCuratedThemeInput) (*model.CuratedTheme, error) {
+	return nil, fmt.Errorf("not supported in memory store")
+}
+
+func (m *Memory) DeleteCuratedTheme(_, _ string) (bool, error) {
+	return false, fmt.Errorf("not supported in memory store")
+}
+

@@ -1,6 +1,7 @@
 package httpapi
 
 import (
+	"crypto/subtle"
 	"encoding/json"
 	"net/http"
 	"strings"
@@ -9,6 +10,22 @@ import (
 	linkedinsync "github.com/leo/ai-weekend/backend/internal/linkedin/sync"
 	"github.com/jackc/pgx/v5/pgxpool"
 )
+
+func cronAuthorized(r *http.Request, secret string) bool {
+	secret = strings.TrimSpace(secret)
+	if secret == "" {
+		return false
+	}
+	auth := strings.TrimSpace(r.Header.Get("Authorization"))
+	if auth == "" {
+		auth = strings.TrimSpace(r.Header.Get("X-Cron-Secret"))
+	}
+	const bearer = "Bearer "
+	if strings.HasPrefix(auth, bearer) {
+		auth = strings.TrimSpace(strings.TrimPrefix(auth, bearer))
+	}
+	return subtle.ConstantTimeCompare([]byte(auth), []byte(secret)) == 1
+}
 
 // JobAutomationsCron runs due job search automations. Secured with CRON_SECRET header.
 func JobAutomationsCron(runner *automation.Runner, cronSecret string) http.HandlerFunc {
@@ -22,15 +39,7 @@ func JobAutomationsCron(runner *automation.Runner, cronSecret string) http.Handl
 			http.Error(w, "cron not configured", http.StatusServiceUnavailable)
 			return
 		}
-		auth := strings.TrimSpace(r.Header.Get("Authorization"))
-		if auth == "" {
-			auth = strings.TrimSpace(r.Header.Get("X-Cron-Secret"))
-		}
-		const bearer = "Bearer "
-		if strings.HasPrefix(auth, bearer) {
-			auth = strings.TrimSpace(strings.TrimPrefix(auth, bearer))
-		}
-		if auth != secret {
+		if !cronAuthorized(r, secret) {
 			http.Error(w, "unauthorized", http.StatusUnauthorized)
 			return
 		}
@@ -62,15 +71,7 @@ func LinkedInApplicationsCron(pool *pgxpool.Pool, cronSecret string) http.Handle
 			http.Error(w, "cron not configured", http.StatusServiceUnavailable)
 			return
 		}
-		auth := strings.TrimSpace(r.Header.Get("Authorization"))
-		if auth == "" {
-			auth = strings.TrimSpace(r.Header.Get("X-Cron-Secret"))
-		}
-		const bearer = "Bearer "
-		if strings.HasPrefix(auth, bearer) {
-			auth = strings.TrimSpace(strings.TrimPrefix(auth, bearer))
-		}
-		if auth != secret {
+		if !cronAuthorized(r, secret) {
 			http.Error(w, "unauthorized", http.StatusUnauthorized)
 			return
 		}
